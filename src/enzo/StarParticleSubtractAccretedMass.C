@@ -62,6 +62,10 @@ int StarParticleSubtractAccretedMass(TopGridData *MetaData,
   if (AllStars == NULL)
     return SUCCESS;
 
+  if (STARMAKE_METHOD(INDIVIDUAL_STAR)){
+    return SUCCESS;
+  }
+
   LCAPERF_START("StarParticleSubtractAccretedMass");
 
   /* Get time and SNe timestep */

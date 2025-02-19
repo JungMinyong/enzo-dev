@@ -110,6 +110,9 @@ int RadiativeTransferComptonHeating(PhotonPackageEntry **PP, FLOAT *dPi, int cel
 				    int TemperatureField, FLOAT ddr, double dN, 
 				    float geo_correction, int gammaNum);
 
+int RadiativeTransferFUVPEHeating(PhotonPackageEntry **PP, FLOAT &dp_FUV,
+                                  const int cellindex, const float tau, const FLOAT photonrate,
+                                  float geo_correction, int FUVRateNum);
 /* Functions to calculate the H2II cross section */
 float LookUpCrossSectionH2II(float hnu, float T);
 
@@ -463,6 +466,9 @@ int PhotonPeriodicBoundary(int &cindex, FLOAT *r, int *g, FLOAT *s,
 			   PhotonPackageEntry* &PP, grid* &MoveToGrid, 
 			   const float *DomainWidth, int &DeleteMe);
 
+int PhotonDeleteByPosition(int &cindex, FLOAT *r,
+                           PhotonPackageEntry* &PP, grid* &MoveToGrid,
+                           int &DeleteMe);
 /* Create PhotonPackages for a given radiation sources   */
 
 int Shine(RadiationSourceEntry *RadiationSource);

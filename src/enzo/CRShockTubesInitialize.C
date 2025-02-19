@@ -240,6 +240,7 @@ int CRShockTubesInitialize(FILE *fptr, FILE *Outfptr,
   DataLabel[count++] = Vel2Name;
   DataLabel[count++] = Vel3Name;
   DataLabel[count++] = TEName;
+  DataLabel[count++] = CRName;
   if (DualEnergyFormalism) {
     DataLabel[count++] = GEName;
   }

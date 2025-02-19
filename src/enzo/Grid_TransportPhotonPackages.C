@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ErrorExceptions.h"
+#include "performance.h"
+#include "EnzoTiming.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -163,6 +165,11 @@ int grid::TransportPhotonPackages(int level, int finest_level,
     EndTime = PhotonTime+dtPhoton-PFLOAT_EPSILON;
 
   while (PP != NULL) {
+    bool stop_fuv_timer = FALSE;
+    if ((PP)->Type == FUVPEHEATING || (PP)->Type == LW){
+      stop_fuv_timer = TRUE;
+      TIMER_START("RadiativeTrasnferFUVandLW");
+    }
     int retval = 0;
     if (PP->PreviousPackage == NULL)
       printf("Bad package.\n");
@@ -255,6 +262,9 @@ int grid::TransportPhotonPackages(int level, int finest_level,
 	PP->NextPackage->PreviousPackage = PP->PreviousPackage;
       trcount++;
     } // ENDIF MoveToGrid
+    if (stop_fuv_timer){
+      TIMER_STOP("RadiativeTrasnferFUVandLW");
+    }
 
     if (AdvancePhotonPointer == TRUE)
       PP = PP->NextPackage;

@@ -56,6 +56,11 @@ int grid::FindAllStarParticles(int level)
 				ParticleType[i] == PARTICLE_TYPE_COLOR_STAR ||
 				ParticleType[i] == PARTICLE_TYPE_MBH ||
 				ParticleType[i] == PARTICLE_TYPE_SIMPLE_SOURCE ||
+        ParticleType[i] == PARTICLE_TYPE_INDIVIDUAL_STAR ||
+        ParticleType[i] == PARTICLE_TYPE_INDIVIDUAL_STAR_WD ||
+        ParticleType[i] == PARTICLE_TYPE_INDIVIDUAL_STAR_REMNANT ||
+        ParticleType[i] == PARTICLE_TYPE_INDIVIDUAL_STAR_POPIII ||
+        ParticleType[i] == PARTICLE_TYPE_INDIVIDUAL_STAR_UNRESOLVED ||
 				(StarParticleRadiativeFeedback == TRUE &&
 				 ParticleType[i] == PARTICLE_TYPE_STAR)) {
 

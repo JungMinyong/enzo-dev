@@ -75,3 +75,4 @@ int idual = (DualEnergyFormalism) ? 1 : 0;
   
   return SUCCESS;
 }
+

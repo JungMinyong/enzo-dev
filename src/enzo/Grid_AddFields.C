@@ -44,10 +44,16 @@ int grid::AddFields(int TypesToAdd[], int NumberOfFields)
 
       }
       BaryonField[n] = new float[size];
+      if ((TypesToAdd[i] >= LiDensity && TypesToAdd[i] <= BiDensity2) || ((TypesToAdd[i] >= MetalPISNeDensity) &&
+         (TypesToAdd[i] <= ExtraMetalField2))){
+        for (j = 0; j < size; j++)
+          BaryonField[n][j] = tiny_number * BaryonField[0][j]; // assuming density is field 0
+      } else{
       value = (TypesToAdd[i] == SNColour || TypesToAdd[i] == Metallicity ||
 	       TypesToAdd[i] == MetalSNIaDensity || TypesToAdd[i]==MetalSNIIDensity) ? tiny_number : 0.0;
       for (j = 0; j < size; j++)
 	BaryonField[n][j] = value;
+      }
     } // ENDIF this processor
 
   } // ENDFOR i

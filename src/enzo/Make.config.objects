@@ -74,6 +74,7 @@ OBJS_CONFIG_LIB = \
         CheckForTimeAction.o \
         CheckOverlap.o \
         CheckShearingBoundaryConsistency.o \
+        ChemicalEvolutionTestInitialize.o \
 	chtable.o \
         cic_deposit.o \
         cic_deposit_c.o \
@@ -165,11 +166,14 @@ OBJS_CONFIG_LIB = \
         DepositParticleMassField.o \
         DepositParticleMassFlaggingField.o \
 	DetermineNumberOfNodes.o \
+	DetermineNumberOfParticleAttributes.o \
 	DetermineParallelism.o \
 	DetermineSubgridSizeExtrema.o \
 	DetermineSEDParameters.o \
     	DistributeFeedbackZone.o \
         DoubleMachInitialize.o \
+        DoublePowerLawDiskGravity.o \
+        DiskGravityUpdateParticleCOM.o \
         E_ColumnFormat.o \
         ealFloat.o \
         ealInt.o \
@@ -278,6 +282,7 @@ OBJS_CONFIG_LIB = \
 	GenerateGridArray.o \
 	GetNodeFreeMemory.o \
 	GetUnits.o \
+        GetParticleAttributeLabels.o \
 	gFLDProblem_AnalyticalEqns.o \
 	gFLDProblem_ChemistrySource.o \
 	gFLDProblem_ComputeRHS.o \
@@ -352,6 +357,7 @@ OBJS_CONFIG_LIB = \
 	Grid_AddOverlappingParticleMassField.o \
 	Grid_AddParticlesFromList.o \
 	Grid_AddRandomForcing.o \
+        Grid_AddTimeVaryingExternalAcceleration.o \
 	Grid_AddToBoundaryFluxes.o \
 	Grid_AllocateGrids.o \
 	Grid_AnalyzeTrackPeaks.o \
@@ -361,16 +367,19 @@ OBJS_CONFIG_LIB = \
     	Grid_ApplyGalaxyParticleGravity.o \
     	Grid_ApplySmartStarParticleFeedback.o \
 	Grid_ApplyTimeAction.o \
+        Grid_ApplyTemperatureLimit.o \
     	Grid_AveragedVelocityAtCell.o \
 	Grid_CalculateAngularMomentum.o \
 	Grid_CalculateJeansMass.o \
 	Grid_CalculateSmartStarAccretionRate.o \
 	Grid_CalculateSpecificQuantities.o \
 	Grid_ChangeParticleTypeBeforeSN.o \
+        Grid_CheckField.o \
 	Grid_CheckForExternalReflections.o \
 	Grid_CheckForOverlap.o \
 	Grid_CheckForPossibleOverlap.o \
         Grid_CheckForSharedFace.o \
+        Grid_ChemicalEvolutionTestInitializeGrid.o \
 	grid_cic.o \
 	grid_ngp.o \
 	Grid_CleanUpMovedParticles.o \
@@ -474,6 +483,7 @@ OBJS_CONFIG_LIB = \
 	Grid_destructor.o \
 	Grid_DetermineActiveParticleTypes.o \
 	Grid_DetachForcingFromBaryonFields.o \
+        Grid_DiskGravityComputeParticleCOM.o \
 	Grid_DoubleMachInitializeGrid.o \
 	Grid_FastSiblingLocatorAddGrid.o \
 	Grid_FastSiblingLocatorFindSiblings.o \
@@ -517,6 +527,7 @@ OBJS_CONFIG_LIB = \
 	Grid_Gadgetfindabundancesandrates.o \
 	Grid_GadgetEquilibriumCooling.o \
 	Grid_GalaxySimulationInitializeGrid.o \
+        Grid_GalaxySimulationInitializeParticles.o \
     	Grid_GetActiveParticlePosition.o \
         Grid_GetEnclosedMass.o \
         Grid_GetEnclosedMassInShell.o \
@@ -532,6 +543,7 @@ OBJS_CONFIG_LIB = \
 	Grid_IdentifyColourFields.o \
 	Grid_HydroShockTubesInitializeGrid.o \
 	Grid_IdentifyShockSpeciesFields.o \
+        Grid_IdentifyChemicalTracerSpeciesFields.o \
 	Grid_IdentifyGloverSpeciesFields.o \
         Grid_IdentifyNewSubgrids.o \
         Grid_IdentifyNewSubgridsSmall.o \
@@ -556,6 +568,7 @@ OBJS_CONFIG_LIB = \
 	Grid_MirrorStarParticles.o \
 	Grid_MoveAllParticles.o \
 	Grid_MoveAllStars.o \
+        Grid_MoveParticleAbundances.o \
 	Grid_MoveParticlesFOF.o \
 	Grid_MoveSubgridParticlesFast.o \
     	Grid_MoveSubgridActiveParticles.o \
@@ -646,6 +659,7 @@ OBJS_CONFIG_LIB = \
         Grid_SphericalInfallGetProfile.o \
         Grid_SphericalInfallInitializeGrid.o \
         Grid_StarParticleHandler.o \
+        Grid_StellarYieldsResetter.o \
 	Grid_StratifiedMediumExplosionInitialize.o \
         Grid_SupernovaRestartInitialize.o \
         Grid_SubtractAccretedMassFromSphere.o \
@@ -666,6 +680,7 @@ OBJS_CONFIG_LIB = \
         Grid_UpdateParticlePosition.o \
         Grid_UpdateParticleVelocity.o \
         Grid_UpdateStarParticles.o \
+        Grid_UpdateAveragedAbundances.o \
         Grid_WriteCubeInterpolate.o \
         Grid_WriteCube.o \
         Grid_WriteGridInterpolate.o \
@@ -696,6 +711,10 @@ OBJS_CONFIG_LIB = \
         I_ColumnFormat.o \
         IdentifyNewSubgridsBySignature.o \
         ImplosionInitialize.o \
+        individual_star_maker.o \
+        IndividualStarParticleAddFeedback.o \
+        IndividualStarProperties_Initialize.o \
+        IndividualStarProperties.o \
 	InexactNewton.o \
 	InexactNewton_constructor.o \
 	InexactNewton_destructor.o \
@@ -714,6 +733,7 @@ OBJS_CONFIG_LIB = \
         InitializeRadiationFieldData.o \
         InitializeRadiativeTransferSpectrumTable.o \
         InitializeRateData.o \
+        InitializeTimeVaryingExternalAcceleration.o \
 	InitialLoadBalanceRootGrids.o \
     init_random_seed.o \
 	interp1d.o \
@@ -894,9 +914,11 @@ OBJS_CONFIG_LIB = \
         StarParticleDeath.o \
         StarParticleFinalize.o \
         StarParticleFindAll.o \
+        StarParticleIndividual_IMFInitialize.o \
         StarParticleInitialize.o \
         StarParticleMergeNew.o \
         StarParticleMergeMBH.o \
+        StarParticleOpticallyThinRadiation.o \
 	StarParticlePopIII_IMFInitialize.o \
 	StarParticleSetRefinementLevel.o \
         StarParticleSubtractAccretedMass.o \
@@ -906,10 +928,12 @@ OBJS_CONFIG_LIB = \
         Star_ActivateNewStar.o \
         Star_ApplyFeedbackTrue.o \
         Star_AssignAccretedAngularMomentum.o \
+        Star_AssignInterpolationTablePositions.o \
 	Star_AssignFinalMassFromIMF.o \
         Star_CalculateFeedbackParameters.o \
         Star_CalculateMassAccretion.o \
         Star_CalculateMassLoss.o \
+        Star_CheckMassEjectionValidity.o \
         Star_ComputePhotonRates.o \
         Star_DeleteCopyInGridGlobal.o \
         Star_DeleteParticle.o \
@@ -936,6 +960,9 @@ OBJS_CONFIG_LIB = \
 	star_maker10.o \
 	star_maker_h2reg.o \
     star_maker_ssn.o \
+	StellarYieldsRoutines.o \
+        StellarYields_Initialize.o \
+        StellarYieldsResetter.o \
 	StratifiedMediumExplosionInitialize.o \
         SupernovaRestartInitialize.o \
         SysMkdir.o \
@@ -959,6 +986,16 @@ OBJS_CONFIG_LIB = \
         UpdateParticlePositions.o \
         utilities.o \
         uuid.o \
+        uuid/clear.o \
+        uuid/compare.o \
+        uuid/copy.o \
+        uuid/gen_uuid.o \
+        uuid/isnull.o \
+        uuid/pack.o \
+        uuid/parse.o \
+        uuid/unpack.o \
+        uuid/unparse.o \
+        uuid/uuid_time.o \
         wall_clock.o \
         WavePoolInitialize.o \
         wrapper1d.o \
@@ -1068,6 +1105,9 @@ POBJS_CONFIG_LIB = \
 	Grid_AddH2Dissociation.o \
 	Grid_AddH2DissociationFromSources.o \
 	Grid_AddH2DissociationFromTree.o \
+        Grid_AddPeHeating.o \
+        Grid_AddPeHeatingFromSources.o \
+        Grid_AddPeHeatingFromTree.o \
 	Grid_AddRadiationImpulse.o \
 	Grid_AddRadiationPressureAcceleration.o \
 	Grid_AllocateInterpolatedRadiation.o \
@@ -1095,6 +1135,7 @@ POBJS_CONFIG_LIB = \
         Grid_MergePausedPhotonPackages.o \
         Grid_RegridPausedPhotonPackage.o \
         Grid_MoveAllPhotonPackages.o \
+        Grid_PhotonDeleteByPosition.o \
 	Grid_PhotonPeriodicBoundary.o \
         Grid_PhotonTestInitializeGrid.o \
         Grid_PhotonTestRestartInitializeGrid.o \
@@ -1127,6 +1168,7 @@ POBJS_CONFIG_LIB = \
 	RadiativeTransferIR.o \
 	RadiativeTransferIonization.o \
 	RadiativeTransferXRays.o \
+        RadiativeTransferFUVPEHeating.o \
         ReadPhotonSources.o \
         ReadRadiativeTransferSpectrumTable.o \
         ReassignSuperSources.o \
@@ -1251,7 +1293,7 @@ POBJS_UUID = \
         uuid/unparse.o \
         uuid/uuid_time.o \
 
-# Objects for the Nbody6 support 
+# Objects for the Abyss support 
 
 OBJS_NBODY_ALL= \
 #				NbodyRoutines.o \
@@ -1285,7 +1327,7 @@ OBJS_NBODY= \
 						nbody/Binary/KSRegularlizationTermination.o\
 						nbody/Binary/KSRegularlizationInitialization.o\
 						nbody/Binary/KSRegularlizationIntegration.o\
- 						nbody/cuda/cuda_kernels.o
+ 						nbody/cuda/cuda_kernels.o\
  						#nbody/cuda/cuda_routines.o\
 
 

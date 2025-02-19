@@ -27,9 +27,21 @@
 void grid::SetNewParticleIndex(int &NumberCount1, PINT &NumberCount2)
 {
   int n, abstype;
+#ifdef INDIVIDUALSTAR
+  int *newstars; // indexes of new stars with potential tags to write out
+  int newstarcount = 0;
+  newstars = new int[NumberOfParticles];
   for (n = 0; n < NumberOfParticles; n++) 
+    newstars[n] = -1;
+#endif
+  for (n = 0; n < NumberOfParticles; n++)
     if (ParticleNumber[n] == INT_UNDEFINED) {
       abstype = ABS(ParticleType[n]);
+#ifdef INDIVIDUALSTAR
+      newstars[newstarcount] = n;
+      newstarcount++;
+#endif
+
 #ifdef NBODY
       if (abstype == PARTICLE_TYPE_STAR || abstype == PARTICLE_TYPE_NBODY_NEW ||
 #else
@@ -43,6 +55,14 @@ void grid::SetNewParticleIndex(int &NumberCount1, PINT &NumberCount2)
 //      printf("New star particle index = %d (%d %d)\n",
 //	     ParticleNumber[n], NumberCount1, NumberCount2);
     }
+
+#ifdef INDIVIDUALSTAR
+  if ((IndividualStarOutputChemicalTags) && (newstarcount > 0))
+    this->OutputStellarAbundances(newstars);
+
+  delete [] newstars;
+#endif
+
   return;
 }
 

@@ -1036,6 +1036,7 @@ int OptimizedUnigridCommunicationTranspose(
 					 processing receives this cycle. */
 
 				MPI_Arg TotalCompletedRequests, CompletedRequests;
+    bool ProcessRequest;
 				if (ReceiveMode) {
 
 					TotalCompletedRequests = 0;

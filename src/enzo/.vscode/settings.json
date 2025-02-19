@@ -7,7 +7,16 @@
         "Grid_UpdateParticleVelocity.C": "cpp",
         "Grid_UpdateParticlePosition.C": "cpp",
         "StarParticleFinalize.C": "cpp",
-        "CommunicationUpdateStarParticleCount.C": "cpp"
+        "CommunicationUpdateStarParticleCount.C": "cpp",
+        "ActiveParticle_AccretingParticle.C": "cpp",
+        "CommunicationBufferedSend.C": "cpp",
+        "CommunicationReceiveFluxes.C": "cpp",
+        "Grid_DiskGravityComputeParticleCOM.C": "cpp",
+        "NbodyRoutines.C": "cpp",
+        "NestedCosmologySimulationInitialize.C": "cpp",
+        "AMRH5writer.C": "cpp",
+        "GetParticleAttributeLabels.C": "cpp",
+        "GalaxySimulationInitialize.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

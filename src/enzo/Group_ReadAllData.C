@@ -64,6 +64,7 @@ int AssignGridToTaskMap(Eint64 *GridIndex, Eint64 *Mem, int Ngrids);
 int InitialLoadBalanceRootGrids(FILE *fptr, hid_t Hfile_id, int TopGridRank,
 				int TopGridDim, int &NumberOfRootGrids,
 				int* &RootProcessors);
+int DetermineNumberOfParticleAttributes(void);
 int mt_read(char *fname);
  
 extern char RadiationSuffix[];
@@ -176,14 +177,22 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
   if (NumberOfParticleAttributes == INT_UNDEFINED ||
       NumberOfParticleAttributes == 0) {
+	  /*
     if (StarParticleCreation || StarParticleFeedback) {
       NumberOfParticleAttributes = 3;
       if (StarMakerTypeIaSNe) NumberOfParticleAttributes++;
       AddParticleAttributes = TRUE;
     } else {
-      NumberOfParticleAttributes = 0;
+      NumberOfParticleAttributes = 0;  MergerYS*/
+	  
+	  NumberOfParticleAttributes = DetermineNumberOfParticleAttributes();
     }
+	
+	
 
+  if (NumberOfParticleAttributes > MAX_NUMBER_OF_PARTICLE_ATTRIBUTES){
+    ENZO_VFAIL("Number of necessary particle attributes (%"ISYM") greater than"
+              " MAX_NUMBER_OF_PARTICLE_ATTRIBUTES. Change and re-compile.\n",NumberOfParticleAttributes);
   }
 
   // name is something like /dsgpfs/harkness/NewL7/Dumps/DD0156/DD0156

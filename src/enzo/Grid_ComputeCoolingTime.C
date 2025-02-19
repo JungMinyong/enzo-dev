@@ -91,7 +91,7 @@ extern "C" void FORTRAN_NAME(cool_time)(
 	float *fh, float *utem, float *urho, 
 	float *eta1, float *eta2, float *gamma, float *coola, float *gammaha, float *mu);
  
-int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
+int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly, int ReturnAbsValue)
 {
  
   /* Return if this doesn't concern us. */
@@ -164,8 +164,32 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     a       = 1.0 / (1.0 + RadiationFieldRedshift);
     aUnits  = 1.0;
   }
+
+  /* for converting from Enzo RT heating to cgs */
+  float rtunits = erg_eV / TimeUnits;
+
   float afloat = float(a);
- 
+
+  /* assign heating rates - set to Null pointers if not used */
+  if (IndividualStarFUVHeating){
+    float EnergyUnits = DensityUnits * VelocityUnits * VelocityUnits;
+
+    int PeNum = FindField( PeHeatingRate, this->FieldType, this->NumberOfBaryonFields);
+
+    // send to Grackle in CGS
+    volumetric_heating_rate = new float[size];
+    specific_heating_rate   = NULL;
+
+    /* convert to cgs */
+    for( i = 0; i < size; i ++){
+      volumetric_heating_rate[i] = BaryonField[PeNum][i] * (EnergyUnits/TimeUnits); // convert to CGS
+    }
+  } else{
+    volumetric_heating_rate = NULL;
+    specific_heating_rate   = NULL;
+  }
+
+
   /* Metal cooling codes. */
  
   int MetalNum = 0, SNColourNum = 0;
@@ -326,8 +350,10 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
       ENZO_FAIL("Error in Grackle calculate_cooling_time.\n");
     }
 
+    if (ReturnAbsValue){
     for (i = 0; i < size; i++) {
       cooling_time[i] = fabs(cooling_time[i]);
+      }
     }
 
     if (temp_thermal == TRUE) {
@@ -342,6 +368,9 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   }
 #endif // TRANSFER
 
+    if (IndividualStarFUVHeating){
+      delete [] volumetric_heating_rate;
+    }
     delete [] TotalMetals;
     delete [] g_grid_dimension;
     delete [] g_grid_start;

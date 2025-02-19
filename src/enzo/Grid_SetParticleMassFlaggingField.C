@@ -37,7 +37,11 @@ int Return_MPI_Tag(int grid_num, int proc);
  
 extern float DepositParticleMaximumParticleMass;
  
-int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level, 
+int grid::SetParticleMassFlaggingField(
+#ifdef INDIVIDUALSTAR
+                                       TopGridData *MetaData, Star *&AllStars,
+#endif
+                                       int StartProc, int EndProc, int level,
 				       int ParticleMassMethod, int MustRefineMethod,
 				       int *SendProcs, int NumberOfSends)
 {
@@ -114,13 +118,23 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
     /* ==== METHOD 8: BY POSITION OF MUST-REFINE PARTICLES  ==== */
  
-    if (MustRefineMethod >= 0 &&
-	level <= MustRefineParticlesRefineToLevel) {
+    if (MustRefineMethod >= 0){
 
       KeepFlaggingField = (level == MustRefineParticlesRefineToLevel);
-      NumberOfFlaggedCells = 
+      if (level <= MustRefineParticlesRefineToLevel){
+        NumberOfFlaggedCells = this->DepositMustRefineParticles(ParticleMassMethod,
+                                                                 level, KeepFlaggingField);
+      }
+#ifdef INDIVIDUALSTAR
+      KeepFlaggingField = KeepFlaggingField || (level == IndividualStarRefineToLevel);
+      if (level < IndividualStarRefineToLevel){
+        NumberOfFlaggedCells +=
 	this->DepositMustRefineParticles(ParticleMassMethod, level,
-					 KeepFlaggingField);
+                                           KeepFlaggingField,
+                                           MetaData, AllStars
+                                         );
+      }
+#endif
 
       if (NumberOfFlaggedCells < 0) {
 	ENZO_FAIL("Error in grid->DepositMustRefineParticles.\n");
@@ -248,5 +262,19 @@ void InitializeParticleMassFlaggingFieldCommunication(void)
   }
 #endif USE_MPI
   return;
+}
+#endif
+#ifdef INDIVIDUALSTAR
+void DeleteStarList(Star *&Node);
+int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level, 
+                                       int ParticleMassMethod, int MustRefineMethod,
+                                       int *SendProcs, int NumberOfSends){
+  Star *AllStars = NULL;
+  TopGridData *MetaData = NULL;
+  int val = this->SetParticleMassFlaggingField(MetaData, AllStars, StartProc, EndProc, level,
+                                     ParticleMassMethod, MustRefineMethod,
+                                     SendProcs, NumberOfSends);
+  DeleteStarList(AllStars);
+  return val;
 }
 #endif

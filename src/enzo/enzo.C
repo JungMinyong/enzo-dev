@@ -173,7 +173,14 @@ int FastSiblingLocatorInitialize(ChainingMeshStructure *Mesh, int Rank,
 int FastSiblingLocatorFinalize(ChainingMeshStructure *Mesh);
 
 int RebuildHierarchy(TopGridData *MetaData,
-		     LevelHierarchyEntry *LevelArray[], int level);
+		     LevelHierarchyEntry *LevelArray[], int level
+#ifdef INDIVIDUALSTAR
+                     , Star *&AllStars
+#endif
+                     );
+#ifdef INDIVIDUALSTAR
+int RebuildHierarchy(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], int level);
+#endif
 int CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData,
 			 LevelHierarchyEntry *LevelArray[], int level);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
@@ -196,6 +203,7 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
 			      HierarchyEntry **NewHierarchyPointer,
 			      FLOAT WriteTime);
 void DeleteGridHierarchy(HierarchyEntry *GridEntry);
+void DeleteRateData(void);
 int OutputPotentialFieldOnly(char *ParameterFile,
 			     LevelHierarchyEntry *LevelArray[], 
 			     HierarchyEntry *TopGrid,
@@ -252,6 +260,12 @@ int RadiativeTransferInitialize(char *ParameterFile,
 				LevelHierarchyEntry *LevelArray[]);
 #endif
 
+#ifdef INDIVIDUALSTAR
+int InitializeStellarYieldFields(HierarchyEntry &TopGrid,
+                                 TopGridData &MetaData,
+                                 ExternalBoundary &Exterior,
+                                 LevelHierarchyEntry *LevelArray[]);
+#endif
 #ifdef USE_LCAPERF
 void lcaperfInitialize (int max_level);
 #endif
@@ -310,7 +324,8 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   //#define DEBUG_MPI
 #ifdef DEBUG_MPI
-  if (MyProcessorNumber == ROOT_PROCESSOR) {
+  const int DebugProcessor = 78;
+  if (MyProcessorNumber == DebugProcessor) {
     int impi = 0;
     char hostname[256];
     gethostname(hostname, sizeof(hostname));
@@ -319,6 +334,9 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     while (impi == 0)
       sleep(5);
   }
+  char hostname[256];
+  gethostname(hostname, sizeof(hostname));
+  fprintf(stdout, "Proc%03d: PID %d on %s\n", MyProcessorNumber, getpid(), hostname);
 #endif
 
 #ifdef USE_GRACKLE
@@ -343,6 +361,13 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   TIMER_REGISTER("RebuildHierarchy");
   TIMER_REGISTER("SetBoundaryConditions");
   TIMER_REGISTER("SolveHydroEquations");
+  TIMER_REGISTER("StarParticlePhotoelectricHeating");
+  TIMER_REGISTER("CreateSourceClusteringTree");
+  TIMER_REGISTER("InitializeOTFields");
+  TIMER_REGISTER("IndividualStarAddFeedback");
+  TIMER_REGISTER("GrackleWrapper");
+  TIMER_REGISTER("StarParticleInitialize");
+  TIMER_REGISTER("RadiativeTrasnferFUVandLW");
   TIMER_REGISTER("Total");
 
 #ifdef USE_LCAPERF
@@ -794,6 +819,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
       fprintf(stderr, "INITIALIZATION TIME = %16.8e\n", (t_init1-t_init0));
     CommunicationBarrier();
 #endif /* USE_MPI */
+
   }
 
 #ifdef ECUDA
@@ -811,6 +837,14 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   if (RadiativeTransferInitialize(ParameterFile, TopGrid, MetaData, Exterior, 
 				  ImplicitSolver, LevelArray) == FAIL) {
     fprintf(stderr, "Error in RadiativeTransferInitialize.\n");
+    my_exit(EXIT_FAILURE);
+  }
+#endif
+
+#ifdef INDIVIDUALSTAR
+  if (InitializeStellarYieldFields(TopGrid, MetaData, Exterior,
+                                   LevelArray) == FAIL){
+    fprintf(stderr, "Error in StellarYieldsInitialize.\n");
     my_exit(EXIT_FAILURE);
   }
 #endif
@@ -846,6 +880,25 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   }
   else
   {
+    // Delete all data to cleanup for memory checkers (e.g. valgrind)
+    LevelHierarchyEntry *Previous, *Temp;
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      fprintf(stderr, "Cleanup: deleting all grid data\n");
+    for (i = 0; i < MAX_DEPTH_OF_HIERARCHY; i++) {
+      Temp = LevelArray[i];
+      while (Temp != NULL) {
+	delete Temp->GridData;
+	if (Temp->GridHierarchyEntry != &TopGrid)
+	  delete Temp->GridHierarchyEntry;
+	Previous = Temp;
+	Temp = Temp->NextGridThisLevel;
+	// Delete previous level hierarchy entry
+	delete Previous;
+      }
+    }
+    Exterior.CleanUp();
+    delete enzo_timer;
+    DeleteRateData();
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       fprintf(stderr, "Successful run, exiting.\n");
     }
@@ -938,7 +991,7 @@ void my_exit(int status)
   // Exit gracefully if successful; abort on error
 #ifdef USE_PYTHON
   FinalizePythonInterface();
-#endif
+#endif  
 
   if (status == EXIT_SUCCESS) {
 

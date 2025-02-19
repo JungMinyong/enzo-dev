@@ -56,11 +56,19 @@
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
+#include "phys_constants.h"
 
 // function prototypes
 
 int RebuildHierarchy(TopGridData *MetaData,
-		LevelHierarchyEntry *LevelArray[], int level);
+                     LevelHierarchyEntry *LevelArray[], int level
+#ifdef INDIVIDUALSTAR
+                     , Star *&AllStars
+#endif
+                     );
+#ifdef INDIVIDUALSTAR
+int RebuildHierarchy(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], int level);
+#endif
 
 int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 		int level, float dtLevelAbove, ExternalBoundary *Exterior
@@ -99,6 +107,8 @@ int CheckForOutput(HierarchyEntry *TopGrid, TopGridData &MetaData,
 		int Restart = FALSE);
 int CheckForTimeAction(LevelHierarchyEntry *LevelArray[],
 		TopGridData &MetaData);
+int DiskGravityUpdateParticleCOM(LevelHierarchyEntry *LevelArray[],
+                                 TopGridData &MetaData);
 int CheckForResubmit(TopGridData &MetaData, int &Stop);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
@@ -125,8 +135,13 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 		TopGridData *MetaData); 
 int MagneticFieldResetter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 		TopGridData *MetaData); 
+int StellarYieldsResetter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
+                          TopGridData *MetaData);
 void PrintMemoryUsage(char *str);
 int SetEvolveRefineRegion(FLOAT time);
+int GetUnits(float *DensityUnits, float *LengthUnits,
+             float *TemperatureUnits, float *TimeUnits,
+             float *VelocityUnits, FLOAT Time);
 
 int SetStellarMassThreshold(FLOAT time);
 int SetStellarFeedbackEfficiency(FLOAT time);
@@ -143,9 +158,19 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
 
 #define NO_REDUCE_FRAGMENTATION
 
+#ifdef INDIVIDUALSTAR
+  int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
+                             int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
+                             int ThisLevel, Star *&AllStars,
+                             int TotalStarParticleCountPrevious[],
+                             int SkipFeedbackFlag = 0);
 
+  void DeleteStarList(Star *&Node);
 
+  int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
+                        HierarchyEntry **Grids[]);
 
+#endif
 int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 		ExternalBoundary *Exterior,
 #ifdef TRANSFER
@@ -300,6 +325,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 			ResetMagneticField == TRUE)
 		MagneticFieldResetter(LevelArray, 0, &MetaData);
 
+  if  (MetaData.FirstTimestepAfterRestart == TRUE &&
+      (StellarYieldsNumberOfSpecies > 0 && ResetStellarAbundances == TRUE))
+    StellarYieldsResetter(LevelArray, 0, &MetaData);
 	/* Open the OutputLevelInformation file. */
 
 	FILE *LevelInfofptr;
@@ -484,6 +512,28 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 				ENZO_FAIL("Error in SetStellarFeedbackEfficiency.");
 		}
 
+	// MergerYS might be deleted?
+    /* Check maximum refinement level */
+    if (MaximumRefinementLevelPhysicalScale > 0) {
+      float DensityUnits = 1, LengthUnits = 1, TemperatureUnits = 1,
+      TimeUnits = 1, VelocityUnits = 1;
+      if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+                   &TimeUnits, &VelocityUnits, MetaData.Time) == FAIL) {
+            ENZO_FAIL("Error in GetUnits.");
+      }
+
+
+      FLOAT max_dx = TopGridDx[0] / POW(FLOAT(RefineBy), MaximumRefinementLevel);
+
+      // Could make this a while loop, but don't want to bump max level
+      // too much in a single cycle
+      if ( (max_dx * LengthUnits / pc_cm) > MaximumRefinementLevelPhysicalScale){
+        MaximumRefinementLevel++;
+        MaximumGravityRefinementLevel++;
+        MaximumParticleRefinementLevel++;
+        if (IndividualStarRefineToLevel > 0) IndividualStarRefineToLevel++;
+      }
+    }
 		/* Evolve the stochastic forcing spectrum and add
 		 *  the force to the acceleration fields */
 		if (DrivenFlowProfile)
@@ -590,10 +640,27 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 		PrintMemoryUsage("Pre loop rebuild");
 
+#ifdef INDIVIDUALSTAR
+    /* make a list of stars for must refine particle refinement */
+    Star *AllStars = NULL;
+    HierarchyEntry **Grids;
+    int NumberOfGrids = GenerateGridArray(LevelArray, 0, &Grids);
+    int *TotalStarParticleCountPrevious = new int[NumberOfGrids];
+
+    StarParticleInitialize(Grids, &MetaData, NumberOfGrids, LevelArray,
+                           0, AllStars, TotalStarParticleCountPrevious, 1); //last arg, don't set flags
 		if (ProblemType != 25 && Restart == FALSE)
+      RebuildHierarchy(&MetaData, LevelArray, 0, AllStars);
+    PrintMemoryUsage("Post loop rebuild");
+    delete [] TotalStarParticleCountPrevious;
+    delete [] Grids;
+    DeleteStarList(AllStars);
+#else
+    if (ProblemType != 25 && Restart == FALSE)
 			RebuildHierarchy(&MetaData, LevelArray, 0);
 
 		PrintMemoryUsage("Post loop rebuild");
+#endif
 
 #ifdef USE_MPI
 		treb1 = MPI_Wtime();
@@ -603,9 +670,14 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 		CheckForTimeAction(LevelArray, MetaData);
 
-		/* Check for output. */
+    /* Compute COM of dark matter halo for isolated live DM simulations */
+	// MergerYS Do I need this?
 
-		CheckForOutput(&TopGrid, MetaData, Exterior, 
+    DiskGravityUpdateParticleCOM(LevelArray, MetaData);
+
+    /* Check for output. */
+ 
+    CheckForOutput(&TopGrid, MetaData, Exterior, 
 #ifdef TRANSFER
 				ImplicitSolver,
 #endif		 

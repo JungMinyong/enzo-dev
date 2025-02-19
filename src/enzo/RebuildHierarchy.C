@@ -46,7 +46,11 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
 int ReportMemoryUsage(char *header = NULL);
 int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
-		int level, bool AllLocal);
+				     int level, bool AllLocal
+#ifdef INDIVIDUALSTAR
+                                     , TopGridData *MetaData, Star *&AllStars
+#endif
+                                     );
 int DepositActiveParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 		int level, int TopGridDims[]);
 int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[], int grids,
@@ -95,7 +99,11 @@ int MustCollectParticlesToLevelZero = FALSE;  // Set only in NestedCosmologySimu
 /* RebuildHierarchy function */
 
 int RebuildHierarchy(TopGridData *MetaData,
-		LevelHierarchyEntry *LevelArray[], int level)
+		     LevelHierarchyEntry *LevelArray[], int level
+#ifdef INDIVIDUALSTAR
+                     , Star *&AllStars
+#endif
+                     )
 {
 
 	if (LevelSubCycleCount[level] % RebuildHierarchyCycleSkip[level]) {
@@ -398,7 +406,11 @@ int RebuildHierarchy(TopGridData *MetaData,
 			MoveParticles = (ParticlesAreLocal) ? TRUE : FALSE;
 
 			tt0 = ReturnWallTime();
-			DepositParticleMassFlaggingField(LevelArray, i, ParticlesAreLocal);
+      DepositParticleMassFlaggingField(LevelArray, i, ParticlesAreLocal
+#ifdef INDIVIDUALSTAR
+                                       , MetaData, AllStars
+#endif
+                                       );
 			tt1 = ReturnWallTime();
 			RHperf[3] += tt1-tt0;
 
@@ -578,12 +590,12 @@ refinement on large numbers of particles
 				case 1:
 				case 2:
 				case 3:
-					if (i >= LoadBalancingMinLevel && i <= LoadBalancingMaxLevel)
+	if (i+1 >= LoadBalancingMinLevel && i+1 <= LoadBalancingMaxLevel)
 						CommunicationLoadBalanceGrids(SubgridHierarchyPointer, subgrids, 
 								MoveParticles);
 					break;
 				case 4:
-					if (i >= LoadBalancingMinLevel && i <= LoadBalancingMaxLevel)
+	  if (i+1 >= LoadBalancingMinLevel && i+1 <= LoadBalancingMaxLevel)
 						LoadBalanceHilbertCurve(SubgridHierarchyPointer, subgrids, 
 								MoveParticles);
 					break;
@@ -749,3 +761,20 @@ refinement on large numbers of particles
 	return SUCCESS;
 
 }
+
+
+#ifdef INDIVIDUALSTAR
+void DeleteStarList(Star * &Node);
+
+// do this to avoid having to edit all funtcion calls of rebuild hierarchy
+
+int RebuildHierarchy(TopGridData *MetaData,
+                     LevelHierarchyEntry *LevelArray[], int level){
+
+  Star *AllStars = nullptr;
+  int val = RebuildHierarchy(MetaData, LevelArray, level, AllStars); //AllStars);
+  DeleteStarList(AllStars);
+  return val;
+}
+
+#endif

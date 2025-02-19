@@ -6,6 +6,7 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"\n");
    fprintf (fp,"   PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000\n");
    fprintf (fp,"   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 30\n");
+   fprintf (fp,"   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 4\n");
    fprintf (fp,"   PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 36\n");
    fprintf (fp,"   PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : 100000\n");
    fprintf (fp,"\n");
@@ -41,5 +42,8 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_GRACKLE  [grackle-{yes,no}]                        : yes\n");
    fprintf (fp,"   CONFIG_LOG2ALLOC  [log2alloc-{yes,no}]                    : no\n");
    fprintf (fp,"   CONFIG_UUID  [uuid-{yes,no}]                              : yes\n");
+   fprintf (fp,"   CONFIG_INDIVIDUALSTAR [individualstar-{yes,no}]           : no\n");
+   fprintf (fp,"   CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : no\n");
+   fprintf (fp,"   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : no\n");
    fprintf (fp,"\n");
 }

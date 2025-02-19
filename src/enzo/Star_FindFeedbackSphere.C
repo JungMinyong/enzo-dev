@@ -42,6 +42,12 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 			     bool &MarkedSubgrids)
 {
 
+  // AJE-memleak
+  if(STARMAKE_METHOD(INDIVIDUAL_STAR)){
+    return SUCCESS;
+  }
+
+
   float values[7];
   float AccretedMass, DynamicalTime = 0, AvgDensity, AvgVelocity[MAX_DIMENSION];
   int StarType, i, l, dim, FirstLoop = TRUE, SphereTooSmall, 

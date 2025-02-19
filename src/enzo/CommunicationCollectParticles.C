@@ -208,13 +208,13 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
         GridHierarchyPointer[j]->GridData->TransferSubgridParticles
           (SubgridPointers, NumberOfSubgrids, NumberToMove, Zero, Zero, 
            SendList, KeepLocal, ParticlesAreLocal, COPY_OUT, FALSE, TRUE);
-        
       } // ENDIF subgrids exist
     
     /* Now allocate the memory once and store the particles to move */
 
     TotalNumber = 0;
     TotalStars  = 0;
+    APTotalNumber = 0;
     for (j = 0; j < NumberOfProcessors; j++) {
       TotalNumber += NumberToMove[j];
       TotalStars += StarsToMove[j];
@@ -516,6 +516,8 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 
     /* Count the number of particles needed to move */
 
+    /* AJE-memleak: Valgrind has a problem with SendList here... says some of it
+       isn't getting initialized and is causes use issues later */
     SendList = new particle_data[TotalNumberToMove];
     StarSendList = new star_data[TotalStarsToMove];
 

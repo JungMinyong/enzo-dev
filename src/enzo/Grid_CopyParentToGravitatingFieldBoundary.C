@@ -135,6 +135,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
  
   /* Interpolate (linear interpolation) */
  
+#define NO_INTERPOLATE_LINEAR
  
 #ifdef INTERPOLATE_LINEAR
   FORTRAN_NAME(prolong)(ParentGrid->GravitatingMassField,

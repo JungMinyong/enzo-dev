@@ -64,13 +64,15 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 
+float NormalizedDustToGasRatio(const float &Z);
 int grid::WalkPhotonPackage(PhotonPackageEntry **PP, 
 			    grid **MoveToGrid, grid *ParentGrid, grid *CurrentGrid, 
 			    grid **Grids0, int nGrids0, int &DeleteMe, 
 			    int &PauseMe, int &DeltaLevel, float LightCrossingTime,
 			    float LightSpeed, int level, float MinimumPhotonFlux) {
 
-  const float EnergyThresholds[] = {13.6, 24.6, 54.4, 11.2, 0.755, 100.0};
+  const float EnergyThresholds[] = {HI_ionizing_energy, HeI_ionizing_energy,
+                                    HeII_ionizing_energy, LW_threshold_energy, 0.755, 100.0};
   const float PopulationFractions[] = {1.0, 0.25, 0.25, 1.0, 1.0, 1.0, 1.0}; //Matches Fields
   const float EscapeRadiusFractions[] = {0.5, 1.0, 2.0};
   const int offset[] = {1, GridDimension[0], GridDimension[0]*GridDimension[1]};
@@ -306,6 +308,11 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   if(RadiativeTransferH2ShieldType == 1) {
     TemperatureField = this->GetTemperatureFieldNumberForH2Shield();
   }
+  int MetalNum = -1, FUVRateNum = -1;
+  if(IndividualStarFUVHeating && !(RadiativeTransferOpticallyThinFUV)){
+    FUVRateNum = FindField(FUVRate, this->FieldType, this->NumberOfBaryonFields);
+    MetalNum   = FindField(Metallicity, this->FieldType, this->NumberOfBaryonFields);
+  }
 
   dx = CellWidth[0][0];
   dx2 = dx*dx;
@@ -425,6 +432,9 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     				       DomainWidth, DeleteMe) == FALSE)
     	break;
 
+    if (RadiativeTransferDeletePhotonByPosition)
+      if (this->PhotonDeleteByPosition(cindex, r, *PP, *MoveToGrid, DeleteMe) == FALSE)
+        break;
     oldr = (*PP)->Radius;
     min_dr = 1e20;
        
@@ -803,6 +813,50 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       for (i = 0; i < 4; i++) dP += dPXray[i] * slice_factor2;
 
       break;
+
+    /* Account for contributions to PE heating in FUV band */
+		/************************************************************/
+		/* FUV band radiation for PE heating - Type 8 */
+		/************************************************************/
+
+    case FUVPEHEATING:
+    {
+        // tau = gamma * A_v (FERVENT + refs therein)
+	//  A_v = (NH2 + NH + NH+) / (1.87E-21 cm^-2)  * f_d_to_g
+	//    Draine + Bertoldi 1996
+      dP = 0;
+
+      const double gamma = 3.5;
+      thisDensity = PopulationFractions[HIField]*BaryonField[HINum][index]+
+	              PopulationFractions[HIIField]*BaryonField[HIINum][index]+
+	              ((MultiSpecies>1) ?
+	               2.0*(PopulationFractions[H2INum] *BaryonField[H2INum ][index]+
+		            PopulationFractions[H2IINum]*BaryonField[H2IINum][index]): 0.0) ;
+
+      thisDensity *= ConvertToProperNumberDensity;
+
+      double dN_H = thisDensity * ddr; // in cgs !!!
+
+    	double Z = BaryonField[MetalNum][index]/BaryonField[DensNum][index];
+      double f_d_g = NormalizedDustToGasRatio(Z);
+      const double dust_crs = (1.87E-21 * LengthUnits*LengthUnits);
+      double A_v = dN_H / (dust_crs) * f_d_g;
+
+      tau = A_v * gamma;
+
+      // printf("FUV:  %"ESYM" %"ESYM" %"ESYM" %"ESYM"\n",thisDensity, dN_H, A_v, tau);
+
+      if(FAIL==RadiativeTransferFUVPEHeating(PP, dP,
+                                             index,tau,factor1,
+	                                           slice_factor2,FUVRateNum)){
+	      fprintf(stderr,"Failed to calculate the FUV PE heating rate field");
+	      return FAIL;
+	    }
+
+	    (*PP)->ColumnDensity += thisDensity*ddr*LengthUnits; // in cgs
+      break;
+
+    }
     default:
       printf("Photon type = %d, radius = %g, pos = %"FSYM" %"FSYM" %"FSYM"\n",
 	     type, radius, r[0], r[1], r[2]);
@@ -936,8 +990,8 @@ static void CalculateCrossSection(PhotonPackageEntry **PP,
   else if ((*PP)->Type == XRAYS) {
     for (i = 0; i < 3; i++)
       sigma[i] = FindCrossSection(i, (*PP)->Energy) * LengthUnits; //fits from Verner et al. 1996
-    nSecondaryHII = (*PP)->Energy / 13.6;
-    nSecondaryHeII = (*PP)->Energy / 24.6; 
+    nSecondaryHII = (*PP)->Energy / HI_ionizing_energy;
+    nSecondaryHeII = (*PP)->Energy / HeII_ionizing_energy;
   } /* If radiation is in the IR (type = 4) */
   else if (((*PP)->Type == IR)) {
     /* Fit taken from Tegmark et al. (1997) */

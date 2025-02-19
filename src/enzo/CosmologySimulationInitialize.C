@@ -52,7 +52,9 @@ int InitializeRateData(FLOAT Time);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
-
+#ifdef INDIVIDUALSTAR
+  char* ChemicalSpeciesBaryonFieldLabel(const int &atomic_number, int element_set=1);
+#endif
 
 // Cosmology Parameters (that need to be shared)
  
@@ -96,6 +98,10 @@ static float CosmologySimulationInitialUniformBField[MAX_DIMENSION];  // in prop
 static float RadHydroInitialRadiationEnergy = 1.0e-32;
 #endif
 
+#ifdef INDIVIDUALSTAR
+static float CosmologySimulationInitialChemicalSpeciesFractions[MAX_STELLAR_YIELDS];
+#endif
+
 #define MAX_INITIAL_GRIDS 10
  
  
@@ -131,6 +137,19 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *PSTempName = "PreShock_Temperature";
   char *PSDenName  = "PreShock_Density";
   char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
+  char *AGBMetalName    = "AGB_Metal_Density";
+  char *PopIIIMetalName = "PopIII_Metal_Density";
+  char *PopIIIPISNeMetalName = "PopIII_PISNe_Metal_Density";
+  char *WindMetalName = "Intermediate_Wind_Metal_Density";
+  char *WindMetalName2 = "Massive_Wind_Metal_Density";
+  char *SNIIMetalName = "SNII_Metal_Density";
+  char *SNIaMetalName = "SNIa_Metal_Density";
+  char *RProcMetalName = "RProcess_Metal_Density";
+
+  char *ExtraMetalName0    = "SNIa_sCh_Metal_Density";
+  char *ExtraMetalName1    = "SNIa_SDS_Metal_Density";
+  char *ExtraMetalName2    = "SNIa_HeRS_Metal_Density";
+
   char *BxName = "Bx";
   char *ByName = "By";
   char *BzName = "Bz";
@@ -153,7 +172,9 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char line[MAX_LINE_LENGTH];
   int i, j, dim, gridnum, ret, SubgridsAreStatic, region;
   HierarchyEntry *Subgrid;
- 
+
+  std::vector<std::string> DL2(MAX_NUMBER_OF_BARYON_FIELDS);
+
   char *DensityName = NULL, *TotalEnergyName = NULL, *GasEnergyName = NULL,
     *ParticlePositionName = NULL, *ParticleVelocityName = NULL, 
     *ParticleDisplacementName = NULL, *ParticleMassName = NULL, 
@@ -199,7 +220,13 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
     fprintf(stderr, "CosmologySimulation: DualEnergyFormalism is off!\n");
   if (!SelfGravity)
     fprintf(stderr, "CosmologySimulation: gravity is off!?!\n");
- 
+
+#ifdef INDIVIDUALSTAR
+  for (i = 0; i < MAX_STELLAR_YIELDS; i ++){
+    CosmologySimulationInitialChemicalSpeciesFractions[i] = -1.0;
+  }
+#endif
+
   // Read input from file
  
   char *dummy = new char[MAX_LINE_LENGTH];
@@ -317,6 +344,27 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 		  CosmologySimulationInitialUniformBField+1,
 		  CosmologySimulationInitialUniformBField+2);
 
+#ifdef INDIVIDUALSTAR
+    ret += sscanf(line, "CosmologySimulationInitialChemicalSpeciesFractions = %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
+                           CosmologySimulationInitialChemicalSpeciesFractions,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 1,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 2,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 3,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 4,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 5,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 6,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 7,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 8,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 9,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 10,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 11,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 12,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 13,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 14,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 15,
+                           CosmologySimulationInitialChemicalSpeciesFractions + 16 );
+#endif
+
     // If the dummy char space was used, then make another
  
     if (dummy[0] != 0) {
@@ -360,7 +408,15 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   }
 
 #endif
- 
+
+#ifdef INDIVIDUALSTAR
+  for (i = 0; i < MAX_STELLAR_YIELDS; i ++){
+    if (CosmologySimulationInitialChemicalSpeciesFractions[i]<0){
+      CosmologySimulationInitialChemicalSpeciesFractions[i] = CosmologySimulationInitialFractionMetal;
+    }
+  }
+#endif
+
   // More error checking
  
   if (CosmologySimulationDensityName == NULL &&
@@ -388,6 +444,10 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       MultiSpecies+RadiativeCooling > 0) {
     fprintf(stderr, "warning: no density field; setting MultiSpecies/RadiativeCooling = 0\n");
     MultiSpecies = RadiativeCooling = 0;
+  }
+
+  if (MultiMetals && !CosmologySimulationUseMetallicityField){
+    ENZO_FAIL("MultiMetals is ON but CosmologySimulationUseMetallicityField is OFF");
   }
 
   if (CosmologySimulationParticleVelocityNames[0] != NULL &&
@@ -672,6 +732,9 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 			     CosmologySimulationManualParticleMassRatio,
 			     CosmologySimulationCalculatePositions,
 			     CosmologySimulationInitialUniformBField
+#ifdef INDIVIDUALSTAR
+         ,CosmologySimulationInitialChemicalSpeciesFractions
+#endif
 						       ) == FAIL) {
       ENZO_FAIL("Error in grid->CosmologySimulationInitializeGrid.\n");
     }
@@ -791,10 +854,50 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[i++] = MetalName;
     if (StarMakerTypeIaSNe)
       DataLabel[i++] = MetalIaName;
+#ifdef INDIVIDUALSTAR
+  if (MultiMetals == 2){
+   for(j =0; j < StellarYieldsNumberOfSpecies; j++){
+     if(StellarYieldsAtomicNumbers[j] > 2){
+       DataLabel[i++] = ChemicalSpeciesBaryonFieldLabel(StellarYieldsAtomicNumbers[j]);
+     }
+   } // yields loop
+      if (IndividualStarTrackAGBMetalDensity){
+        DataLabel[i++] = AGBMetalName;
+      }
+      if (IndividualStarPopIIIFormation){
+        DataLabel[i++] = PopIIIMetalName;
+        DataLabel[i++] = PopIIIPISNeMetalName;
+        if (IndividualStarPopIIISeparateYields){
+          for(j =0; j < StellarYieldsNumberOfSpecies; j++){
+            if(StellarYieldsAtomicNumbers[j] > 2){
+              DataLabel[i++] = ChemicalSpeciesBaryonFieldLabel(StellarYieldsAtomicNumbers[j],2);
+            }
+          }
+        } // pop III separate
+      } // pop III
+      if (IndividualStarTrackWindDensity){
+        DataLabel[i++] = WindMetalName;
+        DataLabel[i++] = WindMetalName2;
+      }
+      if (IndividualStarTrackSNMetalDensity){
+        DataLabel[i++] = SNIaMetalName;
+        if (IndividualStarSNIaModel == 2){
+          DataLabel[i++] = ExtraMetalName0;
+          DataLabel[i++] = ExtraMetalName1;
+          DataLabel[i++] = ExtraMetalName2;
+        }
+        DataLabel[i++] = SNIIMetalName;
+      }
+      if (IndividualStarRProcessModel){
+        DataLabel[i++] = RProcMetalName;
+      }
+  }
+#else
     if(MultiMetals){
       DataLabel[i++] = ExtraNames[0];
       DataLabel[i++] = ExtraNames[1];
     }
+#endif
   }
   if(STARMAKE_METHOD(COLORED_POP3_STAR)){
     DataLabel[i++] = ForbidName;
@@ -1085,6 +1188,9 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 			     CosmologySimulationManualParticleMassRatio,
 			     CosmologySimulationCalculatePositions,
 			     CosmologySimulationInitialUniformBField
+#ifdef INDIVIDUALSTAR
+           ,CosmologySimulationInitialChemicalSpeciesFractions
+#endif
 						       ) == FAIL) {
       ENZO_FAIL("Error in grid->CosmologySimulationInitializeGrid.\n");
     }

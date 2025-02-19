@@ -49,6 +49,9 @@ int grid::CRShockTubesInitializeGrid(   float x0,
   
   int iCRD = FindField(CRDensity, FieldType, NumberOfBaryonFields);
 
+  if (DualEnergyFormalism) {
+    FieldType[NumberOfBaryonFields++] = InternalEnergy;
+  }
   
   if (ProcessorNumber != MyProcessorNumber) {
     return SUCCESS;
@@ -61,6 +64,7 @@ int grid::CRShockTubesInitializeGrid(   float x0,
   for (dim = 0; dim < GridRank; dim++)
     activesize *= (GridDimension[dim] - 2*NumberOfGhostZones);
   
+  // this->AllocateGrids(); MergerYS
   int field;
   for (field = 0; field < NumberOfBaryonFields; field++)
     if (BaryonField[field] == NULL)
@@ -169,6 +173,7 @@ int grid::CRShockTubesInitializeGrid(   float x0,   float x1,
   for (dim = 0; dim < GridRank; dim++)
     activesize *= (GridDimension[dim] - 2*NumberOfGhostZones);
   
+  //this->AllocateGrids(); // MergerYS
   int field;
   for (field = 0; field < NumberOfBaryonFields; field++)
     if (BaryonField[field] == NULL)

@@ -39,6 +39,7 @@
 
 void my_exit(int status);
 
+void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabel);
 // HDF5 function prototypes
 
 
@@ -97,6 +98,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 	{"particle_position_x", "particle_position_y", "particle_position_z"};
 	char *ParticleVelocityLabel[] =
 	{"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
+	/*
 #ifdef NBODY
 #ifdef WINDS
 	char *ParticleAttributeLabel[] = 
@@ -117,6 +119,11 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 	{"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
 #endif
+*/
+
+  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes);
+  GetParticleAttributeLabels(ParticleAttributeLabel);
+
 	char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
 		"Particle_x-velocity", "Particle_y-velocity",
 		"Particle_z-velocity"};
@@ -620,13 +627,13 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 			GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 					&TimeUnits, &VelocityUnits, Time);
 
-			if (this->ComputeCoolingTime(cooling_time) == FAIL) {
+      if (this->ComputeCoolingTime(cooling_time, FALSE, FALSE) == FAIL) {
 				ENZO_FAIL("Error in grid->ComputeCoolingTime.");
 			}
 
 			// Make all cooling time values positive and convert to seconds.
 			for (i = 0;i < size;i++) {
-				cooling_time[i] = fabs(cooling_time[i]) * TimeUnits;
+	cooling_time[i] *= TimeUnits; // fabs(cooling_time[i]) * TimeUnits;
 			}
 
 			if(CopyOnlyActive == TRUE) {
@@ -848,7 +855,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
 		for (j = 0; j < NumberOfParticleAttributes; j++) {
 
-			this->write_dataset(1, TempIntArray, ParticleAttributeLabel[j],
+      this->write_dataset(1, TempIntArray, ParticleAttributeLabel[j].c_str(),
 					group_id, HDF5_REAL, (VOIDP) ParticleAttribute[j], FALSE);
 		}
 

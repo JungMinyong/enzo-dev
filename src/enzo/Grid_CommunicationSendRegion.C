@@ -508,6 +508,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 			 receive-mode). */
 
 		delete [] buffer;
+    buffer = NULL;
 
 	} // ENDIF unpack
 

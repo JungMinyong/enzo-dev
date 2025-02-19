@@ -57,6 +57,8 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
     return SUCCESS;
 
   const int LymanWernerBin = 3;
+  const int IRBin          = 4;
+  const int FUVBin         = 7;
 
   int i, j, LR_leaf_flag[2], dim, sort_dim, median, nleft, nright;
   bool top_level = false;
@@ -89,6 +91,18 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
 	  RadSource->SED[LymanWernerBin];
       else
 	SourceList[i].LWLuminosity = RadSource->LWLuminosity;
+      if (RadSource->EnergyBins > IRBin)
+        SourceList[i].IRLuminosity = RadSource->Luminosity *
+                                       RadSource->SED[IRBin];
+      else
+        SourceList[i].IRLuminosity = RadSource->IRLuminosity;
+
+      /* This will be silly RT units, but eV/s NOT #/s like above*/
+      if (RadSource->EnergyBins > FUVBin)
+        SourceList[i].FUVLuminosity = RadSource->Luminosity *
+                                      RadSource->SED[FUVBin]; // AJE: 3/31 - changed to photon lum
+      else
+        SourceList[i].FUVLuminosity = RadSource->FUVLuminosity;
       SourceList[i].Source = RadSource;
       RadSource = RadSource->NextSource;
     }
@@ -109,7 +123,7 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
 
   FLOAT center[MAX_DIMENSION];
   double weight = 0.0;
-  float lw_lum = 0.0;
+  float lw_lum = 0.0, fuv_lum = 0.0, ir_lum = 0.0;
   
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     center[dim] = 0.0;
@@ -119,6 +133,8 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
       center[dim] += SourceList[i].Position[dim] * SourceList[i].Luminosity;
     weight += SourceList[i].Luminosity;
     lw_lum += SourceList[i].LWLuminosity;
+    fuv_lum += SourceList[i].FUVLuminosity;
+    ir_lum  += SourceList[i].IRLuminosity;
   }
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     center[dim] /= weight;
@@ -148,6 +164,8 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
   new_leaf->ClusteringRadius = max_separation;
   new_leaf->LeafID = loop_count;
   new_leaf->LWLuminosity = lw_lum;
+  new_leaf->FUVLuminosity = fuv_lum;
+  new_leaf->IRLuminosity  = ir_lum;
 
   if (SourceClusteringTree == NULL) // top-grid (first time through)
     SourceClusteringTree = new_leaf;
@@ -211,6 +229,7 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
   } else {
     median = nShine/2;
     nleft = (nShine+1)/2;
+    if (nleft > median) nleft = median; // AJE - may need to change
     nright = nShine-nleft;
   }
   /* Divide into children if there are more than one source */
@@ -258,6 +277,7 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
       }
     } else {
       LR_leaf_flag[0] = 0;
+      LR_leaf_flag[1] = 0; // AJE - may be wrong
     }
     for (i = 0; i < nShine; i++) {
       new_leaf = new SuperSourceEntry;
@@ -269,6 +289,8 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
       new_leaf->ClusteringRadius = 0;
       new_leaf->LeafID = INT_UNDEFINED;
       new_leaf->LWLuminosity = SourceList[i].LWLuminosity;
+      new_leaf->FUVLuminosity = SourceList[i].FUVLuminosity;
+      new_leaf->IRLuminosity  = SourceList[i].IRLuminosity;
       new_leaf->ParentSource = SourceClusteringTree;
       SourceClusteringTree->ChildSource[LR_leaf_flag[i]] = new_leaf;
     } // ENDFOR i

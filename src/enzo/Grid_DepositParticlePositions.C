@@ -392,6 +392,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 			}
 
 			delete [] ParticleMassPointerSink;
+      ParticleMassPointerSink = NULL;
 
 		}
 
@@ -439,6 +440,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 				}
 			}
 			delete [] ParticleMassPointerSink;
+      ParticleMassPointerSink = NULL;
 		}
 
 		if (NumberOfActiveParticles > 0) {
@@ -481,6 +483,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 				delete [] ActiveParticlePosition[dim];
 			delete [] ActiveParticlePosition;
 			delete [] ActiveParticleMassPointer;
+      ActiveParticlePosition = NULL;
+      ActiveParticleMassPointer = NULL;
 		}
 
 	} // ENDIF this processor
@@ -555,6 +559,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 				}
 
 			delete [] DepositFieldPointer;
+      DepositFieldPointer = NULL;
 		} // end: if (MyProcessorNumber == TargetGrid->ProcessorNumber)
 
 	} // end: If (ProcessorNumber != TargetGrid->ProcessorNumber)
@@ -563,10 +568,12 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
 		/* If necessary, delete the particle mass temporary. */
 
-		if (MassFactor != 1.0)
-
+    if (MassFactor != 1.0){
+      if (ParticleMassTemp != NULL){
 			delete [] ParticleMassTemp;
-
+          ParticleMassTemp=NULL;
+      }
+    }
 		/* Return particles to positions at Time. */
 
 		this->UpdateParticlePosition(-TimeDifference);

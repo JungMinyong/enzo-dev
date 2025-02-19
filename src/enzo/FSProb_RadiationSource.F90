@@ -44,7 +44,7 @@ subroutine FSProb_RadiationSource(eta, time, a, ProbType, NGammaDot,   &
 !
 !  EXTERNALS: 
 !
-!  LOCALS:
+!  LOCALS: MergerYS enzon overlaps aeos
 !
 !=======================================================================
   implicit none

@@ -27,6 +27,7 @@
 #ifdef MEMORY_POOL
 #include "MemoryPool.h"
 #endif
+#include "typedefs.h"
 #ifdef DEFINE_STORAGE
 # define EXTERN
 #else /* DEFINE_STORAGE */
@@ -187,6 +188,7 @@ EXTERN int RefineBy;
 
 EXTERN int MaximumRefinementLevel;
 EXTERN int MaximumGravityRefinementLevel;
+EXTERN float MaximumRefinementLevelPhysicalScale;
 EXTERN int MaximumParticleRefinementLevel;
 EXTERN int FastSiblingLocatorEntireDomain;
 
@@ -330,7 +332,8 @@ EXTERN float PointSourceGravityCoreRadius;
 /* disk gravity */
 EXTERN int DiskGravity;
 EXTERN FLOAT DiskGravityPosition[MAX_DIMENSION],
-             DiskGravityAngularMomentum[MAX_DIMENSION];
+             DiskGravityAngularMomentum[MAX_DIMENSION],
+             DiskGravityDarkMatterCOM[MAX_DIMENSION];
 EXTERN float DiskGravityStellarDiskMass;
 EXTERN float DiskGravityStellarDiskScaleHeightR;
 EXTERN float DiskGravityStellarDiskScaleHeightz;
@@ -338,6 +341,22 @@ EXTERN float DiskGravityStellarBulgeMass;
 EXTERN float DiskGravityStellarBulgeR;
 EXTERN float DiskGravityDarkMatterMass;
 EXTERN float DiskGravityDarkMatterConcentration;
+EXTERN float DiskGravityDarkMatterR;
+EXTERN float DiskGravityDarkMatterDensity;
+EXTERN float DiskGravityDarkMatterMassInterior;
+EXTERN float DiskGravityDarkMatterMassInteriorR;
+EXTERN int   DiskGravityDarkMatterUpdateCOM;
+EXTERN float DiskGravityDarkMatterRefineCore;
+EXTERN int DiskGravityDoublePower;
+EXTERN float *DiskGravityDoublePowerMass;
+EXTERN float *DiskGravityDoublePowerR;
+EXTERN float *DiskGravityDoublePowerPot;
+EXTERN float DiskGravityDarkMatterCutoffR;
+EXTERN float DiskGravityDarkMatterAlpha;
+EXTERN float DiskGravityDarkMatterBeta;
+EXTERN float DiskGravityDarkMatterGamma;
+EXTERN float DiskGravityDarkMatterDelta;
+EXTERN float DiskGravityDarkMatterRDecay;
 
 /* SelfGravity (TRUE or FALSE) */
 
@@ -373,6 +392,7 @@ EXTERN int ComputePotential;
 
 EXTERN int WritePotential;
 
+EXTERN int FreezeParticles;
 /* Parameter to control how particles in a subgrid are deposited in
    the target grid.  Options are: 
      CIC_DEPOSIT - cloud in cell using cloud size equal to target grid size
@@ -712,6 +732,11 @@ EXTERN int   MustRefineParticlesRefineToLevelAutoAdjust;
 EXTERN float MustRefineParticlesMinimumMass;
 
 /* For CellFlaggingMethod = 8,
+   Number of hydro cells around a must refine particle to flag for refinement */
+
+EXTERN int MustRefineParticlesBufferSize;
+
+/* For CellFlaggingMethod = 8,
    region in which particles are flagged as MustRefine particles */
 
 EXTERN FLOAT MustRefineParticlesLeftEdge[MAX_DIMENSION], 
@@ -767,6 +792,8 @@ EXTERN int   StarParticleCreation;
 EXTERN int   StarParticleFeedback;
 EXTERN int   StarParticleRadiativeFeedback;
 EXTERN int   NumberOfParticleAttributes;
+EXTERN int   NumberOfParticleTableIDs;
+EXTERN int   ParticleAttributeTableStartIndex;
 EXTERN int   AddParticleAttributes;
 EXTERN int   BigStarFormation;
 EXTERN int   BigStarFormationDone;
@@ -941,6 +968,12 @@ EXTERN FLOAT ExternalGravityPosition[MAX_DIMENSION];
 EXTERN double ExternalGravityRadius;
 EXTERN FLOAT ExternalGravityOrientation[MAX_DIMENSION];
 
+EXTERN int   ExternalGravityNumberofTimePoints;
+EXTERN float ExternalGravityTimeOn;
+EXTERN float ExternalGravityTimeOff;
+EXTERN float *ExternalGravityTime;
+EXTERN float ExternalGravityMass;
+EXTERN FLOAT *ExternalGravityTimePositions[MAX_DIMENSION];
 /* Poisson Clean */
 
 EXTERN int UsePoissonDivergenceCleaning;
@@ -1264,10 +1297,59 @@ EXTERN float GalaxySimulationPreWindDensity;
 EXTERN float GalaxySimulationPreWindTotalEnergy; 
 EXTERN float GalaxySimulationPreWindVelocity[MAX_DIMENSION];
 
+EXTERN int GalaxySimulationInitialStellarDist;
 /* Supernova magnetic seed field */
 EXTERN int UseMagneticSupernovaFeedback;
 EXTERN float MagneticSupernovaRadius;
 EXTERN float MagneticSupernovaDuration;
 EXTERN float MagneticSupernovaEnergy;
+
+/* For setting up the chemical evolution test */
+EXTERN int   ChemicalEvolutionTestNumberOfStars;
+EXTERN FLOAT ChemicalEvolutionTestStarPosition[MAX_DIMENSION];
+EXTERN float ChemicalEvolutionTestStarVelocity[MAX_DIMENSION];
+EXTERN float ChemicalEvolutionTestStarMass;
+EXTERN float ChemicalEvolutionTestStarMetallicity;
+EXTERN int   ChemicalEvolutionTestStarFormed;
+EXTERN FLOAT ChemicalEvolutionTestStarLifetime;
+EXTERN int   ChemicalEvolutionTestGasDistribution;
+EXTERN float ChemicalEvolutionTestGasRadius;
+EXTERN float ChemicalEvolutionTestConcentration;
+EXTERN float ChemicalEvolutionTestBackgroundGasTemperature;
+EXTERN float ChemicalEvolutionTestBackgroundGasDensity;
+EXTERN int ChemicalEvolutionTestScaledSolarAbundances;
+
+/* For individual star properties and radiation data */
+EXTERN IndividualStarRadDataType        IndividualStarRadData;
+EXTERN IndividualStarPropertiesDataType IndividualStarPropertiesData;
+
+/* fuv */
+EXTERN int   UseFUVBackground;
+EXTERN float PhotoelectricHeatingDustModelEfficiency;
+EXTERN int   PhotoelectricHeatingDustModel;
+
+/* For stellar yields data tables */
+#ifdef NEWYIELDTABLES
+EXTERN char* StellarYieldsFilename;
+#endif
+EXTERN int MetalMixingExperiment;
+EXTERN StellarYieldsDataType          StellarYieldsSNData;   // SNe
+EXTERN StellarYieldsDataType          StellarYieldsWindData; // Winds from stars above AGB threshold (same dim as above)
+#ifdef NEWYIELDTABLES
+EXTERN StellarYieldsDataType          StellarYieldsAGBData;  // AGB yields
+#endif
+EXTERN StellarYieldsDataType          StellarYieldsPopIIIData; // PopIII stars
+
+EXTERN StellarYieldsDataType          StellarYieldsMassiveStarData; // here for backwards compatability with original yields ONLY
+
+
+EXTERN MetalMixingExperimentDataType  MixingExperimentData;
+EXTERN int StellarYieldsAtomicNumbers[MAX_STELLAR_YIELDS];
+EXTERN int StellarYieldsResetAtomicNumbers[MAX_STELLAR_YIELDS];
+EXTERN int StellarYieldsNumberOfSpecies;
+EXTERN int StellarYieldsScaledSolarInitialAbundances;
+EXTERN int ResetStellarAbundances;
+EXTERN char * StellarAbundancesFilename;
+
 
 #endif

@@ -121,7 +121,7 @@ void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int le
 #endif
 
 #define EXTRA_OUTPUT_MACRO(A,B) ExtraOutput(A,LevelArray,MetaData,level,Exterior IMPLICIT_MACRO,B);
-int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *MetaData, int level, ExternalBoundary *Exterior
+		int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *MetaData, int level, ExternalBoundary *Exterior
 #ifdef TRANSFER
 		, ImplicitProblemABC *ImplicitSolver
 #endif
@@ -130,7 +130,15 @@ int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *
 int ComputeDednerWaveSpeeds(TopGridData *MetaData,LevelHierarchyEntry *LevelArray[], 
 		int level, FLOAT dt0);
 int  RebuildHierarchy(TopGridData *MetaData,
+		      LevelHierarchyEntry *LevelArray[], int level
+#ifdef INDIVIDUALSTAR
+                      , Star *&AllStars
+#endif
+                      );
+#ifdef INDIVIDUALSTAR
+int  RebuildHierarchy(TopGridData *MetaData,
 		LevelHierarchyEntry *LevelArray[], int level);
+#endif
 int  ReportMemoryUsage(char *header = NULL);
 int  UpdateParticlePositions(grid *Grid);
 int  CheckEnergyConservation(HierarchyEntry *Grids[], int grid,
@@ -239,7 +247,11 @@ int ActiveParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
 		int ThisLevel, Star *&AllStars,
-		int TotalStarParticleCountPrevious[]);
+			   int TotalStarParticleCountPrevious[]
+#ifdef INDIVIDUALSTAR
+                           , int SkipFeedbackFlag = 0
+#endif
+                           );
 int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
 		int level, Star *&AllStars,
@@ -286,6 +298,9 @@ static int StaticLevelZero = 0;
 #endif
 extern int RK2SecondStepBaryonDeposit;
 
+#ifdef INDIVIDUALSTAR
+void DeleteStarList(Star * &Node);
+#endif
 
 int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 		int level, float dtLevelAbove, ExternalBoundary *Exterior
@@ -402,6 +417,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 	EXTRA_OUTPUT_MACRO(1, "Before Time Loop")
 
+#ifdef INDIVIDUALSTAR
+  Star *AllStars = NULL;
+#endif
 		while ((CheckpointRestart == TRUE)
 				|| (dtThisLevelSoFar[level] < dtLevelAbove)) {
 			if(CheckpointRestart == FALSE) {
@@ -410,6 +428,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				SetLevelTimeStep(Grids, NumberOfGrids, level, 
 						&dtThisLevelSoFar[level], &dtThisLevel[level], dtLevelAbove);
 
+#ifdef INDIVIDUALSTAR
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+        Grids[grid1]->GridData->ApplyTemperatureLimit();
+    }
+#endif
 				TimeSinceRebuildHierarchy[level] += dtThisLevel[level];
 
 				/* If StarFormationOncePerRootGridTimeStep, stars are only created
@@ -451,10 +474,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 				/* Initialize the star particles */
 
+#ifdef INDIVIDUALSTAR
+    if (AllStars != NULL)
+      DeleteStarList(AllStars);
+#else
 				ActiveParticleInitialize(Grids, MetaData, NumberOfGrids, LevelArray,
 						level);
 
 				Star *AllStars = NULL;
+#endif
 				if (debug1) fprintf(stdout,"2\n");  // by YS
 				StarParticleInitialize(Grids, MetaData, NumberOfGrids, LevelArray,
 						level, AllStars, TotalStarParticleCountPrevious);
@@ -601,7 +629,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #define GravTest
 #ifdef GravTest
 #endif
-
+#ifdef INDIVIDUALSTAR
+//      Grids[grid1]->GridData->ApplyTemperatureLimit();
+#endif
 
 
 				if (debug1) fprintf(stdout,"Proc: %d 7\n", MyProcessorNumber);  // by YS
@@ -672,6 +702,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 						for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
+
+      // AJE-density-check
+//      if ( Grids[grid1]->GridData->CheckDensity() == FAIL){
+ //         printf("Negative densities reached before solve hydro equations\n");
+   //   }
+
+      /* Call hydro solver and save fluxes around subgrids. */  //MergerYS doubt
+	//Grids[grid1]->GridData->SolveHydroEquations(LevelCycleCount[level],
+	    //NumberOfSubgrids[grid1], SubgridFluxesEstimate[grid1], level);
 							/* Gravity: compute acceleration field for grid and particles. */
 							if (RK2SecondStepBaryonDeposit && SelfGravity) {
 								int Dummy;
@@ -894,8 +933,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 					/* For each grid, delete the GravitatingMassFieldParticles. */
 
 				if (debug1) fprintf(stdout,"17\n");  // by YS
-					for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
+					for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 						Grids[grid1]->GridData->DeleteGravitatingMassFieldParticles();
+#ifdef INDIVIDUALSTAR
+      Grids[grid1]->GridData->ApplyTemperatureLimit();
+#endif
+    }
 
 				TIMER_STOP(level_name);
 				/* ----------------------------------------- */
@@ -907,9 +950,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 							 // dtThisLevelSoFar set during restart
 							 // dtThisLevel set during restart
 							 // Set dtFixed on each grid to dtThisLevel
-				for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
+        for (grid1 = 0; grid1 < NumberOfGrids; grid1++){
+#ifdef INDIVIDUALSTAR
+          Grids[grid1]->GridData->ApplyTemperatureLimit();
+#endif
 					Grids[grid1]->GridData->SetTimeStep(dtThisLevel[level]);
 			}
+    }
 
 				if (debug1) fprintf(stdout,"18\n");  // by YS
 			if (LevelArray[level+1] != NULL) {
@@ -1063,8 +1110,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				 Don't bother on the last cycle, as we'll rebuild this grid soon. */
 
 			if (dtThisLevelSoFar[level] < dtLevelAbove)
-				RebuildHierarchy(MetaData, LevelArray, level);
+      RebuildHierarchy(MetaData, LevelArray, level
+#ifdef INDIVIDUALSTAR
+                       , AllStars
+#endif
+                       );
 
+#ifdef INDIVIDUALSTAR
+     DeleteStarList(AllStars);
+#endif
 			cycle++;
 			LevelCycleCount[level]++;
 			LevelSubCycleCount[level]++;

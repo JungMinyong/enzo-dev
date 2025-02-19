@@ -1,15 +1,15 @@
 /***********************************************************************
-	/
-	/  COMMUNICATION ROUTINE: LOAD BALANCE GRIDS
-	/
-	/  written by: Greg Bryan
-	/  date:       December, 1997
-	/  modified1:  John Wise (July, 2009): Mode 2/3 -- load balance only
-	/              within a node.
-	/
-	/  PURPOSE:
-	/
- ************************************************************************/
+/
+/  COMMUNICATION ROUTINE: LOAD BALANCE GRIDS
+/
+/  written by: Greg Bryan
+/  date:       December, 1997
+/  modified1:  John Wise (July, 2009): Mode 2/3 -- load balance only
+/              within a node.
+/
+/  PURPOSE:
+/
+************************************************************************/
 
 #ifdef USE_MPI
 #include "mpi.h"
@@ -29,9 +29,9 @@
 #include "LevelHierarchy.h"
 #include "communication.h"
 #include "CommunicationUtilities.h"
-
+ 
 // Function prototypes
-
+ 
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 		int NumberOfSubgrids[] = NULL,
 		int FluxFlag = FALSE,
@@ -76,51 +76,59 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
 
 	/* Compute work for each grid. */
 
-	for (i = 0; i < NumberOfGrids; i++) {
-		proc = GridHierarchyPointer[i]->GridData->ReturnProcessorNumber();
-		GridHierarchyPointer[i]->GridData->CollectGridInformation
-			(GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
-		//    ComputeTime[i] = GridMemory; // roughly speaking
-		ComputeTime[i] = float(NumberOfCells);
-		ProcessorComputeTime[proc] += ComputeTime[i];
-		NewProcessorNumber[i] = proc;
-	}
+  /* AE: Plug in particle compute time here:
+         1) get number of particle type 11 on this grid
+         2) take that as fraction of all star particles in simulation
+         3) Scale to same size as grid points, so particles have equal weight
+         4) Multiply by a factor of 2-3 such that grids WITH many young stars
+            are counted as heavy load
+  */
 
-													 // Mode 1: Load balance over all processors.  Mode 2/3: Load balance
-													 // only within a node.  Assumes scheduling in blocks (2) or
-													 // round-robin (3).
-	int StartProc, EndProc;
-	int proc0 = -1, dproc = -1;
-	switch (LoadBalancing) {
-		case 1:
-			StartProc = 0;
-			EndProc = NumberOfProcessors;
-			break;
-		case 2:  // block scheduling (ranger)
-			StartProc = CoresPerNode * (MyProcessorNumber / CoresPerNode);
-			EndProc = StartProc + CoresPerNode;
-			break;
-		case 3:  // round-robin scheduling
-			dproc = NumberOfProcessors / CoresPerNode;
-			proc0 = MyProcessorNumber % dproc;
-			break;
-		default:
-			if (debug)
-				printf("Warning: unknown value for LoadBalancing.  Setting to 1.\n");
-			StartProc = 0;
-			EndProc = NumberOfProcessors;
-			LoadBalancing = 1;
-			break;
-	} // ENDSWITCH LoadBalancing
+  for (i = 0; i < NumberOfGrids; i++) {
+    proc = GridHierarchyPointer[i]->GridData->ReturnProcessorNumber();
+    GridHierarchyPointer[i]->GridData->CollectGridInformation
+      (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
+    //    ComputeTime[i] = GridMemory; // roughly speaking
+    ComputeTime[i] = float(NumberOfCells);
+    ProcessorComputeTime[proc] += ComputeTime[i];
+    NewProcessorNumber[i] = proc;
+  }
 
-	/* Transfer grids from heavily-loaded processors. */
-
-	int Done = FALSE, MinProc = 0, MaxProc = 0;
-	while (!Done) {
-
-		/* Find min and max */
-
-		float MaxVal = 0, MinVal = huge_number;
+ // Mode 1: Load balance over all processors.  Mode 2/3: Load balance
+ // only within a node.  Assumes scheduling in blocks (2) or
+ // round-robin (3).
+ int StartProc, EndProc;
+ int proc0 = -1, dproc = -1;
+ switch (LoadBalancing) {
+ case 1:
+   StartProc = 0;
+   EndProc = NumberOfProcessors;
+   break;
+ case 2:  // block scheduling (ranger)
+   StartProc = CoresPerNode * (MyProcessorNumber / CoresPerNode);
+   EndProc = StartProc + CoresPerNode;
+   break;
+ case 3:  // round-robin scheduling
+   dproc = NumberOfProcessors / CoresPerNode;
+   proc0 = MyProcessorNumber % dproc;
+   break;
+ default:
+   if (debug)
+     printf("Warning: unknown value for LoadBalancing.  Setting to 1.\n");
+   StartProc = 0;
+   EndProc = NumberOfProcessors;
+   LoadBalancing = 1;
+   break;
+ } // ENDSWITCH LoadBalancing
+ 
+  /* Transfer grids from heavily-loaded processors. */
+ 
+  int Done = FALSE, MinProc = 0, MaxProc = 0;
+  while (!Done) {
+ 
+    /* Find min and max */
+ 
+    float MaxVal = 0, MinVal = huge_number;
 
 		MaxProc = -1;
 		MinProc = -1;

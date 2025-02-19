@@ -73,6 +73,22 @@ EXTERN float RadiationPressureScale;
 
 EXTERN int RadiativeTransferOpticallyThinH2;
 
+/* Flag to turn on a 1/r^2 FUV radiation field */
+
+EXTERN int RadiativeTransferOpticallyThinFUV;
+
+/* Flag to turn on a 1/r^2 IR radiation field */
+
+EXTERN int RadiativeTransferOpticallyThinIR;
+
+/* Flag to turn on source clustering for optically thin radiation */
+
+EXTERN int RadiativeTransferOpticallyThinSourceClustering;
+
+/* Number of sources to use source clustering when above is ON */
+
+EXTERN int RadiativeTransferSourceClusteringCount;
+
 /* Sets the characteristic length for the self-shielding of Lyman-Werner Radiation */
 
 EXTERN float RadiativeTransferOpticallyThinH2CharLength;
@@ -152,3 +168,17 @@ EXTERN int RadiativeTransferH2IIDiss;
    constant. */
 
 EXTERN float RadiativeTransferHubbleTimeFraction;
+
+
+/* Flag to turn on photon deletion for photons that have passed
+   a certain radial distance from the domain center (set by next 
+   parameter) */
+
+EXTERN int RadiativeTransferDeletePhotonByPosition;
+
+/* If above is on, delete photons that go this radial distance from
+   domain center (in code units) */
+
+EXTERN float RadiativeTransferDeletePhotonRadius;
+
+EXTERN float RadiativeTransferDeletePhotonSourceRadius;
