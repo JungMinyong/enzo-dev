@@ -672,7 +672,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
      by total baryonic density).  At the end we will multiply by the new
      density so that species fractions are maintained. */
  
-  for (field = 0; field < NumberOfBaryonFields; field++)
+  for (field = 0; field < NumberOfBaryonFields; field++) {
     if ((FieldType[field] >= ElectronDensity && FieldType[field] <= ExtraType1) ||
 	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity ||
         FieldType[field] == MetalRProcessDensity || FieldType[field] == MetalPISNeDensity ||

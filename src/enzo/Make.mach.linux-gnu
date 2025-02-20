@@ -37,7 +37,7 @@ MACH_FILE  = Make.mach.linux-gnu
 #-----------------------------------------------------------------------
 
 LOCAL_HDF5_INSTALL    = /home/sykim/local/hdf5-1.12.1 # mandatory
-LOCAL_GRACKLE_INSTALL = /home/sykim/local/grackle # optional
+LOCAL_GRACKLE_INSTALL = /home/wispedia/install/grackle_aemerick # optional
 LOCAL_MPI_INSTALL     = /home/sykim/local/openmpi-4.1.3
 #LOCAL_HYPRE_INSTALL   = /PATH/TO/HYPRE/INSTALL   # optional
 
@@ -98,7 +98,7 @@ LOCAL_INCLUDES_MPI    = -I/home/sykim/local/openmpi-4.1.3/include # MPI includes
 LOCAL_INCLUDES_HDF5   = -I/home/sykim/local/hdf5-1.12.1/include # HDF5 includes
 #LOCAL_INCLUDES_HYPRE  = -I$(LOCAL_HYPRE_INSTALL)/include
 LOCAL_INCLUDES_PAPI   = # PAPI includes
-LOCAL_INCLUDES_GRACKLE = -I/home/sykim/local/grackle/include
+LOCAL_INCLUDES_GRACKLE = -I$(LOCAL_GRACKLE_INSTALL)/include
 
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
@@ -115,7 +115,7 @@ LOCAL_LIBS_HDF5   = -L/home/sykim/local/hdf5-1.12.1//lib -lhdf5 #-lz
 #LOCAL_LIBS_HYPRE  = -L$(LOCAL_HYPRE_INSTALL)/lib -lHYPRE
 LOCAL_LIBS_PAPI   = # PAPI libraries
 LOCAL_LIBS_MACH   = -lgfortran # Machine-dependent libraries
-LOCAL_LIBS_GRACKLE = -L/home/sykim/local/grackle/lib -lgrackle
+LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib -lgrackle
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)

@@ -106,7 +106,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
 			GravitatingMassFieldDimension,
 			GravitatingMassFieldDimension+1,
 			GravitatingMassFieldDimension+2);
-a#endif
+#endif
 #if 0
   FORTRAN_NAME(smooth2)(rhs, GravitatingMassField, &GridRank,
 			GravitatingMassFieldDimension,

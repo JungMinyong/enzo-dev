@@ -1,8 +1,9 @@
 #include <stdio.h>
 void auto_show_config(FILE *fp) {
+   fprintf (fp,"make[1]: Warning: File `DEPEND' has modification time 152 s in the future\n");
    fprintf (fp,"\n");
    fprintf (fp,"   MACHINE: Generic Ubuntu 8.04\n");
-   fprintf (fp,"   MACHINE-NAME: rusty\n");
+   fprintf (fp,"   MACHINE-NAME: linux-mpich\n");
    fprintf (fp,"\n");
    fprintf (fp,"   PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000\n");
    fprintf (fp,"   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 30\n");
@@ -23,7 +24,7 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_LCAPERF  [lcaperf-{yes,no}]                        : no\n");
    fprintf (fp,"   CONFIG_PAPI  [papi-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_PYTHON  [python-{yes,no}]                          : no\n");
-   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : yes\n");
+   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : no\n");
    fprintf (fp,"   CONFIG_ECUDA  [cuda-{yes,no}]                             : no\n");
    fprintf (fp,"   CONFIG_NBODY  [nbody-{yes,no}]                            : yes\n");
    fprintf (fp,"   CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no\n");
@@ -41,9 +42,10 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_ENZO_PERFORMANCE  [enzo-performance-{yes,no}]      : yes\n");
    fprintf (fp,"   CONFIG_GRACKLE  [grackle-{yes,no}]                        : yes\n");
    fprintf (fp,"   CONFIG_LOG2ALLOC  [log2alloc-{yes,no}]                    : no\n");
-   fprintf (fp,"   CONFIG_UUID  [uuid-{yes,no}]                              : yes\n");
+   fprintf (fp,"   CONFIG_UUID  [uuid-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_INDIVIDUALSTAR [individualstar-{yes,no}]           : no\n");
    fprintf (fp,"   CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : no\n");
    fprintf (fp,"   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : no\n");
    fprintf (fp,"\n");
+   fprintf (fp,"make[1]: warning:  Clock skew detected.  Your build may be incomplete.\n");
 }

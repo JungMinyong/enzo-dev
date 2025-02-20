@@ -16,7 +16,20 @@
         "NestedCosmologySimulationInitialize.C": "cpp",
         "AMRH5writer.C": "cpp",
         "GetParticleAttributeLabels.C": "cpp",
-        "GalaxySimulationInitialize.C": "cpp"
+        "GalaxySimulationInitialize.C": "cpp",
+        "Grid_GalaxySimulationInitializeGrid.C": "cpp",
+        "random": "cpp",
+        "*.tcc": "cpp",
+        "Grid_RotatingSphereInitialize.C": "cpp",
+        "Grid_SolveForPotential.C": "cpp",
+        "Grid_StarParticleHandler.C": "cpp",
+        "Grid_UpdateStarParticles.C": "cpp",
+        "Grid_WriteGridX.C": "cpp",
+        "Grid_DepositParticlePositions.C": "cpp",
+        "ListIO.C": "cpp",
+        "ProblemType_AgoraRestart.C": "cpp",
+        "ReadParameterFile.C": "cpp",
+        "auto_show_config.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

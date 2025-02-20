@@ -33,12 +33,13 @@
 
 #include "IndividualStarProperties.h"
 #include "StellarYieldsRoutines.h"
+/*
 #define kboltzKeV (8.617e-8)    // keV per K
 #define mu (0.6)
 #define CM_PER_KM (1.0e5)
 #define CM_PER_KPC (3.0856e21)
 #define KEV_PER_ERG (6.242e8)
-
+*/
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
@@ -92,8 +93,11 @@ struct CGMdata {
   }
 };
 /* Internal Routines for Disk Potential Setup */
-double HaloGasDensity(FLOAT R, struct CGMdata&);
-double HaloGasTemperature(FLOAT R, struct CGMdata&);
+float HaloGasDensity(FLOAT);
+float HaloGasTemperature(FLOAT);
+
+// double HaloGasDensity(FLOAT R, struct CGMdata&);
+//double HaloGasTemperature(FLOAT R, struct CGMdata&);
 float DiskPotentialCircularVelocity(FLOAT cellwidth,FLOAT z,FLOAT density,FLOAT &temperature);
 double trapzd(double (func)(), double a, double b, int n);
 double qromb(double (*func)(double), double a, double b);

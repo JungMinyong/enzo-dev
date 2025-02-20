@@ -72,26 +72,10 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
-
-	/*
-#ifdef NBODY
-	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-		"particle_jet_y", "particle_jet_z", "typeia_fraction", "acc_x", "acc_y", "acc_z"};
-#else
-	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-		"particle_jet_y", "particle_jet_z", "typeia_fraction"};
-#endif
-
   char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
 				    "metallicity_fraction", "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
-    char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-      "metallicity_fraction", "alpha_fraction"};
-	*/
-
-  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes);
-  GetParticleAttributeLabels(ParticleAttributeLabel);
+  /*  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
+      "metallicity_fraction", "alpha_fraction"};*/
 #ifdef IO_LOG
   int         io_log = 1;
 #else
@@ -420,14 +404,14 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
 #ifdef NBODY
       this->ClearGravitatingMassFieldParticlesNoStar();
 #endif
-			this->DepositParticlePositions(this, Time,
+      this->DepositParticlePositions(this, Time,
 				     GRAVITATING_MASS_FIELD_PARTICLES,FALSE);
     }
  
     /* If present, write out the GravitatingMassFieldParticles. */
-
-		if (GravitatingMassFieldParticles != NULL) {
-
+ 
+    if (GravitatingMassFieldParticles != NULL) {
+ 
       /* Set dimensions. */
  
       int StartIndex[] = {0,0,0}, EndIndex[] = {0,0,0};
@@ -449,7 +433,6 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
 	         (j-StartIndex[1])*ActiveDim[0]              +
 	         (k-StartIndex[2])*ActiveDim[0]*ActiveDim[1] ] =
 		     float32(
-
 			     GravitatingMassFieldParticles[ i +
 			       j*GravitatingMassFieldParticlesDimension[0] +
 			       k*GravitatingMassFieldParticlesDimension[0]*
@@ -731,15 +714,15 @@ if ( 0 == 1 )
         if (io_log) fprintf(log_fptr, "H5Screate file_dsp_id: %"ISYM"\n", file_dsp_id);
         if( file_dsp_id == h5_error ){my_exit(EXIT_FAILURE);}
  
-      if (io_log) fprintf(log_fptr, "H5Fcreate with Name = %s\n", ParticleAttributeLabel[j].c_str());
+      if (io_log) fprintf(log_fptr, "H5Fcreate with Name = %s\n", ParticleAttributeLabel[j]);
  
-      file_id = H5Fcreate(ParticleAttributeLabel[j].c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      file_id = H5Fcreate(ParticleAttributeLabel[j], H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         if (io_log) fprintf(log_fptr, "H5Fcreate id: %"ISYM"\n", file_id);
         if( file_id == h5_error ){my_exit(EXIT_FAILURE);}
  
-      if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", ParticleAttributeLabel[j].c_str());
+      if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", ParticleAttributeLabel[j]);
  
-      dset_id = H5Dcreate(file_id, ParticleAttributeLabel[j].c_str(), file_type_id, file_dsp_id, H5P_DEFAULT);
+      dset_id = H5Dcreate(file_id, ParticleAttributeLabel[j], file_type_id, file_dsp_id, H5P_DEFAULT);
         if (io_log) fprintf(log_fptr, "H5Dcreate id: %"ISYM"\n", dset_id);
         if( dset_id == h5_error ){my_exit(EXIT_FAILURE);}
  
