@@ -2,6 +2,7 @@
 #include "../particle.h"
 #include "../global.h"
 #include <unordered_set>
+#include <cassert>
 
 void CalculateAcceleration01(Particle* ptcl);
 void CalculateAcceleration23(Particle* ptcl);

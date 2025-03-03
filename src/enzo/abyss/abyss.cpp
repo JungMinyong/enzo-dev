@@ -21,7 +21,7 @@ void broadcastFromRoot(int &data);
 void DefaultGlobal();
 void WorkerRoutines();
 void RootRoutines();
-InitialCommunication();
+int InitialCommunication();
 
 
 int ABYSS() {

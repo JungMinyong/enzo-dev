@@ -7,12 +7,15 @@
 #include "performance.h"
 #include <mpi.h>
 #include <unordered_map>
+#include <unordered_set>
 
 #ifdef SEVN
 #include "IO.h"
 #endif
 
 
+
+extern std::unordered_set<int> RegularList;
 extern Particle *particles;
 extern Particle *particles_original;
 extern GlobalVariable *global_variable;
@@ -62,6 +65,8 @@ extern double time_step;
 extern ULL block_max;
 
 
+extern bool bin_termination;
+extern bool new_binaries;
 extern double binary_time;
 extern double binary_time_prev;
 extern ULL binary_block;
@@ -78,7 +83,11 @@ extern int BinaryRegularization;
 extern int IdentifyOnTheFly;
 extern int *EnzoPIDs; // stores the order of pids from enzo.
 extern int newNumberOfSingleParticle;
-
+extern int StarParticleFeedback;
+extern double StarMassEjectionFraction;
+extern int ComovingCoordinates;
+extern double eta_tmp;
+extern double InitialNeighborRadius;
 
 // i/o
 extern char* fname;
@@ -91,6 +100,7 @@ extern double outputTime;
 extern int outNum;
 extern double outputTimeStep;
 
+extern FILE* nbpout;
 extern FILE* binout;
 extern FILE* mergerout;
 #ifdef SEVN

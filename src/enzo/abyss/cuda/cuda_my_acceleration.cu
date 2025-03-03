@@ -17,7 +17,7 @@
 
 
 
-extern int MyRank;
+extern int AbyssProcessorNumber;
 const int ROOT = 0;
 
 static int NNB;
@@ -781,7 +781,7 @@ void _ReceiveFromHost(
 #ifdef MultiGPU
 void _InitializeDevice(int irank){
 
-	if (MyRank == ROOT) {
+	if (AbyssProcessorNumber == ROOT) {
 	std::cout << "Initializing CUDA ..." << std::endl;
 	}
 	// Select CUDA device (optional)
@@ -797,7 +797,7 @@ void _InitializeDevice(int irank){
 	
 
 
-	if (MyRank == ROOT) {
+	if (AbyssProcessorNumber == ROOT) {
 	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
 	}
 
@@ -818,7 +818,7 @@ void _InitializeDevice(int irank){
     if ((resCtx == CUDA_SUCCESS) && (context != nullptr)) {
         if (cuCtxGetDevice(&cuDev) == CUDA_SUCCESS) {
             int devId = (int)cuDev;
-            std::cout << "[Rank " << MyRank << "] Current device from driver context = " << devId << std::endl;
+            std::cout << "[Rank " << AbyssProcessorNumber << "] Current device from driver context = " << devId << std::endl;
             // Check if devId is valid
             if (devId < 0 || devId >= deviceCount) {
                 std::cerr << "Invalid device ID from context: " << devId << std::endl;
@@ -829,7 +829,7 @@ void _InitializeDevice(int irank){
                   << "cuCtxGetCurrent returned: " << resCtx << std::endl;
     }
 
-    if (MyRank == ROOT) {
+    if (AbyssProcessorNumber == ROOT) {
         std::cout << "There are " << deviceCount << " GPUs." << std::endl;
     }
 
@@ -883,7 +883,7 @@ void _InitializeDevice(int irank){
 #else //the regacy
 void _InitializeDevice(int irank){
 
-	if (MyRank == ROOT) {
+	if (AbyssProcessorNumber == ROOT) {
 	std::cout << "Initializing CUDA ..." << std::endl;
 	}
 	// Select CUDA device (optional)
@@ -901,7 +901,7 @@ void _InitializeDevice(int irank){
 	
 
 
-	if (MyRank == ROOT) {
+	if (AbyssProcessorNumber == ROOT) {
 	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
 	}
 
@@ -926,7 +926,7 @@ void _InitializeDevice(int irank){
 
 	cudaStreamCreate(&stream);
 
-	if (MyRank == ROOT) {
+	if (AbyssProcessorNumber == ROOT) {
 	std::cout << "There are " << deviceCount << " GPUs." << std::endl;
 	}
 	if (device < 0 || device >= deviceCount) {

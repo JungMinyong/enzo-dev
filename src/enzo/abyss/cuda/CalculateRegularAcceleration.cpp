@@ -226,13 +226,13 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
         {
             if ((*worker)->NumberOfQueues > 0) // original
             {
-				//std::cout << "(REG_CUDA) My Rank =" << (*worker)->MyRank << std::endl;
-				MPI_Send(&task, 1, MPI_INT, (*worker)->MyRank, TASK_TAG, abyss_comm);
-				MPI_Send(&ActiveIndexToOriginalIndex[IndexList[i]], 1, MPI_INT, (*worker)->MyRank, PTCL_TAG, abyss_comm);
-				MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, (*worker)->MyRank, 10, abyss_comm);
-				MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, (*worker)->MyRank, 11, abyss_comm);
-				MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 12, abyss_comm);
-				MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 13, abyss_comm);
+				//std::cout << "(REG_CUDA) My Rank =" << (*worker)->AbyssProcessorNumber << std::endl;
+				MPI_Send(&task, 1, MPI_INT, (*worker)->AbyssProcessorNumber, TASK_TAG, MPI_COMM_WORLD);
+				MPI_Send(&ActiveIndexToOriginalIndex[IndexList[i]], 1, MPI_INT, (*worker)->AbyssProcessorNumber, PTCL_TAG, MPI_COMM_WORLD);
+				MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, (*worker)->AbyssProcessorNumber, 10, MPI_COMM_WORLD);
+				MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, (*worker)->AbyssProcessorNumber, 11, MPI_COMM_WORLD);
+				MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, (*worker)->AbyssProcessorNumber, 12, MPI_COMM_WORLD);
+				MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->AbyssProcessorNumber, 13, MPI_COMM_WORLD);
 				((*worker))->onDuty = true;
 				/*
 				(*worker)->CurrentQueue++;
@@ -249,7 +249,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 			{
                 ++worker;
 #ifdef DEBUG
-				std::cout << "worker MyRank: " << (*worker)->MyRank << std::endl;
+				std::cout << "worker AbyssProcessorNumber: " << (*worker)->AbyssProcessorNumber << std::endl;
 #endif
 			}
         }
@@ -294,16 +294,16 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 		{
 			ws._WorkerTmp = ws._FreeWorkers.back();
 			ws._FreeWorkers.pop_back();
-			MPI_Send(&ws._WorkerTmp->task, 1, MPI_INT, ws._WorkerTmp->MyRank, TASK_TAG, abyss_comm);
-			MPI_Send(&RegularList[i], 1, MPI_INT, ws._WorkerTmp->MyRank, PTCL_TAG, abyss_comm);
-			MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, ws._WorkerTmp->MyRank, 10, abyss_comm);
-			MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, ws._WorkerTmp->MyRank, 11, abyss_comm);
-			MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, ws._WorkerTmp->MyRank, 12, abyss_comm);
-			MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, ws._WorkerTmp->MyRank, 13, abyss_comm);
+			MPI_Send(&ws._WorkerTmp->task, 1, MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, TASK_TAG, MPI_COMM_WORLD);
+			MPI_Send(&RegularList[i], 1, MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, PTCL_TAG, MPI_COMM_WORLD);
+			MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, 10, MPI_COMM_WORLD);
+			MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, 11, MPI_COMM_WORLD);
+			MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, ws._WorkerTmp->AbyssProcessorNumber, 12, MPI_COMM_WORLD);
+			MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, ws._WorkerTmp->AbyssProcessorNumber, 13, MPI_COMM_WORLD);
 			ws._WorkerTmp->onDuty = true;
 			ws._assigned_tasks++;
 			//fprintf(stdout, "assigned_tasks = %d/%d, number of free worker = %d pid = %d rank = %d\n",
-					//ws._assigned_tasks, ws._total_tasks, ws._FreeWorkers.size(), RegularList[i], ws._WorkerTmp->MyRank);
+					//ws._assigned_tasks, ws._total_tasks, ws._FreeWorkers.size(), RegularList[i], ws._WorkerTmp->AbyssProcessorNumber);
 		}
 		i++;
 	} while (ws._completed_tasks < ws._total_tasks);

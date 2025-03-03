@@ -62,7 +62,7 @@ int FinalizePythonInterface();
 
 
 #ifdef NBODY
-int nbody(int MyProcessorNumber);
+int ABYSS();
 #endif
 		
 
@@ -188,7 +188,7 @@ int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridLis
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
 
-int CommunicationInitialize(Eint32 *argc, char **argv[]);
+int CommunicationInitialize(int &argc, char *argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
@@ -275,7 +275,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   // Initialize Communications
 
-  CommunicationInitialize(&argc, &argv); 
+  CommunicationInitialize(argc, argv); 
 	fprintf(stdout, "MPI Initialization Done!\n");
 
 #ifdef USE_MPI	
@@ -290,7 +290,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 	isNbodyParticleIdentification = false;
 	*/
 
-	if (nbody_comm != MPI_COMM_NULL) {
+	if (abyss_comm != MPI_COMM_NULL) {
 		if (inter_comm != MPI_COMM_NULL) {
 			fprintf(stderr, "inter_comm is not NULL!\n");
 		}
@@ -302,7 +302,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 		//inter_comm = inter_comm;
 		//nbody_comm = nbody_comm;
 		fprintf(stderr, "NBODY+ starts!\n");
-		nbody(MyProcessorNumber);
+		ABYSS();
 		my_exit(EXIT_SUCCESS);
 	} 
 #endif

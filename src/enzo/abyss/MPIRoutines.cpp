@@ -72,10 +72,10 @@ void ParticleSynchronization() {
 		int completed_tasks = 0;
 		//int ptcl_id=104;
 		InitialAssignmentOfTasks(task, NumberOfWorker, TASK_TAG);
-		//std::cerr << "before, Rank=" << MyRank <<" pid=" << ptcl_id << ", current_time=" << particles[ptcl_id].CurrentTimeIrr << std::endl;
+		//std::cerr << "before, Rank=" << AbyssProcessorNumber <<" pid=" << ptcl_id << ", current_time=" << particles[ptcl_id].CurrentTimeIrr << std::endl;
 		MPI_Win_sync(win);  // Synchronize memory
 		MPI_Barrier(abyss_comm);
-		//std::cerr << "after, Rank=" << MyRank <<" pid=" << ptcl_id << ", current_time=" << particles[ptcl_id].CurrentTimeIrr << std::endl;
+		//std::cerr << "after, Rank=" << AbyssProcessorNumber <<" pid=" << ptcl_id << ", current_time=" << particles[ptcl_id].CurrentTimeIrr << std::endl;
 		for (int i=0; i<NumberOfWorker; i++) {
 
 			MPI_Irecv(&task, 1, MPI_INT, MPI_ANY_SOURCE, TERMINATE_TAG, abyss_comm, &requests[i]);

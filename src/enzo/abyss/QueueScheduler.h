@@ -177,7 +177,7 @@ public:
     void printFreeWorker() {
         std::cout << std::left << "FreeWorker List: ";
         for (Worker* worker: _FreeWorkers) {
-            std::cout << std::setw(3) << worker->MyRank;
+            std::cout << std::setw(3) << worker->AbyssProcessorNumber;
         }
         std::cout << std::endl;
     }
@@ -185,7 +185,7 @@ public:
     void printWorkerToGo() {
         std::cout << std::left << "WorkersToGo List: ";
         for (Worker* worker: WorkersToGo) {
-            std::cout << std::setw(3) << worker->MyRank;
+            std::cout << std::setw(3) << worker->AbyssProcessorNumber;
         }
         std::cout << std::endl;
     }
@@ -199,9 +199,9 @@ public:
         std::cout << "Completed CM Queues = " << _completed_cm_queues << std::endl;
 
         std::cout << "-----------Worker Status-----------" << std::endl;
-        std::cout << std::left << std::setw(10) << "MyRank";
+        std::cout << std::left << std::setw(10) << "AbyssProcessorNumber";
         for (int i=1; i<=NumberOfWorker; i++) {
-            std::cout << "|  " << std::setw(4) << workers[i].MyRank;
+            std::cout << "|  " << std::setw(4) << workers[i].AbyssProcessorNumber;
         }
         std::cout << std::endl;
 
@@ -350,7 +350,7 @@ private:
                 _assignJobs(_WorkerTmp);
                 _assigned_tasks++;
                 //fprintf(stdout, "assigned_tasks = %d, number of free worker = %d pid = %d rank = %d\n",
-                //_assigned_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->MyRank);
+                //_assigned_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->AbyssProcessorNumber);
                 fflush(stdout);
             }
         } while(_completed_tasks < _total_tasks);
@@ -454,7 +454,7 @@ private:
                 _WorkerTmp->task = 0;
                 _WorkerTmp->next_time = next_time;
                 //fprintf(stdout, "assigned_tasks = %d/%d, number of free worker = %d pid = %d rank = %d\n",
-                //_assigned_tasks, _total_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->MyRank);
+                //_assigned_tasks, _total_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->AbyssProcessorNumber);
                 _assignJobs(_WorkerTmp);
                 _assigned_tasks++;
             }
@@ -488,14 +488,14 @@ private:
     void _assignJobs(Worker *worker) {
         if ((worker->task == 0) || (worker->task == 1) || (worker->task == 26))
         {
-            MPI_Send(&worker->task,      1, MPI_INT,    worker->MyRank, TASK_TAG, abyss_comm);
-            MPI_Send(&worker->PID,       1, MPI_INT,    worker->MyRank, PTCL_TAG, abyss_comm);
-            MPI_Send(&worker->next_time, 1, MPI_DOUBLE, worker->MyRank, TIME_TAG, abyss_comm);
+            MPI_Send(&worker->task,      1, MPI_INT,    worker->AbyssProcessorNumber, TASK_TAG, abyss_comm);
+            MPI_Send(&worker->PID,       1, MPI_INT,    worker->AbyssProcessorNumber, PTCL_TAG, abyss_comm);
+            MPI_Send(&worker->next_time, 1, MPI_DOUBLE, worker->AbyssProcessorNumber, TIME_TAG, abyss_comm);
         }
         else
         {
-            MPI_Send(&worker->task, 1, MPI_INT, worker->MyRank, TASK_TAG, abyss_comm);
-            MPI_Send(&worker->PID,  1, MPI_INT, worker->MyRank, PTCL_TAG, abyss_comm);
+            MPI_Send(&worker->task, 1, MPI_INT, worker->AbyssProcessorNumber, TASK_TAG, abyss_comm);
+            MPI_Send(&worker->PID,  1, MPI_INT, worker->AbyssProcessorNumber, PTCL_TAG, abyss_comm);
         }
         worker->onDuty = true;
     }

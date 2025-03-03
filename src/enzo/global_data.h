@@ -77,8 +77,10 @@ EXTERN int NbodyRestartStarToNbody;
 
 /* by YS, MPI COMMs*/
 extern MPI_Comm enzo_comm;
-extern MPI_Comm nbody_comm;
+extern MPI_Comm abyss_comm;
 extern MPI_Comm inter_comm;
+extern MPI_Comm local_comm;
+extern int local_rank, local_size;
 #endif
 
 
@@ -612,6 +614,11 @@ EXTERN int MyProcessorNumber;
 EXTERN int NumberOfProcessors;
 EXTERN int TotalNumberOfProcessors;
 EXTERN float CommunicationTime;
+#ifdef NBODY
+EXTERN int WorldProcessorNumber;
+EXTERN int AbyssProcessorNumber;
+EXTERN int NumberOfAbyssProcessors;
+#endif
 
 /* Parameter to indicate if top grid should do parallel IO
    (currently only works for ProblemType == 30). */

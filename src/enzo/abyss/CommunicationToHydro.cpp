@@ -4,18 +4,26 @@
 #include <algorithm>
 #include <cmath>
 #include "global.h"
-#include "defs.h"
+#include "def.h"
+#define FLOAT double
+#define MAX_NUMBER_OF_OUTPUT_REDSHIFTS    500
 #include "../CosmologyParameters.h"
 #include "../phys_constants.h"
+
 
 #define No_COM_EVOLUTION
 
 
+
+extern int StarParticleFeedback;
+extern double StarMassEjectionFraction;
+extern int ComovingCoordinates;
+double InitialNeighborRadius;
 Particle* FirstParticleInEnzo = nullptr;
-double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
+//double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
 double EnzoCurrentTime, ClusterRadius2;
 double ClusterAcceleration[Dim], ClusterPosition[Dim], ClusterVelocity[Dim], EnzoClusterPosition[Dim+1];
-double EPS2, eta, InitialRadiusOfAC;
+double EPS2, eta_tmp;
 int FixNumNeighbor, MaxNumNeighbor, FixNumNeighbor0, IdentifyNbodyParticles;
 int BinaryRegularization, IdentifyOnTheFly;
 
@@ -24,12 +32,12 @@ int BinaryRegularization, IdentifyOnTheFly;
 
 
 void deleteParticle(int &PID, int &index);
-int writeParticle(std::vector<Particle*> &particle, double MinRegTime, int outputNum);
+//int writeParticle(std::vector<Particle*> &particle, double MinRegTime, int outputNum);
 //void InitializeParticle(std::vector<Particle*> &particle);
 //void InitializeNewParticle(std::vector<Particle*> &particle, int offset, int newSize);
 void GetCenterOfMass(double *mass, double *x[Dim], double *v[Dim], double x_com[], double v_com[], int N);
-void GetNewCenterOfMass(std::vector<Particle*> &particle, double *mass2, double *x2[Dim], double *v2[Dim], int n2, double x_X[], double v_X[]);
-void UpdateNextRegTime(std::vector<Particle*> &particle);
+void GetNewCenterOfMass(int *PID, double *mass2, double *x2[Dim], double *v2[Dim], int n2, double x_X[], double v_X[]);
+//void UpdateNextRegTime(std::vector<Particle*> &particle);
 int CommunicationInterBarrier();
 //void CalculateAllAccelerationOnGPU(std::vector<Particle*> &particle);
 //void KSTermination(Particle* ptclCM, std::vector<Particle*> &particle, double current_time, ULL current_block);
@@ -87,16 +95,16 @@ int InitialCommunication() {
 	MPI_Recv(&StarMassEjectionFraction, 1, MPI_DOUBLE, 0, 1200, inter_comm, &status);
 	MPI_Recv(&EnzoCurrentTime         , 1, MPI_DOUBLE, 0, 1300, inter_comm, &status);
 	MPI_Recv(&EPS2                    , 1, MPI_DOUBLE, 0, 1400, inter_comm, &status);
-	MPI_Recv(&eta                     , 1, MPI_DOUBLE, 0, 1500, inter_comm, &status);
-	MPI_Recv(&InitialRadiusOfAC       , 1, MPI_DOUBLE, 0, 1600, inter_comm, &status);
+	MPI_Recv(&eta_tmp                 , 1, MPI_DOUBLE, 0, 1500, inter_comm, &status);
+	MPI_Recv(&InitialNeighborRadius   , 1, MPI_DOUBLE, 0, 1600, inter_comm, &status);
 	MPI_Recv(EnzoClusterPosition      , 4, MPI_DOUBLE, 0, 1700, inter_comm, &status);
 	MPI_Recv(&IdentifyNbodyParticles  , 1, MPI_INT   , 0, 1750, inter_comm, &status);
 	MPI_Recv(&IdentifyOnTheFly        , 1, MPI_INT   , 0, 1775, inter_comm, &status);
 	MPI_Recv(&FixNumNeighbor          , 1, MPI_INT   , 0, 1800, inter_comm, &status);
 	MPI_Recv(&MaxNumNeighbor          , 1, MPI_INT   , 0, 1850, inter_comm, &status);
 	MPI_Recv(&BinaryRegularization    , 1, MPI_INT   , 0, 1900, inter_comm, &status);
-	MPI_Recv(&KSDistance              , 1, MPI_DOUBLE, 0, 2000, inter_comm, &status);
-	MPI_Recv(&KSTime                  , 1, MPI_DOUBLE, 0, 2100, inter_comm, &status);
+	//MPI_Recv(&KSDistance              , 1, MPI_DOUBLE, 0, 2000, inter_comm, &status);
+	//MPI_Recv(&KSTime                  , 1, MPI_DOUBLE, 0, 2100, inter_comm, &status);
 	//MPI_Recv(&HydroMethod         , 1, MPI_INT   , 0, 1200, inter_comm, &status);
 	fprintf(nbpout, "data receiving!\n");
 	fflush(nbpout);
@@ -150,21 +158,21 @@ int InitialCommunication() {
 		EPS2 *= EPS2;
 	}
 
-	InitialRadiusOfAC *= EnzoLength;
+	InitialNeighborRadius *= EnzoLength;
 	FixNumNeighbor0    = FixNumNeighbor;
 
 	fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
 	fprintf(nbpout, "Nbody Time               = %lf\n", EnzoTimeStep);
 	fprintf(nbpout, "EPS2                     = %lf pc**2\n", EPS2*position_unit*position_unit);
-	fprintf(nbpout, "InitialRadiusOfAC        = %.2e pc\n", InitialRadiusOfAC*position_unit);
+	fprintf(nbpout, "InitialNeighborRadius        = %.2e pc\n", InitialNeighborRadius*position_unit);
 	fprintf(nbpout, "eta                      = %lf\n", eta);
 	fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n", ClusterRadius2*EnzoLength*EnzoLength*position_unit*position_unit);
 	fprintf(nbpout, "StarMassEjectionFraction = %lf\n", StarMassEjectionFraction);
 	fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
 	fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
 	fprintf(nbpout, "BinaryRegularization     = %d\n", BinaryRegularization);
-	fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
-	fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
+	//fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
+	//fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
 	fprintf(nbpout, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
 	fprintf(nbpout, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
 
@@ -254,8 +262,8 @@ int InitialCommunication() {
 	fflush(stdout);
 	fflush(stderr);
 	fflush(nbpout);
-	fflush(gpuout);
-	fflush(binout);
+	//fflush(gpuout);
+	//fflush(binout);
 	return true;
 }
 
@@ -390,7 +398,7 @@ int ReceiveFromEnzo() {
 
 	if (newNumberOfSingleParticle != 0) {
 		// we need to make adjustment to COM
-		GetNewCenterOfMass(particle, newMass, newPosition, newVelocity, newNumberOfSingleParticle, 
+		GetNewCenterOfMass(PID, newMass, newPosition, newVelocity, newNumberOfSingleParticle, 
 				ClusterPosition, ClusterVelocity);
 
 		for (int i=0; i<newNumberOfSingleParticle; i++) {
@@ -493,7 +501,8 @@ int ReceiveFromEnzo() {
 			}
 
 			particles[index].set(newPID, newMass, newCreationTime, newDynamicalTime, newPosition, newVelocity,
-					newBackgroundAcceleration, NormalStar+SingleParticle+NewParticle, i);
+					//newBackgroundAcceleration, NormalStar+SingleParticle+NewParticle, i);
+					newBackgroundAcceleration, NormalStar, i);
 			PIDtoIndexMap.insert({newPID[i], index});
 			EnzoPIDs[NumberOfSingleParticle+i] = newPID[i];
 
@@ -610,11 +619,6 @@ int ReceiveFromEnzo() {
 	for (int i = 0; i<NumberOfSingleParticle+newNumberOfSingleParticle; i++) {
 
 		ptcl = &particles[PIDtoIndexMap[EnzoPIDs[i]]];
-		for (int dim=0; dim<Dim; dim++) {
-			ptcl->PredPosition[dim] =  ptcl->Position[dim];
-			ptcl->PredVelocity[dim] =  ptcl->Velocity[dim];
-			ptcl->PredMass     	=  ptcl->Mass;
-		}
 		ptcl->CurrentTimeIrr  = 0.;
 		ptcl->CurrentBlockIrr = 0.;
 		ptcl->CurrentTimeReg  = 0.;
@@ -659,22 +663,22 @@ int ReceiveFromEnzo() {
 	fprintf(nbpout, "NBODY+    : In ReceiveFromEzno (after new particle might be added): \n");
 	fprintf(nbpout, "NBODY+    : original NumberOfSingleParticle      = %d (+%d)\n", NumberOfSingleParticle-newNumberOfSingleParticle, newNumberOfSingleParticle);
 	fprintf(nbpout, "NBODY+    : newly updated NumberOfSingleParticle = %d\n", NumberOfSingleParticle, newNumberOfSingleParticle);
-	fprintf(nbpout, "NBODY+    : Particle size     = %d\n", particle.size());
+	//fprintf(nbpout, "NBODY+    : Particle size     = %d\n", particle.size());
 	fprintf(nbpout, "NBODY+    : NextRegTimeStep   = %.3e\n", NextRegTimeBlock*time_step);
 	fprintf(nbpout, "NBODY+    : NextRegTimeBlock  = %d\n", NextRegTimeBlock);
-	fprintf(nbpout, "NBODY+    : RegularList size  = %d\n", RegularList.size());
+	//fprintf(nbpout, "NBODY+    : RegularList size  = %d\n", RegularList.size());
 	fprintf(nbpout, "NBODY+    : FixNumNeighbor    = %d\n", FixNumNeighbor);
 
 
 	fprintf(stderr, "NBODY+    : In ReceiveFromEzno (after new particle might be added): \n");
 	fprintf(stderr, "NBODY+    : original NumberOfSingleParticle      = %d (+%d)\n", NumberOfSingleParticle-newNumberOfSingleParticle, newNumberOfSingleParticle);
 	fprintf(stderr, "NBODY+    : newly updated NumberOfSingleParticle = %d\n", NumberOfSingleParticle, newNumberOfSingleParticle);
-	fprintf(stderr, "NBODY+    : Particle size     = %d\n", particle.size());
-	fprintf(stderr, "NBODY+    : RegularList size = %d\n", RegularList.size());
+	//fprintf(stderr, "NBODY+    : Particle size     = %d\n", particle.size());
+	//fprintf(stderr, "NBODY+    : RegularList size = %d\n", RegularList.size());
 	fflush(stderr);
 	fflush(nbpout);
-	fflush(gpuout);
-	fflush(binout);
+	//fflush(gpuout);
+	//fflush(binout);
 
 
 	return true;
@@ -689,7 +693,7 @@ int SendToEnzo() {
 		std::cout << "NBODY+: Skipping SendToEnzo..." << std::endl;
 		fflush(stdout);
 		fflush(stderr);
-		return DONE;
+		return SUCCESS;
 	}
 	MPI_Request request;
 	MPI_Status status;
@@ -797,7 +801,6 @@ int SendToEnzo() {
 			NbodyCOM[dim] += ptcl->Mass * ptcl->Position[dim];
 		}
 		mass += ptcl->Mass;
-		ptcl = ptcl->NextParticleInEnzo;
 	}
 
 	for (int dim = 0; dim < Dim; dim++)
@@ -839,18 +842,17 @@ int SendToEnzo() {
 
 			if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
 				Position[0][i] -= 20;
-				deleteParticle(EnzoPIDs[i+offset],index)
+				deleteParticle(EnzoPIDs[i],index);
 				NumberOfEscapeParticle++;
 			}
 			//fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
-			ptcl = ptcl->NextParticleInEnzo;
 
 			if ((ptcl == nullptr) && (i != NumberOfSingleParticle-newNumberOfSingleParticle-1))
 			{
 				std::cout << "NBODY+: Warning! ParticleChain for Communication has been broken!" << std::endl;
 				std::cerr << "NBODY+: Warning! ParticleChain for Communication has been broken!" << std::endl;
-				fprintf(stderr, "%d-th particle, particle_size=%d, NumberOfSingleParticle=%d, newNumberOfSingleParticle=%d\n",i,particle.size(), NumberOfSingleParticle, newNumberOfSingleParticle);
-				fprintf(nbpout, "%d-th particle, particle_size=%d, NumberOfSingleParticle=%d, newNumberOfSingleParticle=%d\n",i,particle.size(), NumberOfSingleParticle, newNumberOfSingleParticle);
+				fprintf(stderr, "%d-th particle, NumberOfSingleParticle=%d, newNumberOfSingleParticle=%d\n",i, NumberOfSingleParticle, newNumberOfSingleParticle);
+				fprintf(nbpout, "%d-th particle, NumberOfSingleParticle=%d, newNumberOfSingleParticle=%d\n",i, NumberOfSingleParticle, newNumberOfSingleParticle);
 				fflush(stderr);
 				fflush(stdout);
 				fflush(nbpout);
@@ -889,15 +891,14 @@ int SendToEnzo() {
 			}
 			if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) {
 				newPosition[0][i] -= 20;
-				deleteParticle(EnzoPIDs[i+offset],index)
+				deleteParticle(EnzoPIDs[i+offset],index);
 				NumberOfEscapeParticle++;
 			}
-			ptcl = ptcl->NextParticleInEnzo;
 		}
 	}
 
 	if (ptcl != nullptr) {
-		fprintf(nbpout, "NBODY+: NumberOfSingleParticle=%d, psize=%d, newNumberOfSingleParticle=%d\n", NumberOfSingleParticle, particle.size(), newNumberOfSingleParticle);
+		fprintf(nbpout, "NBODY+: NumberOfSingleParticle=%d, newNumberOfSingleParticle=%d\n", NumberOfSingleParticle, newNumberOfSingleParticle);
 		fprintf(nbpout, "NBODY+: Warrning! NextParticleInEnzo does not match!\n");
 		std::cerr << "NBODY+: Warrning! NextParticleInEnzo does not match!" << std::endl;
 		fflush(nbpout);
@@ -955,13 +956,6 @@ int SendToEnzo() {
 	fprintf(stderr, "\n");
 	*/
 
-
-
-	fprintf(stderr, "NBODY:(Escape) PID=\n");
-	for (Particle* ptcl:EscapeList) {
-		fprintf(stderr, "%d, ", ptcl->PID);
-	}
-	fprintf(stderr, "\n ");
 
 
 	// erase from other particles' neighbor
@@ -1029,18 +1023,16 @@ int SendToEnzo() {
 
 
 	fprintf(stderr, "NBODY+    : In SendToEnzo (after particle might be escaped): \n");
-	fprintf(stderr, "NBODY+    : original NumberOfSingleParticle      = %d (-%d)\n", NumberOfSingleParticle+EscapeParticleNum, EscapeParticleNum);
+	fprintf(stderr, "NBODY+    : original NumberOfSingleParticle      = %d (-%d)\n", NumberOfSingleParticle+NumberOfEscapeParticle, NumberOfEscapeParticle);
 	fprintf(stderr, "NBODY+    : newly updated NumberOfSingleParticle = %d\n", NumberOfSingleParticle);
-	fprintf(stderr, "NBODY+    : Particle size     = %d\n", particle.size());
 
 	fprintf(nbpout, "NBODY+    : In SendToEnzo (after particle might be escaped): \n");
-	fprintf(nbpout, "NBODY+    : original NumberOfSingleParticle      = %d (-%d)\n", NumberOfSingleParticle+EscapeParticleNum, EscapeParticleNum);
+	fprintf(nbpout, "NBODY+    : original NumberOfSingleParticle      = %d (-%d)\n", NumberOfSingleParticle+NumberOfEscapeParticle, NumberOfEscapeParticle);
 	fprintf(nbpout, "NBODY+    : newly updated NumberOfSingleParticle = %d\n", NumberOfSingleParticle);
-	fprintf(nbpout, "NBODY+    : Particle size     = %d\n", particle.size());
 
 	fflush(stderr);
 	fflush(nbpout);
-	fflush(gpuout);
+	//fflush(gpuout);
 	fflush(binout);
 	return true;
 }
@@ -1052,7 +1044,7 @@ Z = (a1+b1+c1+a2+b2)/(M+N) = (X*M+Y*N)/(M+N) -> New COM
 Z-X = N*(Y-X)/(M+N) -> This should be applied to particles
 */
 // this should be improved by using iterative loop
-void GetNewCenterOfMass(std::vector<Particle*> &particle, double *mass2, double *x2[Dim], double *v2[Dim], int n2, double x_X[], double v_X[]) {
+void GetNewCenterOfMass(int* PID, double *mass2, double *x2[Dim], double *v2[Dim], int n2, double x_X[], double v_X[]) {
 
 	double M=0., N=0.;
 	double x_Y[Dim], v_Y[Dim], x_Z[Dim], v_Z[Dim];
@@ -1064,8 +1056,9 @@ void GetNewCenterOfMass(std::vector<Particle*> &particle, double *mass2, double 
 		v_Z[dim] = 0;
 	}
 
-	for (Particle* ptcl:particle)
-		M += ptcl->Mass/EnzoMass;
+	for (int i=0; i<NumberOfSingleParticle; i++) {
+		M += particles[PIDtoIndexMap[PID[i]]].Mass/EnzoMass;
+	}
 
 
 	for (int i=0; i<n2; i++) {
@@ -1084,10 +1077,10 @@ void GetNewCenterOfMass(std::vector<Particle*> &particle, double *mass2, double 
 
 
 	// Adjustment to particles
-	for (Particle* ptcl:particle) {
+	for (int i=0; i<NumberOfSingleParticle; i++) {
 		for (int dim=0; dim<Dim;dim++) {
-			ptcl->Position[dim] - (x_Z[dim] - x_X[dim]) * EnzoLength;
-			ptcl->Velocity[dim] - (v_Z[dim] - v_X[dim]) * EnzoVelocity;
+			particles[PIDtoIndexMap[PID[i]]].Position[dim] - (x_Z[dim] - x_X[dim]) * EnzoLength;
+			particles[PIDtoIndexMap[PID[i]]].Velocity[dim] - (v_Z[dim] - v_X[dim]) * EnzoVelocity;
 		}
 	}
 
@@ -1099,7 +1092,7 @@ void GetNewCenterOfMass(std::vector<Particle*> &particle, double *mass2, double 
 
 void deleteParticle(int &PID, int &index) {
 	particles[index].isActive = false;
-	PIDtoIndexMap.earse(PID);
+	PIDtoIndexMap.erase(PID);
 	AvailableIndices[NumberOfAvailableIndices] = index;
 	NumberOfAvailableIndices++;
 }

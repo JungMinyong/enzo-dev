@@ -13,7 +13,7 @@
 #define MAX_QUEUE 1000
 
 struct Worker {
-    int MyRank; 
+    int AbyssProcessorNumber; 
     bool onDuty;
     std::unordered_set<int> CMPtclIDs;
     bool isCMWorker;
@@ -35,8 +35,8 @@ struct Worker {
         CurrentQueue = 0;
     }
 
-    void initialize(int _MyRank) {
-        MyRank = _MyRank;
+    void initialize(int _AbyssProcessorNumber) {
+        AbyssProcessorNumber = _AbyssProcessorNumber;
         onDuty = false;
         if (CMPtclIDs.size() > 0) {
            isCMWorker = true; 
@@ -56,8 +56,8 @@ struct Worker {
 
     void runQueue() {
         if (onDuty) {
-            std::cout << "Worker " << MyRank << " is already on duty" << std::endl;
-            std::cerr << "Worker " << MyRank << " is already on duty" << std::endl;
+            std::cout << "Worker " << AbyssProcessorNumber << " is already on duty" << std::endl;
+            std::cerr << "Worker " << AbyssProcessorNumber << " is already on duty" << std::endl;
             exit(1);
         }
         if (NumberOfQueues == 0) {
@@ -68,7 +68,7 @@ struct Worker {
         //q->print();
         //sendTask(*q);
         sendTask(queues[CurrentQueue]);
-        //std::cout << "Worker " << MyRank << " is on duty" << std::endl;
+        //std::cout << "Worker " << AbyssProcessorNumber << " is on duty" << std::endl;
     }
 
     void removeQueue() {
@@ -76,22 +76,22 @@ struct Worker {
 
     void callback() {
         int return_value;
-        MPI_Recv(&return_value, 1, MPI_INT, this->MyRank, TERMINATE_TAG, abyss_comm, &_status);
+        MPI_Recv(&return_value, 1, MPI_INT, this->AbyssProcessorNumber, TERMINATE_TAG, abyss_comm, &_status);
         if (!onDuty) {
-            fprintf(stderr, "Something's worng! the worker %d was not on duty.\n", this->MyRank);
-            fprintf(stdout, "Something's worng! the worker %d was not on duty.\n", this->MyRank);
+            fprintf(stderr, "Something's worng! the worker %d was not on duty.\n", this->AbyssProcessorNumber);
+            fprintf(stdout, "Something's worng! the worker %d was not on duty.\n", this->AbyssProcessorNumber);
             exit(1);
         }
         onDuty = false;
         CurrentQueue++;
         CurrentQueue %= MAX_QUEUE;
         NumberOfQueues--;
-        //std::cout << "Worker " << MyRank << " is off duty" << std::endl;
+        //std::cout << "Worker " << AbyssProcessorNumber << " is off duty" << std::endl;
     }
 
 /*
     void callback(int &return_value) {
-        MPI_Recv(&return_value, 1, MPI_INT, this->MyRank, TERMINATE_TAG, abyss_comm, &_status);
+        MPI_Recv(&return_value, 1, MPI_INT, this->AbyssProcessorNumber, TERMINATE_TAG, abyss_comm, &_status);
         if (!onDuty) {
             fprintf(stderr, "Something's worng! the worker was not on duty.");
             exit(1);
@@ -104,14 +104,14 @@ struct Worker {
     void sendTask(Queue &_queue) {
         if ((_queue.task == 0) || (_queue.task == 1) || (_queue.task == 26))
         {
-            MPI_Send(&_queue.task,      1, MPI_INT,    this->MyRank, TASK_TAG, abyss_comm);
-            MPI_Send(&_queue.pid,       1, MPI_INT,    this->MyRank, PTCL_TAG, abyss_comm);
-            MPI_Send(&_queue.next_time, 1, MPI_DOUBLE, this->MyRank, TIME_TAG, abyss_comm);
+            MPI_Send(&_queue.task,      1, MPI_INT,    this->AbyssProcessorNumber, TASK_TAG, abyss_comm);
+            MPI_Send(&_queue.pid,       1, MPI_INT,    this->AbyssProcessorNumber, PTCL_TAG, abyss_comm);
+            MPI_Send(&_queue.next_time, 1, MPI_DOUBLE, this->AbyssProcessorNumber, TIME_TAG, abyss_comm);
         }
         else
         {
-            MPI_Send(&_queue.task, 1, MPI_INT, this->MyRank, TASK_TAG, abyss_comm);
-            MPI_Send(&_queue.pid,  1, MPI_INT, this->MyRank, PTCL_TAG, abyss_comm);
+            MPI_Send(&_queue.task, 1, MPI_INT, this->AbyssProcessorNumber, TASK_TAG, abyss_comm);
+            MPI_Send(&_queue.pid,  1, MPI_INT, this->AbyssProcessorNumber, PTCL_TAG, abyss_comm);
         }
         onDuty = true;
     }
@@ -124,7 +124,7 @@ private:
     MPI_Status _status;    // Pointer to the status object
 
     void _initialize() {
-        MyRank = -1;
+        AbyssProcessorNumber = -1;
         onDuty = false;
         CMPtclIDs.clear();
         isCMWorker = false;

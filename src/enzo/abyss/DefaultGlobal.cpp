@@ -3,7 +3,9 @@
 #include "global.h"
 #include <unordered_map>
 
-
+bool bin_termination;
+bool new_binaries;
+std::unordered_set<int> RegularList;
 int NumberOfWorker;
 int NumberOfCommunication;
 int *AvailableIndices; 
@@ -11,7 +13,6 @@ int NumberOfAvailableIndices;
 std::unordered_map<int,int> PIDtoIndexMap;
 int *EnzoPIDs; 
 int newNumberOfSingleParticle;
-
 int LastParticleIndex; // The last index of particle array
 int NumberOfParticle; // The number of active particles
 int NumberOfSingleParticle;
@@ -50,6 +51,7 @@ double outputTime;
 int outNum;
 
 FILE* binout;
+FILE* nbpout;
 FILE* mergerout;
 #ifdef SEVN
 FILE* SEVNout;
@@ -62,6 +64,7 @@ Performance performance;
 #endif
 
 void DefaultGlobal() {
+
 
 	NumberOfWorker = NumberOfAbyssProcessors-1;
 	/* Task initialization */
@@ -96,6 +99,10 @@ void DefaultGlobal() {
 			AvailableIndices[i] = -1;
 		}
 	}
+
+
+	bin_termination = false;
+	new_binaries = false;
 
 #ifdef SEVN
 	std::vector<std::string> args = {"empty", // Not used

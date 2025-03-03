@@ -7,7 +7,14 @@
         "Grid_UpdateParticleVelocity.C": "cpp",
         "Grid_UpdateParticlePosition.C": "cpp",
         "StarParticleFinalize.C": "cpp",
-        "CommunicationUpdateStarParticleCount.C": "cpp"
+        "CommunicationUpdateStarParticleCount.C": "cpp",
+        "InexactNewton.C": "cpp",
+        "Grid_zEulerSweep.C": "cpp",
+        "enzo.C": "cpp",
+        "CommunicationInitialize.C": "cpp",
+        "gFLDProblem_InitialGuess.C": "cpp",
+        "gFLDProblem_Initialize.C": "cpp",
+        "Grid_SetIsolatedPotentialBoundary.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

@@ -3,6 +3,7 @@
 #include <errno.h>
 #include "global.h"
 #include "Queue.h"
+#include <cassert>
 
 void ComputeAcceleration(int ptcl_id, double next_time);
 void broadcastFromRoot(double &data);
@@ -17,7 +18,7 @@ void NewFBInitialization3(Group* group);
 
 void WorkerRoutines() {
 
-	//std::cout << "Processor " << MyRank << " is ready." << std::endl;
+	//std::cout << "Processor " << AbyssProcessorNumber << " is ready." << std::endl;
 
 	TaskName task = Error;
 	MPI_Status status;
@@ -38,12 +39,12 @@ void WorkerRoutines() {
 		//MPI_Irecv(&task, 1, MPI_INT, ROOT, TASK_TAG, abyss_comm, &request);
 		//MPI_Wait(&request, &status);
 		//if (status.MPI_TAG == TERMINATE_TAG) break;
-		//std::cerr << "Processor " << MyRank << " received task " << task << std::endl;
+		//std::cerr << "Processor " << AbyssProcessorNumber << " received task " << task << std::endl;
 
 		switch (task) {
 			case IrrForce: // Irregular Acceleration
 				MPI_Recv(&ptcl_id,   1, MPI_INT   , ROOT, PTCL_TAG, abyss_comm, &status);
-				//std::cout << "(IRR_FORCE) Processor " << MyRank<< ": PID= "<<ptcl_id << std::endl;
+				//std::cout << "(IRR_FORCE) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_id << std::endl;
 				MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status); // (Query to myself) it seems like it's not needed.
 #ifdef PerformanceTrace
 				ptcl = &particles[ptcl_id];
@@ -60,21 +61,21 @@ void WorkerRoutines() {
 				ptcl->calculateTimeStepIrr();
 				ptcl->NextBlockIrr = ptcl->NewCurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
 				ptcl->isUpdateToDate = true;
-				//std::cout << "IrrCal done " << MyRank << std::endl;
+				//std::cout << "IrrCal done " << AbyssProcessorNumber << std::endl;
 				break;
 
 			case RegForce: // Regular Acceleration
-				//std::cout << "RegCal start " << MyRank << std::endl;
+				//std::cout << "RegCal start " << AbyssProcessorNumber << std::endl;
 				MPI_Recv(&ptcl_id,   1, MPI_INT,    ROOT, PTCL_TAG, abyss_comm, &status);
 				MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status);
 
 				particles[ptcl_id].computeAccelerationReg();
 				//ComputeAcceleration(ptcl_id, next_time);
-				//std::cout << "RegCal end" << MyRank << std::endl;
+				//std::cout << "RegCal end" << AbyssProcessorNumber << std::endl;
 				break;
 
 			case IrrUpdate: // Irregular Update Particle
-				//std::cout << "IrrUp Processor " << MyRank << std::endl;
+				//std::cout << "IrrUp Processor " << AbyssProcessorNumber << std::endl;
 				MPI_Recv(&ptcl_id  , 1, MPI_INT   , ROOT, PTCL_TAG, abyss_comm, &status);
 				ptcl = &particles[ptcl_id];
 
@@ -83,11 +84,11 @@ void WorkerRoutines() {
 				ptcl->CurrentBlockIrr = ptcl->NewCurrentBlockIrr;
 				ptcl->CurrentTimeIrr  = ptcl->CurrentBlockIrr*time_step;
 				//std::cout << "pid=" << ptcl_id << ", CurrentBlockIrr=" << particles[ptcl_id].CurrentBlockIrr << std::endl;
-				//std::cout << "IrrUp end " << MyRank << std::endl;
+				//std::cout << "IrrUp end " << AbyssProcessorNumber << std::endl;
 				break;
 
 			case RegUpdate: // Regular Update Particle
-				//std::cout << "RegUp start " << MyRank << std::endl;
+				//std::cout << "RegUp start " << AbyssProcessorNumber << std::endl;
 				MPI_Recv(&ptcl_id, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, &status);
 				//std::cout << "ptcl " << ptcl_id << std::endl;
 
@@ -113,7 +114,7 @@ void WorkerRoutines() {
 
 			case RegCuda: // Update Regular Particle CUDA
 				MPI_Recv(&ptcl_id, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, MPI_STATUS_IGNORE);
-				//std::cout << "(REG_CUDA) Processor " << MyRank<< ": PID= "<<ptcl_id << std::endl;
+				//std::cout << "(REG_CUDA) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_id << std::endl;
 				MPI_Recv(&NewNumberOfNeighbor, 1, MPI_INT, ROOT, 10, abyss_comm, &status);
 				MPI_Recv(NewNeighbors, NewNumberOfNeighbor, MPI_INT, ROOT, 11, abyss_comm, &status);
 				MPI_Recv(new_a, 3, MPI_DOUBLE, ROOT, 12, abyss_comm, &status);
@@ -153,25 +154,25 @@ void WorkerRoutines() {
 				break;
 
 			case InitAcc1: // Initialize Acceleration(01)
-				//std::cout << "Processor " << MyRank<< " initialization starts." << std::endl;
+				//std::cout << "Processor " << AbyssProcessorNumber<< " initialization starts." << std::endl;
 				MPI_Recv(&ptcl_id, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, &status);
-				//std::cout << "Processor " << MyRank<< ": PID= "<<ptcl_id << std::endl;
+				//std::cout << "Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_id << std::endl;
 				ptcl = &particles[ptcl_id];
 				//std::cerr << ptcl_id+i << std::endl;
 				CalculateAcceleration01(ptcl);
-				//std::cout << "Processor " << MyRank<< " done." << std::endl;
+				//std::cout << "Processor " << AbyssProcessorNumber<< " done." << std::endl;
 				break;
 
 			case InitAcc2: // Initialize Acceleration(23)
 				MPI_Recv(&ptcl_id, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, &status);
-				//std::cout << "Processor " << MyRank<< ": PID= "<<ptcl_id << std::endl;
+				//std::cout << "Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_id << std::endl;
 				ptcl = &particles[ptcl_id];
 				CalculateAcceleration23(ptcl);
 				break;
 
 			case InitTime: // Initialize Time Step
 				MPI_Recv(&ptcl_id, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, &status);
-				//std::cout << "Processor " << MyRank<< ": PID= "<<ptcl_id << std::endl;
+				//std::cout << "Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_id << std::endl;
 				ptcl = &particles[ptcl_id];
 				if (ptcl->isActive)
 					ptcl->initializeTimeStep();
@@ -182,9 +183,9 @@ void WorkerRoutines() {
 				broadcastFromRoot(block_max);
 				broadcastFromRoot(time_step);
 				//MPI_Win_sync(win);  // Synchronize memory
-				//MPI_Barrier(shared_comm);
+				//MPI_Barrier(abyss_comm);
 				//MPI_Win_fence(0, win);
-				fprintf(stderr, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n", MyRank, time_block, EnzoTimeStep);
+				fprintf(stderr, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n", AbyssProcessorNumber, time_block, EnzoTimeStep);
 				fflush(stderr);
 				break;
 
@@ -202,7 +203,7 @@ void WorkerRoutines() {
 			case SearchGroup: // Few-body group search
 				MPI_Recv(&ptcl_id  , 1, MPI_INT   , ROOT, PTCL_TAG, abyss_comm, &status);
 				ptcl = &particles[ptcl_id];
-				// std::cerr << "FB search of particle  " << ptcl_id << " is initiated on rank " << MyRank << "." <<std::endl;
+				// std::cerr << "FB search of particle  " << ptcl_id << " is initiated on rank " << AbyssProcessorNumber << "." <<std::endl;
 
 				if (ptcl->getBinaryInterruptState()==BinaryInterruptState::threebody) {
 					ptcl->setBinaryInterruptState(BinaryInterruptState::none);
@@ -228,7 +229,7 @@ void WorkerRoutines() {
 						ptcl->checkNewGroup();
 				}
 				*/
-				// std::cerr << "FB search of particle  " << ptcl_id << " is successfully finished on rank " << MyRank << "." <<std::endl;
+				// std::cerr << "FB search of particle  " << ptcl_id << " is successfully finished on rank " << AbyssProcessorNumber << "." <<std::endl;
 
 				break;
 
@@ -247,7 +248,7 @@ void WorkerRoutines() {
 				NewFBInitialization(ptcl);
 #ifdef DEBUG
 				std::cout << "FewBody object of particle " << ptcl->PID
-						  << " is successfully initialized on rank " << MyRank << "." <<std::endl;
+						  << " is successfully initialized on rank " << AbyssProcessorNumber << "." <<std::endl;
 #endif
 				break;
 
@@ -262,7 +263,7 @@ void WorkerRoutines() {
 				MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status);
 				
 				ptcl = &particles[ptcl_id];
-				// std::cout << "(SDAR) Processor " << MyRank<< ": PID= "<<ptcl->PID << std::endl;
+				// std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << std::endl;
 
 				/* (Query) this will be done already. 
 				ptcl->computeAccelerationIrr();
@@ -286,12 +287,12 @@ void WorkerRoutines() {
 
 					delete ptcl->GroupInfo;
 #ifdef DEBUG
-					std::cout << "(SDAR) Processor " << MyRank<< ": PID= "<<ptcl->PID << " deleted!" <<std::endl;
+					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " deleted!" <<std::endl;
 #endif
 				}
 #ifdef DEBUG
 				else
-					std::cout << "(SDAR) Processor " << MyRank<< ": PID= "<<ptcl->PID << " done!" <<std::endl;
+					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " done!" <<std::endl;
 #endif
 				break;
 			
@@ -300,7 +301,7 @@ void WorkerRoutines() {
 				MPI_Recv(&ptcl_id,   1, MPI_INT   , ROOT, PTCL_TAG, abyss_comm, &status);
 				
 				ptcl = &particles[ptcl_id];
-				std::cout << "(SDAR) Processor " << MyRank<< ": PID= "<<ptcl->PID << std::endl;
+				std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << std::endl;
 
 				if (!ptcl->isCMptcl || ptcl->GroupInfo == nullptr) {
 					fprintf(stderr, "Something is wrong. ptcl->isCMptcl=%d ptcl->GroupInfo=%p\n", ptcl->isCMptcl, ptcl->GroupInfo);
@@ -312,17 +313,17 @@ void WorkerRoutines() {
 				ptcl->GroupInfo->isMerger = false;
 				ptcl->setBinaryInterruptState(BinaryInterruptState::none);
 
-				std::cout << "(SDAR) Processor " << MyRank<< ": PID= "<<ptcl->PID << " NewFBInitialization3 done!" <<std::endl;
+				std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " NewFBInitialization3 done!" <<std::endl;
 				break;
 #endif 
 
 			case Synchronize: // Synchronize
 				MPI_Win_sync(win);  // Synchronize memory
-				MPI_Barrier(shared_comm);
+				MPI_Barrier(abyss_comm);
 				break;
 
 			case Ends: // Simualtion ends
-				std::cout << "Processor " << MyRank<< " returns." << std::endl;
+				std::cout << "Processor " << AbyssProcessorNumber<< " returns." << std::endl;
 				return;
 				break;
 
@@ -342,7 +343,7 @@ void WorkerRoutines() {
 			MPI_Isend(&task, 1, MPI_INT, ROOT, TERMINATE_TAG, abyss_comm,&request);
 
 		MPI_Wait(&request, &status);
-		//std::cerr << "Processor " << MyRank << " done." << std::endl;
+		//std::cerr << "Processor " << AbyssProcessorNumber << " done." << std::endl;
 	}
 }
 
