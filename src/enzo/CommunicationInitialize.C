@@ -19,6 +19,7 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
+#include <cstdlib> // For getenv
 
 #define NBODY
 
@@ -114,24 +115,14 @@ int CommunicationInitialize(int &argc, char *argv[])
 
 		int NumberOfEnzoNodes = 0;
 		int NumberOfEnzoProcessors = 0;
+		char *env;
 
-		for (int i = 1; i < argc; ++i)
-		{
-			std::string arg = argv[i];
-			if (arg == "-EN" || arg == "--enzo_nodes" || arg == "--enzo_node")
-			{
-				// Display help message
-				NumberOfEnzoNodes = std::atoi(argv[i + 1]);
-				std::cout << "The number of Enzo nodes is " << NumberOfEnzoNodes << std::endl;
-			}
-			if (arg == "-EC" || arg == "--enzo_cores" || arg == "--enzo_core")
-			{
-				// Display help message
-				NumberOfEnzoProcessors = std::atoi(argv[i + 1]);
-				std::cout << "The number of Enzo nodes is " << NumberOfEnzoProcessors << std::endl;
-			}
-		}
+		env = std::getenv("ENZO_PROCESSOR_NUM");
+		NumberOfEnzoProcessors = std::atoi(env);
+		env = std::getenv("ENZO_NODE_NUM");
+		NumberOfEnzoNodes = std::atoi(env);
 
+		NumberOfProcessors = NumberOfEnzoProcessors;
 		NumberOfAbyssProcessors = TotalNumberOfProcessors - NumberOfEnzoProcessors;
 
 

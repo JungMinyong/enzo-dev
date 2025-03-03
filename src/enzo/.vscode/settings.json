@@ -14,7 +14,8 @@
         "CommunicationInitialize.C": "cpp",
         "gFLDProblem_InitialGuess.C": "cpp",
         "gFLDProblem_Initialize.C": "cpp",
-        "Grid_SetIsolatedPotentialBoundary.C": "cpp"
+        "Grid_SetIsolatedPotentialBoundary.C": "cpp",
+        "InterpretCommandLine.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

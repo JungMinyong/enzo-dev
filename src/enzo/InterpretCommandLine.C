@@ -193,8 +193,8 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
       case 'o':
 	OutputAsParticleData = TRUE;
 	break;
- 
-	/* Project to a plane. */
+
+		  /* Project to a plane. */
  
       case 'p':
 	if (--argc > 0) {
@@ -265,17 +265,17 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
  
       default:
 	if (MyProcessorNumber == ROOT_PROCESSOR)
-	ENZO_VFAIL("%s: unknown command-line option: -%s.\n",myname,&c)
-	
-      } // end of switch(c)
- 
-  /* Error check for number of parameters, and set parameter file. */
- 
-  if (argc != 1) {
-    if (MyProcessorNumber == ROOT_PROCESSOR)
+		ENZO_VFAIL("%s: unknown command-line option: -%s.\n", myname, &c);
 
-      PrintUsage(myname);
-    my_exit(EXIT_SUCCESS);
+	  } // end of switch(c)
+
+  /* Error check for number of parameters, and set parameter file. */
+
+  if (argc != 1)
+  {
+	  if (MyProcessorNumber == ROOT_PROCESSOR)
+		  PrintUsage(myname);
+	  my_exit(EXIT_SUCCESS);
   }
   *ParameterFile = argv[0];
  
@@ -287,27 +287,28 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
  
 void PrintUsage(char *myname)
 {
-  fprintf(stderr, "usage: %s [options] param_file\n"
-	          "   options are:\n"
-	          "      -d(ebug)\n"
-	          "      -r(estart)\n"
-	          "      -x(extract)\n"
-	          "         -l(evel_of_extract) level\n"
-	          "      -p(roject_to_plane) dimension\n"
-	          "      -P(roject_to_plane version 2) dimension\n"
-                  "         -m(smooth projection)\n"
-	          "      -o(utput as particle data)\n"
-	          "      -g (Write Potential field only)\n"
-	          "      -M (Write smoothed DM field only)\n"
-	          "      -F(riends-of-friends halo finder only)\n"
-	          "      -C(ooling time write only)\n"
-	          "      -D(ust temperature write only)\n"
-                  "      -h(elp)\n"
-	          "      -i(nformation output)\n"
-	          "      -V (show compiler options and flags)\n"
-	          "      -s(tart  index region) dim0 [dim1] [dim2]\n"
-	          "      -e(nd    index region) dim0 [dim1] [dim2]\n"
-	          "      -b(egin  coordinate region) dim0 [dim1] [dim2]\n"
-	          "      -f(inish coordinate region) dim0 [dim1] [dim2]\n"
-          ,myname);
+	fprintf(stderr, "usage: %s [options] param_file\n"
+					"   options are:\n"
+					"      -d(ebug)\n"
+					"      -r(estart)\n"
+					"      -x(extract)\n"
+					"         -l(evel_of_extract) level\n"
+					"      -p(roject_to_plane) dimension\n"
+					"      -P(roject_to_plane version 2) dimension\n"
+					"         -m(smooth projection)\n"
+					"      -o(utput as particle data)\n"
+					"      -g (Write Potential field only)\n"
+					"      -M (Write smoothed DM field only)\n"
+					"      -F(riends-of-friends halo finder only)\n"
+					"      -C(ooling time write only)\n"
+					"      -D(ust temperature write only)\n"
+					"      -h(elp)\n"
+					"      -i(nformation output)\n"
+					"      -V (show compiler options and flags)\n"
+					"      -s(tart  index region) dim0 [dim1] [dim2]\n"
+					"      -e(nd    index region) dim0 [dim1] [dim2]\n"
+					"      -b(egin  coordinate region) dim0 [dim1] [dim2]\n"
+					"      -f(inish coordinate region) dim0 [dim1] [dim2]\n"
+			,
+			myname);
 }

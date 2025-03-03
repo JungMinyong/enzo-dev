@@ -124,7 +124,7 @@ lib: F90FLAGS += $(MACH_SHARED_FLAGS)
 
 LDFLAGS += -lcudart -lcublas -lnvToolsExt -lm -lcuda -lmpi 
 # SDAR
-CXXFLAGS += -I./abyss/SDAR/src -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE #-DFEWBODY #-DDEBUG
+CXXFLAGS += -I./abyss/SDAR/src -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DNBODY #-DFEWBODY #-DDEBUG
 #CXX_SRCS += FewBody/FBCheck.cpp FewBody/FBInitialization.cpp FewBody/FBIntegration.cpp FewBody/FBTermination.cpp FewBody/GroupAccelerationRoutine.cpp
 #ifdef USE_SEVN
 #CXXFLAGS += -DSEVN -I/data/vinicius/sevn/build/include/sevn
