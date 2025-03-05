@@ -122,20 +122,21 @@ void RootRoutines()
 #ifdef NSIGHT
 		nvtxRangePushA("updateNextRegTime");
 #endif
+#ifdef FEWBODY
 		if (!bin_termination && !new_binaries) // (Query) do we really need these conditions? 2025.03.02
+#endif
 			updateNextRegTime(RegularList);
 
 #ifdef NSIGHT
 		nvtxRangePop();
 #endif
-		/*
 		std::cout << "NextRegTimeBlock=" << NextRegTimeBlock << std::endl;
 		std::cout << "PID= ";
 		for (int i : RegularList)
 			std::cout << i<< ", ";
 		std::cout << std::endl;
 		std::cout << "size of regularlist= " << RegularList.size() << std::endl;
-		*/
+
 		IrregularRoutines(queue_scheduler, workers);
 
 		RegularRoutines(queue_scheduler, workers);
@@ -169,7 +170,7 @@ void updateNextRegTime(std::unordered_set<int> &RegularList)
 {
 
 	ULL time_tmp = 0, time = block_max;
-	Particle *ptcl;
+	Particle *ptcl = nullptr;
 
 	RegularList.clear();
 
@@ -192,7 +193,8 @@ void updateNextRegTime(std::unordered_set<int> &RegularList)
 				time = time_tmp;
 			}
 			// RegularList.push_back(ptcl->ParticleIndex);
-			RegularList.insert(ptcl->ParticleIndex);
+
+			RegularList.insert(PIDtoIndexMap[ptcl->PID]);
 		}
 	}
 	NextRegTimeBlock = time;

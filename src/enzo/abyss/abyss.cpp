@@ -18,6 +18,7 @@
 
 
 void broadcastFromRoot(int &data);
+void broadcastFromRoot(double &data);
 void DefaultGlobal();
 void WorkerRoutines();
 void RootRoutines();
@@ -26,8 +27,21 @@ int InitialCommunication();
 
 int ABYSS() {
 
+	fprintf(stdout, "Abyss Starts!\n");
+
 	/* Initialize global variables */
 	DefaultGlobal();
+
+
+	/*********************************************************************
+	 *  Configuration for outputing log files
+	 *********************************************************************/
+	binout = fopen("binary_output.txt", "w");
+	nbpout = fopen("abyss_output.txt", "w");
+	//gpuout = fopen("cuda_output.txt", "w");
+	fprintf(nbpout, "Abyss Output Starts!\n");
+	//fprintf(binout, "Binary Output Starts!\n");
+	//fprintf(gpuout, "CUDA Output Starts!\n");
 
 	binout = fopen("binary_output.txt", "w");
 	fprintf(binout, "Starting nbody - Binary OUTPUT\n");
@@ -52,7 +66,18 @@ int ABYSS() {
 
 	if (AbyssProcessorNumber == ROOT)
 		InitialCommunication();
+
+	// things that should be synchronized.
 	MPI_Barrier(abyss_comm);
+	broadcastFromRoot(EnzoMass);
+	broadcastFromRoot(EnzoLength);
+	broadcastFromRoot(EnzoVelocity);
+	broadcastFromRoot(EnzoTime);
+	broadcastFromRoot(EnzoAcceleration);
+	broadcastFromRoot(EnzoTimeStep);
+	broadcastFromRoot(EPS2);
+	broadcastFromRoot(InitialNeighborRadius);
+	broadcastFromRoot(FixNumNeighbor);
 
 	/*
 	// Insert this function definition at the top of your code after the include directives.
@@ -77,7 +102,7 @@ int ABYSS() {
 		RootRoutines();
 	} else {
 		// /* // by EW 2025.1.27
-		std::string filename = "worker_output_" + std::to_string(AbyssProcessorNumber) + ".txt";
+		std::string filename = "log/worker/worker_output_" + std::to_string(AbyssProcessorNumber) + ".txt";
 		workerout = fopen(filename.c_str(), "w");
 		fprintf(workerout, "Starting nbody - WORKER OUTPUT\n");
 		fflush(workerout);

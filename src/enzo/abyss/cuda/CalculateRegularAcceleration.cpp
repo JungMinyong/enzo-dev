@@ -11,6 +11,8 @@
 #include <nvToolsExt.h>
 #endif
 
+#define DEBUG
+
 void InitialAssignmentOfTasks(std::vector<int>& data, double next_time, int NumTask, int TAG);
 void InitialAssignmentOfTasks(std::vector<int>& data, int NumTask, int TAG);
 void InitialAssignmentOfTasks(int data, int NumTask, int TAG);
@@ -205,6 +207,14 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	std::cout << std::endl;
 	*/
 
+	std::cout << "(REG_CUDA) AccRegReceive";
+	for (int i=0; i<RegularList.size(); i++) {
+		std::cout << AccRegReceive[i][0] << "\n";
+		assert(AccRegReceive[i][0] == AccRegReceive[i][0]);
+	}
+	std::cout << std::endl;
+	
+
 #ifdef DEBUG
 	std::cout << "Adjust Regular Gravity starts" << std::endl;
 #endif
@@ -226,13 +236,13 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
         {
             if ((*worker)->NumberOfQueues > 0) // original
             {
-				//std::cout << "(REG_CUDA) My Rank =" << (*worker)->AbyssProcessorNumber << std::endl;
-				MPI_Send(&task, 1, MPI_INT, (*worker)->AbyssProcessorNumber, TASK_TAG, MPI_COMM_WORLD);
-				MPI_Send(&ActiveIndexToOriginalIndex[IndexList[i]], 1, MPI_INT, (*worker)->AbyssProcessorNumber, PTCL_TAG, MPI_COMM_WORLD);
-				MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, (*worker)->AbyssProcessorNumber, 10, MPI_COMM_WORLD);
-				MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, (*worker)->AbyssProcessorNumber, 11, MPI_COMM_WORLD);
-				MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, (*worker)->AbyssProcessorNumber, 12, MPI_COMM_WORLD);
-				MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->AbyssProcessorNumber, 13, MPI_COMM_WORLD);
+				//std::cout << "(REG_CUDA) My Rank =" << (*worker)->MyRank << std::endl;
+				MPI_Send(&task, 1, MPI_INT, (*worker)->MyRank, TASK_TAG, abyss_comm);
+				MPI_Send(&ActiveIndexToOriginalIndex[IndexList[i]], 1, MPI_INT, (*worker)->MyRank, PTCL_TAG, abyss_comm);
+				MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, (*worker)->MyRank, 10, abyss_comm);
+				MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, (*worker)->MyRank, 11, abyss_comm);
+				MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 12, abyss_comm);
+				MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 13, abyss_comm);
 				((*worker))->onDuty = true;
 				/*
 				(*worker)->CurrentQueue++;
@@ -242,23 +252,23 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
                 worker = queue_scheduler.WorkersToGo.erase(worker);
 				i++;
 #ifdef DEBUG
-				std::cout << "i: " << i << std::endl;
+				//std::cout << "i: " << i << std::endl;
 #endif
             }
 			else
 			{
                 ++worker;
 #ifdef DEBUG
-				std::cout << "worker AbyssProcessorNumber: " << (*worker)->AbyssProcessorNumber << std::endl;
+				std::cout << "worker MyRank: " << (*worker)->MyRank << std::endl;
 #endif
 			}
         }
 #ifdef DEBUG
-		std::cout << "queue_scheduler.waitQueue(0) starts" << std::endl;
+		//std::cout << "queue_scheduler.waitQueue(0) starts" << std::endl;
 #endif
 		queue_scheduler.waitQueue(0); // blocking wait
 #ifdef DEBUG
-		std::cout << "queue_scheduler.waitQueue(0) ended" << std::endl;
+		//std::cout << "queue_scheduler.waitQueue(0) ended" << std::endl;
 #endif
 	} while (queue_scheduler.isComplete());
 
@@ -270,44 +280,6 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	std::cout << "Adjust Regular Gravity ended" << std::endl;
 #endif
 
-
-#ifdef nouse
-	ws.initialize();
-	int return_value, i = 0;
-	ws._setTask(4);
-	ws._total_tasks = RegularList.size();
-	ws._completed_tasks = 0;
-
-	do
-	{
-		if (ws._FreeWorkers.size() == 0 || ws._assigned_tasks == ws._total_tasks)
-		{
-			// have to add check all the sends are recved.
-			// MPI_Waitall(NumberOfCommunication, requests, statuses);
-			// NumberOfCommunication = 0;
-			ws._checkCompletion(return_value);
-			/* we can do something here */
-			ws._Callback();
-			ws._completed_tasks++;
-		}
-		if (ws._FreeWorkers.size() != 0 && ws._assigned_tasks < ws._total_tasks)
-		{
-			ws._WorkerTmp = ws._FreeWorkers.back();
-			ws._FreeWorkers.pop_back();
-			MPI_Send(&ws._WorkerTmp->task, 1, MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, TASK_TAG, MPI_COMM_WORLD);
-			MPI_Send(&RegularList[i], 1, MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, PTCL_TAG, MPI_COMM_WORLD);
-			MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, 10, MPI_COMM_WORLD);
-			MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, ws._WorkerTmp->AbyssProcessorNumber, 11, MPI_COMM_WORLD);
-			MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, ws._WorkerTmp->AbyssProcessorNumber, 12, MPI_COMM_WORLD);
-			MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, ws._WorkerTmp->AbyssProcessorNumber, 13, MPI_COMM_WORLD);
-			ws._WorkerTmp->onDuty = true;
-			ws._assigned_tasks++;
-			//fprintf(stdout, "assigned_tasks = %d/%d, number of free worker = %d pid = %d rank = %d\n",
-					//ws._assigned_tasks, ws._total_tasks, ws._FreeWorkers.size(), RegularList[i], ws._WorkerTmp->AbyssProcessorNumber);
-		}
-		i++;
-	} while (ws._completed_tasks < ws._total_tasks);
-#endif
 
 	delete[] IndexList;
 
@@ -382,6 +354,11 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 		else
 			ptcl->predictParticleSecondOrder(new_time-ptcl->CurrentTimeIrr, Position[size], Velocity[size]);
 
+
+		assert(Position[size][0] == Position[size][0]);
+		assert(Position[size][0] != 0);
+		assert(Velocity[size][0] == Velocity[size][0]);
+
 		ActiveIndexToOriginalIndex[size] = i;
 		// std::cout << "(size , i) = "  << size << " " << i << std::endl;
 		size++;
@@ -431,6 +408,9 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 		else
 			ptcl->predictParticleSecondOrder(new_time-ptcl->CurrentTimeIrr, Position[size], Velocity[size]);
 
+		assert(Position[size][0] == Position[size][0]);
+		assert(Velocity[size][0] == Velocity[size][0]);
+		assert(Position[size][0] != 0);
 		ActiveIndexToOriginalIndex[size] = i;
 		// std::cout << "(size , i) = "  << size << " " << i << std::endl;
 		size++;

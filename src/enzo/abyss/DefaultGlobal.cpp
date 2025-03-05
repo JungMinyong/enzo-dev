@@ -63,10 +63,15 @@ FILE* workerout;
 Performance performance;
 #endif
 
+
+
+double InitialNeighborRadius;
+double EPS2;
+int FixNumNeighbor, MaxNumNeighbor;
+
 void DefaultGlobal() {
 
 
-	NumberOfWorker = NumberOfAbyssProcessors-1;
 	/* Task initialization */
 	//int Task[NumberOfTask];
 	for (int i=0;i<NumberOfTask; i++) {
@@ -99,6 +104,9 @@ void DefaultGlobal() {
 			AvailableIndices[i] = -1;
 		}
 	}
+
+	NumberOfWorker = NumberOfAbyssProcessors-1;
+
 
 
 	bin_termination = false;

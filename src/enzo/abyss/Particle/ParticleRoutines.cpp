@@ -6,6 +6,7 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
 			 	double *BackgroundAcceleration[Dim], int &i) {
 
 	__initialize__();
+	this->isActive 					 = true;
 	this->PID                        = PID[i];
 	this->Mass                       = Mass[i]*EnzoMass;
 	this->InitialMass                = this->Mass;
@@ -25,7 +26,7 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
 																		 *EnzoAcceleration;
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
-	//this->RadiusOfNeighbor           = InitialRadiusOfAC;
+	this->RadiusOfNeighbor           = InitialNeighborRadius;
 }
 
 void Particle::set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime,
@@ -33,6 +34,7 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
                    double *BackgroundAcceleration[Dim], int ParticleType, int &i)
 {
     __initialize__();
+	this->isActive 					 = true;
 	this->PID                        = PID[i];
 	this->Mass                       = Mass[i]*EnzoMass;
 	this->InitialMass                = this->Mass;
@@ -53,7 +55,7 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
 	this->ParticleType               = ParticleType;
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
-	//this->RadiusOfNeighbor           = InitialRadiusOfAC;
+	this->RadiusOfNeighbor           = InitialNeighborRadius;
 }
 
 void Particle::update(double *Mass, double *BackgroundAcceleration[Dim], int &i)

@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <cstdlib> // For getenv
 
-#define NBODY
 
 typedef int MPI_Arg;
 extern int local_rank, local_size;
@@ -29,15 +28,6 @@ extern int MyProcessorNumber;
 extern int NumberOfProcessors;
 extern int TotalNumberOfProcessors;
 
-#ifdef NBODY
-extern int WorldProcessorNumber;
-extern int AbyssProcessorNumber;
-extern int NumberOfAbyssProcessors;
-extern MPI_Comm enzo_comm;
-extern MPI_Comm abyss_comm;
-extern MPI_Comm inter_comm;
-extern MPI_Comm local_comm;
-#endif
 
 extern MPI_Errhandler CommunicationErrorHandler;
 extern float CommunicationTime;
@@ -46,10 +36,20 @@ extern int CommunicationDirection;
 //#include "macros_and_parameters.h"
 //#include "typedefs.h"
 //#include "global_data.h"
+
 #ifdef NBODY
 #include "communicators.h"
 #include "abyss/particle.h"
 #include "abyss/global.h"
+#include "abyss/def.h"
+
+extern int WorldProcessorNumber;
+extern int AbyssProcessorNumber;
+extern int NumberOfAbyssProcessors;
+//extern MPI_Comm enzo_comm;
+//extern MPI_Comm abyss_comm;
+//extern MPI_Comm inter_comm;
+//extern MPI_Comm local_comm;
 
 Particle *particles_original;
 Particle *particles;
@@ -63,6 +63,11 @@ MPI_Win win3;
 GlobalVariable *global_variable;
 GlobalVariable *global_variable_original;
 
+MPI_Comm abyss_comm;
+MPI_Comm inter_comm;
+MPI_Comm enzo_comm;
+MPI_Comm local_comm;
+
 #endif
 
  
@@ -73,10 +78,6 @@ void my_exit(int exit_status);
 void CommunicationErrorHandlerFn(MPI_Comm *comm, MPI_Arg *err, ...);
 #ifdef NBODY
 //#define NumberOfNbodyProcessors 1
-	MPI_Comm abyss_comm;
-	MPI_Comm inter_comm;
-	MPI_Comm enzo_comm;
-	MPI_Comm local_comm;
 	int local_rank, local_size;
 	//int NumberOfAbyssProcessors;
 	//int WorldProcessorNumber;
@@ -244,33 +245,33 @@ int CommunicationInitialize(int &argc, char *argv[])
 		 ***********************************/
 
 		// Allocate shared memory
-		if (abyss_comm != MPI_COMM_NULL)
+		//if (abyss_comm != MPI_COMM_NULL)
+		//{
+		if (AbyssProcessorNumber == 0)
 		{
-			if (AbyssProcessorNumber == 0)
-			{
-				// MPI_Win_allocate_shared(sizeof(int), sizeof(int), MPI_INFO_NULL, local_comm, &shared_mem, &win);
-				MPI_Win_allocate_shared(sizeof(Particle) * MaxNumberOfParticle, sizeof(Particle),
-										MPI_INFO_NULL, local_comm, &particles_original, &win);
-				MPI_Win_allocate_shared(sizeof(GlobalVariable), sizeof(GlobalVariable),
-										MPI_INFO_NULL, local_comm, &global_variable_original, &win2);
-				MPI_Win_allocate_shared(sizeof(int) * MaxNumberOfParticle, sizeof(int),
-										MPI_INFO_NULL, local_comm, &ActiveIndexToOriginalIndex_orginal, &win3);
-			}
-			else
-			{
-				MPI_Win_allocate_shared(0, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles_original, &win);
-				MPI_Win_allocate_shared(0, sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable_original, &win2);
-				MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &ActiveIndexToOriginalIndex_orginal, &win3);
-			}
-			// Query shared memory of rank 0
-
-			MPI_Aint size_bytes;
-			int disp_unit;
-
-			MPI_Win_shared_query(win, 0, &size_bytes, &disp_unit, &particles);
-			MPI_Win_shared_query(win2, 0, &size_bytes, &disp_unit, &global_variable);
-			MPI_Win_shared_query(win3, 0, &size_bytes, &disp_unit, &ActiveIndexToOriginalIndex);
+			// MPI_Win_allocate_shared(sizeof(int), sizeof(int), MPI_INFO_NULL, local_comm, &shared_mem, &win);
+			MPI_Win_allocate_shared(sizeof(Particle) * MaxNumberOfParticle, sizeof(Particle),
+									MPI_INFO_NULL, local_comm, &particles_original, &win);
+			MPI_Win_allocate_shared(sizeof(GlobalVariable), sizeof(GlobalVariable),
+									MPI_INFO_NULL, local_comm, &global_variable_original, &win2);
+			MPI_Win_allocate_shared(sizeof(int) * MaxNumberOfParticle, sizeof(int),
+									MPI_INFO_NULL, local_comm, &ActiveIndexToOriginalIndex_orginal, &win3);
 		}
+		else
+		{
+			MPI_Win_allocate_shared(0, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles_original, &win);
+			MPI_Win_allocate_shared(0, sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable_original, &win2);
+			MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &ActiveIndexToOriginalIndex_orginal, &win3);
+		}
+		// Query shared memory of rank 0
+
+		MPI_Aint size_bytes;
+		int disp_unit;
+
+		MPI_Win_shared_query(win, 0, &size_bytes, &disp_unit, &particles);
+		MPI_Win_shared_query(win2, 0, &size_bytes, &disp_unit, &global_variable);
+		MPI_Win_shared_query(win3, 0, &size_bytes, &disp_unit, &ActiveIndexToOriginalIndex);
+		//}
 	}
 	else
 	{

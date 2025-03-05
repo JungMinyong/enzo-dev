@@ -47,7 +47,7 @@ void CalculateAcceleration01(Particle* ptcl1) {
 	for (int i=0; i<global_variable->LastParticleIndex; i++) {
 		ptcl2 = &particles[i];
 
-		if (ptcl1->PID == ptcl2->PID) {
+		if (ptcl1->ParticleIndex == ptcl2->ParticleIndex) {
 			continue;
 		}
 
@@ -97,7 +97,7 @@ void CalculateAcceleration01(Particle* ptcl1) {
 		for (int i: CMPtclsSet) {
 			ptcl2 = &particles[i];
 
-			if (ptcl1->PID == ptcl2->PID) {
+			if (ptcl1->ParticleIndex == ptcl2->ParticleIndex) {
 				continue;
 			}
 
@@ -182,7 +182,7 @@ void CalculateAcceleration23(Particle* ptcl1) {
 	for (int i=0; i<global_variable->LastParticleIndex; i++) {
 		ptcl2 = &particles[i];
 
-		if (ptcl1->PID == ptcl2->PID) {
+		if (ptcl1->ParticleIndex == ptcl2->ParticleIndex){
 			continue;
 		}
 
@@ -251,7 +251,7 @@ void CalculateAcceleration23(Particle* ptcl1) {
 		for (int i: CMPtclsSet) {
 			ptcl2 = &particles[i];
 
-			if (ptcl1->PID == ptcl2->PID) {
+			if (ptcl1->ParticleIndex == ptcl2->ParticleIndex) {
 				continue;
 			}
 

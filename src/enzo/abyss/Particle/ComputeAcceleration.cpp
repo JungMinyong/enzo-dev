@@ -446,7 +446,6 @@ void Particle::computeAccelerationReg() {
 // Modified by EW 2025.1.30
 
 void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNeighborGPU, double *new_a, double *new_adot) {
-/*
 	std::cerr <<  "in here!" << std::endl;
 	int NeighborIndex;
 	std::cerr <<  "Compute: MyPID=" <<  this->PID;
@@ -467,7 +466,6 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 		//std::cout <<  particles[NeighborIndex].PID << ", ";
 	}
 	std::cerr << std::endl;
-*/
 /*
 	if (this->PID == 28150) {
 		std::cerr << "NumberOfNeighbor: " << this->NumberOfNeighbor << "\n" << "NewNumberOfNeighborGPU: " << NewNumberOfNeighborGPU << std::endl;
@@ -533,7 +531,14 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 			}
 		}
 	}
-	assert(RealNumberOfNeighbor == hashTableOld.size()); // for debugging by EW 2025.1.30
+	if (RealNumberOfNeighbor != hashTableOld.size()) {
+		fprintf(stderr, "(PID %d, PI %d) this->NumNeighbors=%d, RealNumberOfNeighbor=%d, hashTableOld.size()=%d\n",
+		 this->PID, this->ParticleIndex, this->NumberOfNeighbor, RealNumberOfNeighbor, hashTableOld.size());
+		for (int i =0; i<RealNumberOfNeighbor; i++) {
+		fprintf(stderr, "%d, ", RealNeighbors[i]);
+		}
+			assert(RealNumberOfNeighbor == hashTableOld.size()); // for debugging by EW 2025.1.30
+	}
 
 	size = hashTableNew.size() > hashTableOld.size() ? hashTableNew.size() : hashTableOld.size();
 

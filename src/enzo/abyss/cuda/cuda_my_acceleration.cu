@@ -15,6 +15,8 @@
 #include <nvToolsExt.h>
 #endif
 
+#define DEBUG
+
 
 
 extern int AbyssProcessorNumber;
@@ -70,7 +72,7 @@ int **d_num_neighbor_block_array = new int*[4];
 int *d_target=nullptr;
 // double3 *d_adot=nullptr, *d_acc=nullptr;
 
-//#define debuggig_verification
+#define debuggig_verification
 #ifdef debuggig_verification
 extern CUDA_REAL *h_r2;
 CUDA_REAL *h_r2=nullptr; //only for verification
@@ -321,7 +323,10 @@ void GetAcceleration(
 				double dz = iz - h_ptcl[j + NNB * 2];
 				double r2_temp = dx*dx + dy*dy + dz*dz;
 				if (r2_temp < i_r2) {
-					fprintf(stderr, "%d, (%e)", j, r2_temp);
+					fprintf(stderr, "(%d, %e), ", j, r2_temp);
+				}
+				else {
+					fprintf(stderr, "(%d, too far), ", j);
 				}
 			}
 			fprintf(stderr, "\n");
@@ -342,9 +347,6 @@ void GetAcceleration(
 	*/
 
 }
-
-
-
 #else
 void GetAcceleration(
 		int NumTargetTotal,
@@ -881,6 +883,8 @@ void _InitializeDevice(int irank){
 	*/
 }
 #else //the regacy
+
+
 void _InitializeDevice(int irank){
 
 	if (AbyssProcessorNumber == ROOT) {

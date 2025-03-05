@@ -14,7 +14,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define noDEBUG
+#define DEBUG
 
 void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);
@@ -61,24 +61,25 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
 #ifdef DEBUG
         // print out particlelist
-        fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time * EnzoTimeStep * 1e4);
         /*
-        fprintf(stdout, "PID: %d. CurrentTimeIrr: %e Myr, TimeStepIrr: %e Myr\n",
+        fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time * EnzoTimeStep * 1e4);
+        fprintf(stdout, "ParticleInde (PID)x: %d (%d). CurrentTimeIrr: %e Myr, TimeStepIrr: %e Myr\n",
+                    particles[ThisLevelNode->ParticleList[0]].ParticleIndex,
                     particles[ThisLevelNode->ParticleList[0]].PID,
                     particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr*EnzoTimeStep*1e4,
                     particles[ThisLevelNode->ParticleList[0]].TimeStepIrr*EnzoTimeStep*1e4);
 
-        // fprintf(stdout, "PID (%d) = ", ThisLevelNode->ParticleList.size());
+        fprintf(stdout, "ParticleIndex (%d) = ", ThisLevelNode->ParticleList.size());
         for (int i=0; i<ThisLevelNode->ParticleList.size(); i++) {
             ptcl = &particles[ThisLevelNode->ParticleList[i]];
             // fprintf(stdout, "%d, ", ptcl->PID);
-            fprintf(stdout, "PID: %d. %e Myr, %e Myr\n",
-                    ptcl->PID,
+            fprintf(stdout, "ParticleIndex: %d. %e Myr, %e Myr\n",
+                    ptcl->ParticleIndex,
                     ptcl->CurrentTimeIrr*EnzoTimeStep*1e4,
                     ptcl->TimeStepIrr*EnzoTimeStep*1e4);
         }
         fprintf(stdout, "\n");
-        // fflush(stdout);
+        fflush(stdout);
         */
 #endif
 

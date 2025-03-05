@@ -14,7 +14,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define noDEBUG
+#define DEBUG
 
 void InitialAssignmentOfTasks(std::vector<int>& data, double next_time, int NumTask, int TAG);
 void InitialAssignmentOfTasks(std::vector<int>& data, int NumTask, int TAG);
@@ -36,18 +36,18 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 	MPI_Status status;    // Pointer to the status object
 	int completed_tasks=0;
 
-    std::vector<int> PIDs;
-    PIDs.reserve(NumberOfParticle);
-    PIDs.resize(NumberOfParticle);
+    std::vector<int> ParticleIndices;
+    ParticleIndices.reserve(NumberOfParticle);
+    ParticleIndices.resize(NumberOfParticle);
 
     for (int i = 0; i <= LastParticleIndex; i++)
     {
-        PIDs[i] = i;
+        ParticleIndices[i] = i;
     }
 
     std::cout << "Initialization of particles starts." << std::endl;
     queue_scheduler.initialize(InitAcc1);
-    queue_scheduler.takeQueue(PIDs);
+    queue_scheduler.takeQueue(ParticleIndices);
     do
     {
         // queue_scheduler.printFreeWorker();
@@ -61,7 +61,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
     std::cout << "Init 01 done" << std::endl;
     queue_scheduler.initialize(InitAcc2);
-    queue_scheduler.takeQueue(PIDs);
+    queue_scheduler.takeQueue(ParticleIndices);
     do
     {
         queue_scheduler.assignQueueAuto();
@@ -75,7 +75,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     // Primordial binary search
 
     queue_scheduler.initialize(SearchPrimordialGroup);
-    queue_scheduler.takeQueue(PIDs);
+    queue_scheduler.takeQueue(ParticleIndices);
     do
     {
         queue_scheduler.assignQueueAuto();
@@ -104,7 +104,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                       << rank << "." << std::endl;
             ptcl = &particles[i];
             CMPtclWorker.insert({ptcl->ParticleIndex, CMPtclWorker.size() % NumberOfWorker + 1});
-            PIDs.push_back(ptcl->ParticleIndex);
+            ParticleIndices.push_back(ptcl->ParticleIndex);
             rank = CMPtclWorker[ptcl->ParticleIndex];
 
             queue.task = MakePrimordialGroup;
@@ -131,7 +131,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
     // Initialize Time Step
     queue_scheduler.initialize(InitTime);
-    queue_scheduler.takeQueue(PIDs);
+    queue_scheduler.takeQueue(ParticleIndices);
     do
     {
         queue_scheduler.assignQueueAuto();
@@ -259,29 +259,29 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             MPI_Wait(&request, &status);
             completed_tasks++;
         }
-        fprintf(stderr, "nbody+:time_block = %d, EnzoTimeStep=%e\n", time_block, EnzoTimeStep);
-        fflush(stderr);
+        fprintf(nbpout, "nbody+:time_block = %d, EnzoTimeStep=%e\n", time_block, EnzoTimeStep);
+        //fflush(stderr);
     }
 
     /* Particle Initialization Check */
-    /*
     {
         //, NextRegTime= %.3e Myr(%llu),
         for (int i=0; i<=LastParticleIndex; i++) {
             ptcl = &particles[i];
-            fprintf(stdout, "%d(%d)=",ptcl->PID,ptcl->NumberOfNeighbor);
+            fprintf(nbpout, "PID=%d,PI=%d, (%d)=",ptcl->PID,ptcl->ParticleIndex,ptcl->NumberOfNeighbor);
             for (int j=0;j<ptcl->NumberOfNeighbor;j++) {
-                fprintf(stdout, "%d, ",ptcl->Neighbors[j]);
+                fprintf(nbpout, "%d, ",ptcl->Neighbors[j]);
             }
-            fprintf(stdout, "\n");
+            fprintf(nbpout, "\n");
         }
     }
         for (int i=0; i<=LastParticleIndex; i++) {
             ptcl = &particles[i];
-            fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"\
+            fprintf(nbpout, "PID=%d(%d), CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"\
                     "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"\
                     "NumNeighbor= %d\n",
                     ptcl->PID,
+                    ptcl->ParticleIndex,
                     ptcl->CurrentTimeIrr*EnzoTimeStep*1e10/1e6,
                     ptcl->CurrentBlockIrr,
                     ptcl->CurrentTimeReg*EnzoTimeStep*1e10/1e6,
@@ -297,7 +297,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     ptcl->NumberOfNeighbor
                     );
 
-            fprintf(stdout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
+            fprintf(nbpout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
                     a1_reg = (%.4e,%.4e,%.4e), a2_reg = (%.4e,%.4e,%.4e), a3_reg = (%.4e,%.4e,%.4e)\n\
                     a1_irr = (%.4e,%.4e,%.4e), a2_irr = (%.4e,%.4e,%.4e), a3_irr = (%.4e,%.4e,%.4e)\n",
                     ptcl->a_tot[0][0],
@@ -332,18 +332,17 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         );
 
         }
-        fflush(stdout);
-    }
-    */
+        fflush(nbpout);
     /* Particle Initialization Check */
     // /*
-    {
         //, NextRegTime= %.3e Myr(%llu),
+        /*
+    {
         for (int i = 0; i <= LastParticleIndex; i++)
         {
             ptcl = &particles[i];
             if (ptcl->isActive)
-                fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
+                fprintf(nbpout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
                                 "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"
                                 "NumNeighbor= %d\n",
                         ptcl->PID,
@@ -361,5 +360,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         ptcl->TimeLevelReg,
                         ptcl->NumberOfNeighbor);
         }
+        fflush(nbpout);
     }
+        */
 }

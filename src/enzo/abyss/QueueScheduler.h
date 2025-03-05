@@ -177,7 +177,7 @@ public:
     void printFreeWorker() {
         std::cout << std::left << "FreeWorker List: ";
         for (Worker* worker: _FreeWorkers) {
-            std::cout << std::setw(3) << worker->AbyssProcessorNumber;
+            std::cout << std::setw(3) << worker->MyRank;
         }
         std::cout << std::endl;
     }
@@ -185,7 +185,7 @@ public:
     void printWorkerToGo() {
         std::cout << std::left << "WorkersToGo List: ";
         for (Worker* worker: WorkersToGo) {
-            std::cout << std::setw(3) << worker->AbyssProcessorNumber;
+            std::cout << std::setw(3) << worker->MyRank;
         }
         std::cout << std::endl;
     }
@@ -201,7 +201,7 @@ public:
         std::cout << "-----------Worker Status-----------" << std::endl;
         std::cout << std::left << std::setw(10) << "AbyssProcessorNumber";
         for (int i=1; i<=NumberOfWorker; i++) {
-            std::cout << "|  " << std::setw(4) << workers[i].AbyssProcessorNumber;
+            std::cout << "|  " << std::setw(4) << workers[i].MyRank;
         }
         std::cout << std::endl;
 
@@ -488,14 +488,14 @@ private:
     void _assignJobs(Worker *worker) {
         if ((worker->task == 0) || (worker->task == 1) || (worker->task == 26))
         {
-            MPI_Send(&worker->task,      1, MPI_INT,    worker->AbyssProcessorNumber, TASK_TAG, abyss_comm);
-            MPI_Send(&worker->PID,       1, MPI_INT,    worker->AbyssProcessorNumber, PTCL_TAG, abyss_comm);
-            MPI_Send(&worker->next_time, 1, MPI_DOUBLE, worker->AbyssProcessorNumber, TIME_TAG, abyss_comm);
+            MPI_Send(&worker->task,      1, MPI_INT,    worker->MyRank, TASK_TAG, abyss_comm);
+            MPI_Send(&worker->PID,       1, MPI_INT,    worker->MyRank, PTCL_TAG, abyss_comm);
+            MPI_Send(&worker->next_time, 1, MPI_DOUBLE, worker->MyRank, TIME_TAG, abyss_comm);
         }
         else
         {
-            MPI_Send(&worker->task, 1, MPI_INT, worker->AbyssProcessorNumber, TASK_TAG, abyss_comm);
-            MPI_Send(&worker->PID,  1, MPI_INT, worker->AbyssProcessorNumber, PTCL_TAG, abyss_comm);
+            MPI_Send(&worker->task, 1, MPI_INT, worker->MyRank, TASK_TAG, abyss_comm);
+            MPI_Send(&worker->PID,  1, MPI_INT, worker->MyRank, PTCL_TAG, abyss_comm);
         }
         worker->onDuty = true;
     }

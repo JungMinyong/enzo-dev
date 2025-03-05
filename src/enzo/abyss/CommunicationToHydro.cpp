@@ -18,13 +18,10 @@
 extern int StarParticleFeedback;
 extern double StarMassEjectionFraction;
 extern int ComovingCoordinates;
-double InitialNeighborRadius;
-Particle* FirstParticleInEnzo = nullptr;
-//double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
 double EnzoCurrentTime, ClusterRadius2;
 double ClusterAcceleration[Dim], ClusterPosition[Dim], ClusterVelocity[Dim], EnzoClusterPosition[Dim+1];
-double EPS2, eta_tmp;
-int FixNumNeighbor, MaxNumNeighbor, FixNumNeighbor0, IdentifyNbodyParticles;
+double eta_tmp;
+int FixNumNeighbor0, IdentifyNbodyParticles;
 int BinaryRegularization, IdentifyOnTheFly;
 
 //double KSTime;
@@ -39,6 +36,9 @@ void GetCenterOfMass(double *mass, double *x[Dim], double *v[Dim], double x_com[
 void GetNewCenterOfMass(int *PID, double *mass2, double *x2[Dim], double *v2[Dim], int n2, double x_X[], double v_X[]);
 //void UpdateNextRegTime(std::vector<Particle*> &particle);
 int CommunicationInterBarrier();
+void broadcastFromRoot(int &data);
+void broadcastFromRoot(double &data);
+void broadcastFromRoot(ULL &data);
 //void CalculateAllAccelerationOnGPU(std::vector<Particle*> &particle);
 //void KSTermination(Particle* ptclCM, std::vector<Particle*> &particle, double current_time, ULL current_block);
 
@@ -213,9 +213,10 @@ int InitialCommunication() {
 				Position[dim][i]               -= ClusterPosition[dim];
 			}
 			EnzoPIDs[i] = PID[i];
-			PIDtoIndexMap.insert({PID[i], i});
 			particles[i].set(PID, Mass, CreationTime, DynamicalTime, Position, Velocity,
 							 BackgroundAcceleration, i);
+			PIDtoIndexMap.insert({PID[i], i});
+			particles[i].ParticleIndex = i;
 		}
 
 		
@@ -257,7 +258,14 @@ int InitialCommunication() {
 		}
 	}
 
+	NumberOfParticle = NumberOfSingleParticle;
+	LastParticleIndex = NumberOfSingleParticle-1;
+
+
 	FixNumNeighbor = std::min((int) std::floor(NumberOfSingleParticle/2), FixNumNeighbor0);
+
+
+
 	fprintf(nbpout, "NBODY+: %d particles loaded!\n", NumberOfSingleParticle);
 	fflush(stdout);
 	fflush(stderr);
@@ -503,6 +511,7 @@ int ReceiveFromEnzo() {
 			particles[index].set(newPID, newMass, newCreationTime, newDynamicalTime, newPosition, newVelocity,
 					//newBackgroundAcceleration, NormalStar+SingleParticle+NewParticle, i);
 					newBackgroundAcceleration, NormalStar, i);
+			particles[index].ParticleIndex = index;
 			PIDtoIndexMap.insert({newPID[i], index});
 			EnzoPIDs[NumberOfSingleParticle+i] = newPID[i];
 
@@ -1019,6 +1028,7 @@ int SendToEnzo() {
 	}
 
 	NumberOfSingleParticle -= NumberOfEscapeParticle;
+	NumberOfParticle -= NumberOfEscapeParticle;
 	std::cout << "NBODY+: Sending data finished." << std::endl;
 
 

@@ -88,6 +88,7 @@ extern double StarMassEjectionFraction;
 extern int ComovingCoordinates;
 extern double eta_tmp;
 extern double InitialNeighborRadius;
+extern double EPS2;
 
 // i/o
 extern char* fname;
