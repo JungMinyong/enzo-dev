@@ -266,17 +266,17 @@ verbose: $(EXE).exe
 	@rm -f $@
 	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(F77)  -x f77 -cpp -lstdc++-c -lmpi  -o $@ $(FFLAGS) -lmpi -I./nbody/include $(INCLUDES) $(DEFINES)  $*.for >& $(OUTPUT) ; \
+	  $(F77)  -x f77 -cpp -lstdc++-c -lmpi  -o $@ $(FFLAGS) -lmpi -I./abyss/include $(INCLUDES) $(DEFINES)  $*.for >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(for) -x f77 -cpp -lstdc++ -c -o $@ $(FFLAGS) -lmpi -I./nbody/include $(INCLUDES) $(DEFINES) $*.for"; \
+             echo "$(for) -x f77 -cpp -lstdc++ -c -o $@ $(FFLAGS) -lmpi -I./abyss/include $(INCLUDES) $(DEFINES) $*.for"; \
              echo; \
-             $(for) -x f77 -cpp -lstdc++ -lmpi  -c -o $@ $(FFLAGS) -lmpi  -I./nbody/include $(INCLUDES) $(DEFINES) $*.for; \
+             $(for) -x f77 -cpp -lstdc++ -lmpi  -c -o $@ $(FFLAGS) -lmpi  -I./abyss/include $(INCLUDES) $(DEFINES) $*.for; \
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(F77) -x f77 -cpp -lstdc++ -c -lmpi  -o $@ $(FFLAGS)  -lmpi -I./nbody/include  $(INCLUDES) $(DEFINES) $*.for >> $(OUTPUT) 2>&1 ; \
+	  $(F77) -x f77 -cpp -lstdc++ -c -lmpi  -o $@ $(FFLAGS)  -lmpi -I./abyss/include  $(INCLUDES) $(DEFINES) $*.for >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
@@ -493,10 +493,10 @@ help:
 clean:
 	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) enzo.exe \
           auto_show*.C hydro_rk/*.o *.oo hydro_rk/*.oo \
-					nbody/*.o \
-					nbody/Particle/*.o \
-					nbody/Binary/*.o \
-					nbody/cuda/*.o \
+					abyss/*.o \
+					abyss/Particle/*.o \
+					abyss/Binary/*.o \
+					abyss/cuda/*.o \
           uuid/*.oo DEPEND TAGS \
           libconfig/*.o \
           python_bridge/problemtype_handler.C \
