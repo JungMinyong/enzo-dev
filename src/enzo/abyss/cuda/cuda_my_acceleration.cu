@@ -15,7 +15,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define DEBUG
+#define noDEBUG
 
 
 
@@ -72,7 +72,7 @@ int **d_num_neighbor_block_array = new int*[4];
 int *d_target=nullptr;
 // double3 *d_adot=nullptr, *d_acc=nullptr;
 
-#define debuggig_verification
+#define no_debuggig_verification
 #ifdef debuggig_verification
 extern CUDA_REAL *h_r2;
 CUDA_REAL *h_r2=nullptr; //only for verification
@@ -326,11 +326,11 @@ void GetAcceleration(
 					fprintf(stderr, "(%d, %e), ", j, r2_temp);
 				}
 				else {
-					fprintf(stderr, "(%d, too far), ", j);
+					//fprintf(stderr, "(%d, too far), ", j);
 				}
 			}
 			fprintf(stderr, "\n");
-			exit(1);
+			//exit(1);
 			#endif
 		}
 

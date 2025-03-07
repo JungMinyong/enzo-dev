@@ -14,7 +14,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define DEBUG
+#define noDEBUG
 
 void InitialAssignmentOfTasks(std::vector<int>& data, double next_time, int NumTask, int TAG);
 void InitialAssignmentOfTasks(std::vector<int>& data, int NumTask, int TAG);
@@ -363,4 +363,35 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         fflush(nbpout);
     }
         */
+}
+
+
+
+
+
+void InitializationAfterCommunication() {
+
+    /* Initialize New Particle */ 
+    /*  Neighbor inclusion might be needed (to be updated) */
+
+
+    /* Initialize Particle Attributes */
+    /* Since we're not doing full-initialization, we have to do more work on time steps
+    e.g., if enzo time can be smaller than regualr time steps. we gotta re-normalize it.
+    but this part is not complete yet. */
+    Particle *ptcl;
+    for (int i = 0; i <= LastParticleIndex; i++) {
+        ptcl = &particles[i];
+        ptcl->CurrentTimeIrr = 0.;
+        ptcl->CurrentBlockIrr = 0;
+        ptcl->CurrentTimeReg = 0.;
+        ptcl->CurrentBlockReg = 0;
+        ptcl->NewCurrentBlockIrr = 0;
+        ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+        if (ptcl->Position[0] != ptcl->Position[0])
+        {
+            fprintf(stderr, "%d, %e, %e\n", ptcl->PID, ptcl->Position[0]);
+            throw std::runtime_error("InitializationAfterCommunication\n");
+        }
+    }
 }

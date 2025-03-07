@@ -27,10 +27,21 @@ void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL 
 	}
 	else {
 		for (int dim=0; dim<Dim; dim++) {
-			pos[dim] = (CUDA_REAL) ((a_tot[dim][1]*dt/3 + a_tot[dim][0])*dt/2 + Velocity[dim])*dt + Position[dim];
-			vel[dim] = (CUDA_REAL) (a_tot[dim][1]*dt/2 + a_tot[dim][0])*dt   + Velocity[dim];
+			pos[dim] = (CUDA_REAL) ((a_tot[dim][1]*dt/3 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt/2 + Velocity[dim])*dt + Position[dim];
+			vel[dim] = (CUDA_REAL)  (a_tot[dim][1]*dt/2 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt   + Velocity[dim];
 		}
 	}
+
+	/*
+	if (StarParticleFeedback != 0) {
+		PredMass = Mass + evolveStarMass(CurrentTimeIrr, CurrentTimeIrr+TimeStepIrr*1.01);
+		Mdot     = (PredMass - Mass)/TimeStepIrr*1e-2;
+	}
+	else {
+		PredMass = Mass;
+		Mdot     = 0;
+	}
+	*/
 	return;
 }
 
@@ -51,8 +62,8 @@ void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[])
 	}
 	else {
 		for (int dim=0; dim<Dim; dim++) {
-			pos[dim] = ((a_tot[dim][1]*dt/3 + a_tot[dim][0])*dt/2 + Velocity[dim])*dt + Position[dim];
-			vel[dim] =  (a_tot[dim][1]*dt/2 + a_tot[dim][0])*dt   + Velocity[dim];
+			pos[dim] = ((a_tot[dim][1] * dt / 3 + a_tot[dim][0] + BackgroundAcceleration[dim]) * dt / 2 + Velocity[dim]) * dt + Position[dim];
+			vel[dim] = (a_tot[dim][1] * dt / 2 + a_tot[dim][0] + BackgroundAcceleration[dim]) * dt + Velocity[dim];
 		}
 	}
 	return;

@@ -19,6 +19,7 @@ void NewFBInitialization3(Group* group);
 void WorkerRoutines() {
 
 	std::cout << "Processor " << AbyssProcessorNumber << " is ready." << std::endl;
+	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
 
 	TaskName task = Error;
 	MPI_Status status;
@@ -115,7 +116,7 @@ void WorkerRoutines() {
 			case RegCuda: // Update Regular Particle CUDA
 				//std::cout << "(REG_CUDA) Processor " << std::endl;
 				MPI_Recv(&ptcl_index, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, MPI_STATUS_IGNORE);
-				std::cout << "(REG_CUDA) Processor " << AbyssProcessorNumber<< ": Particle Index= "<<ptcl_index << std::endl;
+				//std::cout << "(REG_CUDA) Processor " << AbyssProcessorNumber<< ": Particle Index= "<<ptcl_index << std::endl;
 				MPI_Recv(&NewNumberOfNeighbor, 1, MPI_INT, ROOT, 10, abyss_comm, &status);
 				MPI_Recv(NewNeighbors, NewNumberOfNeighbor, MPI_INT, ROOT, 11, abyss_comm, &status);
 				MPI_Recv(new_a, 3, MPI_DOUBLE, ROOT, 12, abyss_comm, &status);
@@ -125,7 +126,7 @@ void WorkerRoutines() {
 
 			case RegCudaUpdate: // Update Regular Particle CUDA II
 				MPI_Recv(&ptcl_index, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, MPI_STATUS_IGNORE);
-				std::cout << "(REG_UPDATE) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
+				//std::cout << "(REG_UPDATE) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
 				ptcl = &particles[ptcl_index];
 
 				for (int j = 0; j < ptcl->NewNumberOfNeighbor; j++)
@@ -142,8 +143,8 @@ void WorkerRoutines() {
 					//ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*time_step;
 					if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentBlockReg*time_step) {
 						fprintf(stderr, "PID: %d\n", ptcl->PID);
+						fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", ptcl->TimeBlockIrr, ptcl->TimeBlockReg);
 						fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", ptcl->CurrentBlockIrr, ptcl->CurrentBlockReg);
-						fprintf(stderr, "CurrentBlockIrr * time_step: %e, CurrentBlockReg * time_step: %e\n", ptcl->CurrentBlockIrr*time_step, ptcl->CurrentBlockReg*time_step);
 						fprintf(stderr, "CurrentTimeIrr: %e, CurrentTimeReg: %e\n", ptcl->CurrentTimeIrr, ptcl->CurrentTimeReg);
 						fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
 						fflush(stderr);

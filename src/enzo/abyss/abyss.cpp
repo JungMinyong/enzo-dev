@@ -1,7 +1,7 @@
-#ifdef SEVN
-#include "sevn.h"
-#endif
-
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <cerrno>
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <iostream>
@@ -16,6 +16,9 @@
 #include <cuda_runtime.h>
 #include "cuda/cuda_functions.h"
 
+#ifdef SEVN
+#include "sevn.h"
+#endif
 
 void broadcastFromRoot(int &data);
 void broadcastFromRoot(double &data);
@@ -23,7 +26,7 @@ void DefaultGlobal();
 void WorkerRoutines();
 void RootRoutines();
 int InitialCommunication();
-
+bool directoryExists(const std::string &path);
 
 int ABYSS() {
 
@@ -103,6 +106,37 @@ int ABYSS() {
 	} else {
 		// /* // by EW 2025.1.27
 		std::string filename = "log/worker/worker_output_" + std::to_string(AbyssProcessorNumber) + ".txt";
+		std::string dir_name;
+
+		dir_name = "log";
+		if (!directoryExists(dir_name))
+		{
+			// Create directory with permission 0755
+			if (mkdir(dir_name.c_str(), 0755) == 0)
+			{
+				std::cout << "Directory created successfully." << std::endl;
+			}
+			else
+			{
+				std::cerr << "Failed to create directory: "
+						<< std::strerror(errno) << std::endl;
+			}
+		}
+		dir_name = "log/worker";
+		if (!directoryExists(dir_name))
+		{
+			// Create directory with permission 0755
+			if (mkdir(dir_name.c_str(), 0755) == 0)
+			{
+				std::cout << "Directory created successfully." << std::endl;
+			}
+			else
+			{
+				std::cerr << "Failed to create directory: "
+						<< std::strerror(errno) << std::endl;
+			}
+		}
+
 		workerout = fopen(filename.c_str(), "w");
 		fprintf(workerout, "Starting nbody - WORKER OUTPUT\n");
 		fflush(workerout);
@@ -140,3 +174,13 @@ int ABYSS() {
 	return 0;
 }
 
+
+bool directoryExists(const std::string &path) {
+    struct stat info;
+    // stat returns 0 if the path exists
+    if (stat(path.c_str(), &info) != 0) {
+        return false;
+    }
+    // Check if it's a directory
+    return (info.st_mode & S_IFDIR) != 0;
+}

@@ -446,6 +446,7 @@ void Particle::computeAccelerationReg() {
 // Modified by EW 2025.1.30
 
 void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNeighborGPU, double *new_a, double *new_adot) {
+	/*
 	std::cerr <<  "in here!" << std::endl;
 	int NeighborIndex;
 	std::cerr <<  "Compute: MyPID=" <<  this->PID;
@@ -466,6 +467,7 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 		//std::cout <<  particles[NeighborIndex].PID << ", ";
 	}
 	std::cerr << std::endl;
+	*/
 /*
 	if (this->PID == 28150) {
 		std::cerr << "NumberOfNeighbor: " << this->NumberOfNeighbor << "\n" << "NewNumberOfNeighborGPU: " << NewNumberOfNeighborGPU << std::endl;

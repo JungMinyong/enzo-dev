@@ -41,6 +41,7 @@ void broadcastFromRoot(double &data);
 void broadcastFromRoot(ULL &data);
 //void CalculateAllAccelerationOnGPU(std::vector<Particle*> &particle);
 //void KSTermination(Particle* ptclCM, std::vector<Particle*> &particle, double current_time, ULL current_block);
+void InitializationAfterCommunication();
 
 
 using namespace std;
@@ -201,8 +202,6 @@ int InitialCommunication() {
 		for (int dim=0; dim<Dim; dim++)
 			ClusterAcceleration[dim] /= total_mass;
 #endif
-
-		Particle* ptclPtr;
 
 		for (int i=0; i<NumberOfSingleParticle; i++) {
 			for (int dim=0; dim<Dim; dim++) {
@@ -427,11 +426,6 @@ int ReceiveFromEnzo() {
 
 	// Update Existing Particles
 	// need to update if the ids match between Enzo and Nbody
-	// set the last next pointer array to null
-
-	Particle *NextPtr, *LastPtr;
-	NextPtr = nullptr;
-	LastPtr = nullptr;
 	if (NumberOfSingleParticle != 0) {
 		std::cerr << "In ReceiveFromEnzo, NumberOfSingleParticle = "<< NumberOfSingleParticle<< std::endl;
 		// loop for PID, going backwards to update the NextParticle
@@ -447,26 +441,8 @@ int ReceiveFromEnzo() {
 	} //endif nnb
 
 
-	/*
-	fprintf(stderr, "Receiving PID order= ");
-	fprintf(nbpout, "NumberOfSingleParticle (%d, %d) =", NumberOfSingleParticle, particle.size());
-	NextPtr = FirstParticleInEnzo;
-	for (int i=0; i<NumberOfSingleParticle; i++) {
-		fprintf(nbpout, "%d\n", i);
-		fflush(nbpout);
-		fprintf(stderr, "%d\n", NextPtr->PID);
-		fflush(stderr);
-		NextPtr = NextPtr->NextParticleInEnzo;
-	}
-	fprintf(stderr, "\n");
-	fprintf(nbpout, "\n");
-	*/
 
 
-	//std::cout << "NBODY+: FirstParticleInEnzo PID= " << \
-	FirstParticleInEnzo->PID << "in ReceiveFromEzno" << std::endl;
-
-	Particle* ptclPtr;
 #define no_star_formation_location_test
 #ifdef star_formation_location_test
 	std::vector<Particle*> new_particle; 
@@ -623,20 +599,6 @@ int ReceiveFromEnzo() {
 
 	NumberOfSingleParticle += newNumberOfSingleParticle;
 	NumberOfParticle 	   += newNumberOfSingleParticle;
-
-	Particle* ptcl;
-	for (int i = 0; i<NumberOfSingleParticle+newNumberOfSingleParticle; i++) {
-
-		ptcl = &particles[PIDtoIndexMap[EnzoPIDs[i]]];
-		ptcl->CurrentTimeIrr  = 0.;
-		ptcl->CurrentBlockIrr = 0.;
-		ptcl->CurrentTimeReg  = 0.;
-		ptcl->CurrentBlockReg = 0.;
-		if (ptcl->Position[0] != ptcl->Position[0]) {
-			fprintf(stderr, "%d, %e, %e\n", ptcl->PID, ptcl->Position[0]);
-			throw std::runtime_error("CommunicationToHydro.cpp:643\n");
-		}
-	}
 
 
 	if (NumberOfSingleParticle != 0) {
@@ -902,16 +864,9 @@ int SendToEnzo() {
 				newPosition[0][i] -= 20;
 				deleteParticle(EnzoPIDs[i+offset],index);
 				NumberOfEscapeParticle++;
+				// (Query) binary termination?
 			}
 		}
-	}
-
-	if (ptcl != nullptr) {
-		fprintf(nbpout, "NBODY+: NumberOfSingleParticle=%d, newNumberOfSingleParticle=%d\n", NumberOfSingleParticle, newNumberOfSingleParticle);
-		fprintf(nbpout, "NBODY+: Warrning! NextParticleInEnzo does not match!\n");
-		std::cerr << "NBODY+: Warrning! NextParticleInEnzo does not match!" << std::endl;
-		fflush(nbpout);
-		throw std::runtime_error("CommunicationToHydro.cpp:799");
 	}
 
 	//std::cerr << "NBODY+: Waiting for Enzo to sent data..." << std::endl;

@@ -11,7 +11,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define DEBUG
+#define noDEBUG
 
 void InitialAssignmentOfTasks(std::vector<int>& data, double next_time, int NumTask, int TAG);
 void InitialAssignmentOfTasks(std::vector<int>& data, int NumTask, int TAG);
@@ -207,12 +207,6 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	std::cout << std::endl;
 	*/
 
-	std::cout << "(REG_CUDA) AccRegReceive";
-	for (int i=0; i<RegularList.size(); i++) {
-		std::cout << AccRegReceive[i][0] << "\n";
-		assert(AccRegReceive[i][0] == AccRegReceive[i][0]);
-	}
-	std::cout << std::endl;
 	
 
 #ifdef DEBUG
@@ -356,7 +350,6 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 
 
 		assert(Position[size][0] == Position[size][0]);
-		assert(Position[size][0] != 0);
 		assert(Velocity[size][0] == Velocity[size][0]);
 
 		ActiveIndexToOriginalIndex[size] = i;
@@ -410,7 +403,6 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 
 		assert(Position[size][0] == Position[size][0]);
 		assert(Velocity[size][0] == Velocity[size][0]);
-		assert(Position[size][0] != 0);
 		ActiveIndexToOriginalIndex[size] = i;
 		// std::cout << "(size , i) = "  << size << " " << i << std::endl;
 		size++;

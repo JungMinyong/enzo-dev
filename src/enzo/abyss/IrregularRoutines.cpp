@@ -14,7 +14,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define DEBUG
+#define noDEBUG
 
 void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);

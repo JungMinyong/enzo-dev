@@ -15,7 +15,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define DEBUG
+#define noDEBUG
 
 void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueScheduler &queue_scheduler);
 
@@ -84,6 +84,8 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     performance.RegularRoutine +=
         std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
 #endif
+
+#ifdef DEBUG
     {
         Particle *ptcl;
         for (int index: RegularList)
@@ -144,6 +146,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         }
         // fflush(stdout);
     }
+#endif // endif debug
 }
 #else
 void RegularRoutines()
@@ -301,7 +304,9 @@ void RegularRoutines()
         }
         //fflush(stdout);
     }
+
     */
     // current_time_irr = particles[ThisLevelNode->ParticleList[0]].CurrentBlockIrr;
 } // Regular Done.
+
 #endif

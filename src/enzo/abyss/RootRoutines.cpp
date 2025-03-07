@@ -39,6 +39,7 @@ void FBTermination(Particle *ptclCM);
 void Merge(Particle *p1, Particle *p2);
 int SendToEnzo();
 int ReceiveFromEnzo();
+void InitializationAfterCommunication();
 #ifdef SEVN
 void StellarEvolution();
 #endif
@@ -49,6 +50,7 @@ void RootRoutines()
 {
 
 	std::cout << "Root processor is ready." << std::endl;
+	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
 
 	Particle *ptcl;
 	// int worker_rank;
@@ -130,39 +132,34 @@ void RootRoutines()
 #ifdef NSIGHT
 		nvtxRangePop();
 #endif
+		/*
 		std::cout << "NextRegTimeBlock=" << NextRegTimeBlock << std::endl;
 		std::cout << "PID= ";
 		for (int i : RegularList)
 			std::cout << i<< ", ";
 		std::cout << std::endl;
 		std::cout << "size of regularlist= " << RegularList.size() << std::endl;
+		*/	
 
 		IrregularRoutines(queue_scheduler, workers);
 
 		RegularRoutines(queue_scheduler, workers);
 
 		global_time = NextRegTimeBlock * time_step;
-
-		// Time to communicate with enzo
-		if (global_time >= 1)
-		{
-			// task=Ends;
-			// InitialAssignmentOfTasks(task, NumberOfWorker, TASK_TAG);
-			// MPI_Waitall(NumberOfCommunication, requests, statuses);
-			// NumberOfCommunication = 0;
-
-			SendToEnzo();
-			ReceiveFromEnzo();
-
-			std::cout << EnzoTimeStep << std::endl;
-			std::cout << "Simulation Done!" << std::endl;
-			return;
-		}
-
 #ifdef SEVN
 		StellarEvolution(); // How about evolving particles inside RegularList only? by EW 2025.1.19
 							// Currently, evolving all the particles upto global_time
 #endif
+		// Time to communicate with enzo
+		if (global_time >= 1)
+		{
+			SendToEnzo();
+			ReceiveFromEnzo();
+			InitializationAfterCommunication();
+			NextRegTimeBlock = 0;
+			global_time = 0;
+		}
+
 	} //  Main loop ends here.
 }
 
