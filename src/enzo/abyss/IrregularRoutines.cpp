@@ -176,7 +176,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             if (ptcl->NumberOfNeighbor != 0) // IAR modified
                 ptcl->updateParticle();
             ptcl->CurrentBlockIrr = ptcl->NewCurrentBlockIrr;
-            ptcl->CurrentTimeIrr = ptcl->CurrentBlockIrr * time_step;
+            ptcl->CurrentTimeIrr = ptcl->CurrentBlockIrr * global_variable->time_step;
         }
 #ifdef DEBUG
         for (int i : ThisLevelNode->ParticleList)
@@ -184,7 +184,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             ptcl = &particles[i];
             if (ptcl->CurrentTimeIrr != next_time)
             {
-                fprintf(stdout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * EnzoTimeStep * 1e4, next_time * EnzoTimeStep * 1e4);
+                fprintf(stdout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
                 assert(ptcl->CurrentTimeIrr == next_time);
             }
         }
@@ -257,10 +257,10 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 bin_termination = true;
                 ptcl->isActive = false;
 
-                if (ptcl->ParticleIndex == LastParticleIndex)
+                if (ptcl->ParticleIndex == global_variable->LastParticleIndex)
                 {
-                    LastParticleIndex--;
-                    global_variable->LastParticleIndex == LastParticleIndex;
+                    global_variable->LastParticleIndex--;
+                    //global_variable->LastParticleIndex == LastParticleIndex;
                 }
                 else
                     PrevCMPtclWorker.insert({ptcl->ParticleIndex, CMPtclWorker[ptcl->ParticleIndex]});
@@ -330,7 +330,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             else
             {
                 ptcl->NewNumberOfNeighbor = 0;
-                if (ptcl->TimeStepIrr * EnzoTimeStep * 1e4 < TSEARCH)
+                if (ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e4 < TSEARCH)
                     ptcl->checkNewGroup();
             }
         }
@@ -434,24 +434,24 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         {
             //, NextRegTime= %.3e Myr(%llu),
             for (int i=0; i<ThisLevelNode->ParticleList.size(); i++) {
-                ptcl = &particles_original[ThisLevelNode->ParticleList[i]];
+                ptcl = &particles[ThisLevelNode->ParticleList[i]];
                 fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr, NextReg = %.3e (%llu)\n"\
                         "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d), NextBlockIrr= %.3e(%llu)\n"\
                         "NumNeighbor= %d\n",
                         ptcl->PID,
-                        ptcl->CurrentTimeIrr*EnzoTimeStep*1e10/1e6,
+                        ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e10/1e6,
                         ptcl->CurrentBlockIrr,
-                        ptcl->CurrentTimeReg*EnzoTimeStep*1e10/1e6,
+                        ptcl->CurrentTimeReg*global_variable->EnzoTimeStep*1e10/1e6,
                         ptcl->CurrentBlockReg,
-                        NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
+                        NextRegTimeBlock*global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
                         NextRegTimeBlock,
-                        ptcl->TimeStepIrr*EnzoTimeStep*1e10/1e6,
-                        ptcl->TimeStepReg*EnzoTimeStep*1e10/1e6,
+                        ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e10/1e6,
+                        ptcl->TimeStepReg*global_variable->EnzoTimeStep*1e10/1e6,
                         ptcl->TimeBlockIrr,
                         ptcl->TimeLevelIrr,
                         ptcl->TimeBlockReg,
                         ptcl->TimeLevelReg,
-                        ptcl->NextBlockIrr*time_step*EnzoTimeStep*1e10/1e6,
+                        ptcl->NextBlockIrr*global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
                         ptcl->NextBlockIrr,
                         ptcl->NumberOfNeighbor
                         );
@@ -493,7 +493,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             fflush(stdout);
         }
         */
-        current_time_irr = particles[ThisLevelNode->ParticleList[0]].CurrentBlockIrr * time_step;
+        current_time_irr = particles[ThisLevelNode->ParticleList[0]].CurrentBlockIrr * global_variable->time_step;
 #ifdef DEBUG
         std::cout << "skiplist->deleteFirstNode() starts" << std::endl;
 #endif
@@ -600,7 +600,7 @@ bool createSkipList(SkipList *skiplist) {
 
 	Particle* ptcl;
 
-	for (int i=0; i<=LastParticleIndex; i++) {
+	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl =  &particles[i];
 
 		// if ((ptcl->NumberOfNeighbor != 0) && (ptcl->NextBlockIrr <= NextRegTimeBlock)) { // IAR original
@@ -651,15 +651,15 @@ bool updateSkipList(SkipList *skiplist, int ptcl_id) {
 	/* Update New Time Steps */
 	//Node* ThisLevelNode = skiplist->getFirstNode();
 
-	/*
-		 if (this->debug) {
-		 fprintf(stdout, "PID=%d, NBI=%llu, size=%lu\n", ptcl->PID, ptcl->NextBlockIrr, ThisLevelNode->particle_list.size());
-		 fprintf(stdout, "NextBlockIrr=%llu\n",ptcl->NextBlockIrr);
-		 fflush(stdout);
-		 }
-		 */
+    /*
+         if (this->debug) {
+         fprintf(stdout, "PID=%d, NBI=%llu, size=%lu\n", ptcl->PID, ptcl->NextBlockIrr, ThisLevelNode->particle_list.size());
+         fprintf(stdout, "NextBlockIrr=%llu\n",ptcl->NextBlockIrr);
+         fflush(stdout);
+         }
+         */
 
-	Particle * ptcl = &particles[ptcl_id];
+    Particle * ptcl = &particles[ptcl_id];
 
 	//std::cout << "NextBlockIrr of "<< ptcl_id<<" = " << ptcl->NextBlockIrr << std::endl;
 	if (ptcl->NextBlockIrr > NextRegTimeBlock)

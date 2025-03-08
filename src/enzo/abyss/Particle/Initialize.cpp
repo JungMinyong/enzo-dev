@@ -347,7 +347,7 @@ void Particle::initializeTimeStep() {
 
 
 	this->TimeStepReg  = MIN(1,this->TimeStepReg);
-	this->TimeBlockReg = std::min(block_max, this->TimeBlockReg);
+	this->TimeBlockReg = std::min(global_variable->block_max, this->TimeBlockReg);
 	this->TimeLevelReg = std::min(0, this->TimeLevelReg);
 
 	if (this->NumberOfNeighbor != 0) {
@@ -365,6 +365,15 @@ void Particle::initializeTimeStep() {
 	this->CurrentBlockIrr = 0;
 	this->CurrentBlockReg = 0;
 
+	/*
+    fprintf(stderr, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n",
+	AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
+    fprintf(nbpout, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n",
+	AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
+    fprintf(workerout, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n",
+	AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
+	fflush(nbpout);
+	*/
 }
 
 

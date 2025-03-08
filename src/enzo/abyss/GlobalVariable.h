@@ -4,6 +4,11 @@
 struct GlobalVariable {
 	int LastParticleIndex;
 	ULL NextRegTimeBlock;
+	int time_block;
+	double time_step;
+	ULL block_max;
+	double EnzoTimeStep;
+	double OldEnzoTimeStep;
 	// int NumberOfParticle;
 };
 

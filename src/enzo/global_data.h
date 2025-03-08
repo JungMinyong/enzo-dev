@@ -74,6 +74,7 @@ EXTERN double NbodyBinaryDistance;
 EXTERN double NbodyBinaryTimeStep;
 EXTERN int NbodyNewStarToNbody;
 EXTERN int NbodyRestartStarToNbody;
+EXTERN char *NbodyDir;
 
 /* by YS, MPI COMMs*/
 extern MPI_Comm enzo_comm;

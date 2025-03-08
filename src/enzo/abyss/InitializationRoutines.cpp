@@ -23,13 +23,13 @@ void InitialAssignmentOfTasks(int* data, int NumTask, int TAG);
 void broadcastFromRoot(double &data);
 void broadcastFromRoot(ULL &data);
 void broadcastFromRoot(int &data);
+void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vector<int> ParticleIndices);
 
 /* Initialization */
 void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
 
     Particle* ptcl;
-	int min_time_level=0;
 	TaskName task;
 	int total_tasks;
 	MPI_Request request;  // Pointer to the request handle
@@ -40,7 +40,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     ParticleIndices.reserve(NumberOfParticle);
     ParticleIndices.resize(NumberOfParticle);
 
-    for (int i = 0; i <= LastParticleIndex; i++)
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++)
     {
         ParticleIndices[i] = i;
     }
@@ -88,16 +88,16 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     // example code by EW 2025.1.7
     Queue queue;
     int rank;
-    int OriginalLastParticleIndex = LastParticleIndex;
+    int OriginalLastParticleIndex = global_variable->LastParticleIndex;
     formPrimordialBinaries(OriginalLastParticleIndex);
-    assert(OriginalLastParticleIndex <= LastParticleIndex); // for debugging by EW 2025.1.4
+    assert(OriginalLastParticleIndex <= global_variable->LastParticleIndex); // for debugging by EW 2025.1.4
     assert(CMPtclWorker.empty());                           // for debugging by EW 2025.1.4
-    if (OriginalLastParticleIndex != LastParticleIndex)
+    if (OriginalLastParticleIndex != global_variable->LastParticleIndex)
     {
-        std::cout << "In total, " << LastParticleIndex - OriginalLastParticleIndex
+        std::cout << "In total, " << global_variable->LastParticleIndex - OriginalLastParticleIndex
                   << " primordial binaries are created." << std::endl;
         queue_scheduler.initialize(MakePrimordialGroup);
-        for (int i = OriginalLastParticleIndex + 1; i <= LastParticleIndex; i++)
+        for (int i = OriginalLastParticleIndex + 1; i <= global_variable->LastParticleIndex; i++)
         {
             std::cout << "New Primordial Binary of PID="
                       << i << " is created with being assigned to a worker of rank "
@@ -129,144 +129,13 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     fflush(stdout);
 #endif
 
-    // Initialize Time Step
-    queue_scheduler.initialize(InitTime);
-    queue_scheduler.takeQueue(ParticleIndices);
-    do
-    {
-        queue_scheduler.assignQueueAuto();
-        queue_scheduler.runQueueAuto();
-        queue_scheduler.waitQueue(0); // blocking wait
-    } while (queue_scheduler.isComplete());
 
-    /*
-    for (int i=0; i<=LastParticleIndex; i++) {
-        ptcl = &particles[i];
-        if (ptcl->isActive)
-            fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
-                            "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"
-                            "NumNeighbor= %d\n",
-                    ptcl->PID,
-                    ptcl->CurrentTimeIrr * EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->CurrentBlockIrr,
-                    ptcl->CurrentTimeReg * EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->CurrentBlockReg,
-                    // NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
-                    // NextRegTimeBlock,
-                    ptcl->TimeStepIrr * EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->TimeStepReg * EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->TimeBlockIrr,
-                    ptcl->TimeLevelIrr,
-                    ptcl->TimeBlockReg,
-                    ptcl->TimeLevelReg,
-                    ptcl->NumberOfNeighbor);
-    }
-    */
-
-    /* synchronization */
-    // ParticleSynchronization();
-
-    /* timestep correction */
-    {
-        std::cout << "Time Step correction." << std::endl;
-        for (int i = 0; i <= LastParticleIndex; i++)
-        {
-            ptcl = &particles[i];
-
-            if (!ptcl->isActive)
-                continue;
-
-            if (ptcl->NumberOfNeighbor != 0)
-            {
-                while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg)
-                {
-                    ptcl->TimeStepIrr *= 0.5;
-                    ptcl->TimeBlockIrr *= 0.5;
-                    ptcl->TimeLevelIrr--;
-                }
-            }
-            if (ptcl->TimeLevelIrr < min_time_level)
-            {
-                min_time_level = ptcl->TimeLevelIrr;
-            }
-        }
-
-        // resetting time_block based on the system
-        time_block = std::max(-60, min_time_level - MIN_LEVEL_BUFFER);
-        block_max = static_cast<ULL>(pow(2, -time_block));
-        time_step = pow(2, time_block);
-
-        for (int i = 0; i <= LastParticleIndex; i++)
-        {
-            ptcl = &particles[i];
-
-            if (!ptcl->isActive)
-                continue;
-
-            ptcl->TimeBlockIrr = static_cast<ULL>(pow(2, ptcl->TimeLevelIrr - time_block));
-            ptcl->TimeBlockReg = static_cast<ULL>(pow(2, ptcl->TimeLevelReg - time_block));
-#ifdef IRR_TEST
-            ptcl->TimeStepReg = 1;
-            ptcl->TimeLevelReg = 0;
-            ptcl->TimeBlockReg = block_max;
-#endif
-            ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
-        }
-        std::cout << "Time Step done." << std::endl;
-    }
-
-    /*
-        for (int i=0; i<=LastParticleIndex; i++) {
-            ptcl = &particles[i];
-            if (ptcl->isActive)
-                fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
-                                "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"
-                                "NumNeighbor= %d\n",
-                        ptcl->PID,
-                        ptcl->CurrentTimeIrr * EnzoTimeStep * 1e10 / 1e6,
-                        ptcl->CurrentBlockIrr,
-                        ptcl->CurrentTimeReg * EnzoTimeStep * 1e10 / 1e6,
-                        ptcl->CurrentBlockReg,
-                        // NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
-                        // NextRegTimeBlock,
-                        ptcl->TimeStepIrr * EnzoTimeStep * 1e10 / 1e6,
-                        ptcl->TimeStepReg * EnzoTimeStep * 1e10 / 1e6,
-                        ptcl->TimeBlockIrr,
-                        ptcl->TimeLevelIrr,
-                        ptcl->TimeBlockReg,
-                        ptcl->TimeLevelReg,
-                        ptcl->NumberOfNeighbor);
-        }
-        */
-
-    /* timestep variable synchronization */
-    {
-        std::cout << "Time Step synchronization." << std::endl;
-        task = TimeSync;
-        completed_tasks = 0;
-        total_tasks = NumberOfWorker;
-        InitialAssignmentOfTasks(task, NumberOfWorker, TASK_TAG);
-        // MPI_Waitall(NumberOfCommunication, requests, statuses);
-        // NumberOfCommunication = 0;
-        broadcastFromRoot(time_block);
-        broadcastFromRoot(block_max);
-        broadcastFromRoot(time_step);
-        // MPI_Win_sync(win);  // Synchronize memory
-        // MPI_Barrier(shared_comm);
-        while (completed_tasks < total_tasks)
-        {
-            MPI_Irecv(&task, 1, MPI_INT, MPI_ANY_SOURCE, TERMINATE_TAG, abyss_comm, &request);
-            MPI_Wait(&request, &status);
-            completed_tasks++;
-        }
-        fprintf(nbpout, "nbody+:time_block = %d, EnzoTimeStep=%e\n", time_block, EnzoTimeStep);
-        //fflush(stderr);
-    }
+    initializeTime(queue_scheduler, workers, ParticleIndices);
 
     /* Particle Initialization Check */
     {
         //, NextRegTime= %.3e Myr(%llu),
-        for (int i=0; i<=LastParticleIndex; i++) {
+        for (int i=0; i<=global_variable->LastParticleIndex; i++) {
             ptcl = &particles[i];
             fprintf(nbpout, "PID=%d,PI=%d, (%d)=",ptcl->PID,ptcl->ParticleIndex,ptcl->NumberOfNeighbor);
             for (int j=0;j<ptcl->NumberOfNeighbor;j++) {
@@ -275,21 +144,21 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             fprintf(nbpout, "\n");
         }
     }
-        for (int i=0; i<=LastParticleIndex; i++) {
+        for (int i=0; i<=global_variable->LastParticleIndex; i++) {
             ptcl = &particles[i];
             fprintf(nbpout, "PID=%d(%d), CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"\
                     "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"\
                     "NumNeighbor= %d\n",
                     ptcl->PID,
                     ptcl->ParticleIndex,
-                    ptcl->CurrentTimeIrr*EnzoTimeStep*1e10/1e6,
+                    ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e10/1e6,
                     ptcl->CurrentBlockIrr,
-                    ptcl->CurrentTimeReg*EnzoTimeStep*1e10/1e6,
+                    ptcl->CurrentTimeReg*global_variable->EnzoTimeStep*1e10/1e6,
                     ptcl->CurrentBlockReg,
                     //NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
                     //NextRegTimeBlock,
-                    ptcl->TimeStepIrr*EnzoTimeStep*1e10/1e6,
-                    ptcl->TimeStepReg*EnzoTimeStep*1e10/1e6,
+                    ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e10/1e6,
+                    ptcl->TimeStepReg*global_variable->EnzoTimeStep*1e10/1e6,
                     ptcl->TimeBlockIrr,
                     ptcl->TimeLevelIrr,
                     ptcl->TimeBlockReg,
@@ -369,29 +238,147 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
 
 
-void InitializationAfterCommunication() {
 
+
+void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vector<int> ParticleIndices) {
+    Particle *ptcl;
+    int min_time_level=0;
+
+    // Initialize Time Step
+    queue_scheduler.initialize(InitTime);
+    queue_scheduler.takeQueue(ParticleIndices);
+    do
+    {
+        queue_scheduler.assignQueueAuto();
+        queue_scheduler.runQueueAuto();
+        queue_scheduler.waitQueue(0); // blocking wait
+    } while (queue_scheduler.isComplete());
+
+    /* timestep correction */
+    {
+        std::cout << "Time Step correction." << std::endl;
+        for (int i = 0; i <= global_variable->LastParticleIndex; i++)
+        {
+            ptcl = &particles[i];
+
+            if (ptcl->NumberOfNeighbor != 0)
+            {
+                while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg)
+                {
+                    ptcl->TimeStepIrr *= 0.5;
+                    ptcl->TimeBlockIrr *= 0.5;
+                    ptcl->TimeLevelIrr--;
+                }
+            }
+            if (ptcl->TimeLevelIrr < min_time_level)
+            {
+                min_time_level = ptcl->TimeLevelIrr;
+            }
+        }
+
+        // resetting time_block based on the system
+        global_variable->time_block = std::max(-60, min_time_level - MIN_LEVEL_BUFFER);
+        global_variable->block_max = static_cast<ULL>(pow(2, -global_variable->time_block));
+        global_variable->time_step = pow(2, global_variable->time_block);
+
+        for (int i = 0; i <= global_variable->LastParticleIndex; i++)
+        {
+            ptcl = &particles[i];
+
+            ptcl->TimeBlockIrr = static_cast<ULL>(pow(2, ptcl->TimeLevelIrr - global_variable->time_block));
+            ptcl->TimeBlockReg = static_cast<ULL>(pow(2, ptcl->TimeLevelReg - global_variable->time_block));
+#ifdef IRR_TEST
+            ptcl->TimeStepReg = 1;
+            ptcl->TimeLevelReg = 0;
+            ptcl->TimeBlockReg = global_variable->block_max;
+#endif
+            ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+        }
+        std::cout << "Time Step done." << std::endl;
+    }
+
+    /* timestep variable synchronization */
+    {
+        fprintf(stderr, "nbody+:time_block = %d, EnzoTimeStep=%e\n", global_variable->time_block, global_variable->EnzoTimeStep);
+        fprintf(nbpout, "nbody+:time_block = %d, EnzoTimeStep=%e\n", global_variable->time_block, global_variable->EnzoTimeStep);
+        //fflush(stderr);
+    }
+
+    /*
+    {
+        for (int i = 0; i <= global_variable->LastParticleIndex; i++)
+        {
+            ptcl = &particles[i];
+            fprintf(nbpout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
+                            "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"
+                            "NumNeighbor= %d\n",
+                    ptcl->PID,
+                    ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->CurrentBlockIrr,
+                    ptcl->CurrentTimeReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->CurrentBlockReg,
+                    // NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
+                    // NextRegTimeBlock,
+                    ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->TimeStepReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->TimeBlockIrr,
+                    ptcl->TimeLevelIrr,
+                    ptcl->TimeBlockReg,
+                    ptcl->TimeLevelReg,
+                    ptcl->NumberOfNeighbor);
+        }
+        fflush(nbpout);
+    }
+    */
+}
+
+
+void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers) {
+    std::vector<int> ParticleIndices;
+    ParticleIndices.reserve(global_variable->LastParticleIndex);
     /* Initialize New Particle */ 
     /*  Neighbor inclusion might be needed (to be updated) */
-
 
     /* Initialize Particle Attributes */
     /* Since we're not doing full-initialization, we have to do more work on time steps
     e.g., if enzo time can be smaller than regualr time steps. we gotta re-normalize it.
     but this part is not complete yet. */
     Particle *ptcl;
-    for (int i = 0; i <= LastParticleIndex; i++) {
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
         ptcl = &particles[i];
+        ParticleIndices.push_back(i);
+        ptcl->setNewTimeStepWithNewEnzoTimeStep(global_variable->OldEnzoTimeStep, global_variable->EnzoTimeStep);
         ptcl->CurrentTimeIrr = 0.;
         ptcl->CurrentBlockIrr = 0;
         ptcl->CurrentTimeReg = 0.;
         ptcl->CurrentBlockReg = 0;
         ptcl->NewCurrentBlockIrr = 0;
         ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
-        if (ptcl->Position[0] != ptcl->Position[0])
-        {
-            fprintf(stderr, "%d, %e, %e\n", ptcl->PID, ptcl->Position[0]);
-            throw std::runtime_error("InitializationAfterCommunication\n");
-        }
     }
+    //initializeTime(queue_scheduler, workers, ParticleIndices);
+    ParticleIndices.clear();
+    ParticleIndices.shrink_to_fit();
+
+        for (int i = 0; i <= global_variable->LastParticleIndex; i++)
+        {
+            ptcl = &particles[i];
+            fprintf(nbpout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
+                            "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"
+                            "NumNeighbor= %d\n",
+                    ptcl->PID,
+                    ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->CurrentBlockIrr,
+                    ptcl->CurrentTimeReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->CurrentBlockReg,
+                    // NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
+                    // NextRegTimeBlock,
+                    ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->TimeStepReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->TimeBlockIrr,
+                    ptcl->TimeLevelIrr,
+                    ptcl->TimeBlockReg,
+                    ptcl->TimeLevelReg,
+                    ptcl->NumberOfNeighbor);
+        }
+        fflush(nbpout);
 }

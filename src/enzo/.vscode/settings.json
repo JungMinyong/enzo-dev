@@ -16,7 +16,9 @@
         "gFLDProblem_Initialize.C": "cpp",
         "Grid_SetIsolatedPotentialBoundary.C": "cpp",
         "InterpretCommandLine.C": "cpp",
-        "CommunicationUtilities.C": "cpp"
+        "CommunicationUtilities.C": "cpp",
+        "ReadParameterFile.C": "cpp",
+        "ProblemType_AgoraRestart.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

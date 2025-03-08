@@ -83,7 +83,7 @@ void WorkerRoutines() {
 				if (ptcl->NumberOfNeighbor != 0) // IAR modified
 					ptcl->updateParticle();
 				ptcl->CurrentBlockIrr = ptcl->NewCurrentBlockIrr;
-				ptcl->CurrentTimeIrr  = ptcl->CurrentBlockIrr*time_step;
+				ptcl->CurrentTimeIrr  = ptcl->CurrentBlockIrr*global_variable->time_step;
 				//std::cout << "pid=" << ptcl_index << ", CurrentBlockIrr=" << particles[ptcl_index].CurrentBlockIrr << std::endl;
 				//std::cout << "IrrUp end " << AbyssProcessorNumber << std::endl;
 				break;
@@ -101,14 +101,14 @@ void WorkerRoutines() {
 				ptcl->NumberOfNeighbor = ptcl->NewNumberOfNeighbor;
 
 				ptcl->CurrentBlockReg += ptcl->TimeBlockReg;
-				ptcl->CurrentTimeReg   = ptcl->CurrentBlockReg*time_step;
+				ptcl->CurrentTimeReg   = ptcl->CurrentBlockReg*global_variable->time_step;
 				ptcl->calculateTimeStepReg();
 				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockReg;
 				ptcl->calculateTimeStepIrr();
 				ptcl->updateRadius();
 				if (ptcl->NumberOfNeighbor == 0) {
 					ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
-					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*time_step;
+					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*global_variable->time_step;
 				}
 				ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
 				break;
@@ -135,13 +135,13 @@ void WorkerRoutines() {
 
 				ptcl->updateParticle();
 				ptcl->CurrentBlockReg = ptcl->CurrentBlockReg + ptcl->TimeBlockReg;
-				ptcl->CurrentTimeReg = ptcl->CurrentBlockReg * time_step;
+				ptcl->CurrentTimeReg = ptcl->CurrentBlockReg * global_variable->time_step;
 				ptcl->calculateTimeStepReg();
 				ptcl->calculateTimeStepIrr();
 				if (ptcl->NumberOfNeighbor == 0) {
 					//ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
 					//ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*time_step;
-					if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentBlockReg*time_step) {
+					if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentBlockReg*global_variable->time_step) {
 						fprintf(stderr, "PID: %d\n", ptcl->PID);
 						fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", ptcl->TimeBlockIrr, ptcl->TimeBlockReg);
 						fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", ptcl->CurrentBlockIrr, ptcl->CurrentBlockReg);
@@ -149,7 +149,7 @@ void WorkerRoutines() {
 						fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
 						fflush(stderr);
 						assert(ptcl->CurrentBlockIrr == ptcl->CurrentBlockReg);
-						assert(ptcl->CurrentTimeIrr == ptcl->CurrentBlockReg*time_step);
+						assert(ptcl->CurrentTimeIrr == ptcl->CurrentBlockReg*global_variable->time_step);
 					}
 				}
 				ptcl->updateRadius();
@@ -177,19 +177,19 @@ void WorkerRoutines() {
 				MPI_Recv(&ptcl_index, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, &status);
 				//std::cout << "Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
 				ptcl = &particles[ptcl_index];
-				if (ptcl->isActive)
-					ptcl->initializeTimeStep();
+				//if (ptcl->isActive)
+				ptcl->initializeTimeStep();
 				break;
 
 			case TimeSync: // Initialize Timestep variables
 				fprintf(stderr, "time sync (%d)\n", AbyssProcessorNumber);
-				broadcastFromRoot(time_block);
-				broadcastFromRoot(block_max);
-				broadcastFromRoot(time_step);
+				//broadcastFromRoot(time_block);
+				//broadcastFromRoot(block_max);
+				//broadcastFromRoot(time_step);
 				//MPI_Win_sync(win);  // Synchronize memory
 				//MPI_Barrier(abyss_comm);
 				//MPI_Win_fence(0, win);
-				fprintf(stderr, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n", AbyssProcessorNumber, time_block, EnzoTimeStep);
+				fprintf(stderr, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n", AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
 				fflush(stderr);
 				break;
 
@@ -219,7 +219,7 @@ void WorkerRoutines() {
 				}
 				else {
 					ptcl->NewNumberOfNeighbor = 0;
-					if (ptcl->TimeStepIrr*EnzoTimeStep*1e4 < TSEARCH)
+					if (ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4 < TSEARCH)
 						ptcl->checkNewGroup();
 				}
 				/*

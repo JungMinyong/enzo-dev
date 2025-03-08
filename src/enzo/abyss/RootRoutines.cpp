@@ -39,7 +39,7 @@ void FBTermination(Particle *ptclCM);
 void Merge(Particle *p1, Particle *p2);
 int SendToEnzo();
 int ReceiveFromEnzo();
-void InitializationAfterCommunication();
+void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers);
 #ifdef SEVN
 void StellarEvolution();
 #endif
@@ -145,7 +145,7 @@ void RootRoutines()
 
 		RegularRoutines(queue_scheduler, workers);
 
-		global_time = NextRegTimeBlock * time_step;
+		global_time = NextRegTimeBlock * global_variable->time_step;
 #ifdef SEVN
 		StellarEvolution(); // How about evolving particles inside RegularList only? by EW 2025.1.19
 							// Currently, evolving all the particles upto global_time
@@ -155,7 +155,7 @@ void RootRoutines()
 		{
 			SendToEnzo();
 			ReceiveFromEnzo();
-			InitializationAfterCommunication();
+			InitializationAfterCommunication(queue_scheduler, workers);
 			NextRegTimeBlock = 0;
 			global_time = 0;
 		}
@@ -166,12 +166,12 @@ void RootRoutines()
 void updateNextRegTime(std::unordered_set<int> &RegularList)
 {
 
-	ULL time_tmp = 0, time = block_max;
+	ULL time_tmp = 0, time = global_variable->block_max;
 	Particle *ptcl = nullptr;
 
 	RegularList.clear();
 
-	for (int i = 0; i <= LastParticleIndex; i++)
+	for (int i = 0; i <= global_variable->LastParticleIndex; i++)
 	{
 		// std::cout << i << std::endl;
 		ptcl = &particles[i];

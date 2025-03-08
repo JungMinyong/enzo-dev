@@ -350,9 +350,8 @@ struct Particle {
 			 double *Position[Dim], double *Velocity[Dim],
 			 double *BackgroundAcceleration[Dim], int &i);
 	void update(double *Mass, double *BackgroundAcceleration[Dim], int &i);
+
+	void setNewTimeStepWithNewEnzoTimeStep(double &OldEnzoTimeStep, double &NewEnzoTimeStep) ;
 };
-
-
-
 
 #endif

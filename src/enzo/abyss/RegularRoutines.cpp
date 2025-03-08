@@ -32,7 +32,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     start_point = std::chrono::high_resolution_clock::now();
 #endif
     // total_tasks = RegularList.size();
-    next_time = NextRegTimeBlock * time_step;
+    next_time = NextRegTimeBlock * global_variable->time_step;
 
     // fprintf(stdout, "Regular starts\n");
 #ifdef NSIGHT
@@ -95,19 +95,19 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                             "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d), NextBlockIrr= %.3e(%llu)\n"
                             "NumNeighbor= %d\n",
                     ptcl->PID,
-                    ptcl->CurrentTimeIrr * EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
                     ptcl->CurrentBlockIrr,
-                    ptcl->CurrentTimeReg * EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->CurrentTimeReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
                     ptcl->CurrentBlockReg,
-                    NextRegTimeBlock * time_step * EnzoTimeStep * 1e10 / 1e6,
+                    NextRegTimeBlock * global_variable->time_step * global_variable->EnzoTimeStep * 1e10 / 1e6,
                     NextRegTimeBlock,
-                    ptcl->TimeStepIrr * EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->TimeStepReg * EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->TimeStepReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
                     ptcl->TimeBlockIrr,
                     ptcl->TimeLevelIrr,
                     ptcl->TimeBlockReg,
                     ptcl->TimeLevelReg,
-                    ptcl->NextBlockIrr * time_step * EnzoTimeStep * 1e10 / 1e6,
+                    ptcl->NextBlockIrr * global_variable->time_step * global_variable->EnzoTimeStep * 1e10 / 1e6,
                     ptcl->NextBlockIrr,
                     ptcl->NumberOfNeighbor);
 
@@ -155,7 +155,7 @@ void RegularRoutines()
     task = RegForce;
     completed_tasks = 0;
     total_tasks = RegularList.size();
-    next_time = NextRegTimeBlock * time_step;
+    next_time = NextRegTimeBlock * global_variable->time_step;
 
     // std::cout << "TotalTask=" << total_tasks << std::endl;
 
@@ -242,8 +242,6 @@ void RegularRoutines()
         completed_tasks++;
     }
 
-    /*
-    {
         //, NextRegTime= %.3e Myr(%llu),
         for (int i=0; i<total_tasks; i++) {
             ptcl = &particles[RegularList[i]];
@@ -268,6 +266,7 @@ void RegularRoutines()
                     ptcl->NumberOfNeighbor
                     );
 
+/*
             fprintf(stdout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
                     a1_reg = (%.4e,%.4e,%.4e), a2_reg = (%.4e,%.4e,%.4e), a3_reg = (%.4e,%.4e,%.4e)\n\
                     a1_irr = (%.4e,%.4e,%.4e), a2_irr = (%.4e,%.4e,%.4e), a3_irr = (%.4e,%.4e,%.4e)\n",

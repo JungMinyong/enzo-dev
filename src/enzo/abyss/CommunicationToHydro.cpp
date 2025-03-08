@@ -11,7 +11,9 @@
 #include "../phys_constants.h"
 
 
-#define No_COM_EVOLUTION
+#define no_COM_EVOLUTION // (Query) eventaully I think this should adopt COM evolution due to bulk motion. 
+//Bulk motion in irregular force will cause some distorts since a fraction of particle will advance due to bulk motion
+// and that will cause artificial tidal force.
 
 
 
@@ -150,7 +152,7 @@ int InitialCommunication() {
 	EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
 
 	// Unit conversion
-	EnzoTimeStep       = TimeStep*EnzoTime;
+	global_variable->EnzoTimeStep       = TimeStep*EnzoTime;
 	EnzoCurrentTime   *= EnzoTime;
 	if (EPS2 < 0)
 		EPS2 = -1;
@@ -163,7 +165,7 @@ int InitialCommunication() {
 	FixNumNeighbor0    = FixNumNeighbor;
 
 	fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
-	fprintf(nbpout, "Nbody Time               = %lf\n", EnzoTimeStep);
+	fprintf(nbpout, "Nbody Time               = %lf\n", global_variable->EnzoTimeStep);
 	fprintf(nbpout, "EPS2                     = %lf pc**2\n", EPS2*position_unit*position_unit);
 	fprintf(nbpout, "InitialNeighborRadius        = %.2e pc\n", InitialNeighborRadius*position_unit);
 	fprintf(nbpout, "eta                      = %lf\n", eta);
@@ -213,7 +215,7 @@ int InitialCommunication() {
 			}
 			EnzoPIDs[i] = PID[i];
 			particles[i].set(PID, Mass, CreationTime, DynamicalTime, Position, Velocity,
-							 BackgroundAcceleration, i);
+							BackgroundAcceleration, i);
 			PIDtoIndexMap.insert({PID[i], i});
 			particles[i].ParticleIndex = i;
 		}
@@ -229,22 +231,7 @@ int InitialCommunication() {
 		std::cerr << "CreationTime :" << CreationTime[0] << std::endl;
 		std::cerr << "DynamicalTime:" << DynamicalTime[0] << std::endl;
 
-		/*
-	for (Particle* ptcl:particle) {
-		fprintf(nbpout, "NBODY0: PID=%d\n", ptcl->PID);
-		fprintf(nbpout, "NBODY0: Mass Of NewNbodyParticles=%.3e\n", ptcl->Mass*mass_unit);
-		fprintf(nbpout, "NBODY0: Vel  Of news=(%.3e, %.3e, %.3e)\n", 
-				ptcl->Velocity[0]*velocity_unit/yr*pc/1e5, ptcl->Velocity[1]*velocity_unit/yr*pc/1e5, ptcl->Velocity[2]*velocity_unit/yr*pc/1e5);
-		fprintf(nbpout, "NBODY0: Pos  Of news=(%.3e, %.3e, %.3e)\n",
-				ptcl->Position[0]*position_unit, ptcl->Position[1]*position_unit, ptcl->Position[2]*position_unit);
-		fprintf(nbpout, "NBODY0: Acc  Of regs=(%.3e, %.3e, %.3e)\n",
-				ptcl->a_reg[0][0], ptcl->a_reg[1][0], ptcl->a_reg[2][0]);
-		fprintf(nbpout, "NBODY0: Acc  Of irrs=(%.3e, %.3e, %.3e)\n",
-				ptcl->a_irr[0][0], ptcl->a_irr[1][0], ptcl->a_irr[2][0]);
-		fprintf(nbpout, "NBODY0: Back Acc  Of news=(%.3e, %.3e, %.3e)\n",
-				ptcl->BackgroundAcceleration[0], ptcl->BackgroundAcceleration[1], ptcl->BackgroundAcceleration[2]);
-	}
-	*/
+
 
 		delete [] PID;
 		delete [] Mass;
@@ -258,12 +245,28 @@ int InitialCommunication() {
 	}
 
 	NumberOfParticle = NumberOfSingleParticle;
-	LastParticleIndex = NumberOfSingleParticle-1;
+	global_variable->LastParticleIndex = NumberOfSingleParticle-1;
 
 
 	FixNumNeighbor = std::min((int) std::floor(NumberOfSingleParticle/2), FixNumNeighbor0);
 
-
+	Particle *ptcl;
+	for (int i = 0; i < global_variable->LastParticleIndex; i++)
+	{
+		ptcl = &particles[i];
+		fprintf(nbpout, "NBODY0: PID=%d\n", ptcl->PID);
+		fprintf(nbpout, "NBODY0: Mass Of NewNbodyParticles=%.3e\n", ptcl->Mass * mass_unit);
+		fprintf(nbpout, "NBODY0: Vel  Of news=(%.3e, %.3e, %.3e)\n",
+				ptcl->Velocity[0] * velocity_unit / yr * pc / 1e5, ptcl->Velocity[1] * velocity_unit / yr * pc / 1e5, ptcl->Velocity[2] * velocity_unit / yr * pc / 1e5);
+		fprintf(nbpout, "NBODY0: Pos  Of news=(%.3e, %.3e, %.3e)\n",
+				ptcl->Position[0] * position_unit, ptcl->Position[1] * position_unit, ptcl->Position[2] * position_unit);
+		fprintf(nbpout, "NBODY0: Acc  Of regs=(%.3e, %.3e, %.3e)\n",
+				ptcl->a_reg[0][0], ptcl->a_reg[1][0], ptcl->a_reg[2][0]);
+		fprintf(nbpout, "NBODY0: Acc  Of irrs=(%.3e, %.3e, %.3e)\n",
+				ptcl->a_irr[0][0], ptcl->a_irr[1][0], ptcl->a_irr[2][0]);
+		fprintf(nbpout, "NBODY0: Back Acc  Of news=(%.3e, %.3e, %.3e)\n",
+				ptcl->BackgroundAcceleration[0], ptcl->BackgroundAcceleration[1], ptcl->BackgroundAcceleration[2]);
+	}
 
 	fprintf(nbpout, "NBODY+: %d particles loaded!\n", NumberOfSingleParticle);
 	fflush(stdout);
@@ -299,7 +302,7 @@ int ReceiveFromEnzo() {
 	MPI_Recv(&EnzoNumberOfSingleParticle, 1, MPI_INT, 0, 10, inter_comm, &status);
 	if (EnzoNumberOfSingleParticle != NumberOfSingleParticle) {
 		fprintf(stderr, "The numbers of nbody and hydro do not match: NumberOfSingleParticle=%d, EnzoNumberOfSingleParticle=%d\n",
-			 	NumberOfSingleParticle, EnzoNumberOfSingleParticle);
+				NumberOfSingleParticle, EnzoNumberOfSingleParticle);
 		fflush(stderr);
 		throw runtime_error("");
 	}
@@ -350,14 +353,15 @@ int ReceiveFromEnzo() {
 
 	std::cout << "Enzo  Time    :" << EnzoCurrentTime << std::endl;
 	//std::cout << "Nbody Time    :" << OldEnzoCurrentTime+particle[0]->CurrentTimeReg*EnzoTimeStep << std::endl;
-	EnzoTimeStep = TimeStep*EnzoTime;
+	global_variable->OldEnzoTimeStep = global_variable->EnzoTimeStep;
+	global_variable->EnzoTimeStep = TimeStep*EnzoTime;
 
 	std::cout << "NBODY+: Data trnsferred!" << std::endl;
 	fprintf(stdout, "NBODY+: Data trnsferred!\n");
 	EnzoCurrentTime = EnzoCurrentTime*EnzoTime;
 	std::cout << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
 	std::cout << "Enzo TimeStep:" << TimeStep  << std::endl;
-	std::cout << "EnzoTimeStep :" << EnzoTimeStep*1e4 << " Myr" << std::endl;
+	std::cout << "EnzoTimeStep :" << global_variable->EnzoTimeStep*1e4 << " Myr" << std::endl;
 	//std::cout << "Nbody Mass    :" << particle[0]->Mass << std::endl;
 	//std::cout << "Enzo  Mass    :" << Mass[0]*EnzoMass << std::endl;
 	//std::cout << "enzo Time :" << TimeStep << std::endl;
@@ -429,7 +433,7 @@ int ReceiveFromEnzo() {
 	if (NumberOfSingleParticle != 0) {
 		std::cerr << "In ReceiveFromEnzo, NumberOfSingleParticle = "<< NumberOfSingleParticle<< std::endl;
 		// loop for PID, going backwards to update the NextParticle
-		for (int i=NumberOfSingleParticle-1; i>=0; i--) {
+		for (int i=0; i<NumberOfSingleParticle; i++) {
 #ifdef COM_EVOLUTION
 			for (int dim=0; dim<Dim; dim++) {
 				BackgroundAcceleration[dim][i] -= ClusterAcceleration[dim];
@@ -480,8 +484,8 @@ int ReceiveFromEnzo() {
                 NumberOfAvailableIndices--;
 			}
 			else {
-				index = LastParticleIndex + 1;
-				LastParticleIndex++;
+				index = global_variable->LastParticleIndex + 1;
+				global_variable->LastParticleIndex++;
 			}
 
 			particles[index].set(newPID, newMass, newCreationTime, newDynamicalTime, newPosition, newVelocity,
@@ -635,7 +639,7 @@ int ReceiveFromEnzo() {
 	fprintf(nbpout, "NBODY+    : original NumberOfSingleParticle      = %d (+%d)\n", NumberOfSingleParticle-newNumberOfSingleParticle, newNumberOfSingleParticle);
 	fprintf(nbpout, "NBODY+    : newly updated NumberOfSingleParticle = %d\n", NumberOfSingleParticle, newNumberOfSingleParticle);
 	//fprintf(nbpout, "NBODY+    : Particle size     = %d\n", particle.size());
-	fprintf(nbpout, "NBODY+    : NextRegTimeStep   = %.3e\n", NextRegTimeBlock*time_step);
+	fprintf(nbpout, "NBODY+    : NextRegTimeStep   = %.3e\n", NextRegTimeBlock*global_variable->time_step);
 	fprintf(nbpout, "NBODY+    : NextRegTimeBlock  = %d\n", NextRegTimeBlock);
 	//fprintf(nbpout, "NBODY+    : RegularList size  = %d\n", RegularList.size());
 	fprintf(nbpout, "NBODY+    : FixNumNeighbor    = %d\n", FixNumNeighbor);
@@ -748,7 +752,7 @@ int SendToEnzo() {
 
 	int NumberOfEscapeParticle = 0;
 	double r2;
-	double TimeStep=EnzoTimeStep/EnzoTime;
+	double TimeStep=global_variable->EnzoTimeStep/EnzoTime;
 
 
 
@@ -796,11 +800,11 @@ int SendToEnzo() {
 #ifdef COM_EVOLUTION
 				if (IdentifyNbodyParticles && IdentifyOnTheFly)
 					r2 += Position[dim][i]*Position[dim][i];
-				Velocity[dim][i] += ClusterVelocity[dim];
-
 				// COM correction
 				Position[dim][i] += ClusterPosition[dim];
+				Velocity[dim][i] += ClusterVelocity[dim];
 #else
+
 				// COM correction
 				Position[dim][i] += ClusterPosition[dim];
 				if (IdentifyNbodyParticles && IdentifyOnTheFly)
@@ -842,14 +846,13 @@ int SendToEnzo() {
 			for (int dim=0; dim<Dim; dim++) {
 				newPosition[dim][i]  = ptcl->Position[dim]/EnzoLength;
 				newVelocity[dim][i]  = ptcl->Velocity[dim]/EnzoVelocity;
-				newVelocity[dim][i] += ClusterVelocity[dim];
 
 #ifdef COM_EVOLUTION
 				if (IdentifyNbodyParticles && IdentifyOnTheFly)
 					r2 += newPosition[dim][i]*newPosition[dim][i];
-
 				// COM correction
 				newPosition[dim][i] += ClusterPosition[dim];
+				newVelocity[dim][i] += ClusterVelocity[dim];
 #else
 				// COM correction
 				newPosition[dim][i] += ClusterPosition[dim];

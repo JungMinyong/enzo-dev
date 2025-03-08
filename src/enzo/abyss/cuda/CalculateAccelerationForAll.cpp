@@ -49,7 +49,7 @@ void CalculateAllAccelerationOnGPU(std::vector<Particle*> &particle){
 	bool neighborOK;
 	int ACnumi2;
 	int ACjid;
-	CUDA_REAL dt = particle[0]->TimeStepReg*EnzoTimeStep;
+	CUDA_REAL dt = particle[0]->TimeStepReg*global_variable->EnzoTimeStep;
 
 
 

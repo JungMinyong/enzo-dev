@@ -764,7 +764,7 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 			nHalo = nlines("halo.dat");
 			if(debug) fprintf(stderr, "InitializeParticles: Number of Halo Particles %"ISYM"\n", nHalo);
 #ifdef NBODY
-			nNbody = nlines("nbody.dat");
+			nNbody = nlines(NbodyDir);
 			if(debug) fprintf(stderr, "InitializeParticles: Number of Nbody Particles %"ISYM"\n", nNbody);
 			nParticles = nBulge + nDisk + nHalo + nNbody;
 #else
@@ -824,13 +824,13 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 					"halo.dat", PARTICLE_TYPE_DARK_MATTER, count, dx);
 			this->ReadParticlesFromFile(
 					Number, Type, Position, Velocity, Mass,
-					"nbody.dat", PARTICLE_TYPE_NBODY, count, dx);
+					NbodyDir, PARTICLE_TYPE_NBODY, count, dx);
 
 #ifdef NBODY_old
 
 			this->ReadNbodyParticles(
 					Number, Type, Position, Velocity, Mass, nNbody,
-					"nbody.dat", PARTICLE_TYPE_NBODY, count, dx);
+					NbodyDir, PARTICLE_TYPE_NBODY, count, dx);
 			fprintf(stdout, "NbodyCluster = (%.3e,%.3e,%.3e), r2 = %.3e \n", 
 					NbodyClusterPosition[0][0], NbodyClusterPosition[1][0], NbodyClusterPosition[2][0], NbodyClusterPosition[3][0]);
 #endif

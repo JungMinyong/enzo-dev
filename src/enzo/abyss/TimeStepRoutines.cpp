@@ -53,9 +53,9 @@ double getNewTimeStepIrr(double f[3][4], double df[3][4]) {
 	}
 	*/
 
-  TimeStep  = (std::sqrt(F2*F2dot2)+Fdot2)/(std::sqrt(Fdot2*F3dot2)+F2dot2);
-  //TimeStep  = F2/Fdot2;
-	//TimeStep  = std::sqrt(DivergentPrevent*eta*TimeStep);
+	TimeStep = (std::sqrt(F2 * F2dot2) + Fdot2) / (std::sqrt(Fdot2 * F3dot2) + F2dot2);
+	// TimeStep  = F2/Fdot2;
+	// TimeStep  = std::sqrt(DivergentPrevent*eta*TimeStep);
 	TimeStep  = std::sqrt(eta*TimeStep);
 	//std::cout<< TimeStep << " ";
 	//exit(EXIT_FAILURE); 
@@ -100,18 +100,32 @@ double getNewTimeStep(double f[3][4], double df[3][4]) {
 }
 
 void getBlockTimeStep(double dt, int &TimeLevel, ULL &TimeBlock, double &TimeStep) {
-	TimeLevel = static_cast<int>(floor(log(dt/EnzoTimeStep)/log(2.0)));
+	TimeLevel = static_cast<int>(floor(log(dt/global_variable->EnzoTimeStep)/log(2.0)));
 	//TimeLevel = static_cast<int>(ceil(log(dt/EnzoTimeStep)/log(2.0)));
 	//std::cout << "NBODY+: TimeLevel = " << TimeLevel << std::endl;
 	//std::cout << "NBODY+: TimeStep = " << TimeStep << std::endl;
 	
-	if (TimeLevel < time_block) {
+	if (TimeLevel < global_variable->time_block) {
 		//std::cerr << "TimeLevel is less than time block!!" << std::endl;
-		TimeLevel = time_block;
+		TimeLevel = global_variable->time_block;
 	}
 
 	TimeStep = static_cast<double>(pow(2, TimeLevel));
-	TimeBlock = static_cast<ULL>(pow(2, TimeLevel-time_block));
+	TimeBlock = static_cast<ULL>(pow(2, TimeLevel-global_variable->time_block));
 }
 
+
+void Particle::setNewTimeStepWithNewEnzoTimeStep(double &OldEnzoTimeStep, double &NewEnzoTimeStep) {
+	double dt = this->TimeStepReg*OldEnzoTimeStep; //*1e10/1e6;
+	this->TimeLevelReg = static_cast<int>(floor(log(dt / NewEnzoTimeStep) / log(2.0)));
+	this->TimeLevelReg = std::min(0,this->TimeLevelReg);
+	this->TimeStepReg = static_cast<double>(pow(2, this->TimeLevelReg));
+	this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg-global_variable->time_block));
+
+	dt = this->TimeStepIrr*OldEnzoTimeStep; //*1e10/1e6;
+	this->TimeLevelIrr = static_cast<int>(floor(log(dt / NewEnzoTimeStep) / log(2.0)));
+	this->TimeLevelIrr = std::min(0,this->TimeLevelIrr);
+	this->TimeStepIrr = static_cast<double>(pow(2, this->TimeLevelIrr));
+	this->TimeBlockIrr = static_cast<ULL>(pow(2, this->TimeLevelIrr-global_variable->time_block));
+}
 

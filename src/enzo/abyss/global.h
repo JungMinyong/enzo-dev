@@ -36,7 +36,6 @@ const int ROOT = 0;
 extern int NumberOfCommunication;
 
 /* Particle Array */
-extern int LastParticleIndex;
 extern int NumberOfParticle;
 extern int NumberOfSingleParticle;
 extern int *AvailableIndices; // stores available indices due to inactive particles (< LastParticleIndex).
@@ -60,9 +59,6 @@ extern int Task[NumberOfTask];
 extern double global_time;
 extern double global_time_irr;
 extern ULL NextRegTimeBlock;
-extern int time_block;
-extern double time_step;
-extern ULL block_max;
 
 
 extern bool bin_termination;
@@ -73,7 +69,6 @@ extern ULL binary_block;
 
 // Enzo to Abyss
 extern double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
-extern double EnzoTimeStep;
 extern double ClusterRadius2;
 extern double ClusterAcceleration[Dim];
 extern double ClusterPosition[Dim];

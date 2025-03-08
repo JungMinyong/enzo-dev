@@ -31,7 +31,7 @@ void Particle::computeAccelerationIrr() {
 	double m_r3;
 	Particle* ptcl;
 	new_time = this->CurrentTimeIrr + this->TimeStepIrr; // the time to be advanced to
-	dt       = this->TimeStepIrr*EnzoTimeStep; // interval of time step
+	dt       = this->TimeStepIrr*global_variable->EnzoTimeStep; // interval of time step
 
 
 	// initialize irregular force terms for ith particle just in case
@@ -153,7 +153,7 @@ void Particle::computeAccelerationIrr() {
 
 
 	double a2, a3, da_dt2, adot_dt, dt2, dt3, dt4, dt5;
-	double dt_ex = (new_time - this->CurrentTimeReg)*EnzoTimeStep;
+	double dt_ex = (new_time - this->CurrentTimeReg)*global_variable->EnzoTimeStep;
 
 	double A, B, C;
 
@@ -251,7 +251,7 @@ void Particle::computeAccelerationReg() {
 	int    j=0;
 	Particle* ptcl;
 	new_time = this->CurrentTimeReg+this->TimeStepReg; // the time to be advanced to
-	dt       = this->TimeStepReg*EnzoTimeStep; // interval of time step
+	dt       = this->TimeStepReg*global_variable->EnzoTimeStep; // interval of time step
 	this->NewNumberOfNeighbor = 0;
 
 	// initialize irregular force terms for ith particle just in case
@@ -652,7 +652,7 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 	/*******************************************************
 	 * Position and velocity correction due to 4th order correction
 	 ********************************************************/
-	double dt  = this->TimeStepReg*EnzoTimeStep;  // unit conversion
+	double dt  = this->TimeStepReg*global_variable->EnzoTimeStep;  // unit conversion
 	double dt2 = dt*dt;
 	double dt3 = dt2*dt;
 	double dt4 = dt3*dt;
@@ -715,6 +715,10 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 		if (this->NewNumberOfNeighbor == 0) {
 			this->a_tot[dim][2] = this->a_reg[dim][2];
 			this->a_tot[dim][3] = this->a_reg[dim][3];
+		}
+		if (this->NumberOfNeighbor == 0 && this->NewNumberOfNeighbor != 0) {
+			this->a_irr[dim][2] = this->a_reg[dim][2];
+			this->a_irr[dim][3] = this->a_reg[dim][3];
 		}
 	}
 }

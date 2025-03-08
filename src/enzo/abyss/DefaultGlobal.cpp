@@ -13,7 +13,6 @@ int NumberOfAvailableIndices;
 std::unordered_map<int,int> PIDtoIndexMap;
 int *EnzoPIDs; 
 int newNumberOfSingleParticle;
-int LastParticleIndex; // The last index of particle array
 int NumberOfParticle; // The number of active particles
 int NumberOfSingleParticle;
 int NewPID;
@@ -25,9 +24,6 @@ int Task[NumberOfTask];
 double global_time;
 double global_time_irr;
 ULL NextRegTimeBlock;
-int time_block;
-double time_step;
-ULL block_max;
 double outputTimeStep;
 double endTime;
 
@@ -38,7 +34,6 @@ ULL binary_block;
 // Enzo to Nbody
 Particle* FirstEnzoParticle;
 double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
-double EnzoTimeStep;
 
 
 // i/o
@@ -82,12 +77,11 @@ void DefaultGlobal() {
 
 	/* Timesteps */
 	endTime = 1;
-	EnzoTimeStep   = endTime/1e10; // endTime should be Myr
 	outputTimeStep = outputTimeStep/endTime; // endTime should be Myr
 
-	time_block = -30;
-	block_max = static_cast<ULL>(pow(2, -time_block));
-	time_step = std::pow(2,time_block);
+	global_variable->time_block = -30;
+	global_variable->block_max = static_cast<ULL>(pow(2, -global_variable->time_block));
+	global_variable->time_step = std::pow(2,global_variable->time_block);
 
 	inputTime = 0.0;
 	endTime = 0.0;

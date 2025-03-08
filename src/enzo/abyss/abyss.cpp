@@ -70,14 +70,13 @@ int ABYSS() {
 	if (AbyssProcessorNumber == ROOT)
 		InitialCommunication();
 
-	// things that should be synchronized.
+	// things that should be synchronized. this can be moved to GlobalVariable
 	MPI_Barrier(abyss_comm);
 	broadcastFromRoot(EnzoMass);
 	broadcastFromRoot(EnzoLength);
 	broadcastFromRoot(EnzoVelocity);
 	broadcastFromRoot(EnzoTime);
 	broadcastFromRoot(EnzoAcceleration);
-	broadcastFromRoot(EnzoTimeStep);
 	broadcastFromRoot(EPS2);
 	broadcastFromRoot(InitialNeighborRadius);
 	broadcastFromRoot(FixNumNeighbor);
@@ -101,7 +100,6 @@ int ABYSS() {
 	*/
 
 	if (AbyssProcessorNumber == ROOT) {
-		global_variable->LastParticleIndex = LastParticleIndex;
 		RootRoutines();
 	} else {
 		// /* // by EW 2025.1.27

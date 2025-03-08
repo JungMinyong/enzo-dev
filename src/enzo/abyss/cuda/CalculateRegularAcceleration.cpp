@@ -72,7 +72,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	Particle *ptcl;
 
 
-	double new_time = NextRegTimeBlock*time_step;  // next regular time
+	double new_time = NextRegTimeBlock*global_variable->time_step;  // next regular time
 
 
 	// need to make array to send to GPU
@@ -326,7 +326,7 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 	Particle *ptcl;
 
 	// copy the data of particles to the arrays to be sent
-	for (int i=0; i<=LastParticleIndex; i++) {
+	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl       = &particles[i];
 
 		if (!ptcl->isActive) {
@@ -378,7 +378,7 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 
 	// copy the data of particles to the arrays to be sent
 		
-	for (int i=0; i<=LastParticleIndex; i++) {
+	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl = &particles[i];
 
 		if (!ptcl->isActive) {

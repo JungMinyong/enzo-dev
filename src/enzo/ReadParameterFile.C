@@ -1284,6 +1284,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		ret += sscanf(line, "NbodyBinaryRegularization = %"ISYM, &NbodyBinaryRegularization);
 		ret += sscanf(line, "NbodyBinaryDistance       = %"FSYM, &NbodyBinaryDistance);
 		ret += sscanf(line, "NbodyBinaryTimeStep       = %"FSYM, &NbodyBinaryTimeStep);
+		//ret += sscanf(line, "NbodyFilename             = %"FSYM, &NbodyFilename);
+    if (sscanf(line, "NbodyDir           = %s", dummy) == 1)
+      NbodyDir = dummy;
     //ret += sscanf(line, "UseNbodyClusterIdentificationOnTheFly = %d", &isNbodyParticleIdentification);
 		//
     ret += sscanf(line, "ClusterSMBHFeedback = %"ISYM, &ClusterSMBHFeedback);

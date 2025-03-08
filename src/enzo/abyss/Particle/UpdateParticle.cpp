@@ -17,7 +17,7 @@ void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL 
 	// only predict the positions if necessary
 	// how about using polynomial correction here?
 	
-	dt = dt*EnzoTimeStep;
+	dt = dt*global_variable->EnzoTimeStep;
 
 	if (dt == 0) {
 		for (int dim=0; dim<Dim; dim++) {
@@ -52,7 +52,7 @@ void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[])
 	// only predict the positions if necessary
 	// how about using polynomial correction here?
 	
-	dt = dt*EnzoTimeStep;
+	dt = dt*global_variable->EnzoTimeStep;
 
 	if (dt == 0) {
 		for (int dim=0; dim<Dim; dim++) {
@@ -81,7 +81,7 @@ void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[])
 void Particle::correctParticleFourthOrder(double dt, double pos[], double vel[], double a[3][4]) {
 	double dt3,dt4,dt5;
 
-	dt = dt*EnzoTimeStep;
+	dt = dt*global_variable->EnzoTimeStep;
 
 	dt3 = dt*dt*dt;
 	dt4 = dt3*dt;
@@ -120,10 +120,10 @@ void Particle::updateRadius() {
 
 	/* exponential (aggressive) */
 	/*
-		 const double c = 0.5;
-		 const double b = std::log(2) / (NumNeighborMax);  // ln(2) / 40
-		 double exp = a * (std::exp(b * NumberOfAC) - 1);
-		 */
+		const double c = 0.5;
+		const double b = std::log(2) / (NumNeighborMax);  // ln(2) / 40
+		double exp = a * (std::exp(b * NumberOfAC) - 1);
+		*/
 
 	/* n=2 polynomial (mild) as n increases it grows mild */
 
@@ -167,7 +167,7 @@ void Particle::calculateTimeStepIrr() {
 	if (this->NumberOfNeighbor == 0) {
 		TimeLevelIrr = TimeLevelReg;
 		TimeStepIrr = static_cast<double>(pow(2, TimeLevelReg));
-		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelReg-time_block));
+		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 		return;
 	}
 
@@ -225,22 +225,22 @@ void Particle::calculateTimeStepIrr() {
 
 	TimeLevelIrr = TimeLevelTmp;
 
-	if (TimeLevelIrr < time_block) {
+	if (TimeLevelIrr < global_variable->time_block) {
 		//std::cerr << "TimeLevelIrr is too small" << std::endl;
-		TimeLevelIrr = std::max(time_block, TimeLevelIrr);
+		TimeLevelIrr = std::max(global_variable->time_block, TimeLevelIrr);
 	}
 
 
 	TimeStepIrr = static_cast<double>(pow(2, TimeLevelIrr));
-	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-time_block));
+	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
-	if (TimeStepIrr*EnzoTimeStep*1e4<1e-11) {
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-11) {
 		fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				PID, TimeStepIrr*EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*EnzoTimeStep*1e4);
-		while (TimeStepIrr*EnzoTimeStep*1e4<1e-11) {
+				PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-11) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
-			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-time_block));
+			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 		}
 	}
 
@@ -269,7 +269,7 @@ void Particle::calculateTimeStepIrr2() {
 	if (this->NumberOfNeighbor == 0) {
 		TimeLevelIrr = TimeLevelReg;
 		TimeStepIrr = static_cast<double>(pow(2, TimeLevelReg));
-		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelReg-time_block));
+		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 		return;
 	}
 
@@ -303,22 +303,23 @@ void Particle::calculateTimeStepIrr2() {
 
 	TimeLevelIrr = TimeLevelTmp;
 
-	if (TimeLevelIrr < time_block) {
+	if (TimeLevelIrr < global_variable->time_block) {
 		//std::cerr << "TimeLevelIrr is too small" << std::endl;
-		TimeLevelIrr = std::max(time_block, TimeLevelIrr);
+		TimeLevelIrr = std::max(global_variable->time_block, TimeLevelIrr);
 	}
 
 
 	TimeStepIrr = static_cast<double>(pow(2, TimeLevelIrr));
-	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-time_block));
+	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
-	if (TimeStepIrr*EnzoTimeStep*1e4<1e-11) {
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
 		fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				PID, TimeStepIrr*EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*EnzoTimeStep*1e4);
-		while (TimeStepIrr*EnzoTimeStep*1e4<1e-11) {
+				PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		exit(1);
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-11) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
-			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-time_block));
+			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 		}
 	}
 
@@ -401,7 +402,7 @@ void Particle::calculateTimeStepReg() {
 
 	//fprintf(stderr, " final time step=%.2eMyr\n", TimeStepRegTmp*EnzoTimeStep*1e10/1e6);
 
-	TimeLevelReg = std::max(time_block,TimeLevelTmp);
+	TimeLevelReg = std::max(global_variable->time_block,TimeLevelTmp);
 	//TimeLevelReg = std::max(time_block, TimeLevelReg);
 
 	if (this->NumberOfNeighbor == 0) {
@@ -409,32 +410,32 @@ void Particle::calculateTimeStepReg() {
 	}
 
 	TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
-	TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-time_block));
+	TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 
-	if (TimeStepReg*EnzoTimeStep*1e4 < 1e-7) {
+	if (TimeStepReg*global_variable->EnzoTimeStep*1e4 < 1e-7) {
 		fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
-			 	PID, TimeStepReg*EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*EnzoTimeStep*1e4);
+				PID, TimeStepReg * global_variable->EnzoTimeStep * 1e4, static_cast<double>(pow(2, TimeLevelTmp0)) * global_variable->EnzoTimeStep * 1e4);
 		fflush(stderr);
 	}
 
 	if (CurrentTimeReg+TimeStepReg > 1 && CurrentTimeReg != 1.0) {
 		TimeStepReg = 1 - CurrentTimeReg;
-		TimeBlockReg = block_max-CurrentBlockReg;
+		TimeBlockReg = global_variable->block_max-CurrentBlockReg;
 	}
 	/*
 	if (TimeStepReg*EnzoTimeStep*1e4<1e-9) {
 		fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
-			 	PID, TimeStepReg*EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*EnzoTimeStep*1e4);
+				PID, TimeStepReg*EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*EnzoTimeStep*1e4);
 		throw std::runtime_error("TimeStepReg is too small.");
 	}
 	*/
-	if (TimeStepReg*EnzoTimeStep*1e4<1e-9) {
+	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-9) {
 		fprintf(stderr, "Too small TimeStepReg! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				PID, TimeStepReg*EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*EnzoTimeStep*1e4);
-		while (TimeStepReg*EnzoTimeStep*1e4<1e-9) {
+				PID, TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		while (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-9) {
 			TimeLevelReg++;
 			TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
-			TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-time_block));
+			TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 		}
 	}
 	if (TimeStepReg > 1) {
