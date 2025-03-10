@@ -20,7 +20,7 @@ void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);
 bool updateSkipList(SkipList *skiplist, int ptcl_id);
 
-void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
+bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
 #ifdef PerformanceTrace
     std::chrono::high_resolution_clock::time_point start_point;
@@ -33,6 +33,12 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     Particle *ptcl;
     double current_time_irr = 0;
     double next_time = 0;
+
+#ifdef FEWBODY
+    bool bin_termination = false;
+	bool new_binaries = false;
+    std::vector<int> newCMptcls; // by EW 2025.1.6 // unordered_set? by EW 2025.1.11
+#endif
 
 #ifdef NSIGHT
     nvtxRangePushA("createSkipList");
@@ -61,25 +67,24 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
 #ifdef DEBUG
         // print out particlelist
+        fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time*EnzoTimeStep*1e4);
         /*
-        fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time * EnzoTimeStep * 1e4);
-        fprintf(stdout, "ParticleInde (PID)x: %d (%d). CurrentTimeIrr: %e Myr, TimeStepIrr: %e Myr\n",
-                    particles[ThisLevelNode->ParticleList[0]].ParticleIndex,
-                    particles[ThisLevelNode->ParticleList[0]].PID,
-                    particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr*EnzoTimeStep*1e4,
+        fprintf(stdout, "PID: %d. CurrentTimeIrr: %e Myr, TimeStepIrr: %e Myr\n", 
+                    particles[ThisLevelNode->ParticleList[0]].PID, 
+                    particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr*EnzoTimeStep*1e4, 
                     particles[ThisLevelNode->ParticleList[0]].TimeStepIrr*EnzoTimeStep*1e4);
 
-        fprintf(stdout, "ParticleIndex (%d) = ", ThisLevelNode->ParticleList.size());
+        // fprintf(stdout, "PID (%d) = ", ThisLevelNode->ParticleList.size());
         for (int i=0; i<ThisLevelNode->ParticleList.size(); i++) {
             ptcl = &particles[ThisLevelNode->ParticleList[i]];
             // fprintf(stdout, "%d, ", ptcl->PID);
-            fprintf(stdout, "ParticleIndex: %d. %e Myr, %e Myr\n",
-                    ptcl->ParticleIndex,
+            fprintf(stdout, "PID: %d. %e Myr, %e Myr\n", 
+                    ptcl->PID,
                     ptcl->CurrentTimeIrr*EnzoTimeStep*1e4,
                     ptcl->TimeStepIrr*EnzoTimeStep*1e4);
         }
         fprintf(stdout, "\n");
-        fflush(stdout);
+        // fflush(stdout);
         */
 #endif
 
@@ -111,6 +116,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         iter = queue_scheduler.CMPtcls.begin();
                     cm_pid = *(iter);
                     ptcl = &particles[cm_pid];
+                    /* // commented out by EW 2025.3.10
                     for (int j = 0; j < ptcl->NumberOfNeighbor; j++)
                     {
                         // if (particles[ptcl->Neighbors[j]].isUpdateToDate == false) // original code
@@ -120,6 +126,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                             goto skip_to_next;
                         }
                     }
+                    */
                     // queue_scheduler.printFreeWorker();
                     // queue_scheduler.printWorkerToGo();
                     // std::cout << "before: The number of CM ptcl is " << queue_scheduler.CMPtcls.size() << std::endl;
@@ -132,7 +139,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     // std::cout << "after: The number of CM ptcl is " << queue_scheduler.CMPtcls.size() << std::endl;
                     // queue_scheduler.printFreeWorker();
                     // queue_scheduler.printWorkerToGo();
-                skip_to_next:;
+                // skip_to_next:;
                 }
                 if (worker != nullptr)
                 {
@@ -169,6 +176,17 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef NSIGHT
         nvtxRangePushA("IrregularUpdate");
 #endif
+/*
+        // Irregular Update
+        queue_scheduler.initialize(IrrUpdate);
+        queue_scheduler.takeQueue(ThisLevelNode->ParticleList);
+        do
+        {
+            queue_scheduler.assignQueueAuto();
+            queue_scheduler.runQueueAuto();
+            queue_scheduler.waitQueue(0); // blocking wait
+        } while (queue_scheduler.isComplete());
+*/
         for (int ptcl_id : ThisLevelNode->ParticleList)
         {
             ptcl = &particles[ptcl_id];
@@ -269,7 +287,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 for (int j = 0; j < ptcl->NumberOfMember; j++)
                 {
                     particles[ptcl->Members[j]].CMPtclIndex = -1;
-                    if (particles[ptcl->Members[j]].Mass == 0.0)
+                    if (particles[ptcl->Members[j]].Mass == 0.0) // (Query) EW: this particle should be deleted from both Abyss & Enzo, this should be inserted in AvailableIndices
                         continue;
                     ThisLevelNode->ParticleList.push_back(ptcl->Members[j]);
                     particles[ptcl->Members[j]].isActive = true;
@@ -279,14 +297,29 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             }
         }
 
-        // Erase terminated CM particles by EW 2025.1.6
-        ThisLevelNode->ParticleList.erase(
-            std::remove_if(ThisLevelNode->ParticleList.begin(), ThisLevelNode->ParticleList.end(),
-                           [](int i)
-                           {
-                               return !particles[i].isActive;
-                           }),
-            ThisLevelNode->ParticleList.end());
+        if (bin_termination) {
+            for (int i=OriginalSize; i<ThisLevelNode->ParticleList.size(); i++) {
+                ptcl = &particles[ThisLevelNode->ParticleList[i]];
+
+                if (ptcl->CurrentBlockReg + ptcl->TimeBlockReg == NextRegTimeBlock)
+                    RegularList.insert(ptcl->ParticleIndex);
+
+                ptcl->NewNumberOfNeighbor = 0;
+                if (ptcl->TimeStepIrr * EnzoTimeStep * 1e4 < TSEARCH)
+                    ptcl->checkNewGroup4();
+            }
+
+            // Erase terminated CM particles by EW 2025.1.6
+            ThisLevelNode->ParticleList.erase(
+                std::remove_if(ThisLevelNode->ParticleList.begin(), ThisLevelNode->ParticleList.end(),
+                    [](int i) {
+                    return !particles[i].isActive;
+                    }
+                ),
+                ThisLevelNode->ParticleList.end()
+            );
+        }
+
 #ifdef NSIGHT
         nvtxRangePop();
 #endif
@@ -299,19 +332,19 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         std::cout << "FB search starts" << std::endl;
 #endif
         /*
-                        // std::cerr << "FB search starts" << std::endl;
-                        // Few-body group search
-                        queue_scheduler.initialize(SearchGroup);
-                        queue_scheduler.takeQueue(ThisLevelNode->ParticleList);
-                        do
-                        {
-                            queue_scheduler.assignQueueAuto();
-                            queue_scheduler.runQueueAuto();
-                            // queue_scheduler.printStatus();
-                            queue_scheduler.waitQueue(0); // blocking wait
-                        } while (queue_scheduler.isComplete());
+        // std::cerr << "FB search starts" << std::endl;
+        // Few-body group search
+        queue_scheduler.initialize(SearchGroup);
+        queue_scheduler.takeQueue(ThisLevelNode->ParticleList);
+        do
+        {
+            queue_scheduler.assignQueueAuto();
+            queue_scheduler.runQueueAuto();
+            // queue_scheduler.printStatus();
+            queue_scheduler.waitQueue(0); // blocking wait
+        } while (queue_scheduler.isComplete());
 
-                        // std::cerr << "FB search ended" << std::endl;
+        // std::cerr << "FB search ended" << std::endl;
         */
         for (int ptcl_id : ThisLevelNode->ParticleList)
         {
@@ -327,11 +360,9 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 ptcl->checkNewGroup2();
                 ptcl->setBinaryInterruptState(BinaryInterruptState::none);
             }
-            else
-            {
-                ptcl->NewNumberOfNeighbor = 0;
-                if (ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e4 < TSEARCH)
-                    ptcl->checkNewGroup();
+            else if (ptcl->NewNumberOfNeighbor != 0)
+            {	
+                ptcl->checkNewGroup3();
             }
         }
 #ifdef DEBUG
@@ -350,6 +381,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef DEBUG
         std::cout << "formBinaries starts" << std::endl;
 #endif
+        LastParticleIndex = global_variable->LastParticleIndex; // for formBinareis function by EW 2025.3.11
         formBinaries(ThisLevelNode->ParticleList, newCMptcls, CMPtclWorker, PrevCMPtclWorker);
 #ifdef DEBUG
         std::cout << "formBinaries ended" << std::endl;
@@ -388,7 +420,6 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     }
                 }
 
-                queue_scheduler.initialize(MakeGroup);
                 rank_new = CMPtclWorker[ptclCM->ParticleIndex];
 #ifdef DEBUG
                 fprintf(stdout, "Rank of CM ptcl %d: %d\n", ptclCM->PID, rank_new);
@@ -398,6 +429,10 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 workers[rank_new].addQueue(queue);
                 workers[rank_new].runQueue();
                 workers[rank_new].callback();
+
+                if (ptclCM->CurrentBlockReg + ptclCM->TimeBlockReg == NextRegTimeBlock) {
+                    RegularList.insert(ptcl->ParticleIndex);
+                }
             }
 #ifdef DEBUG
             std::cout << "All new fewbody objects are initialized." << std::endl;
@@ -545,31 +580,25 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     // exit(SUCCESS);
 
 #ifdef FEWBODY
-    if (bin_termination || new_binaries)
-    {
-        ULL OriginalNextRegTimeBlock = NextRegTimeBlock;
-#ifdef DEBUG
-        std::cout << "(FB) updateNextRegTime starts" << std::endl;
+    if (bin_termination || new_binaries) {
+
+        for (auto it = RegularList.begin(); it != RegularList.end(); ) {
+            if (!particles[*it].isActive)
+                it = RegularList.erase(it);
+            else
+                ++it;
+        }
+
+        if (RegularList.empty()) {
+
+#ifdef PerformanceTrace
+            end_point = std::chrono::high_resolution_clock::now();
+            performance.IrregularRoutine +=
+                std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
 #endif
 
-#ifdef NSIGHT
-        nvtxRangePushA("updateNextRegTime");
-#endif
-
-        updateNextRegTime(RegularList);
-        if (OriginalNextRegTimeBlock != NextRegTimeBlock)
-            continue;
-
-        bin_termination = false;
-        new_binaries = false;
-#ifdef NSIGHT
-        nvtxRangePop();
-#endif
-
-#ifdef DEBUG
-        std::cout << "(FB) updateNextRegTime done" << std::endl;
-        std::cout << "(FB) RegularList size: " << RegularList.size() << std::endl;
-#endif
+            return false;
+        }
     }
 #endif
 
@@ -578,6 +607,7 @@ void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     performance.IrregularRoutine +=
         std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
 #endif
+    return true;
 }
 
 

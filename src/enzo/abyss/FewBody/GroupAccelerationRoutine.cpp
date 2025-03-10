@@ -34,9 +34,9 @@ void formPrimordialBinaries(int OriginalLastParticleIndex) {
 	for (int i=OriginalLastParticleIndex+1; i<=LastParticleIndex; i++) {
 		// deleteNeighbors(i);
 		NewCM = &particles[i];
-		NewCM->ParticleIndex = i;
+		NewCM->ParticleIndex = i; // (Query) EW: for primordial binaries, there's no need to care about AvailableIndices, right?
 		NewCM->PID = NewPID;
-		NewPID++;
+		NewPID--;
 		std::cout << "New Primordial CM ParticleIndex: " << i << std::endl;
 		std::cout << "New Primordial CM PID: " << NewCM->PID << std::endl;
 		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
@@ -110,7 +110,7 @@ void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls,
 		NewCM = &particles[i];
 		NewCM->ParticleIndex = i;
 		NewCM->PID = NewPID;
-		NewPID++;
+		NewPID--;
 #ifdef DEBUG
 		std::cout << "New CM ParticleIndex: " << i << std::endl;
 		std::cout << "New CM PID: " << NewCM->PID << std::endl;
@@ -183,7 +183,7 @@ void deleteNeighbors(int newOrder) {
 	std::cout << "New particle index is " << newOrder << std::endl;
 	ptclCM = &particles[newOrder];
 	ptclCM->PID = NewPID;
-	NewPID++;
+	NewPID--;
 	ptclCM->isActive = true;
 	ptclCM->isCMptcl = true;
 	ptclCM->setBinaryInterruptState(BinaryInterruptState::none);

@@ -46,7 +46,7 @@ int ABYSS() {
 	//fprintf(binout, "Binary Output Starts!\n");
 	//fprintf(gpuout, "CUDA Output Starts!\n");
 
-	binout = fopen("binary_output.txt", "w");
+	binout = fopen("binary_output.txt", "w"); // (Query) EW: how to open output files?
 	fprintf(binout, "Starting nbody - Binary OUTPUT\n");
 	fflush(binout);
 	mergerout = fopen("merger_output.txt", "w");

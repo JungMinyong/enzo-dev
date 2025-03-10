@@ -3,19 +3,24 @@
 #include "global.h"
 #include <unordered_map>
 
-bool bin_termination;
-bool new_binaries;
 std::unordered_set<int> RegularList;
 int NumberOfWorker;
 int NumberOfCommunication;
 int *AvailableIndices; 
 int NumberOfAvailableIndices;
-std::unordered_map<int,int> PIDtoIndexMap;
+std::unordered_map<int,int> PIDtoIndexMap; // (Query) EW: How about CM particles?
 int *EnzoPIDs; 
 int newNumberOfSingleParticle;
-int NumberOfParticle; // The number of active particles
-int NumberOfSingleParticle;
+int NumberOfParticle; // The number of active particles (single + CM ptcl)
+int NumberOfSingleParticle; // The number of single particles (only single, not CM ptcl)
 int NewPID;
+int LastParticleIndex; // The last index of particle array; for few-body case by EW 2025.3.10
+
+// Few-Body
+#ifdef FEWBODY
+std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11
+std::unordered_map<int, int> PrevCMPtclWorker; // by EW 2025.1.4 // unordered_map by EW 2025.1.11
+#endif
 
 // Task
 int Task[NumberOfTask];
@@ -101,10 +106,7 @@ void DefaultGlobal() {
 
 	NumberOfWorker = NumberOfAbyssProcessors-1;
 
-
-
-	bin_termination = false;
-	new_binaries = false;
+	NewPID = -1;
 
 #ifdef SEVN
 	std::vector<std::string> args = {"empty", // Not used

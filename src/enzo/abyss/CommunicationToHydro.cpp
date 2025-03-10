@@ -10,6 +10,11 @@
 #include "../CosmologyParameters.h"
 #include "../phys_constants.h"
 
+#ifdef FEWBODY
+#include <unordered_set>
+#include "Worker.h"
+#endif
+
 
 #define no_COM_EVOLUTION // (Query) eventaully I think this should adopt COM evolution due to bulk motion. 
 //Bulk motion in irregular force will cause some distorts since a fraction of particle will advance due to bulk motion
@@ -61,7 +66,6 @@ int InitialCommunication() {
 	MPI_Status status;
 
 	fprintf(nbpout, "NBODY+: First Waiting for Enzo to receive data...\n");
-	fflush(nbpout);
 
 	CommunicationInterBarrier();
 	fprintf(nbpout, "NBODY+: Frist Receiving data from Enzo...\n");
@@ -97,7 +101,7 @@ int InitialCommunication() {
 	MPI_Recv(&StarParticleFeedback    , 1, MPI_INT   , 0, 1100, inter_comm, &status);
 	MPI_Recv(&StarMassEjectionFraction, 1, MPI_DOUBLE, 0, 1200, inter_comm, &status);
 	MPI_Recv(&EnzoCurrentTime         , 1, MPI_DOUBLE, 0, 1300, inter_comm, &status);
-	MPI_Recv(&EPS2                    , 1, MPI_DOUBLE, 0, 1400, inter_comm, &status);
+	MPI_Recv(&EPS2                    , 1, MPI_DOUBLE, 0, 1400, inter_comm, &status); // (Query) EW: this seems unnecessary
 	MPI_Recv(&eta_tmp                 , 1, MPI_DOUBLE, 0, 1500, inter_comm, &status);
 	MPI_Recv(&InitialNeighborRadius   , 1, MPI_DOUBLE, 0, 1600, inter_comm, &status);
 	MPI_Recv(EnzoClusterPosition      , 4, MPI_DOUBLE, 0, 1700, inter_comm, &status);
@@ -105,16 +109,15 @@ int InitialCommunication() {
 	MPI_Recv(&IdentifyOnTheFly        , 1, MPI_INT   , 0, 1775, inter_comm, &status);
 	MPI_Recv(&FixNumNeighbor          , 1, MPI_INT   , 0, 1800, inter_comm, &status);
 	MPI_Recv(&MaxNumNeighbor          , 1, MPI_INT   , 0, 1850, inter_comm, &status);
-	MPI_Recv(&BinaryRegularization    , 1, MPI_INT   , 0, 1900, inter_comm, &status);
+	MPI_Recv(&BinaryRegularization    , 1, MPI_INT   , 0, 1900, inter_comm, &status); // (Query) EW: What is this?
 	//MPI_Recv(&KSDistance              , 1, MPI_DOUBLE, 0, 2000, inter_comm, &status);
 	//MPI_Recv(&KSTime                  , 1, MPI_DOUBLE, 0, 2100, inter_comm, &status);
 	//MPI_Recv(&HydroMethod         , 1, MPI_INT   , 0, 1200, inter_comm, &status);
 	fprintf(nbpout, "data receiving!\n");
-	fflush(nbpout);
+
 
 	MPI_Recv(&ComovingCoordinates        , 1, MPI_INT   , 0, 3000, inter_comm, &status);
 	fprintf(nbpout, "ComovingCoordinates=%d\n",ComovingCoordinates);
-	fflush(nbpout);
 	if (ComovingCoordinates) {
 		fprintf(nbpout, "Cosmo data receiving!\n");
 		MPI_Recv(&HubbleConstantNow        , 1, MPI_DOUBLE, 0, 3010, inter_comm, &status);
@@ -131,8 +134,8 @@ int InitialCommunication() {
 		MPI_Recv(&CosmologyTableLogtIndex   , 1, MPI_INT  , 0, 3120, inter_comm, &status);
 		MPI_Recv(&CosmologyTableLogaInitial , 1, MPI_DOUBLE, 0, 3130, inter_comm, &status);
 		MPI_Recv(&CosmologyTableLogaFinal   , 1, MPI_DOUBLE, 0, 3140, inter_comm, &status);
-		CosmologyTableLoga = new double[CosmologyTableNumberOfBins];
-		CosmologyTableLogt = new double[CosmologyTableNumberOfBins];
+		CosmologyTableLoga = new double[CosmologyTableNumberOfBins]; // (Query) EW: not deleted later?
+		CosmologyTableLogt = new double[CosmologyTableNumberOfBins]; // (Query) EW: not deleted later?
 		MPI_Recv(CosmologyTableLoga, CosmologyTableNumberOfBins, MPI_DOUBLE, 0, 3150, inter_comm, &status);
 		MPI_Recv(CosmologyTableLogt, CosmologyTableNumberOfBins, MPI_DOUBLE, 0, 3160, inter_comm, &status);
 	}
@@ -173,7 +176,7 @@ int InitialCommunication() {
 	fprintf(nbpout, "StarMassEjectionFraction = %lf\n", StarMassEjectionFraction);
 	fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
 	fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
-	fprintf(nbpout, "BinaryRegularization     = %d\n", BinaryRegularization);
+	fprintf(nbpout, "BinaryRegularization     = %d\n", BinaryRegularization); // (Query) EW: What is this?
 	//fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
 	//fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
 	fprintf(nbpout, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
@@ -269,8 +272,8 @@ int InitialCommunication() {
 	}
 
 	fprintf(nbpout, "NBODY+: %d particles loaded!\n", NumberOfSingleParticle);
-	fflush(stdout);
-	fflush(stderr);
+	// fflush(stdout);
+	// fflush(stderr);
 	fflush(nbpout);
 	//fflush(gpuout);
 	//fflush(binout);
@@ -432,16 +435,40 @@ int ReceiveFromEnzo() {
 	// need to update if the ids match between Enzo and Nbody
 	if (NumberOfSingleParticle != 0) {
 		std::cerr << "In ReceiveFromEnzo, NumberOfSingleParticle = "<< NumberOfSingleParticle<< std::endl;
+
+		std::unordered_set<int> CMPtclsSet;
+		Particle* ptcl;
+
 		// loop for PID, going backwards to update the NextParticle
 		for (int i=0; i<NumberOfSingleParticle; i++) {
+
+			ptcl = &particles[PIDtoIndexMap[PID[i]]];
+
+			if (!ptcl->isActive && ptcl->CMPtclIndex != -1) {
+				CMPtclsSet.insert(ptcl->CMPtclIndex);
+			}
+
 #ifdef COM_EVOLUTION
 			for (int dim=0; dim<Dim; dim++) {
 				BackgroundAcceleration[dim][i] -= ClusterAcceleration[dim];
 			}
 #endif
 			EnzoPIDs[i] = PID[i];
-			particles[PIDtoIndexMap[PID[i]]].update(Mass, BackgroundAcceleration, i);
+			ptcl->update(Mass, BackgroundAcceleration, i);
 		} //endfor i
+		for (int i: CMPtclsSet) { // Calculate background acceleration on the CM particles
+			Particle* ptcl = &particles[i];
+			double BackgroundAccelerationCM[Dim] = {0, 0, 0};
+
+			for (int j = 0; j < ptcl->NumberOfMember; j++) {
+				Particle* members = &particles[ptcl->Members[j]];
+
+				for (int dim = 0; dim < Dim; dim++)
+					BackgroundAccelerationCM[dim] += members->Mass * members->BackgroundAcceleration[dim];
+			}
+			for (int dim = 0; dim < Dim; dim++)
+				ptcl->BackgroundAcceleration[dim] = BackgroundAccelerationCM[dim]/ptcl->Mass;
+		}
 	} //endif nnb
 
 
@@ -660,14 +687,14 @@ int ReceiveFromEnzo() {
 }
 
 
-
-int SendToEnzo() {
+// (Query) How to deal with merged zero-mass particles, and PISN?
+int SendToEnzo() { 
 
 	std::cout << "NBODY+: Entering SendToEnzo..." << std::endl;
 	if (NumberOfSingleParticle == 0 && newNumberOfSingleParticle == 0) {
 		std::cout << "NBODY+: Skipping SendToEnzo..." << std::endl;
 		fflush(stdout);
-		fflush(stderr);
+		// fflush(stderr);
 		return SUCCESS;
 	}
 	MPI_Request request;
@@ -700,60 +727,9 @@ int SendToEnzo() {
 	//for (Particle* ptcl:particle) {
 
 
-	// (Query to EW) in this part, all the sdar objects should return to individual particles.
-#ifdef FEWBODY
-	if (BinaryList.size() > 0) {
-
-		int offset = particle.size() - BinaryList.size();
-
-		for (Binary* bin:BinaryList) {
-			if (bin->ptclCM->Position[0] != bin->ptclCM->Position[0])
-				fprintf(stderr, "COM=%d, %e\n", bin->ptclCM->PID, bin->ptclCM->Position[0]);
-			bin->ptclCM->convertBinaryCoordinatesToCartesian();
-			bin->ptclCM->isErase = true;
-			particle.push_back(bin->ptclCM->BinaryParticleI);
-			particle.push_back(bin->ptclCM->BinaryParticleJ);
-			if (bin->ptclCM->BinaryParticleI->Position[0] != bin->ptclCM->BinaryParticleI->Position[0]) {
-				fprintf(stderr, "%d, %e\n", bin->ptclCM->BinaryParticleI->PID, bin->ptclCM->BinaryParticleI->Position[0]);
-			}
-			std::cerr << bin->ptclCM->BinaryParticleI->PID << std::endl;
-			std::cerr << bin->ptclCM->BinaryParticleJ->PID << std::endl;
-			delete bin;
-		}
-		fflush(stderr);
-		particle.erase(
-				std::remove_if(particle.begin(), particle.end(),
-					[](Particle* p) {
-					bool to_remove = p->isErase;
-					if (to_remove) delete p;
-					return to_remove;
-					}),
-				particle.end());
-		std::cerr << "CM Particle dissociation failed!\n" << std::endl;
-		if (offset+BinaryList.size()*2 != particle.size()) {
-			std::cerr << "CM Particle dissociation failed!\n" << std::endl;
-			fprintf(stderr, "offset = %d, BinaryList=%d, ptclsize=%d\n", offset, BinaryList.size(), particle.size());
-			fflush(stderr);
-			throw runtime_error("");
-		}
-
-		/*
-		int i=0;
-		for (Particle* ptcl:particle) {
-			ptcl->ParticleOrder = i;
-			i++;
-		}
-		*/
-		InitializeNewParticle(particle, offset, BinaryList.size()*2);
-	}
-	BinaryList.clear();
-	std::cerr << "Binary Done!\n" << std::endl;
-#endif // FewBody
-
 	int NumberOfEscapeParticle = 0;
 	double r2;
 	double TimeStep=global_variable->EnzoTimeStep/EnzoTime;
-
 
 
 #ifdef COM_EVOLUTION
@@ -788,10 +764,21 @@ int SendToEnzo() {
 
 	if (NumberOfSingleParticle - newNumberOfSingleParticle > 0) {
 		//fprintf(stderr, "Sending PID order= ");
+
+		std::unordered_set<int> CMPtclsSet;
+
 		for (int i=0; i<NumberOfSingleParticle-newNumberOfSingleParticle; i++) {
 			//fprintf(stderr, "%d, ",ptcl->PID);
 			index = PIDtoIndexMap[EnzoPIDs[i]];
 			ptcl = &particles[index];
+
+			if (!ptcl->isActive) {
+				if (ptcl->CMPtclIndex != -1) {
+					CMPtclsSet.insert(ptcl->CMPtclIndex);
+				}
+				continue;
+			}
+
 			r2 = 0;
 			for (int dim=0; dim<Dim; dim++) {
 				Position[dim][i]  = ptcl->Position[dim]/EnzoLength;
@@ -815,14 +802,14 @@ int SendToEnzo() {
 					r2 += (Position[dim][i]-EnzoClusterPosition[dim])*(Position[dim][i]-EnzoClusterPosition[dim]);
 			}
 
-			if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
+			if (ptcl->isActive && IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
 				Position[0][i] -= 20;
 				deleteParticle(EnzoPIDs[i],index);
 				NumberOfEscapeParticle++;
 			}
 			//fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
 
-			if ((ptcl == nullptr) && (i != NumberOfSingleParticle-newNumberOfSingleParticle-1))
+			if ((ptcl == nullptr) && (i != NumberOfSingleParticle-newNumberOfSingleParticle-1)) // (Query) EW: this seems unnecessary. particles is no longer dynamically allocated
 			{
 				std::cout << "NBODY+: Warning! ParticleChain for Communication has been broken!" << std::endl;
 				std::cerr << "NBODY+: Warning! ParticleChain for Communication has been broken!" << std::endl;
@@ -835,13 +822,90 @@ int SendToEnzo() {
 			}
 		}
 		//fprintf(stderr, "\n");
+
+		for (int i: CMPtclsSet) {
+			ptcl = &particles[i];
+
+			double memPosition[3];
+			double memVelocity[3];
+			bool memEscape = true;
+
+			Particle* members;
+
+			for (int j = 0; j < ptcl->NumberOfMember; j++) {
+				members = &particles[ptcl->Members[j]];
+
+				r2 = 0;
+				for (int dim=0; dim<Dim; dim++) {
+					memPosition[dim]  = members->Position[dim]/EnzoLength; // EW: not i!
+					memVelocity[dim]  = members->Velocity[dim]/EnzoVelocity; // EW: not i!
+
+#ifdef COM_EVOLUTION
+					if (IdentifyNbodyParticles && IdentifyOnTheFly)
+						r2 += memPosition[dim]*memPosition[dim];
+					// COM correction
+					memPosition[dim] += ClusterPosition[dim];
+					memVelocity[dim] += ClusterVelocity[dim];
+#else
+
+					// COM correction
+					memPosition[dim] += ClusterPosition[dim];
+					if (IdentifyNbodyParticles && IdentifyOnTheFly)
+						r2 += (memPosition[dim]-NbodyCOM[dim])*(memPosition[dim]-NbodyCOM[dim]);
+#endif
+
+					if (IdentifyNbodyParticles && !IdentifyOnTheFly)
+						r2 += (memPosition[dim]-EnzoClusterPosition[dim])*(memPosition[dim]-EnzoClusterPosition[dim]);
+				}
+
+				if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 <= ClusterRadius2) { // in Enzo Unit
+					memEscape = false;
+					break;
+				}
+				//fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
+			}
+			if (memEscape) {
+				NumberOfParticle--; // CM particld should be removed from active particles
+
+				int rank_delete = CMPtclWorker[ptcl->ParticleIndex];
+				fprintf(nbpdout, "Rank of CM ptcl %d: %d\n", ptcl->PID, rank_delete);
+				Queue queue;
+				queue.task = DeleteGroup;
+				queue.pid = ptcl->ParticleIndex;
+				workers[rank_delete].addQueue(queue); // (Query) EW: How about globally defining workers?
+				workers[rank_delete].runQueue();
+				workers[rank_delete].callback();
+
+				AvailableIndices[NumberOfAvailableIndices] = ptcl->ParticleIndex;
+				NumberOfAvailableIndices++;
+
+				for (int j = 0; j < ptcl->NumberOfMember; j++) {
+					members = &particles[ptcl->Members[j]];
+					// Position[0][i] -= 20; // (Query) EW: Is this necessary? I have ho idea how to find i in binary case
+					deleteParticle(members->PID, ptcl->Members[j]);
+					NumberOfEscapeParticle++;
+				}
+			}
+		}
+
 	}
 
 	if (newNumberOfSingleParticle > 0) {
+
+		std::unordered_set<int> CMPtclsSet;
+
 		int offset = NumberOfSingleParticle-newNumberOfSingleParticle;
 		for (int i=0; i<newNumberOfSingleParticle; i++) {
 			index = PIDtoIndexMap[EnzoPIDs[i+offset]];
 			ptcl = &particles[index];
+
+			if (!ptcl->isActive) {
+				if (ptcl->CMPtclIndex != -1) {
+					CMPtclsSet.insert(ptcl->CMPtclIndex);
+				}
+				continue;
+			}
+
 			r2 = 0;
 			for (int dim=0; dim<Dim; dim++) {
 				newPosition[dim][i]  = ptcl->Position[dim]/EnzoLength;
@@ -863,11 +927,76 @@ int SendToEnzo() {
 				if (IdentifyNbodyParticles && !IdentifyOnTheFly)
 					r2 += (newPosition[dim][i]-EnzoClusterPosition[dim])*(newPosition[dim][i]-EnzoClusterPosition[dim]);
 			}
-			if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) {
+			if (ptcl->isActive && IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) {
 				newPosition[0][i] -= 20;
 				deleteParticle(EnzoPIDs[i+offset],index);
 				NumberOfEscapeParticle++;
 				// (Query) binary termination?
+			}
+		}
+
+		for (int i: CMPtclsSet) {
+			ptcl = &particles[i];
+
+			double memPosition[3];
+			double memVelocity[3];
+			bool memEscape = true;
+
+			Particle* members;
+
+			for (int j = 0; j < ptcl->NumberOfMember; j++) {
+				members = &particles[ptcl->Members[j]];
+
+				r2 = 0;
+				for (int dim=0; dim<Dim; dim++) {
+					memPosition[dim]  = members->Position[dim]/EnzoLength; // EW: not i!
+					memVelocity[dim]  = members->Velocity[dim]/EnzoVelocity; // EW: not i!
+
+#ifdef COM_EVOLUTION
+					if (IdentifyNbodyParticles && IdentifyOnTheFly)
+						r2 += memPosition[dim]*memPosition[dim];
+					// COM correction
+					memPosition[dim] += ClusterPosition[dim];
+					memVelocity[dim] += ClusterVelocity[dim];
+#else
+
+					// COM correction
+					memPosition[dim] += ClusterPosition[dim];
+					if (IdentifyNbodyParticles && IdentifyOnTheFly)
+						r2 += (memPosition[dim]-NbodyCOM[dim])*(memPosition[dim]-NbodyCOM[dim]);
+#endif
+
+					if (IdentifyNbodyParticles && !IdentifyOnTheFly)
+						r2 += (memPosition[dim]-EnzoClusterPosition[dim])*(memPosition[dim]-EnzoClusterPosition[dim]);
+				}
+
+				if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 <= ClusterRadius2) { // in Enzo Unit
+					memEscape = false;
+					break;
+				}
+				//fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
+			}
+			if (memEscape) {
+				NumberOfParticle--; // CM particld should be removed from active particles
+
+				int rank_delete = CMPtclWorker[ptcl->ParticleIndex];
+				fprintf(nbpdout, "Rank of CM ptcl %d: %d\n", ptcl->PID, rank_delete);
+				Queue queue;
+				queue.task = DeleteGroup;
+				queue.pid = ptcl->ParticleIndex;
+				workers[rank_delete].addQueue(queue); // (Query) EW: How about globally defining workers?
+				workers[rank_delete].runQueue();
+				workers[rank_delete].callback();
+
+				AvailableIndices[NumberOfAvailableIndices] = ptcl->ParticleIndex;
+				NumberOfAvailableIndices++;
+
+				for (int j = 0; j < ptcl->NumberOfMember; j++) {
+					members = &particles[ptcl->Members[j]];
+					// Position[0][i] -= 20; // (Query) EW: Is this necessary? I have ho idea how to find i in binary case
+					deleteParticle(members->PID, ptcl->Members[j]);
+					NumberOfEscapeParticle++;
+				}
 			}
 		}
 	}
@@ -986,7 +1115,7 @@ int SendToEnzo() {
 	}
 
 	NumberOfSingleParticle -= NumberOfEscapeParticle;
-	NumberOfParticle -= NumberOfEscapeParticle;
+	// NumberOfParticle -= NumberOfEscapeParticle; // (Query) EW: this must be wrong due to CM particles
 	std::cout << "NBODY+: Sending data finished." << std::endl;
 
 
@@ -1001,7 +1130,7 @@ int SendToEnzo() {
 	fflush(stderr);
 	fflush(nbpout);
 	//fflush(gpuout);
-	fflush(binout);
+	// fflush(binout);
 	return true;
 }
 

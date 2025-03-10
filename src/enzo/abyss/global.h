@@ -47,6 +47,8 @@ extern std::unordered_map<int,int> PIDtoIndexMap;
 extern int MaxNumNeighbor;
 extern int FixNumNeighbor;
 
+extern int LastParticleIndex; // for few-body case by EW 2025.3.10
+
 // Task
 const int TASK_TAG = 1;
 const int PTCL_TAG = 2;
@@ -60,9 +62,6 @@ extern double global_time;
 extern double global_time_irr;
 extern ULL NextRegTimeBlock;
 
-
-extern bool bin_termination;
-extern bool new_binaries;
 extern double binary_time;
 extern double binary_time_prev;
 extern ULL binary_block;
@@ -84,6 +83,12 @@ extern int ComovingCoordinates;
 extern double eta_tmp;
 extern double InitialNeighborRadius;
 extern double EPS2;
+
+// Few-Body
+#ifdef FEWBODY
+extern std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11
+extern std::unordered_map<int, int> PrevCMPtclWorker; // by EW 2025.1.4 // unordered_map by EW 2025.1.11
+#endif
 
 // i/o
 extern char* fname;

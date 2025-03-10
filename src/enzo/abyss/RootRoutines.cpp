@@ -17,7 +17,7 @@
 #define noDEBUG
 
 void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers);
-void IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers);
+bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers);
 void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers);
 void InitialAssignmentOfTasks(std::vector<int> &data, double next_time, int NumTask, int TAG);
 void InitialAssignmentOfTasks(std::vector<int> &data, int NumTask, int TAG);
@@ -33,7 +33,6 @@ bool updateSkipList(SkipList *skiplist, int ptcl_id);
 int writeParticle(double current_time, int outputNum);
 void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueScheduler &queue_scheduler);
 
-void formPrimordialBinaries(int beforeLastParticleIndex);
 void formBinaries(std::vector<int> &ParticleList, std::vector<int> &newCMptcls, std::unordered_map<int, int> &existing, std::unordered_map<int, int> &terminated);
 void FBTermination(Particle *ptclCM);
 void Merge(Particle *p1, Particle *p2);
@@ -58,9 +57,6 @@ void RootRoutines()
 	int total_tasks;
 	int remaining_tasks = 0, completed_tasks = 0, completed_rank;
 
-	std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11
-	std::unordered_map<int, int> PrevCMPtclWorker; // by EW 2025.1.4 // unordered_map by EW 2025.1.11
-	std::vector<int> newCMptcls;				   // by EW 2025.1.6 // unordered_set? by EW 2025.1.11
 	std::vector<int> EmptyIndex;				   // by EW 2025.1.7  empty slots in particles e.g., due to mergers
 	// unordered_set? by EW 2025.1.11
 	// merged particles & PISN will be contained here
@@ -124,10 +120,8 @@ void RootRoutines()
 #ifdef NSIGHT
 		nvtxRangePushA("updateNextRegTime");
 #endif
-#ifdef FEWBODY
-		if (!bin_termination && !new_binaries) // (Query) do we really need these conditions? 2025.03.02
-#endif
-			updateNextRegTime(RegularList);
+
+		updateNextRegTime(RegularList);
 
 #ifdef NSIGHT
 		nvtxRangePop();
@@ -141,12 +135,13 @@ void RootRoutines()
 		std::cout << "size of regularlist= " << RegularList.size() << std::endl;
 		*/	
 
-		IrregularRoutines(queue_scheduler, workers);
+		if (!IrregularRoutines(queue_scheduler, workers))
+			continue;
 
 		RegularRoutines(queue_scheduler, workers);
 
 		global_time = NextRegTimeBlock * global_variable->time_step;
-#ifdef SEVN
+#ifdef SEVN // (Query) EW: PISN should be deleted in PIDtoIndexMap, EnzoPID, ...
 		StellarEvolution(); // How about evolving particles inside RegularList only? by EW 2025.1.19
 							// Currently, evolving all the particles upto global_time
 #endif

@@ -147,7 +147,7 @@ void NewFBInitialization(Particle* ptclCM) {
 			NumberOfMembers += members->NewNumberOfNeighbor;
     }
 
-	fprintf(workerout, "NewFBInitialization. CurrentTimeIrr (Myr): %e\n", ptcl->CurrentTimeIrr*EnzoTimeStep*1e4);
+	fprintf(workerout, "NewFBInitialization. CurrentTimeIrr (Myr): %e\n", ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
 
 	for (int i = 0; i < ptclCM->NewNumberOfNeighbor; ++i) {
 		Particle* members = &particles[ptclCM->NewNeighbors[i]];
@@ -181,15 +181,20 @@ void NewFBInitialization(Particle* ptclCM) {
 	ptclGroup->initialManager();
 	ptclGroup->initialIntegrator(NumberOfMembers); // Binary tree is made and CM particle is made automatically.
 
+	ptclCM->Mass = ptclGroup->sym_int.particles.cm.Mass;
 	for (int dim=0; dim<Dim; dim++) {
 		ptclCM->Position[dim] = ptclGroup->sym_int.particles.cm.Position[dim];
 		ptclCM->Velocity[dim] = ptclGroup->sym_int.particles.cm.Velocity[dim];
-		ptclCM->Mass = ptclGroup->sym_int.particles.cm.Mass;
+		for (int i = 0; i < ptclCM->NumberOfMember; i++) {
+			Particle* members = &particles[ptclCM->Members[i]];
+			ptclCM->BackgroundAcceleration[dim] += members->Mass * members->BackgroundAcceleration[dim];
+		}
+		ptclCM->BackgroundAcceleration[dim] /= ptclCM->Mass;
 	}
 
 	// Set ptcl information like time, PID, etc.
-	// ptclCM->RadiusOfNeighbor = ptcl->RadiusOfNeighbor; // original by EW 2025.2.4
-	ptclCM->RadiusOfNeighbor = ACRadius*ACRadius;
+	ptclCM->RadiusOfNeighbor = ptcl->RadiusOfNeighbor; // original by EW 2025.2.4
+	// ptclCM->RadiusOfNeighbor = ACRadius*ACRadius;
 
 	ptclCM->CurrentTimeIrr  = ptcl->CurrentTimeIrr;
 	ptclCM->CurrentTimeReg  = ptcl->CurrentTimeReg;
@@ -227,7 +232,7 @@ void NewFBInitialization(Particle* ptclCM) {
 		// fprintf(workerout, "PID: %d. Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_irr[0][1], members->a_irr[1][1], members->a_irr[2][1]);
 		// fprintf(workerout, "PID: %d. Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_irr[0][2], members->a_irr[1][2], members->a_irr[2][2]);
 		// fprintf(workerout, "PID: %d. Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_irr[0][3], members->a_irr[1][3], members->a_irr[2][3]);
-		fprintf(workerout, "PID: %d. Time Steps (Myr) - irregular:%e, regular:%e \n", members->PID, members->TimeStepIrr*EnzoTimeStep*1e4, members->TimeStepReg*EnzoTimeStep*1e4);
+		fprintf(workerout, "PID: %d. Time Steps (Myr) - irregular:%e, regular:%e \n", members->PID, members->TimeStepIrr*global_variable->EnzoTimeStep*1e4, members->TimeStepReg*global_variable->EnzoTimeStep*1e4);
 		// fprintf(workerout, "PID: %d. Time Blocks - irregular:%llu, regular:%llu \n", members->PID, members->TimeBlockIrr, members->TimeBlockReg);
 		// fprintf(workerout, "PID: %d. Current Blocks - irregular: %llu, regular:%llu \n", members->PID, members->CurrentBlockIrr, members->CurrentBlockReg);
 
@@ -247,7 +252,7 @@ void NewFBInitialization(Particle* ptclCM) {
 		// fprintf(workerout, "PID: %d. Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_irr[0][1], members->a_irr[1][1], members->a_irr[2][1]);
 		// fprintf(workerout, "PID: %d. Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_irr[0][2], members->a_irr[1][2], members->a_irr[2][2]);
 		// fprintf(workerout, "PID: %d. Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_irr[0][3], members->a_irr[1][3], members->a_irr[2][3]);
-		// fprintf(workerout, "PID: %d. Time Steps - irregular:%e, regular:%e \n", members->PID, members->TimeStepIrr*EnzoTimeStep, members->TimeStepReg*EnzoTimeStep);
+		// fprintf(workerout, "PID: %d. Time Steps - irregular:%e, regular:%e \n", members->PID, members->TimeStepIrr*global_variable->EnzoTimeStep, members->TimeStepReg*global_variable->EnzoTimeStep);
 		// fprintf(workerout, "PID: %d. Time Blocks - irregular:%llu, regular:%llu \n", members->PID, members->TimeBlockIrr, members->TimeBlockReg);
 		// fprintf(workerout, "PID: %d. Current Blocks - irregular: %llu, regular:%llu \n", members->PID, members->CurrentBlockIrr, members->CurrentBlockReg);
     }
@@ -274,7 +279,7 @@ void NewFBInitialization(Particle* ptclCM) {
     for (int i=0; i<ptclCM->NumberOfNeighbor; i++)
     	ptclGroup->sym_int.particles.cm.Neighbors[i] = ptclCM->Neighbors[i];
 
-	ptclGroup->sym_int.initialIntegration(ptclGroup->CurrentTime*EnzoTimeStep);
+	ptclGroup->sym_int.initialIntegration(ptclGroup->CurrentTime*global_variable->EnzoTimeStep);
     ptclGroup->sym_int.info.calcDsAndStepOption(ptclGroup->manager.step.getOrder(), ptclGroup->manager.interaction.gravitational_constant, ptclGroup->manager.ds_scale);
 
 	ptclCM->calculateTimeStepReg();
@@ -323,7 +328,7 @@ void NewFBInitialization(Particle* ptclCM) {
 */
 
 /* // Eunwoo added
-	while (ptclCM->TimeStepIrr*EnzoTimeStep*1e4 < 1e-7) {
+	while (ptclCM->TimeStepIrr*global_variable->EnzoTimeStep*1e4 < 1e-7) {
 		ptclCM->TimeLevelIrr += 1;
 		ptclCM->TimeStepIrr = static_cast<REAL>(pow(2, ptclCM->TimeLevelIrr));
 		ptclCM->TimeBlockIrr = static_cast<ULL>(pow(2, ptclCM->TimeLevelIrr-time_block));
@@ -371,7 +376,7 @@ void NewFBInitialization(Particle* ptclCM) {
 	// fprintf(workerout, "Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", ptclCM->a_irr[0][1], ptclCM->a_irr[1][1], ptclCM->a_irr[2][1]);
 	// fprintf(workerout, "Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", ptclCM->a_irr[0][2], ptclCM->a_irr[1][2], ptclCM->a_irr[2][2]);
 	// fprintf(workerout, "Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", ptclCM->a_irr[0][3], ptclCM->a_irr[1][3], ptclCM->a_irr[2][3]);
-	fprintf(workerout, "Time Steps (Myr) - irregular:%e, regular:%e \n", ptclCM->TimeStepIrr*EnzoTimeStep*1e4, ptclCM->TimeStepReg*EnzoTimeStep*1e4);
+	fprintf(workerout, "Time Steps (Myr) - irregular:%e, regular:%e \n", ptclCM->TimeStepIrr*global_variable->EnzoTimeStep*1e4, ptclCM->TimeStepReg*global_variable->EnzoTimeStep*1e4);
 	// fprintf(workerout, "Time Blocks - irregular:%llu, regular:%llu \n", ptclCM->TimeBlockIrr, ptclCM->TimeBlockReg);
 	// fprintf(workerout, "Current Blocks - irregular: %llu, regular:%llu \n", ptclCM->CurrentBlockIrr, ptclCM->CurrentBlockReg);
 
@@ -384,7 +389,7 @@ void NewFBInitialization3(Group* group) {
 
 	Group* ptclGroup = new Group();
 
-	fprintf(workerout, "NewFBInitialization3. CurrentTimeIrr (Myr): %e\n", group->CurrentTime*EnzoTimeStep*1e4);
+	fprintf(workerout, "NewFBInitialization3. CurrentTimeIrr (Myr): %e\n", group->CurrentTime*global_variable->EnzoTimeStep*1e4);
 
 	Particle* ptclCM = group->groupCM;
 
@@ -431,7 +436,7 @@ void NewFBInitialization3(Group* group) {
 		// fprintf(workerout, "PID: %d. Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_irr[0][1], members->a_irr[1][1], members->a_irr[2][1]);
 		// fprintf(workerout, "PID: %d. Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_irr[0][2], members->a_irr[1][2], members->a_irr[2][2]);
 		// fprintf(workerout, "PID: %d. Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_irr[0][3], members->a_irr[1][3], members->a_irr[2][3]);
-		fprintf(workerout, "PID: %d. Time Steps (Myr) - irregular:%e, regular:%e \n", members->PID, members->TimeStepIrr*EnzoTimeStep*1e4, members->TimeStepReg*EnzoTimeStep*1e4);
+		fprintf(workerout, "PID: %d. Time Steps (Myr) - irregular:%e, regular:%e \n", members->PID, members->TimeStepIrr*global_variable->EnzoTimeStep*1e4, members->TimeStepReg*global_variable->EnzoTimeStep*1e4);
 		// fprintf(workerout, "PID: %d. Time Blocks - irregular:%llu, regular:%llu \n", members->PID, members->TimeBlockIrr, members->TimeBlockReg);
 		// fprintf(workerout, "PID: %d. Current Blocks - irregular: %llu, regular:%llu \n", members->PID, members->CurrentBlockIrr, members->CurrentBlockReg);
     }
@@ -445,7 +450,7 @@ void NewFBInitialization3(Group* group) {
     for (int i=0; i<ptclCM->NumberOfNeighbor; i++)
     	ptclGroup->sym_int.particles.cm.Neighbors[i] = ptclCM->Neighbors[i];
 
-	ptclGroup->sym_int.initialIntegration(ptclGroup->CurrentTime*EnzoTimeStep);
+	ptclGroup->sym_int.initialIntegration(ptclGroup->CurrentTime*global_variable->EnzoTimeStep);
     ptclGroup->sym_int.info.calcDsAndStepOption(ptclGroup->manager.step.getOrder(), ptclGroup->manager.interaction.gravitational_constant, ptclGroup->manager.ds_scale);
 
 	auto& bin_root = ptclGroup->sym_int.info.getBinaryTreeRoot();
@@ -489,7 +494,7 @@ void NewFBInitialization3(Group* group) {
 	// fprintf(workerout, "Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", ptclCM->a_irr[0][1], ptclCM->a_irr[1][1], ptclCM->a_irr[2][1]);
 	// fprintf(workerout, "Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", ptclCM->a_irr[0][2], ptclCM->a_irr[1][2], ptclCM->a_irr[2][2]);
 	// fprintf(workerout, "Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", ptclCM->a_irr[0][3], ptclCM->a_irr[1][3], ptclCM->a_irr[2][3]);
-	fprintf(workerout, "Time Steps (Myr) - irregular:%e, regular:%e \n", ptclCM->TimeStepIrr*EnzoTimeStep*1e4, ptclCM->TimeStepReg*EnzoTimeStep*1e4);
+	fprintf(workerout, "Time Steps (Myr) - irregular:%e, regular:%e \n", ptclCM->TimeStepIrr*global_variable->EnzoTimeStep*1e4, ptclCM->TimeStepReg*global_variable->EnzoTimeStep*1e4);
 	// fprintf(workerout, "Time Blocks - irregular:%llu, regular:%llu \n", ptclCM->TimeBlockIrr, ptclCM->TimeBlockReg);
 	// fprintf(workerout, "Current Blocks - irregular: %llu, regular:%llu \n", ptclCM->CurrentBlockIrr, ptclCM->CurrentBlockReg);
 

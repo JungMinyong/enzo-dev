@@ -38,8 +38,8 @@ void FBTermination(Particle* ptclCM) {
 
 	fprintf(binout,"--------------------------------------\n");
 	fprintf(binout,"In FBTermination.cpp... (CM PID: %d)\n", ptclCM->PID);
-	fprintf(binout, "CurrentTimeIrr of ptclCM (Myr): %e\n", ptclCM->CurrentTimeIrr*EnzoTimeStep*1e4);
-	fprintf(binout, "CurrentTimeIrr of the first member (Myr): %e\n", particles[ptclCM->Members[0]].CurrentTimeIrr*EnzoTimeStep*1e4);
+	fprintf(binout, "CurrentTimeIrr of ptclCM (Myr): %e\n", ptclCM->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
+	fprintf(binout, "CurrentTimeIrr of the first member (Myr): %e\n", particles[ptclCM->Members[0]].CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
 	fprintf(binout, "N_member: %d\n", ptclCM->NumberOfMember);
 
 	NumberOfParticle--; // CM particle should be inactive by EW 2025.1.20
@@ -67,8 +67,8 @@ void FBTermination(Particle* ptclCM) {
 		members->TimeLevelIrr		= ptclCM->TimeLevelIrr; // test by EW 2025.1.29
 		members->TimeLevelReg		= ptclCM->TimeLevelReg;
 
-		members->RadiusOfNeighbor = ACRadius*ACRadius; // added by EW 2025.1.16
-		// members->RadiusOfNeighbor = ptclCM->RadiusOfNeighbor; // modified by EW 2025.1.30
+		// members->RadiusOfNeighbor = ACRadius*ACRadius; // added by EW 2025.1.16
+		members->RadiusOfNeighbor = ptclCM->RadiusOfNeighbor; // modified by EW 2025.1.30
 
 		CalculateAcceleration01(members);
 		CalculateAcceleration23(members);
@@ -104,7 +104,8 @@ void FBTermination(Particle* ptclCM) {
 		members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-time_block));
 
 		if (members->NumberOfNeighbor != 0) {
-			members->calculateTimeStepIrr2();
+			// members->calculateTimeStepIrr2();
+			members->calculateTimeStepIrr();
 
 			if (ptclCM->NumberOfMember > 2) {
 				members->TimeLevelIrr--;
@@ -150,7 +151,7 @@ void FBTermination(Particle* ptclCM) {
 		else {
 			members->calculateTimeStepReg();
 
-			while (members->TimeStepReg*EnzoTimeStep*1e4 > 2e-7) {
+			while (members->TimeStepReg*global_variable->EnzoTimeStep*1e4 > 2e-7) {
 				members->TimeLevelReg--;
 				members->TimeStepReg  = static_cast<double>(pow(2, members->TimeLevelReg));
 				members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-time_block));
@@ -162,7 +163,7 @@ void FBTermination(Particle* ptclCM) {
 
 			// members->calculateTimeStepIrr();
 			members->calculateTimeStepIrr2();
-			while (members->TimeStepIrr*EnzoTimeStep*1e4 > 1e-10) {
+			while (members->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > 1e-10) {
 				members->TimeLevelIrr--;
 				members->TimeStepIrr = static_cast<double>(pow(2, members->TimeLevelIrr));
 				members->TimeBlockIrr = static_cast<ULL>(pow(2, members->TimeLevelIrr-time_block));
@@ -189,7 +190,7 @@ void FBTermination(Particle* ptclCM) {
 		// fprintf(binout, "Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->a_irr[0][1], members->a_irr[1][1], members->a_irr[2][1]);
 		// fprintf(binout, "Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->a_irr[0][2], members->a_irr[1][2], members->a_irr[2][2]);
 		// fprintf(binout, "Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->a_irr[0][3], members->a_irr[1][3], members->a_irr[2][3]);
-		fprintf(binout, "Time Steps (Myr) - irregular:%e, regular:%e \n", members->TimeStepIrr*EnzoTimeStep*1e4, members->TimeStepReg*EnzoTimeStep*1e4);
+		fprintf(binout, "Time Steps (Myr) - irregular:%e, regular:%e \n", members->TimeStepIrr*global_variable->EnzoTimeStep*1e4, members->TimeStepReg*global_variable->EnzoTimeStep*1e4);
 		// fprintf(binout, "Time Blocks - irregular:%llu, regular:%llu \n", members->TimeBlockIrr, members->TimeBlockReg);
 		// fprintf(binout, "Current Blocks - irregular: %llu, regular:%llu \n", members->CurrentBlockIrr, members->CurrentBlockReg);
 	}
