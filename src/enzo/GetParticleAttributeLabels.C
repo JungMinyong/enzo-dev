@@ -123,6 +123,7 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
     ParticleAttributeLabel[NumberOfParticleAttributes-4] = "acc_x";
     ParticleAttributeLabel[NumberOfParticleAttributes-3] = "acc_y";
     ParticleAttributeLabel[NumberOfParticleAttributes-2] = "acc_z";
+    ParticleAttributeLabel[NumberOfParticleAttributes-1] = "empty_for_abyss";
 #endif
 
   return ;

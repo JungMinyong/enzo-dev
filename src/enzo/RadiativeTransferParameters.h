@@ -83,8 +83,6 @@ EXTERN int RadiativeTransferOpticallyThinIR;
 
 /* Flag to turn on source clustering for optically thin radiation */
 
-EXTERN int RadiativeTransferOpticallyThinSourceClustering;
-
 /* Number of sources to use source clustering when above is ON */
 
 EXTERN int RadiativeTransferSourceClusteringCount;

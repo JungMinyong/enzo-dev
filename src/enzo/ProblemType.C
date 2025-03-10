@@ -31,7 +31,9 @@
 
 #include "ProblemType.h"
 
-int ChemicalSpeciesBaryonFieldNumber(const int &atomic_number);
+//int ChemicalSpeciesBaryonFieldNumber(const int &atomic_number);
+//int ChemicalSpeciesBaryonFieldNumber(const int &atomic_number);
+int ChemicalSpeciesBaryonFieldNumber(const int &atomic_number, int element_set = 1);
 
 EnzoProblemMap& get_problem_types()
 {

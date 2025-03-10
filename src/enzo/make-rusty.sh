@@ -33,7 +33,7 @@ module add hdf5/1.8.22
 #module add intel-parallel-studio
 
 make machine-rusty
-make precision-64 integers-32 particle-id-32 max-baryons-30 lcaperf-no max-tasks-per-node-36 grackle-yes new-problem-types-yes photon-no nbody-yes opt-aggressive cuda-no
+make precision-64 integers-32 particle-id-32 max-baryons-60 max-particle-attr-40 lcaperf-no max-tasks-per-node-36 grackle-yes new-problem-types-yes photon-yes nbody-yes opt-aggressive cuda-no uuid-no individualstar-yes new-yield-tables-yes memorypool-yes #new-yield-tables-yes 
 make show-config
 make show-flags
 ##make -j3

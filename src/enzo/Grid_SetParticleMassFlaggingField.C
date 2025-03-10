@@ -123,21 +123,22 @@ int grid::SetParticleMassFlaggingField(
       KeepFlaggingField = (level == MustRefineParticlesRefineToLevel);
       if (level <= MustRefineParticlesRefineToLevel){
         NumberOfFlaggedCells = this->DepositMustRefineParticles(ParticleMassMethod,
-                                                                 level, KeepFlaggingField);
+                                                                level, KeepFlaggingField);
       }
 #ifdef INDIVIDUALSTAR
       KeepFlaggingField = KeepFlaggingField || (level == IndividualStarRefineToLevel);
-      if (level < IndividualStarRefineToLevel){
+      if (level < IndividualStarRefineToLevel)
+      {
         NumberOfFlaggedCells +=
-	this->DepositMustRefineParticles(ParticleMassMethod, level,
-                                           KeepFlaggingField,
-                                           MetaData, AllStars
-                                         );
+            this->DepositMustRefineParticles(ParticleMassMethod, level,
+                                            KeepFlaggingField,
+                                            MetaData, AllStars);
       }
 #endif
 
-      if (NumberOfFlaggedCells < 0) {
-	ENZO_FAIL("Error in grid->DepositMustRefineParticles.\n");
+      if (NumberOfFlaggedCells < 0)
+      {
+        ENZO_FAIL("Error in grid->DepositMustRefineParticles.\n");
       }
 
     } // ENDIF MustRefineMethod

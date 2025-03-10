@@ -48,6 +48,7 @@
 #define MAX_TASKS_PER_NODE                   __max_cpu_per_node
 
 #define MAX_NUMBER_OF_BARYON_FIELDS          __max_baryons  /* must be at least 6 */
+//#define MAX_NUMBER_OF_BARYON_FIELDS          40  /* must be at least 6 */ // (Query) I have to fix this too
 
 #define MAX_NUMBER_OF_SUBGRIDS               __max_subgrids
 
@@ -88,6 +89,8 @@
 #else
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  7
 #endif
+#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES __max_particle_attr // MergerYS, AJE may need to do something different
+//#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES 33 // by YS 2025.03.08 (Query) I have to fix this (make it parameters)
 #else
 //#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  4
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES __max_particle_attr // AJE may need to do something different

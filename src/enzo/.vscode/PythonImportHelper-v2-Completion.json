@@ -1,0 +1,191 @@
+[
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "sys,",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys.",
+        "description": "sys.",
+        "detail": "sys.",
+        "documentation": {}
+    },
+    {
+        "label": "os,",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os.",
+        "description": "os.",
+        "detail": "os.",
+        "documentation": {}
+    },
+    {
+        "label": "itertools",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "itertools",
+        "description": "itertools",
+        "detail": "itertools",
+        "documentation": {}
+    },
+    {
+        "label": "filename",
+        "kind": 5,
+        "importPath": "check_obj",
+        "description": "check_obj",
+        "peekOfCode": "filename = \"Make.config.objects\"\nexts = [\"C\", \"c\", \"F\", \"F90\"]\n# Read object names from Makefile\nlines = open(filename).readlines()\nfiles = []\nfor l in lines:\n    if l.find(\".o\") > 0 and not(l.startswith(\"#\")) and l.find(\"auto_show\") < 0:\n        source = l.strip().split(\".\")[0]\n        files.append(source)\n# Check if their sources exists",
+        "detail": "check_obj",
+        "documentation": {}
+    },
+    {
+        "label": "exts",
+        "kind": 5,
+        "importPath": "check_obj",
+        "description": "check_obj",
+        "peekOfCode": "exts = [\"C\", \"c\", \"F\", \"F90\"]\n# Read object names from Makefile\nlines = open(filename).readlines()\nfiles = []\nfor l in lines:\n    if l.find(\".o\") > 0 and not(l.startswith(\"#\")) and l.find(\"auto_show\") < 0:\n        source = l.strip().split(\".\")[0]\n        files.append(source)\n# Check if their sources exists\nAllFound = True",
+        "detail": "check_obj",
+        "documentation": {}
+    },
+    {
+        "label": "lines",
+        "kind": 5,
+        "importPath": "check_obj",
+        "description": "check_obj",
+        "peekOfCode": "lines = open(filename).readlines()\nfiles = []\nfor l in lines:\n    if l.find(\".o\") > 0 and not(l.startswith(\"#\")) and l.find(\"auto_show\") < 0:\n        source = l.strip().split(\".\")[0]\n        files.append(source)\n# Check if their sources exists\nAllFound = True\nfor f in files:\n    found = False",
+        "detail": "check_obj",
+        "documentation": {}
+    },
+    {
+        "label": "files",
+        "kind": 5,
+        "importPath": "check_obj",
+        "description": "check_obj",
+        "peekOfCode": "files = []\nfor l in lines:\n    if l.find(\".o\") > 0 and not(l.startswith(\"#\")) and l.find(\"auto_show\") < 0:\n        source = l.strip().split(\".\")[0]\n        files.append(source)\n# Check if their sources exists\nAllFound = True\nfor f in files:\n    found = False\n    for ext in exts:",
+        "detail": "check_obj",
+        "documentation": {}
+    },
+    {
+        "label": "AllFound",
+        "kind": 5,
+        "importPath": "check_obj",
+        "description": "check_obj",
+        "peekOfCode": "AllFound = True\nfor f in files:\n    found = False\n    for ext in exts:\n        testfile = f + \".\" + ext\n        if os.path.exists(testfile):\n            found = True\n            break\n    if found == False:\n        print(\"%s not found.\" % (f))",
+        "detail": "check_obj",
+        "documentation": {}
+    },
+    {
+        "label": "get_hg_info",
+        "kind": 2,
+        "importPath": "create_config_info",
+        "description": "create_config_info",
+        "peekOfCode": "def get_hg_info():\n    try:\n        import hglib\n    except ImportError:\n        print(\"WARNING: could not get version information.  Please install mercurial and/or hglib.\")\n        return ('unknown', 'unknown', None)\n    try:\n        client = hglib.open('../..')\n        changeset = str(client.tip().node)\n        branch = str(client.tip().branch)",
+        "detail": "create_config_info",
+        "documentation": {}
+    },
+    {
+        "label": "get_options",
+        "kind": 2,
+        "importPath": "create_config_info",
+        "description": "create_config_info",
+        "peekOfCode": "def get_options(filename, my_options=None, get_list_order=False):\n    if my_options is None: my_options = {}\n    if get_list_order: option_list = []\n    if not os.path.exists(filename): return my_options\n    for line in open(filename).readlines():\n        if line.startswith('#'): continue\n        if '=' in line:\n            key, val = line.split('=', 2)\n            my_options[key.strip()] = val.strip()\n            if get_list_order: option_list.append(key.strip())",
+        "detail": "create_config_info",
+        "documentation": {}
+    },
+    {
+        "label": "sanitize_parameter_name",
+        "kind": 2,
+        "importPath": "create_dictionary_mapping",
+        "description": "create_dictionary_mapping",
+        "peekOfCode": "def sanitize_parameter_name(vn):\n    return vn.replace(\";\",\"\").replace(\",\",\"\")\ndef parse_file(fn):\n    all_vars = []\n    for line in open(fn):\n        line = line[:line.rfind(\"//\")]\n        if line.startswith(\"#include\") and \"<\" not in line:\n            all_vars += parse_file(line.split('\"')[1])\n            continue\n        elif line.startswith(\"#ifdef\"):",
+        "detail": "create_dictionary_mapping",
+        "documentation": {}
+    },
+    {
+        "label": "parse_file",
+        "kind": 2,
+        "importPath": "create_dictionary_mapping",
+        "description": "create_dictionary_mapping",
+        "peekOfCode": "def parse_file(fn):\n    all_vars = []\n    for line in open(fn):\n        line = line[:line.rfind(\"//\")]\n        if line.startswith(\"#include\") and \"<\" not in line:\n            all_vars += parse_file(line.split('\"')[1])\n            continue\n        elif line.startswith(\"#ifdef\"):\n            vn = line.split(None, 1)[1]\n            all_vars.append((\"IFDEF\", vn))",
+        "detail": "create_dictionary_mapping",
+        "documentation": {}
+    },
+    {
+        "label": "finder_function",
+        "kind": 2,
+        "importPath": "create_dictionary_mapping",
+        "description": "create_dictionary_mapping",
+        "peekOfCode": "def finder_function(vname, vtype):\n    if vname == \"IFDEF\": return \"#ifdef %s\\n\" % vtype\n    elif vname == \"ENDIF\": return \"#endif /* %s */ \\n\" % (vtype)\n    if vtype not in python_functions: return \"\"\n    pf, cn = python_functions[vtype]\n    kwargs = dict(parameter_name = vname,\n                  name_length = len(vname) + 1,\n                  py_func = pf,\n                  cast_type = cn)\n    return template % kwargs",
+        "detail": "create_dictionary_mapping",
+        "documentation": {}
+    },
+    {
+        "label": "stack",
+        "kind": 5,
+        "importPath": "create_dictionary_mapping",
+        "description": "create_dictionary_mapping",
+        "peekOfCode": "stack = []\ndef sanitize_parameter_name(vn):\n    return vn.replace(\";\",\"\").replace(\",\",\"\")\ndef parse_file(fn):\n    all_vars = []\n    for line in open(fn):\n        line = line[:line.rfind(\"//\")]\n        if line.startswith(\"#include\") and \"<\" not in line:\n            all_vars += parse_file(line.split('\"')[1])\n            continue",
+        "detail": "create_dictionary_mapping",
+        "documentation": {}
+    },
+    {
+        "label": "python_functions",
+        "kind": 5,
+        "importPath": "create_dictionary_mapping",
+        "description": "create_dictionary_mapping",
+        "peekOfCode": "python_functions = {\n    \"FLOAT\" : (\"PyFloat_FromDouble\", \"double\"),\n    \"float\" : (\"PyFloat_FromDouble\", \"double\"),\n    \"int\" : (\"PyLong_FromLong\", \"long\"),\n    \"string\" : (\"PyString_FromString\", \"char *\"),\n}\ntemplate = \"\"\"\n    if (strncmp(parameter_name, \"%(parameter_name)s\", %(name_length)i) == 0) {\n        PyObject *rv = %(py_func)s((%(cast_type)s) %(parameter_name)s);\n        return rv;",
+        "detail": "create_dictionary_mapping",
+        "documentation": {}
+    },
+    {
+        "label": "template",
+        "kind": 5,
+        "importPath": "create_dictionary_mapping",
+        "description": "create_dictionary_mapping",
+        "peekOfCode": "template = \"\"\"\n    if (strncmp(parameter_name, \"%(parameter_name)s\", %(name_length)i) == 0) {\n        PyObject *rv = %(py_func)s((%(cast_type)s) %(parameter_name)s);\n        return rv;\n    }\n\"\"\"\ndef finder_function(vname, vtype):\n    if vname == \"IFDEF\": return \"#ifdef %s\\n\" % vtype\n    elif vname == \"ENDIF\": return \"#endif /* %s */ \\n\" % (vtype)\n    if vtype not in python_functions: return \"\"",
+        "detail": "create_dictionary_mapping",
+        "documentation": {}
+    },
+    {
+        "label": "exts",
+        "kind": 5,
+        "importPath": "find_uncompiled",
+        "description": "find_uncompiled",
+        "peekOfCode": "exts = [\"C\",\"F\",\"c\"]\nobjs = [line.strip().split(\".\")[0]\n        for line in open(\"Make.config.objects\")]\n# Make.config.assemble also adds:\nobjs += [\"enzo\", \"ProblemType_Python\", \"lcaperf\", \"python_bridge/problemtype_handler\"]\nuncompiled = []\nfor fn in itertools.chain(*(glob.glob(\"*.%s\" % ext) for ext in exts)):\n    if fn.split(\".\")[0] not in objs: uncompiled.append(fn)\nfor fn in sorted(uncompiled): print(fn)",
+        "detail": "find_uncompiled",
+        "documentation": {}
+    },
+    {
+        "label": "objs",
+        "kind": 5,
+        "importPath": "find_uncompiled",
+        "description": "find_uncompiled",
+        "peekOfCode": "objs = [line.strip().split(\".\")[0]\n        for line in open(\"Make.config.objects\")]\n# Make.config.assemble also adds:\nobjs += [\"enzo\", \"ProblemType_Python\", \"lcaperf\", \"python_bridge/problemtype_handler\"]\nuncompiled = []\nfor fn in itertools.chain(*(glob.glob(\"*.%s\" % ext) for ext in exts)):\n    if fn.split(\".\")[0] not in objs: uncompiled.append(fn)\nfor fn in sorted(uncompiled): print(fn)",
+        "detail": "find_uncompiled",
+        "documentation": {}
+    },
+    {
+        "label": "uncompiled",
+        "kind": 5,
+        "importPath": "find_uncompiled",
+        "description": "find_uncompiled",
+        "peekOfCode": "uncompiled = []\nfor fn in itertools.chain(*(glob.glob(\"*.%s\" % ext) for ext in exts)):\n    if fn.split(\".\")[0] not in objs: uncompiled.append(fn)\nfor fn in sorted(uncompiled): print(fn)",
+        "detail": "find_uncompiled",
+        "documentation": {}
+    }
+]

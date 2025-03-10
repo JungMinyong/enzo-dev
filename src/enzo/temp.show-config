@@ -1,11 +1,10 @@
-make[1]: Warning: File `DEPEND' has modification time 152 s in the future
 
    MACHINE: Generic Ubuntu 8.04
-   MACHINE-NAME: linux-mpich
+   MACHINE-NAME: rusty
 
    PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000
-   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 30
-   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 4
+   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 60
+   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 40
    PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 36
    PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : 100000
 
@@ -22,14 +21,14 @@ make[1]: Warning: File `DEPEND' has modification time 152 s in the future
    CONFIG_LCAPERF  [lcaperf-{yes,no}]                        : no
    CONFIG_PAPI  [papi-{yes,no}]                              : no
    CONFIG_PYTHON  [python-{yes,no}]                          : no
-   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : no
+   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : yes
    CONFIG_ECUDA  [cuda-{yes,no}]                             : no
    CONFIG_NBODY  [nbody-{yes,no}]                            : yes
    CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no
    CONFIG_ACCELERATION_BOUNDARY  [acceleration-boundary-{yes,no}] : yes
    CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : aggressive
    CONFIG_TESTING  [testing-{yes,no}]                        : no
-   CONFIG_PHOTON  [photon-{yes,no}]                          : no
+   CONFIG_PHOTON  [photon-{yes,no}]                          : yes
    CONFIG_HYPRE  [hypre-{yes,no}]                            : no
    CONFIG_EMISSIVITY  [emissivity-{yes,no}]                  : no
    CONFIG_USE_HDF4  [use-hdf4-{yes,no}]                      : no
@@ -41,8 +40,7 @@ make[1]: Warning: File `DEPEND' has modification time 152 s in the future
    CONFIG_GRACKLE  [grackle-{yes,no}]                        : yes
    CONFIG_LOG2ALLOC  [log2alloc-{yes,no}]                    : no
    CONFIG_UUID  [uuid-{yes,no}]                              : no
-   CONFIG_INDIVIDUALSTAR [individualstar-{yes,no}]           : no
-   CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : no
-   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : no
+   CONFIG_INDIVIDUALSTAR [individualstar-{yes,no}]           : yes
+   CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : yes
+   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : yes
 
-make[1]: warning:  Clock skew detected.  Your build may be incomplete.

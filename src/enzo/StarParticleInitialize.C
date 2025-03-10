@@ -26,6 +26,8 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "NbodyRoutines.h"
+#include "CommunicationUtilities.h"
+
 
 int StarParticlePopIII_IMFInitialize(void);
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
@@ -67,8 +69,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   TIMER_START("StarParticleInitialize:SetMetaData");
 	MetaData->NumberOfParticles = FindTotalNumberOfParticles(LevelArray);
 	NumberOfOtherParticles = MetaData->NumberOfParticles - NumberOfStarParticles;
-	RecordTotalStarParticleCount(Grids, NumberOfGrids, 
-			TotalStarParticleCountPrevious);
+	RecordTotalStarParticleCount(Grids, NumberOfGrids, TotalStarParticleCountPrevious);
   TIMER_STOP("StarParticleInitialize:SetMetaData");
 
 	/* Initialize the IMF lookup table if requested and not defined */
@@ -80,19 +81,38 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Initialize IMF lookup table if needed and radiation table if needed */
   if(STARMAKE_METHOD(INDIVIDUAL_STAR)){
     StarParticleIndividual_IMFInitialize();
-
+#define aeos_debug
+#ifdef aeos_debug
+		std::cerr << "star init 1" << std::endl;
+    CommunicationBarrier();
+#endif
     /* Initialize individual star properties (L, T, R) */
     IndividualStarProperties_Initialize(*MetaData);
-
+#ifdef aeos_debug
+		std::cerr << "star init 2" << std::endl;
+    CommunicationBarrier();
+#endif
     /* Initialize radiation data table */
     if((RadiativeTransfer && IndividualStarBlackBodyOnly == FALSE) || IndividualStarFUVHeating){
       IndividualStarRadiationProperties_Initialize();
-    }
+#ifdef aeos_debug
+		std::cerr << "star init 3" << std::endl;
+    CommunicationBarrier();
+#endif   
+	}
 
     /* StellarYields */
-    InitializeStellarYields(MetaData->Time);
-
+#ifdef aeos_debug
+		std::cerr << "star init 4" << std::endl;
+		CommunicationBarrier();
+#endif  
+	//InitializeStellarYields(MetaData->Time);
+#ifdef aeos_debug
+		std::cerr << "star init 5" << std::endl;
+		CommunicationBarrier();
+#endif  
   }
+
   TIMER_STOP("StarParticleInitialize:InitializeTables");
 	int level, grids;
 	Star *cstar;
@@ -100,6 +120,10 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 	grid *GridPointer[MAX_NUMBER_OF_SUBGRIDS];
 	FLOAT TimeNow = LevelArray[ThisLevel]->GridData->ReturnTime();
 
+#ifdef aeos_debug
+		std::cerr << "star init 6" << std::endl;
+		CommunicationBarrier();
+#endif  
 	/* Initialize all star particles if this is a restart */
 
   TIMER_START("StarParticleInitialize:InitializeStarsRestart");
@@ -111,6 +135,10 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 				}
   TIMER_STOP("StarParticleInitialize:InitializeStarsRestart");
 
+#ifdef aeos_debug
+		std::cerr << "star init 7" << std::endl;
+		CommunicationBarrier();
+#endif  
 	/* Create a master list of all star particles */
 
   TIMER_START("StarParticleInitialize:MasterList");
@@ -118,7 +146,10 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		ENZO_FAIL("Error in StarParticleFindAll.");
 	}
   TIMER_STOP("StarParticleInitialize:MasterList");
-
+#ifdef aeos_debug
+		std::cerr << "star init 8" << std::endl;
+		CommunicationBarrier();
+#endif  
 	if (MetaData->FirstTimestepAfterRestart == FALSE) {
 
 		/* Merge any newly created, clustered particles */
@@ -152,6 +183,10 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 	//      cstar->PrintInfo();
 	//  }
 
+#ifdef aeos_debug
+		std::cerr << "star init 9" << std::endl;
+    CommunicationBarrier();
+#endif  
 #ifdef INDIVIDUALSTAR
   if (SkipFeedbackFlag){
 #endif
@@ -178,6 +213,10 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
 
   }
+#ifdef aeos_debug
+		std::cerr << "star init 10" << std::endl;
+    CommunicationBarrier();
+#endif  
 #ifdef INDIVIDUALSTAR
   }
 #endif

@@ -29,6 +29,7 @@
 #include "LevelHierarchy.h"
 #include "StarParticleData.h"
 #include "StellarYieldsRoutines.h"
+#include "CommunicationUtilities.h"
 
 /* function prototypes */
 void unpack_line_to_yields( char *line, float *dummy);
@@ -79,10 +80,21 @@ int InitializeStellarYieldFields(HierarchyEntry &TopGrid,
     TypesToAdd[i] = FieldUndefined;
   }
 
+#define aeos_debug
+#ifdef aeos_debug
+		std::cerr << "star yield field -1" << std::endl;
+    CommunicationBarrier();
+#endif
+
   /* Check if the fields already exist */
   OldNumberOfBaryonFields = LevelArray[0]->GridData->
     ReturnNumberOfBaryonFields();
   LevelArray[0]->GridData->ReturnFieldType(ExistingTypes);
+
+#ifdef aeos_debug
+		std::cerr << "star yield field 0" << std::endl;
+    CommunicationBarrier();
+#endif
 
   for (int i = 0; i < FieldsToAdd; i++){
     for (int j = 0; j < OldNumberOfBaryonFields; j++){
@@ -97,11 +109,17 @@ int InitializeStellarYieldFields(HierarchyEntry &TopGrid,
       } // endif
     } // end oldnumberofbaryonfields loop
   } // end fields to add loop
-
+#ifdef aeos_debug
+		std::cerr << "star yield field 1" << std::endl;
+    CommunicationBarrier();
+#endif
   FieldsToAdd = 0;
   while (TypesToAdd[FieldsToAdd] != FieldUndefined)
     FieldsToAdd++;
-
+#ifdef aeos_debug
+		std::cerr << "star yield field 2" << std::endl;
+    CommunicationBarrier();
+#endif
   // Add the fields
   if (FieldsToAdd > 0 && debug){
     fprintf(stdout, "InitializeStellarYieldsFields: Increasing baryon fields "
@@ -112,7 +130,10 @@ int InitializeStellarYieldFields(HierarchyEntry &TopGrid,
       fprintf(stdout, "Field Number  %"ISYM"\n", TypesToAdd[k]);
     }
   }
-
+#ifdef aeos_debug
+		std::cerr << "star yield field 3" << std::endl;
+    CommunicationBarrier();
+#endif
   // Add an extra one?? (copied over from RT, but do I actually need the +1?)
   if (OldNumberOfBaryonFields+FieldsToAdd+1 > MAX_NUMBER_OF_BARYON_FIELDS)
     ENZO_FAIL("Exceeds MAX_NUMBER_OF_BARYON_FIELDS. Please increase and re-compile.");
@@ -124,12 +145,18 @@ int InitializeStellarYieldFields(HierarchyEntry &TopGrid,
       Temp->GridData->AddFields(TypesToAdd, FieldsToAdd);
     }
   }
-
+#ifdef aeos_debug
+		std::cerr << "star yield field 4" << std::endl;
+    CommunicationBarrier();
+#endif
   // Add external boundaries
   for (int i = 0; i < FieldsToAdd; i++){
     Exterior.AddField(TypesToAdd[i]);
   }
-
+#ifdef aeos_debug
+		std::cerr << "star yield field 5" << std::endl;
+    CommunicationBarrier();
+#endif
   for (int i = 0; i < FieldsToAdd; i ++){
 //   if(StellarYieldsAtomicNumbers[i] > 2){
      DataLabel[OldNumberOfBaryonFields+i] =\
@@ -139,6 +166,9 @@ int InitializeStellarYieldFields(HierarchyEntry &TopGrid,
 
   return SUCCESS;
 }
+
+
+
 
 int InitializeStellarYields(const float &time){
   /* ------------------------------------------------------
@@ -176,13 +206,43 @@ int InitializeStellarYields(const float &time){
 
   hid_t file_id = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
+#define aeos_debug
+#ifdef aeos_debug
+		std::cerr << "star yield -1" << std::endl;
+    CommunicationBarrier();
+#endif
+
   fill_table(file_id, &StellarYieldsSNData,           filename, "SN");
+
+#ifdef aeos_debug
+		std::cerr << "star yield -1.1" << std::endl;
+    CommunicationBarrier();
+#endif
+
   fill_table(file_id, &StellarYieldsWindData,         filename, "Wind");
+
+ #ifdef aeos_debug
+		std::cerr << "star yield -1.2" << std::endl;
+    CommunicationBarrier();
+#endif 
+
   fill_table(file_id, &StellarYieldsPopIIIData,       filename, "PopIII");
+
+#ifdef aeos_debug
+		std::cerr << "star yield -1.3" << std::endl;
+    CommunicationBarrier();
+#endif
 
 // treat these two a little differently for now so this is backwards compatabile
 // with original model.
+
   int agb_check     = fill_table(file_id, &StellarYieldsAGBData,          filename, "AGB", TRUE);
+
+#ifdef aeos_debug
+		std::cerr << "star yield -1.4" << std::endl;
+    CommunicationBarrier();
+#endif
+
   int massive_check = fill_table(file_id, &StellarYieldsMassiveStarData,  filename, "Massive_star", TRUE);
 
   if (agb_check && massive_check){
@@ -196,14 +256,28 @@ int InitializeStellarYields(const float &time){
   //     are using the old methods. In this case, the Wind yields contain both
   //     AGB stars and stars up to 25 Msun. Massive_star contains winds for stars above 25 Msun.
 
+#ifdef aeos_debug
+		std::cerr << "star yield 0" << std::endl;
+    CommunicationBarrier();
+#endif
+
   herr_t status = H5Fclose (file_id);
   herr_t h5_error = -1;
   if (status == h5_error){
     ENZO_VFAIL("Error closing %s \n", filename.c_str());
   }
 
+#ifdef aeos_debug
+		std::cerr << "star yield 0.1" << std::endl;
+    CommunicationBarrier();
+#endif
+
 #else
 
+#ifdef aeos_debug
+		std::cerr << "star yield 1" << std::endl;
+    CommunicationBarrier();
+#endif
 
   // AJE: Hard code he number of bins for now
   //     - I want to fix this but this is not priority -
@@ -244,6 +318,10 @@ int InitializeStellarYields(const float &time){
     ENZO_FAIL("Error opening stellar yields massive stars, 'stellar_yields_massive_star.in'");
   }
 
+#ifdef aeos_debug
+		std::cerr << "star yield 2" << std::endl;
+    CommunicationBarrier();
+#endif
   /* Initialize tables with empty pointers */
   initialize_table(&StellarYieldsSNData);
   initialize_table(&StellarYieldsWindData);
@@ -260,6 +338,11 @@ int InitializeStellarYields(const float &time){
   fclose(fptr_wind);
   fclose(fptr_mstar);
 
+#ifdef aeos_debug
+		std::cerr << "star yield 3" << std::endl;
+    CommunicationBarrier();
+#endif
+
   if (IndividualStarPopIIIFormation){
 
     FILE *fptr_popIII = fopen("popIII_yields.in", "r");
@@ -270,13 +353,21 @@ int InitializeStellarYields(const float &time){
 
     initialize_table(&StellarYieldsPopIIIData);
     fill_table(&StellarYieldsPopIIIData, fptr_popIII);
+
+#ifdef aeos_debug
+		std::cerr << "star yield 4" << std::endl;
+    CommunicationBarrier();
+#endif
     fclose(fptr_popIII);
   }
 
 
+#endif // new yield tables
+
+#ifdef aeos_debug
+		std::cerr << "star yield 0.25" << std::endl;
+    CommunicationBarrier();
 #endif
-
-
   /* If we are doing artificial injection events */
   if (MetalMixingExperiment) {
 
@@ -311,15 +402,25 @@ int InitializeStellarYields(const float &time){
        MixingExperimentData.yield[i][j] = 0.0; // MASS (not mass fraction of event)
      }
    }
-
+#ifdef aeos_debug
+		std::cerr << "star yield 0.5" << std::endl;
+    CommunicationBarrier();
+#endif
    for (int j = 0; j < StellarYieldsNumberOfSpecies; j ++){
      MixingExperimentData.anums[j] = -1;
    }
-
+#ifdef aeos_debug
+		std::cerr << "star yield 1" << std::endl;
+    CommunicationBarrier();
+#endif
     FILE *fptr_mix = fopen("mixing_events.in", "r");
     if (fptr_mix == NULL){
       ENZO_FAIL("Error opening metal mixing experiment events file, 'mixing_events.in'");
     }
+#ifdef aeos_debug
+		std::cerr << "star yield 2" << std::endl;
+    CommunicationBarrier();
+#endif
 
     const int max_column_number = 87; /* bad to hard code this */
     float *dummy = new float[max_column_number];
@@ -392,6 +493,10 @@ int InitializeStellarYields(const float &time){
         i++;
       }
     }
+#ifdef aeos_debug
+		std::cerr << "star yield 3" << std::endl;
+    CommunicationBarrier();
+#endif
 
     if (debug){
       fprintf(stdout,"Succesfully initialized Metal mixing experiment with %"ISYM" events\n", MixingExperimentData.NumberOfEvents);
@@ -406,7 +511,10 @@ int InitializeStellarYields(const float &time){
 
     fclose(fptr_mix);
   }
-
+#ifdef aeos_debug
+		std::cerr << "star yield 4" << std::endl;
+    CommunicationBarrier();
+#endif
   return SUCCESS;
 }
 
@@ -657,6 +765,11 @@ int fill_table(hid_t file_id,
 
   initialize_table(table);
 
+
+ #ifdef aeos_debug
+		std::cerr << "fill table 1" << std::endl;
+    CommunicationBarrier();
+#endif 
   // Now read in yields
 
   if(! read_dataset(file_id, ("/"+dname+"/M").c_str(),
@@ -665,12 +778,19 @@ int fill_table(hid_t file_id,
                dname.c_str(), filename.c_str());
   }
 
+ #ifdef aeos_debug
+		std::cerr << "fill table 1.1" << std::endl;
+    CommunicationBarrier();
+#endif 
   if( !read_dataset(file_id, ("/"+dname+"/Z").c_str(),
                     table->Z)){
     ENZO_VFAIL("Error reading dataset 'Z' in %s in %s.\n",
                dname.c_str(), filename.c_str());
   }
-
+ #ifdef aeos_debug
+		std::cerr << "fill table 1.2" << std::endl;
+    CommunicationBarrier();
+#endif 
   // Find list of atomic numbers in the dataset
   //   list *should* start with -1 and 0 since these
   //   are the codes for total mass (-1) and metal mass (0)
@@ -678,34 +798,59 @@ int fill_table(hid_t file_id,
 
   int * temp_anum = new int [Nyields];
   for (int i = 0; i < Nyields; i++) temp_anum[i] = -1;
+ #ifdef aeos_debug
+		std::cerr << "fill table 1.3" << std::endl;
+    CommunicationBarrier();
+#endif 
 
   dset_id = H5Dopen(file_id, ("/"+dname+"/atomic_numbers").c_str());
   if (dset_id == h5_error){
     ENZO_VFAIL("Error opening atomic_numbers for %s in %s\n",
                dname.c_str(), filename.c_str());
   }
-
+ #ifdef aeos_debug
+		std::cerr << "fill table 1.4" << std::endl;
+    CommunicationBarrier();
+#endif 
   status = H5Dread(dset_id, HDF5_I8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_anum);
   if (status == h5_error){
     ENZO_VFAIL("Error reading in atomic_numbers for %s in %s\n",
                dname.c_str(), filename.c_str());
   }
 
+
+ #ifdef aeos_debug
+		std::cerr << "fill table 2" << std::endl;
+    CommunicationBarrier();
+#endif 
   // now, allocate a temporary array to load in ALL yields
   // from the table
 
   int temp_size = table->Nm * table->Nz *
                    Nyields;
 
+ #ifdef aeos_debug
+		std::cerr << "fill table 2.1" << std::endl;
+    CommunicationBarrier();
+#endif 
   float *temp_yields = new float [temp_size];
   for(int i = 0 ; i < temp_size; i++) temp_yields[i] = 0.0;
 
+ #ifdef aeos_debug
+		std::cerr << "fill table 2.2" << std::endl;
+    CommunicationBarrier();
+#endif 
   dset_id = H5Dopen(file_id, ("/"+dname+"/yields").c_str());
   if (dset_id == h5_error){
     ENZO_VFAIL("Error opening yields for %s in %s\n",
                dname.c_str(), filename.c_str());
   }
 
+
+ #ifdef aeos_debug
+		std::cerr << "fill table 3" << std::endl;
+    CommunicationBarrier();
+#endif 
   status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_yields);
   if (status == h5_error){
     ENZO_VFAIL("Error reading yields dataset for %s in %s\n",
@@ -730,6 +875,12 @@ int fill_table(hid_t file_id,
          temp_yields[1 + (j + i*table->Nz)*Nyields];
     }
   }
+
+
+ #ifdef aeos_debug
+		std::cerr << "fill table 4" << std::endl;
+    CommunicationBarrier();
+#endif 
   // now loop through and grab the elements we need
   int temp_k = 0;
   for (int k = 0; k < table->Ny; k++){
@@ -780,6 +931,11 @@ int fill_table(hid_t file_id,
     } // else if available
   }
 
+ #ifdef aeos_debug
+		std::cerr << "fill table 5" << std::endl;
+    CommunicationBarrier();
+#endif 
+
   /* Save index offsets for next item in each dimension for convenience */
   table->dm = 1;                     // next mass
   table->dz = table->Nm;             // next metallicity
@@ -791,6 +947,10 @@ int fill_table(hid_t file_id,
                dname.c_str(), filename.c_str());
   }
 
+ #ifdef aeos_debug
+		std::cerr << "fill table 6" << std::endl;
+    CommunicationBarrier();
+#endif 
   /* Delete temporary yields and atomic numbers */
   delete [] temp_yields;
   delete [] temp_anum;

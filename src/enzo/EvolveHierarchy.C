@@ -490,6 +490,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 		FOF(&MetaData, LevelArray, MetaData.WroteData);
 
+
 		/* If provided, set RefineRegion from evolving RefineRegion 
 			 OR set MustRefineRegion from evolving MustRefineRegion 
 			 OR set CoolingRefineRegion from evolving CoolingRefineRegion */

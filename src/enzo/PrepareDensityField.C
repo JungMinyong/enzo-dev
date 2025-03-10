@@ -580,7 +580,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	} // ENDFOR grid batches
 	LCAPERF_STOP("PrepareGravitatingMassField2b");
 
-	if (debug1) fprintf(stdout,"Proc:%d, 4-8\n", MyProcessorNumber); // by YS
+	if (debug1) fprintf(stdout,"Proc:%d, 4-8 NoStar\n", MyProcessorNumber); // by YS
 
 	/*******************************************************************************/
 	// No Star Done

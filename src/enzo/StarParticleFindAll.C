@@ -66,20 +66,35 @@ std::map<int, Star*> grid::MakeStarParticleMap() // makes lookup table to quickl
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 {
 
+#define aeos_debug
+#ifdef aeos_debug
+		std::cout << "star find all -2" << std::endl;
+		CommunicationBarrier();
+#endif 
+
 	int i, level, GridNum, TotalNumberOfStars, LocalNumberOfStars;
 	int SavedP3IMFCalls;
 	Star *LocalStars = NULL, *GridStars = NULL, *cstar = NULL, *lstar = NULL;
 	HierarchyEntry **Grids;
 	int NumberOfGrids, *NumberOfStarsInGrids;
-  std::map<int, Star*> StarParticleLookupMap;
+    std::map<int, Star*> StarParticleLookupMap;
 
 	minStarLifetime = 1e20;
 	TotalNumberOfStars = 0;
 	LocalNumberOfStars = 0;
 
+#ifdef aeos_debug
+		std::cout << "star find all -1" << std::endl;
+		CommunicationBarrier();
+#endif  
+
 	if (AllStars != NULL)
 		DeleteStarList(AllStars);
 
+#ifdef aeos_debug
+		std::cout << "star find all 0" << std::endl;
+		CommunicationBarrier();
+#endif  
 	for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
 
     TIMER_START("StarParticleFindAll:GenerateGridArray");
@@ -138,6 +153,10 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 
 	} // ENDFOR level
 
+#ifdef aeos_debug
+		std::cout << "star find all 1" << std::endl;
+		CommunicationBarrier();
+#endif  
 	/***********************************************/
 	/*                                             */
 	/* Gather all star particles on all processors */
@@ -153,6 +172,10 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 			FirstTimeCalled = FALSE;
 		}
 
+#ifdef aeos_debug
+		std::cout << "star find all 1.0" << std::endl;
+		CommunicationBarrier();
+#endif  
 		/* Gather a list of particle counts on each processor */
 
 		Eint32 *nCount = new Eint32[NumberOfProcessors];
@@ -161,6 +184,10 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 		MPI_Allgather(&LocalNumberOfStars, 1, MPI_INT, nCount, 1, MPI_INT, 
 				enzo_comm);
 
+#ifdef aeos_debug
+		std::cout << "star find all 1.1" << std::endl;
+		CommunicationBarrier();
+#endif  
     TIMER_START("StarParticleFindAll:DisplacementList");
 		/* Generate displacement list. */
 
@@ -168,6 +195,10 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 			displace[i] = TotalNumberOfStars;
 			TotalNumberOfStars += nCount[i];
 		}
+#ifdef aeos_debug
+		std::cout << "star find all 1.2" << std::endl;
+		CommunicationBarrier();
+#endif  
     TIMER_STOP("StarParticleFindAll:DisplacementList");
 
     TIMER_START("StarParticleFindAll:GatherShiningParticles");
@@ -221,6 +252,11 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 				sendBuffer = NULL;
 			}
 
+#ifdef aeos_debug
+		std::cout << "star find all 1.3" << std::endl;
+		CommunicationBarrier();
+#endif  
+
       TIMER_STOP("StarParticleFindAll:GatherShiningParticles");
 
       TIMER_START("StarParticleFindAll:ShareData");
@@ -230,12 +266,20 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 					recvBuffer, nCount, displace, MPI_STAR,
 					enzo_comm);
 
+#ifdef aeos_debug
+		std::cout << "star find all 1.4" << std::endl;
+		CommunicationBarrier();
+#endif  
 			AllStars = StarBufferToList(recvBuffer, TotalNumberOfStars);
       TIMER_STOP("StarParticleFindAll:ShareData");
 
 			/* Re-assign CurrentGrid pointers to local particles */
       TIMER_START("StarParticleFindAll:ReassignGridPointers");
 
+#ifdef aeos_debug
+		std::cout << "star find all 1.5" << std::endl;
+		CommunicationBarrier();
+#endif  
 			int i0, i1;
 			cstar = AllStars;
 			lstar = LocalStars;
@@ -255,6 +299,10 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 				cstar = cstar->NextStar;
 
 			} // ENDFOR stars
+#ifdef aeos_debug
+		std::cout << "star find all 1.6" << std::endl;
+		CommunicationBarrier();
+#endif  
       TIMER_STOP("StarParticleFindAll:ReassignGridPointers");
 
 			DeleteStarList(LocalStars);
@@ -269,6 +317,10 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 		TotalNumberOfStars = LocalNumberOfStars;
 		AllStars = LocalStars;
 	}
+#ifdef aeos_debug
+		std::cout << "star find all 2" << std::endl;
+		CommunicationBarrier();
+#endif  
 
 	/* Find minimum stellar lifetime */
   TIMER_START("StarParticleFindAll:MiniStellarLife");

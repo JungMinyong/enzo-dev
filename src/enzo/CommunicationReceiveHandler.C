@@ -159,7 +159,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 				CommunicationReceiveArgumentInt[1][index],
 				CommunicationReceiveArgumentInt[2][index],
 						CommunicationReceiveDependsOn[index]);
-			MPI_Comm comm = MPI_COMM_WORLD;
+			MPI_Comm comm = enzo_comm;
 			MPI_Arg errcode = ListOfStatuses[index].MPI_ERROR;
 			CommunicationErrorHandlerFn(&comm, &errcode);
 			}

@@ -428,10 +428,20 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				SetLevelTimeStep(Grids, NumberOfGrids, level, 
 						&dtThisLevelSoFar[level], &dtThisLevel[level], dtLevelAbove);
 
+#define aeos_debug
+#ifdef aeos_debug
+		std::cout << "aeos 1" << std::endl;
+		debug1 = true;
+#endif
+
 #ifdef INDIVIDUALSTAR
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
         Grids[grid1]->GridData->ApplyTemperatureLimit();
     }
+#endif
+
+#ifdef aeos_debug
+		std::cout << "aeos 2" << std::endl;
 #endif
 				TimeSinceRebuildHierarchy[level] += dtThisLevel[level];
 

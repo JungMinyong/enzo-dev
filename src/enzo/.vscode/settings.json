@@ -29,7 +29,15 @@
         "ListIO.C": "cpp",
         "ProblemType_AgoraRestart.C": "cpp",
         "ReadParameterFile.C": "cpp",
-        "auto_show_config.C": "cpp"
+        "auto_show_config.C": "cpp",
+        "New_Grid_WriteGrid.C": "cpp",
+        "RebuildHierarchy.C": "cpp",
+        "EvolveHierarchy.C": "cpp",
+        "StellarYields_Initialize.C": "cpp",
+        "Grid_CopyPotentialToBaryonField.C": "cpp",
+        "StarParticleFindAll.C": "cpp",
+        "StarParticleInitialize.C": "cpp",
+        "StarListRoutines.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }
