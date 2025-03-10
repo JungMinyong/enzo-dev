@@ -876,8 +876,13 @@ int SendToEnzo() {
 				workers[rank_delete].runQueue();
 				workers[rank_delete].callback();
 
-				AvailableIndices[NumberOfAvailableIndices] = ptcl->ParticleIndex;
-				NumberOfAvailableIndices++;
+				if (ptcl->ParticleIndex == global_variable->LastParticleIndex)
+                {
+                    global_variable->LastParticleIndex--;
+                }
+                else
+                    PrevCMPtclWorker.insert({ptcl->ParticleIndex, CMPtclWorker[ptcl->ParticleIndex]});
+                CMPtclWorker.erase(ptcl->ParticleIndex);
 
 				for (int j = 0; j < ptcl->NumberOfMember; j++) {
 					members = &particles[ptcl->Members[j]];
