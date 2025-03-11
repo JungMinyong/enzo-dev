@@ -287,8 +287,16 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 for (int j = 0; j < ptcl->NumberOfMember; j++)
                 {
                     particles[ptcl->Members[j]].CMPtclIndex = -1;
-                    if (particles[ptcl->Members[j]].Mass == 0.0) // (Query) EW: this particle should be deleted from both Abyss & Enzo, this should be inserted in AvailableIndices
+                    if (particles[ptcl->Members[j]].Mass == 0.0) {
+                        
+                        /* // (Query) EW: Here? I don't think so
+                        NumberOfSingleParticle--;
+                        AvailableIndices[NumberOfAvailableIndices] = particles[ptcl->Members[j]].ParticleIndex;
+                        NumberOfAvailableIndices++;
+                        */
+
                         continue;
+                    }
                     ThisLevelNode->ParticleList.push_back(ptcl->Members[j]);
                     particles[ptcl->Members[j]].isActive = true;
                 }
@@ -660,7 +668,7 @@ bool createSkipList(SkipList *skiplist) {
 	if (skiplist->getFirstNode() == nullptr)
 		return FAIL;
 	else
-		return SUCCESS;
+		return 1; // SUCCESS -> 1 by EW 2025.3.11
 }
 
 

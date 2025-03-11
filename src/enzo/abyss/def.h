@@ -2,7 +2,7 @@
 #define CUDA
 
 #define FAIL    -1
-#define SUCCESS  1
+// #define SUCCESS  1
 
 
 #define NumberOfTask 20

@@ -32,6 +32,7 @@ void Particle::checkNewGroup() {
     Particle* ptcl2;
 
     std::unordered_set<int> CMPtclsSet;
+    CMPtclsSet.reserve(CMPtclWorker.size());
 
     // check only active particles 
     // single case
@@ -162,6 +163,7 @@ void Particle::checkNewGroup2() {
     Particle* ptcl2;
 
     std::unordered_set<int> CMPtclsSet;
+    CMPtclsSet.reserve(CMPtclWorker.size());
 
     // check only active particles 
     // single case
@@ -282,6 +284,7 @@ void Particle::checkNewGroup4() {
     Particle* ptcl2;
 
     std::unordered_set<int> CMPtclsSet;
+    CMPtclsSet.reserve(CMPtclWorker.size());
 
     // check only active particles 
     // single case

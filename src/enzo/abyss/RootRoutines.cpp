@@ -36,7 +36,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 void formBinaries(std::vector<int> &ParticleList, std::vector<int> &newCMptcls, std::unordered_map<int, int> &existing, std::unordered_map<int, int> &terminated);
 void FBTermination(Particle *ptclCM);
 void Merge(Particle *p1, Particle *p2);
-int SendToEnzo();
+int SendToEnzo(Worker *workers);
 int ReceiveFromEnzo();
 void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers);
 #ifdef SEVN
@@ -148,7 +148,7 @@ void RootRoutines()
 		// Time to communicate with enzo
 		if (global_time >= 1)
 		{
-			SendToEnzo();
+			SendToEnzo(workers);
 			ReceiveFromEnzo();
 			InitializationAfterCommunication(queue_scheduler, workers);
 			NextRegTimeBlock = 0;

@@ -152,7 +152,7 @@ void WorkerRoutines() {
 					}
 					*/
 					ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
-					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*time_step;
+					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*global_variable->time_step;
 				}
 				ptcl->updateRadius();
 				ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of ptcl particle
@@ -320,6 +320,17 @@ void WorkerRoutines() {
 				ptcl->setBinaryInterruptState(BinaryInterruptState::none);
 
 				std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " NewFBInitialization3 done!" <<std::endl;
+				break;
+			
+			case ResetSDARTime:
+
+				MPI_Recv(&ptcl_index,   1, MPI_INT   , ROOT, PTCL_TAG, abyss_comm, &status);
+				
+				ptcl = &particles[ptcl_index];
+
+				ptcl->GroupInfo->CurrentTime = 0.;
+				ptcl->GroupInfo->sym_int.initialIntegration(0.);
+
 				break;
 #endif 
 

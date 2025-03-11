@@ -85,10 +85,8 @@ extern double InitialNeighborRadius;
 extern double EPS2;
 
 // Few-Body
-#ifdef FEWBODY
 extern std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11
 extern std::unordered_map<int, int> PrevCMPtclWorker; // by EW 2025.1.4 // unordered_map by EW 2025.1.11
-#endif
 
 // i/o
 extern char* fname;

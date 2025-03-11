@@ -17,10 +17,8 @@ int NewPID;
 int LastParticleIndex; // The last index of particle array; for few-body case by EW 2025.3.10
 
 // Few-Body
-#ifdef FEWBODY
 std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11
 std::unordered_map<int, int> PrevCMPtclWorker; // by EW 2025.1.4 // unordered_map by EW 2025.1.11
-#endif
 
 // Task
 int Task[NumberOfTask];

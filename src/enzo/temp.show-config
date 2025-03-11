@@ -1,6 +1,6 @@
 
    MACHINE: Generic Ubuntu 8.04
-   MACHINE-NAME: rusty
+   MACHINE-NAME: linux-mpich
 
    PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000
    PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 30
