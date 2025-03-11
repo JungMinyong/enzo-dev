@@ -20,6 +20,10 @@ void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);
 bool updateSkipList(SkipList *skiplist, int ptcl_id);
 
+void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls, std::unordered_map<int, int>& existing, std::unordered_map<int, int>& terminated);
+void FBTermination(Particle* ptclCM);
+void Merge(Particle* p1, Particle* p2);
+
 bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
 #ifdef PerformanceTrace
@@ -33,6 +37,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     Particle *ptcl;
     double current_time_irr = 0;
     double next_time = 0;
+    Worker* worker;
 
 #ifdef FEWBODY
     bool bin_termination = false;
@@ -67,12 +72,12 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
 #ifdef DEBUG
         // print out particlelist
-        fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time*EnzoTimeStep*1e4);
+        fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time*global_variable->EnzoTimeStep*1e4);
         /*
         fprintf(stdout, "PID: %d. CurrentTimeIrr: %e Myr, TimeStepIrr: %e Myr\n", 
                     particles[ThisLevelNode->ParticleList[0]].PID, 
-                    particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr*EnzoTimeStep*1e4, 
-                    particles[ThisLevelNode->ParticleList[0]].TimeStepIrr*EnzoTimeStep*1e4);
+                    particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr*global_variable->EnzoTimeStep*1e4, 
+                    particles[ThisLevelNode->ParticleList[0]].TimeStepIrr*global_variable->EnzoTimeStep*1e4);
 
         // fprintf(stdout, "PID (%d) = ", ThisLevelNode->ParticleList.size());
         for (int i=0; i<ThisLevelNode->ParticleList.size(); i++) {
@@ -80,8 +85,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             // fprintf(stdout, "%d, ", ptcl->PID);
             fprintf(stdout, "PID: %d. %e Myr, %e Myr\n", 
                     ptcl->PID,
-                    ptcl->CurrentTimeIrr*EnzoTimeStep*1e4,
-                    ptcl->TimeStepIrr*EnzoTimeStep*1e4);
+                    ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4,
+                    ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4);
         }
         fprintf(stdout, "\n");
         // fflush(stdout);
@@ -313,7 +318,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     RegularList.insert(ptcl->ParticleIndex);
 
                 ptcl->NewNumberOfNeighbor = 0;
-                if (ptcl->TimeStepIrr * EnzoTimeStep * 1e4 < TSEARCH)
+                if (ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e4 < TSEARCH)
                     ptcl->checkNewGroup4();
             }
 
@@ -557,14 +562,14 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"\
                         "NumNeighbor= %d\n",
                         ptcl->PID,
-                        ptcl->CurrentTimeIrr*EnzoTimeStep*1e10/1e6,
+                        ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e10/1e6,
                         ptcl->CurrentBlockIrr,
-                        ptcl->CurrentTimeReg*EnzoTimeStep*1e10/1e6,
+                        ptcl->CurrentTimeReg*global_variable->EnzoTimeStep*1e10/1e6,
                         ptcl->CurrentBlockReg,
-                        NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
+                        NextRegTimeBlock*time_step*global_variable->EnzoTimeStep*1e10/1e6,
                         NextRegTimeBlock,
-                        ptcl->TimeStepIrr*EnzoTimeStep*1e10/1e6,
-                        ptcl->TimeStepReg*EnzoTimeStep*1e10/1e6,
+                        ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e10/1e6,
+                        ptcl->TimeStepReg*global_variable->EnzoTimeStep*1e10/1e6,
                         ptcl->TimeBlockIrr,
                         ptcl->TimeLevelIrr,
                         ptcl->TimeBlockReg,

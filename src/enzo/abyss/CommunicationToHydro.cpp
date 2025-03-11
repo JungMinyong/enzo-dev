@@ -956,7 +956,7 @@ int SendToEnzo(Worker *workers) {
 				NumberOfParticle--; // CM particle should be removed from active particles
 
 				int rank_delete = CMPtclWorker[ptcl->ParticleIndex];
-				fprintf(nbpdout, "Rank of CM ptcl %d: %d\n", ptcl->PID, rank_delete);
+				fprintf(nbpout, "Rank of CM ptcl %d: %d\n", ptcl->PID, rank_delete);
 				Queue queue;
 				queue.task = DeleteGroup;
 				queue.pid = ptcl->ParticleIndex;
@@ -975,8 +975,8 @@ int SendToEnzo(Worker *workers) {
 
 				for (int j = 0; j < ptcl->NumberOfMember; j++) {
 					members = &particles[ptcl->Members[j]];
-					if (ptcl->NewNeigbors[j] < offset)
-						Position[0][ptcl->NewNeigbors[j]] -= 20;
+					if (ptcl->NewNeighbors[j] < offset)
+						Position[0][ptcl->NewNeighbors[j]] -= 20;
 					else
 						newPosition[0][ptcl->NewNeighbors[j] - offset] -= 20;
 					deleteParticle(members->PID, ptcl->Members[j]);

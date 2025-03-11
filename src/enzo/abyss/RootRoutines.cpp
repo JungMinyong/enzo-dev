@@ -31,11 +31,7 @@ void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);
 bool updateSkipList(SkipList *skiplist, int ptcl_id);
 int writeParticle(double current_time, int outputNum);
-void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueScheduler &queue_scheduler);
 
-void formBinaries(std::vector<int> &ParticleList, std::vector<int> &newCMptcls, std::unordered_map<int, int> &existing, std::unordered_map<int, int> &terminated);
-void FBTermination(Particle *ptclCM);
-void Merge(Particle *p1, Particle *p2);
 int SendToEnzo(Worker *workers);
 int ReceiveFromEnzo();
 void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers);

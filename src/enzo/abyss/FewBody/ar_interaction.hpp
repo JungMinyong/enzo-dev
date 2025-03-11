@@ -3,9 +3,9 @@
 #ifdef FEWBODY
 //#pragma once
 
-extern double EnzoTimeStep;
 extern FILE* workerout;
 extern Particle *particles;
+extern GlobalVariable *global_variable;
 
 #include "ar_perturber.hpp"
 #include <cassert>
@@ -225,7 +225,7 @@ public:
                 //     n_single_count++;
                 // }
 
-                Float dt = time - pertj->CurrentTimeIrr*EnzoTimeStep;
+                Float dt = time - pertj->CurrentTimeIrr*global_variable->EnzoTimeStep;
                 // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
                 //ASSERT(dt>=-1e-7);
                 xp[j][0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_irr[0][0] + inv3*dt*pertj->a_irr[0][1]));
@@ -238,7 +238,7 @@ public:
             // ASSERT(n_single_count == n_pert_single);
             // ASSERT(n_group_count == n_pert_group);
 
-            Float dt = time - _particle_cm.CurrentTimeIrr*EnzoTimeStep;
+            Float dt = time - _particle_cm.CurrentTimeIrr*global_variable->EnzoTimeStep;
             // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
 
             xcm[0] = _particle_cm.Position[0] + dt*(_particle_cm.Velocity[0] + 0.5*dt*(_particle_cm.a_irr[0][0] + inv3*dt*_particle_cm.a_irr[0][1]));
@@ -460,7 +460,7 @@ public:
             auto pert_adr = _particle_cm.Neighbors;
 
             Float xp[3], xcm[3];
-            Float dt = _time - _particle_cm.CurrentTimeIrr*EnzoTimeStep;
+            Float dt = _time - _particle_cm.CurrentTimeIrr*global_variable->EnzoTimeStep;
             // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
             xcm[0] = _particle_cm.Position[0] + dt*(_particle_cm.Velocity[0] + 0.5*dt*(_particle_cm.a_irr[0][0] + inv3*dt*_particle_cm.a_irr[0][1]));
             xcm[1] = _particle_cm.Position[1] + dt*(_particle_cm.Velocity[1] + 0.5*dt*(_particle_cm.a_irr[1][0] + inv3*dt*_particle_cm.a_irr[1][1]));
@@ -482,7 +482,7 @@ public:
                 Particle* pertj;
                 pertj = &particles[pert_adr[j]];
 
-                Float dt = _time - pertj->CurrentTimeIrr*EnzoTimeStep;
+                Float dt = _time - pertj->CurrentTimeIrr*global_variable->EnzoTimeStep;
                 // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
                 xp[0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_irr[0][0] + inv3*dt*pertj->a_irr[0][1]));
                 xp[1] = pertj->Position[1] + dt*(pertj->Velocity[1] + 0.5*dt*(pertj->a_irr[1][0] + inv3*dt*pertj->a_irr[1][1]));

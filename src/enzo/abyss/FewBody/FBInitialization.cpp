@@ -294,7 +294,7 @@ void NewFBInitialization(Particle* ptclCM) {
 		ptclCM->TimeLevelReg = ptcl->TimeLevelReg;
 
 	ptclCM->TimeStepReg  = static_cast<double>(pow(2, ptclCM->TimeLevelReg));
-	ptclCM->TimeBlockReg = static_cast<ULL>(pow(2, ptclCM->TimeLevelReg-time_block));
+	ptclCM->TimeBlockReg = static_cast<ULL>(pow(2, ptclCM->TimeLevelReg-global_variable->time_block));
 
 	if (ptclCM->NumberOfNeighbor != 0) {	
 
@@ -323,7 +323,7 @@ void NewFBInitialization(Particle* ptclCM) {
 			&& ptclCM->TimeLevelIrr <= ptcl->TimeLevelIrr) { //first condition guarantees that ptclcm is small than ptcl
 		ptclCM->TimeLevelIrr++;
 		ptclCM->TimeStepIrr  = static_cast<double>(pow(2, ptclCM->TimeLevelIrr));
-		ptclCM->TimeBlockIrr = static_cast<ULL>(pow(2, ptclCM->TimeLevelIrr-time_block));
+		ptclCM->TimeBlockIrr = static_cast<ULL>(pow(2, ptclCM->TimeLevelIrr-global_variable->time_block));
 	}
 */
 
@@ -331,7 +331,7 @@ void NewFBInitialization(Particle* ptclCM) {
 	while (ptclCM->TimeStepIrr*global_variable->EnzoTimeStep*1e4 < 1e-7) {
 		ptclCM->TimeLevelIrr += 1;
 		ptclCM->TimeStepIrr = static_cast<REAL>(pow(2, ptclCM->TimeLevelIrr));
-		ptclCM->TimeBlockIrr = static_cast<ULL>(pow(2, ptclCM->TimeLevelIrr-time_block));
+		ptclCM->TimeBlockIrr = static_cast<ULL>(pow(2, ptclCM->TimeLevelIrr-global_variable->time_block));
 	}
 */
 

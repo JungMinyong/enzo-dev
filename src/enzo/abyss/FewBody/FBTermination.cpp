@@ -92,7 +92,7 @@ void FBTermination(Particle* ptclCM) {
 
 		members->calculateTimeStepReg();
 		if (members->TimeLevelReg <= ptclCM->TimeLevelReg-1 
-				&& members->TimeBlockReg/2+members->CurrentBlockReg >= NextRegTimeBlock)  { // this ensures that irr time of any particles is smaller than adjusted new reg time.
+				&& members->TimeBlockReg/2+members->CurrentBlockReg >= global_variable->NextRegTimeBlock)  { // this ensures that irr time of any particles is smaller than adjusted new reg time.
 			members->TimeLevelReg = ptclCM->TimeLevelReg-1;
 		}
 		else if  (members->TimeLevelReg >= ptclCM->TimeLevelReg+1) {
@@ -101,7 +101,7 @@ void FBTermination(Particle* ptclCM) {
 		else 
 			members->TimeLevelReg = ptclCM->TimeLevelReg;
 		members->TimeStepReg  = static_cast<double>(pow(2, members->TimeLevelReg));
-		members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-time_block));
+		members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-global_variable->time_block));
 
 		if (members->NumberOfNeighbor != 0) {
 			// members->calculateTimeStepIrr2();
@@ -110,7 +110,7 @@ void FBTermination(Particle* ptclCM) {
 			if (ptclCM->NumberOfMember > 2) {
 				members->TimeLevelIrr--;
 				members->TimeStepIrr = static_cast<double>(pow(2, members->TimeLevelIrr));
-				members->TimeBlockIrr = static_cast<ULL>(pow(2, members->TimeLevelIrr-time_block));
+				members->TimeBlockIrr = static_cast<ULL>(pow(2, members->TimeLevelIrr-global_variable->time_block));
 			}
 			members->NewCurrentBlockIrr = members->CurrentBlockIrr + members->TimeBlockIrr;
 			members->NextBlockIrr = members->CurrentBlockIrr + members->TimeBlockIrr;
@@ -143,7 +143,7 @@ void FBTermination(Particle* ptclCM) {
 			else 
 				members->TimeLevelReg = ptclCM->TimeLevelReg;
 			members->TimeStepReg  = static_cast<double>(pow(2, members->TimeLevelReg));
-			members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-time_block));
+			members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-global_variable->time_block));
 
 			// members->calculateTimeStepIrr();
 			members->calculateTimeStepIrr2();
@@ -154,11 +154,11 @@ void FBTermination(Particle* ptclCM) {
 			while (members->TimeStepReg*global_variable->EnzoTimeStep*1e4 > 2e-7) {
 				members->TimeLevelReg--;
 				members->TimeStepReg  = static_cast<double>(pow(2, members->TimeLevelReg));
-				members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-time_block));
+				members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-global_variable->time_block));
 			}
 			if (members->TimeBlockReg + members->CurrentBlockReg <= ptclCM->CurrentBlockIrr) {
-				members->CurrentBlockReg = NextRegTimeBlock - members->TimeBlockReg;
-				members->CurrentTimeReg = members->CurrentBlockReg * time_step;
+				members->CurrentBlockReg = global_variable->NextRegTimeBlock - members->TimeBlockReg;
+				members->CurrentTimeReg = members->CurrentBlockReg * global_variable->time_step;
 			}
 
 			// members->calculateTimeStepIrr();
@@ -166,7 +166,7 @@ void FBTermination(Particle* ptclCM) {
 			while (members->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > 1e-10) {
 				members->TimeLevelIrr--;
 				members->TimeStepIrr = static_cast<double>(pow(2, members->TimeLevelIrr));
-				members->TimeBlockIrr = static_cast<ULL>(pow(2, members->TimeLevelIrr-time_block));
+				members->TimeBlockIrr = static_cast<ULL>(pow(2, members->TimeLevelIrr-global_variable->time_block));
 			}
 
 			members->NewCurrentBlockIrr = members->CurrentBlockIrr + members->TimeBlockIrr;
