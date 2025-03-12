@@ -630,7 +630,7 @@ bool createSkipList(SkipList *skiplist) {
 	if (skiplist->getFirstNode() == nullptr)
 		return FAIL;
 	else
-		return SUCCESS;
+		return 1;//SUCCESS;
 }
 
 

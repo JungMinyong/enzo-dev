@@ -668,7 +668,7 @@ int SendToEnzo() {
 		std::cout << "NBODY+: Skipping SendToEnzo..." << std::endl;
 		fflush(stdout);
 		fflush(stderr);
-		return SUCCESS;
+		return 1; //SUCCESS;
 	}
 	MPI_Request request;
 	MPI_Status status;
