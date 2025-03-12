@@ -182,7 +182,8 @@ void updateNextRegTime(std::unordered_set<int> &RegularList)
 			}
 			// RegularList.push_back(ptcl->ParticleIndex);
 
-			RegularList.insert(PIDtoIndexMap[ptcl->PID]);
+			// RegularList.insert(PIDtoIndexMap[ptcl->PID]); // If PID is duplicated in ENZO, this causes an error by EW 2025.3.12
+			RegularList.insert(ptcl->ParticleIndex);
 		}
 	}
 	NextRegTimeBlock = time;

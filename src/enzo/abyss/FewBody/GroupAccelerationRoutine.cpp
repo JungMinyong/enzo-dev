@@ -111,7 +111,7 @@ void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls,
 		NewCM->ParticleIndex = i;
 		NewCM->PID = NewPID;
 		NewPID--;
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 		std::cout << "New CM ParticleIndex: " << i << std::endl;
 		std::cout << "New CM PID: " << NewCM->PID << std::endl;
 #endif
@@ -257,7 +257,8 @@ void makePrimordialGroup(Particle* ptclCM) {
 		ptclCM->Mass = ptclGroup->sym_int.particles.cm.Mass;
 	}
 
-	ptclCM->RadiusOfNeighbor = ACRadius*ACRadius;
+	// ptclCM->RadiusOfNeighbor = ACRadius*ACRadius;
+	ptclCM->RadiusOfNeighbor = InitialNeighborRadius*InitialNeighborRadius; // fixed by EW 2025.3.12
 
 	fprintf(workerout, "The ID of CM is %d.\n",ptclCM->PID);
 

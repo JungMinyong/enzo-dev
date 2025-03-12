@@ -70,7 +70,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
         next_time = particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr + particles[ThisLevelNode->ParticleList[0]].TimeStepIrr;
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         // print out particlelist
         fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time*global_variable->EnzoTimeStep*1e4);
         /*
@@ -98,7 +98,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef NSIGHT
         nvtxRangePushA("IrregularForce");
 #endif
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "Irr force starts" << std::endl;
 #endif
         int cm_pid;
@@ -154,7 +154,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             queue_scheduler.callback(worker);
             // queue_scheduler.printStatus();
         } while (queue_scheduler.isComplete());
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "Irregular Force done" << std::endl;
 #endif
 #ifdef NSIGHT
@@ -201,7 +201,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             ptcl->CurrentBlockIrr = ptcl->NewCurrentBlockIrr;
             ptcl->CurrentTimeIrr = ptcl->CurrentBlockIrr * global_variable->time_step;
         }
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         for (int i : ThisLevelNode->ParticleList)
         {
             ptcl = &particles[i];
@@ -341,7 +341,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         nvtxRangePushA("FewBodySearch");
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "FB search starts" << std::endl;
 #endif
         /*
@@ -378,7 +378,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 ptcl->checkNewGroup3();
             }
         }
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "FB search ended" << std::endl;
 #endif
 
@@ -391,17 +391,17 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
         int OriginalParticleListSize = ThisLevelNode->ParticleList.size();
         int rank_delete, rank_new;
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "formBinaries starts" << std::endl;
 #endif
         LastParticleIndex = global_variable->LastParticleIndex; // for formBinareis function by EW 2025.3.11
         formBinaries(ThisLevelNode->ParticleList, newCMptcls, CMPtclWorker, PrevCMPtclWorker);
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "formBinaries ended" << std::endl;
 #endif
         if (OriginalParticleListSize != ThisLevelNode->ParticleList.size())
         {
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
             std::cout << "New Binary!" << std::endl;
 #endif
             new_binaries = true;
@@ -434,7 +434,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 }
 
                 rank_new = CMPtclWorker[ptclCM->ParticleIndex];
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
                 fprintf(stdout, "Rank of CM ptcl %d: %d\n", ptclCM->PID, rank_new);
 #endif
                 queue.task = MakeGroup;
@@ -447,7 +447,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     RegularList.insert(ptcl->ParticleIndex);
                 }
             }
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
             std::cout << "All new fewbody objects are initialized." << std::endl;
 #endif
 
@@ -467,12 +467,12 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
 #endif
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "updateSkipList starts" << std::endl;
 #endif
         for (int i = 0; i < ThisLevelNode->ParticleList.size(); i++)
             updateSkipList(skiplist, ThisLevelNode->ParticleList[i]);
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "updateSkipList ended" << std::endl;
 #endif
 
@@ -542,11 +542,11 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         }
         */
         current_time_irr = particles[ThisLevelNode->ParticleList[0]].CurrentBlockIrr * global_variable->time_step;
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "skiplist->deleteFirstNode() starts" << std::endl;
 #endif
         skiplist->deleteFirstNode();
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
         std::cout << "skiplist->deleteFirstNode() ended" << std::endl;
 #endif
 
@@ -585,7 +585,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef PerformanceTrace
     start_point = std::chrono::high_resolution_clock::now();
 #endif
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     delete skiplist;
     std::cout << "delete skiplist" << std::endl;
 #endif

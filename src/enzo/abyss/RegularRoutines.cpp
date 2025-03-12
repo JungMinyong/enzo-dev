@@ -39,14 +39,14 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     nvtxRangePushA("calculateRegAccelerationOnGPU");
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "calculateRegAccelerationOnGPU starts" << std::endl;
     std::cout << "RegularList size: " << RegularList.size() << std::endl;
 #endif
 
     calculateRegAccelerationOnGPU(RegularList, queue_scheduler);
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "calculateRegAccelerationOnGPU ended" << std::endl;
 #endif
 
@@ -58,7 +58,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     nvtxRangePushA("RegCudaUpdate");
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "update regular starts" << std::endl;
 #endif
 
@@ -71,7 +71,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         queue_scheduler.runQueueAuto();
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "update regular ended" << std::endl;
 #endif
 
@@ -85,7 +85,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     {
         Particle *ptcl;
         for (int index: RegularList)

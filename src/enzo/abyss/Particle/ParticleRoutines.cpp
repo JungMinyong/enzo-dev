@@ -26,7 +26,7 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
 																		 *EnzoAcceleration;
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
-	this->RadiusOfNeighbor           = InitialNeighborRadius;
+	this->RadiusOfNeighbor           = InitialNeighborRadius*InitialNeighborRadius; // fixed by EW 2025.3.12
 }
 
 void Particle::set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime,
@@ -55,7 +55,7 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
 	this->ParticleType               = ParticleType;
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
-	this->RadiusOfNeighbor           = InitialNeighborRadius;
+	this->RadiusOfNeighbor           = InitialNeighborRadius*InitialNeighborRadius; // fixed by EW 2025.3.12
 }
 
 void Particle::update(double *Mass, double *BackgroundAcceleration[Dim], int &i)

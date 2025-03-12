@@ -252,7 +252,7 @@ void WorkerRoutines() {
 				ptcl = &particles[ptcl_index];
 
 				NewFBInitialization(ptcl);
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 				std::cout << "FewBody object of particle " << ptcl->PID
 						  << " is successfully initialized on rank " << AbyssProcessorNumber << "." <<std::endl;
 #endif
@@ -292,11 +292,11 @@ void WorkerRoutines() {
 						ptcl->setBinaryInterruptState(BinaryInterruptState::terminated);
 
 					delete ptcl->GroupInfo;
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " deleted!" <<std::endl;
 #endif
 				}
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 				else
 					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " done!" <<std::endl;
 #endif
