@@ -31,6 +31,7 @@
 #include "CommunicationUtilities.h"
 #include "NbodyRoutines.h"  //added  
 #include "phys_constants.h"
+#include "abyss/def.h" // for nbody units
 
 
 void InitializeNbodyArrays(int);
@@ -44,6 +45,23 @@ int GetUnits(double *DensityUnits, double *LengthUnits,
 int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 {
 
+	/* Do direct calculation!*/
+	double dt = 1e-3, scale_factor=1.0;
+	double DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1,
+				TemperatureUnits=1;
+	double MassUnits=1;
+	double Time, TimeStep;
+	Time = LevelArray[level]->GridData->ReturnTime(); // Not sure ?
+	TimeStep = LevelArray[level]->GridData->ReturnTimeStep(); // Not sure ?
+	if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+				&TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
+		ENZO_FAIL("Error in GetUnits.");
+	}
+	double EnzoTime = TimeUnits/yr/time_unit;
+	double EnzoMass = MassUnits/Msun/mass_unit;
+	double EnzoLength = LengthUnits/pc/position_unit;
+	double EnzoVelocity = VelocityUnits/pc*yr/velocity_unit;
+	double EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
 
 	if (LevelArray[level+1] == NULL) {
 		int i, GridNum, LocalNumberOfNbodyParticles=0, NewLocalNumberOfNbodyParticles=0;
@@ -297,7 +315,8 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 							LocalNumberOfNbodyParticles, NbodyParticleIDTemp, 
 							NbodyParticlePositionTemp, NbodyParticleVelocityTemp,
 							NewLocalNumberOfNbodyParticles, NewNbodyParticleIDTemp, 
-							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp
+							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp,
+							EnzoTime, EnzoMass, EnzoLength, EnzoVelocity, EnzoAcceleration
 							) == FAIL) {
 					ENZO_FAIL("Error in grid::CopyNbodyParticles.");
 				}

@@ -78,7 +78,7 @@ int ABYSS() {
 	broadcastFromRoot(EnzoTime);
 	broadcastFromRoot(EnzoAcceleration);
 	broadcastFromRoot(EPS2);
-	broadcastFromRoot(InitialNeighborRadius);
+	broadcastFromRoot(InitialNeighborRadius2);
 	broadcastFromRoot(FixNumNeighbor);
 
 	/*

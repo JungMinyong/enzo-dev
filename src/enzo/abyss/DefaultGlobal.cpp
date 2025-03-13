@@ -60,7 +60,7 @@ Performance performance;
 
 
 
-double InitialNeighborRadius;
+double InitialNeighborRadius2;
 double EPS2;
 int FixNumNeighbor, MaxNumNeighbor;
 

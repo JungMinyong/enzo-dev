@@ -11,11 +11,11 @@
 #include "../phys_constants.h"
 
 
-#define no_COM_EVOLUTION // (Query) eventaully I think this should adopt COM evolution due to bulk motion. 
+#define NO_COM_EVOLUTION // (Query) eventaully I think this should adopt COM evolution due to bulk motion. 
 //Bulk motion in irregular force will cause some distorts since a fraction of particle will advance due to bulk motion
 // and that will cause artificial tidal force.
 
-
+// 
 
 extern int StarParticleFeedback;
 extern double StarMassEjectionFraction;
@@ -99,7 +99,7 @@ int InitialCommunication() {
 	MPI_Recv(&EnzoCurrentTime         , 1, MPI_DOUBLE, 0, 1300, inter_comm, &status);
 	MPI_Recv(&EPS2                    , 1, MPI_DOUBLE, 0, 1400, inter_comm, &status);
 	MPI_Recv(&eta_tmp                 , 1, MPI_DOUBLE, 0, 1500, inter_comm, &status);
-	MPI_Recv(&InitialNeighborRadius   , 1, MPI_DOUBLE, 0, 1600, inter_comm, &status);
+	MPI_Recv(&InitialNeighborRadius2   , 1, MPI_DOUBLE, 0, 1600, inter_comm, &status);
 	MPI_Recv(EnzoClusterPosition      , 4, MPI_DOUBLE, 0, 1700, inter_comm, &status);
 	MPI_Recv(&IdentifyNbodyParticles  , 1, MPI_INT   , 0, 1750, inter_comm, &status);
 	MPI_Recv(&IdentifyOnTheFly        , 1, MPI_INT   , 0, 1775, inter_comm, &status);
@@ -140,7 +140,7 @@ int InitialCommunication() {
 	fprintf(nbpout, "Data received!\n");
 
 
-	ClusterRadius2 = EnzoClusterPosition[3];
+	ClusterRadius2 = EnzoClusterPosition[3]; //it's already squared
 
 	// Enzo to Nbody unit convertors
 	//EnzoMass         = MassUnits/Msun/mass_unit;
@@ -152,24 +152,27 @@ int InitialCommunication() {
 	EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
 
 	// Unit conversion
-	global_variable->EnzoTimeStep       = TimeStep*EnzoTime;
-	EnzoCurrentTime   *= EnzoTime;
+	global_variable->EnzoTimeStep       = TimeStep; //TimeStep*EnzoTime;
+	// EnzoCurrentTime   *= EnzoTime;
+
 	if (EPS2 < 0)
 		EPS2 = -1;
 	else {
-		EPS2 *= EnzoLength;
+		// EPS2 *= EnzoLength;
 		EPS2 *= EPS2;
 	}
 
-	InitialNeighborRadius *= EnzoLength;
+	// InitialNeighborRadius2 *= EnzoLength;
+	InitialNeighborRadius2 *= InitialNeighborRadius2;
 	FixNumNeighbor0    = FixNumNeighbor;
 
-	fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
-	fprintf(nbpout, "Nbody Time               = %lf\n", global_variable->EnzoTimeStep);
+	// fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
+	fprintf(nbpout, "Nbody Time               = %lf\n", EnzoCurrentTime);
+	fprintf(nbpout, "Nbody TimeStep           = %lf\n", global_variable->EnzoTimeStep);
 	fprintf(nbpout, "EPS2                     = %lf pc**2\n", EPS2*position_unit*position_unit);
-	fprintf(nbpout, "InitialNeighborRadius        = %.2e pc\n", InitialNeighborRadius*position_unit);
+	fprintf(nbpout, "InitialNeighborRadius2        = %.2e pc**2\n", InitialNeighborRadius2*position_unit*position_unit);
 	fprintf(nbpout, "eta                      = %lf\n", eta);
-	fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n", ClusterRadius2*EnzoLength*EnzoLength*position_unit*position_unit);
+	fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n", ClusterRadius2*position_unit*position_unit);
 	fprintf(nbpout, "StarMassEjectionFraction = %lf\n", StarMassEjectionFraction);
 	fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
 	fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
@@ -221,13 +224,14 @@ int InitialCommunication() {
 		}
 
 		
-		std::cerr << "enzo Pos     :" << Position[0][0] << ", " << Position[0][1] << std::endl;
-		std::cerr << "nbody Pos    :" << Position[0][0]*EnzoLength << ", " << Position[0][1]*EnzoLength << std::endl;
-		std::cerr << "enzo Vel     :" << Velocity[1][0] << ", " << Velocity[1][1] << std::endl;
-		std::cerr << "nbody Vel    :" << Velocity[1][0]*EnzoVelocity << ", " << Velocity[1][1]*EnzoVelocity << std::endl;
-		std::cerr << "km/s Vel     :" << Velocity[1][0]*VelocityUnits/1e5 << ", " << Velocity[1][1]*VelocityUnits/1e5 << std::endl;
-		std::cerr << "enzo  Mass   :" << Mass[0] << std::endl;
-		std::cerr << "nbody Mass   :" << Mass[0]*EnzoMass << std::endl;
+		std::cerr << "nbody Pos     :" << Position[0][0] << ", " << Position[0][1] << std::endl;
+		// std::cerr << "nbody Pos    :" << Position[0][0]*EnzoLength << ", " << Position[0][1]*EnzoLength << std::endl;
+		std::cerr << "nbody Vel     :" << Velocity[1][0] << ", " << Velocity[1][1] << std::endl;
+		// std::cerr << "nbody Vel    :" << Velocity[1][0]*EnzoVelocity << ", " << Velocity[1][1]*EnzoVelocity << std::endl;
+		std::cerr << "km/s Vel     :" << Velocity[1][0]*pc/yr*velocity_unit/1e5 << ", " << Velocity[1][1]*pc/yr*velocity_unit/1e5 << std::endl;
+		// std::cerr << "km/s Vel     :" << Velocity[1][0]*VelocityUnits/1e5 << ", " << Velocity[1][1]*VelocityUnits/1e5 << std::endl;
+		// std::cerr << "enzo  Mass   :" << Mass[0] << std::endl;
+		std::cerr << "nbody Mass   :" << Mass[0] << std::endl;
 		std::cerr << "CreationTime :" << CreationTime[0] << std::endl;
 		std::cerr << "DynamicalTime:" << DynamicalTime[0] << std::endl;
 
@@ -354,11 +358,11 @@ int ReceiveFromEnzo() {
 	std::cout << "Enzo  Time    :" << EnzoCurrentTime << std::endl;
 	//std::cout << "Nbody Time    :" << OldEnzoCurrentTime+particle[0]->CurrentTimeReg*EnzoTimeStep << std::endl;
 	global_variable->OldEnzoTimeStep = global_variable->EnzoTimeStep;
-	global_variable->EnzoTimeStep = TimeStep*EnzoTime;
+	global_variable->EnzoTimeStep = TimeStep; // *EnzoTime;
 
 	std::cout << "NBODY+: Data trnsferred!" << std::endl;
 	fprintf(stdout, "NBODY+: Data trnsferred!\n");
-	EnzoCurrentTime = EnzoCurrentTime*EnzoTime;
+	EnzoCurrentTime = EnzoCurrentTime; // *EnzoTime;
 	std::cout << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
 	std::cout << "Enzo TimeStep:" << TimeStep  << std::endl;
 	std::cout << "EnzoTimeStep :" << global_variable->EnzoTimeStep*1e4 << " Myr" << std::endl;
@@ -755,7 +759,6 @@ int SendToEnzo() {
 	double TimeStep=global_variable->EnzoTimeStep/EnzoTime;
 
 
-
 #ifdef COM_EVOLUTION
 	// COM evolution	
 	for (int dim=0; dim<Dim; dim++) {	
@@ -781,7 +784,7 @@ int SendToEnzo() {
 	for (int dim = 0; dim < Dim; dim++)
 	{
 		NbodyCOM[dim] /= mass;
-		NbodyCOM[dim] /= EnzoLength;
+		// NbodyCOM[dim] /= EnzoLength;
 		NbodyCOM[dim] += ClusterPosition[dim];
 	}
 #endif
@@ -794,8 +797,8 @@ int SendToEnzo() {
 			ptcl = &particles[index];
 			r2 = 0;
 			for (int dim=0; dim<Dim; dim++) {
-				Position[dim][i]  = ptcl->Position[dim]/EnzoLength;
-				Velocity[dim][i]  = ptcl->Velocity[dim]/EnzoVelocity;
+				Position[dim][i]  = ptcl->Position[dim]; ///EnzoLength;
+				Velocity[dim][i]  = ptcl->Velocity[dim]; // /EnzoVelocity;
 
 #ifdef COM_EVOLUTION
 				if (IdentifyNbodyParticles && IdentifyOnTheFly)
@@ -816,7 +819,7 @@ int SendToEnzo() {
 			}
 
 			if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
-				Position[0][i] -= 20;
+				Position[0][i] -= 10*EnzoClusterPosition[0]; // 20; //fix this?
 				deleteParticle(EnzoPIDs[i],index);
 				NumberOfEscapeParticle++;
 			}
@@ -844,8 +847,8 @@ int SendToEnzo() {
 			ptcl = &particles[index];
 			r2 = 0;
 			for (int dim=0; dim<Dim; dim++) {
-				newPosition[dim][i]  = ptcl->Position[dim]/EnzoLength;
-				newVelocity[dim][i]  = ptcl->Velocity[dim]/EnzoVelocity;
+				newPosition[dim][i]  = ptcl->Position[dim]; // /EnzoLength;
+				newVelocity[dim][i]  = ptcl->Velocity[dim]; // /EnzoVelocity;
 
 #ifdef COM_EVOLUTION
 				if (IdentifyNbodyParticles && IdentifyOnTheFly)
@@ -864,7 +867,7 @@ int SendToEnzo() {
 					r2 += (newPosition[dim][i]-EnzoClusterPosition[dim])*(newPosition[dim][i]-EnzoClusterPosition[dim]);
 			}
 			if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) {
-				newPosition[0][i] -= 20;
+				newPosition[0][i] -= 10*EnzoClusterPosition[0];
 				deleteParticle(EnzoPIDs[i+offset],index);
 				NumberOfEscapeParticle++;
 				// (Query) binary termination?
@@ -1012,6 +1015,7 @@ Z = (a1+b1+c1+a2+b2)/(M+N) = (X*M+Y*N)/(M+N) -> New COM
 Z-X = N*(Y-X)/(M+N) -> This should be applied to particles
 */
 // this should be improved by using iterative loop
+
 void GetNewCenterOfMass(int* PID, double *mass2, double *x2[Dim], double *v2[Dim], int n2, double x_X[], double v_X[]) {
 
 	double M=0., N=0.;
@@ -1025,7 +1029,7 @@ void GetNewCenterOfMass(int* PID, double *mass2, double *x2[Dim], double *v2[Dim
 	}
 
 	for (int i=0; i<NumberOfSingleParticle; i++) {
-		M += particles[PIDtoIndexMap[PID[i]]].Mass/EnzoMass;
+		M += particles[PIDtoIndexMap[PID[i]]].Mass;
 	}
 
 
@@ -1047,8 +1051,8 @@ void GetNewCenterOfMass(int* PID, double *mass2, double *x2[Dim], double *v2[Dim
 	// Adjustment to particles
 	for (int i=0; i<NumberOfSingleParticle; i++) {
 		for (int dim=0; dim<Dim;dim++) {
-			particles[PIDtoIndexMap[PID[i]]].Position[dim] - (x_Z[dim] - x_X[dim]) * EnzoLength;
-			particles[PIDtoIndexMap[PID[i]]].Velocity[dim] - (v_Z[dim] - v_X[dim]) * EnzoVelocity;
+			particles[PIDtoIndexMap[PID[i]]].Position[dim] - (x_Z[dim] - x_X[dim]);
+			particles[PIDtoIndexMap[PID[i]]].Velocity[dim] - (v_Z[dim] - v_X[dim]);
 		}
 	}
 

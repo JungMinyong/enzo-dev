@@ -82,7 +82,7 @@ extern int StarParticleFeedback;
 extern double StarMassEjectionFraction;
 extern int ComovingCoordinates;
 extern double eta_tmp;
-extern double InitialNeighborRadius;
+extern double InitialNeighborRadius2;
 extern double EPS2;
 
 // i/o

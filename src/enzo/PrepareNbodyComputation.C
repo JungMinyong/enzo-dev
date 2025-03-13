@@ -32,6 +32,7 @@
 #include "NbodyRoutines.h"  //added  
 #include "phys_constants.h"
 #include "CosmologyParameters.h"
+#include "abyss/def.h" // for nbody units
 
 void InitializeNbodyArrays(bool NbodyFirst);
 void InitializeNbodyArrays(void);
@@ -130,6 +131,13 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		NbodyParticleAccelerationNoStarTemp[dim]  = new double[LocalNumberOfNbodyParticles];
 	}
 
+	// unit conversion
+	double EnzoTime = TimeUnits/yr/time_unit;
+	double EnzoMass = MassUnits/Msun/mass_unit;
+	double EnzoLength = LengthUnits/pc/position_unit;
+	double EnzoVelocity = VelocityUnits/pc*yr/velocity_unit;
+	double EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
+	
 	fprintf(stdout, "ENZO: Allocate variables.\n");
 
 	/* Get particle information from Grids */
@@ -139,7 +147,7 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 			for (Temp = LevelArray[level1]; Temp; Temp = Temp->NextGridThisLevel) {
 				if (Temp->GridData->CopyNbodyParticlesFirst(&count, NbodyParticleIDTemp, NbodyParticleMassTemp,
 							NbodyParticlePositionTemp, NbodyParticleVelocityTemp, NbodyParticleAccelerationNoStarTemp,
-							NbodyParticleCreationTimeTemp, NbodyParticleDynamicalTimeTemp) == FAIL) {
+							NbodyParticleCreationTimeTemp, NbodyParticleDynamicalTimeTemp, EnzoTime, EnzoMass, EnzoLength, EnzoVelocity, EnzoAcceleration) == FAIL) {
 					ENZO_FAIL("Error in grid::CopyNbodyParticlesFirst.");
 				}
 			}
@@ -243,6 +251,16 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 					 	1, 500, inter_comm);
 			}
 		}
+		// unit conversion
+		TimeStep *= EnzoTime;
+		Time *= EnzoTime;
+		NbodyNeighborRadius *= EnzoLength;
+		NbodyClusterPosition[0] *= EnzoLength;
+		NbodyClusterPosition[1] *= EnzoLength;
+		NbodyClusterPosition[2] *= EnzoLength;
+		NbodyClusterPosition[3] *= EnzoLength*EnzoLength;
+		NbodySmoothingLength *= EnzoLength;
+
 		fprintf(stderr, "ENZO: data sending! \n");
 		MPI_Send(&TimeStep,                    1, MPI_DOUBLE, 1,  600, inter_comm);
 		MPI_Send(&TimeUnits,                   1, MPI_DOUBLE, 1,  700, inter_comm);
@@ -411,7 +429,13 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 		ENZO_FAIL("Error in GetUnits.");
 	}
 
-
+	// unit conversion
+	double EnzoTime = TimeUnits/yr/time_unit;
+	double EnzoMass = MassUnits/Msun/mass_unit;
+	double EnzoLength = LengthUnits/pc/position_unit;
+	double EnzoVelocity = VelocityUnits/pc*yr/velocity_unit;
+	double EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
+	
 	//int *NbodyParticleIDTemp;
 	//int *NewNbodyParticleIDTemp;
 	double *NbodyParticleMassTemp;
@@ -445,7 +469,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 				if (Temp->GridData->CopyNbodyParticles(&count, NbodyParticleIDTemp, NbodyParticleMassTemp, NbodyParticleAccelerationNoStarTemp,
 							&count_new, NewNbodyParticleIDTemp, NewNbodyParticleMassTemp,
 							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp, NewNbodyParticleAccelerationNoStarTemp,
-							NewNbodyParticleCreationTimeTemp, NewNbodyParticleDynamicalTimeTemp
+							NewNbodyParticleCreationTimeTemp, NewNbodyParticleDynamicalTimeTemp, EnzoTime, EnzoMass, EnzoLength, EnzoVelocity, EnzoAcceleration
 							) == FAIL) {
 
 					//NbodyParticleAccelerationTemp
@@ -610,6 +634,8 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 			}
 		}
 
+		TimeStep *= EnzoTime;
+		Time *= EnzoTime;
 		ierr = MPI_Send(&TimeStep, 1, MPI_DOUBLE, 1, 600, inter_comm);
 		ierr = MPI_Send(&Time    , 1, MPI_DOUBLE, 1, 700, inter_comm);
 		//ierr = MPI_Send(&TimeUnits, 1, MPI_DOUBLE, 1, 700, inter_comm);

@@ -1821,7 +1821,8 @@ class grid
 
 		int CopyNbodyParticlesFirst(int* count,int NbodyParticleIDTemp[], double NbodyParticleMassTemp[], 
 				double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[], double *NbodyParticleAccelerationNoStarTemp[],
-				double *NbodyParticleCreationTimeTmp, double *NbodyParticleDynamicalTimeTmp) {
+				double *NbodyParticleCreationTimeTmp, double *NbodyParticleDynamicalTimeTmp,
+				double EnzoTime, double EnzoMass, double EnzoLength, double EnzoVelocity, double EnzoAcceleration) {
 
 			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
 
@@ -1830,20 +1831,20 @@ class grid
 			for (int i=0; i < NumberOfParticles; i++) {
 
 				if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
-					NbodyParticleMassTemp[*count]         = ParticleMass[i]*dv;
+					NbodyParticleMassTemp[*count]         = ParticleMass[i]*dv*EnzoMass;
 					NbodyParticleIDTemp[*count]           = ParticleNumber[i];
-					NbodyParticleCreationTimeTmp[*count]  = ParticleAttribute[0][i];
-					NbodyParticleDynamicalTimeTmp[*count] = ParticleAttribute[1][i];
+					NbodyParticleCreationTimeTmp[*count]  = ParticleAttribute[0][i]*EnzoTime;
+					NbodyParticleDynamicalTimeTmp[*count] = ParticleAttribute[1][i]*EnzoTime;
 
 					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
-						NbodyParticlePositionTemp[dim][*count] = ParticlePosition[dim][i];
-						NbodyParticleVelocityTemp[dim][*count] = ParticleVelocity[dim][i];
+						NbodyParticlePositionTemp[dim][*count] = ParticlePosition[dim][i]*EnzoLength;
+						NbodyParticleVelocityTemp[dim][*count] = ParticleVelocity[dim][i]*EnzoVelocity;
 
 					}
 					// if you want potential then go with MAX_DIMENSION+1 by YS
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
-						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i];
+						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i]*EnzoAcceleration;
 						//NbodyParticleAccelerationNoStarTemp[dim][*count] = 246.22271888;
 					} // ENDFOR dim
 					(*count)++;
@@ -1857,7 +1858,8 @@ class grid
 		int CopyNbodyParticles(int* count,int NbodyParticleIDTemp[], double NbodyParticleMassTemp[], double *NbodyParticleAccelerationNoStarTemp[],
 				int* count_new, int NewNbodyParticleIDTemp[], double NewNbodyParticleMassTemp[],
 				double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[], double *NewNbodyParticleAccelerationNoStarTemp[],
-				double *NewNbodyParticleCreationTimeTmp, double *NewNbodyParticleDynamicalTimeTmp
+				double *NewNbodyParticleCreationTimeTmp, double *NewNbodyParticleDynamicalTimeTmp, 
+				double EnzoTime, double EnzoMass, double EnzoLength, double EnzoVelocity, double EnzoAcceleration
 				) {
 
 			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
@@ -1868,16 +1870,16 @@ class grid
 
 				if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
 					//fprintf(stderr, "Mass Of NewNbodyParticles=%lf in Copy\n", ParticleMass[i]*dv);
-					NewNbodyParticleMassTemp[*count_new]         = ParticleMass[i]*dv;
+					NewNbodyParticleMassTemp[*count_new]         = ParticleMass[i]*dv*EnzoMass;
 					NewNbodyParticleIDTemp[*count_new]           = ParticleNumber[i];
-					NewNbodyParticleCreationTimeTmp[*count_new]  = ParticleAttribute[0][i];
-					NewNbodyParticleDynamicalTimeTmp[*count_new] = ParticleAttribute[1][i];
+					NewNbodyParticleCreationTimeTmp[*count_new]  = ParticleAttribute[0][i]*EnzoTime;
+					NewNbodyParticleDynamicalTimeTmp[*count_new] = ParticleAttribute[1][i]*EnzoTime;
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
 						//if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
-						NewNbodyParticlePositionTemp[dim][*count_new] = ParticlePosition[dim][i];
-						NewNbodyParticleVelocityTemp[dim][*count_new] = ParticleVelocity[dim][i];
+						NewNbodyParticlePositionTemp[dim][*count_new] = ParticlePosition[dim][i]*EnzoLength;
+						NewNbodyParticleVelocityTemp[dim][*count_new] = ParticleVelocity[dim][i]*EnzoVelocity;
 						//}
-						NewNbodyParticleAccelerationNoStarTemp[dim][*count_new] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i];
+						NewNbodyParticleAccelerationNoStarTemp[dim][*count_new] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i]*EnzoAcceleration;
 					} // ENDFOR dim
 					(*count_new)++;
 				} // endif particle_type_nbody_new
@@ -1885,9 +1887,9 @@ class grid
 				if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
 					//fprintf(stderr, "Mass Of NbodyParticles=%lf in Copy\n", ParticleMass[i]*dv);
 					NbodyParticleIDTemp[*count]   = ParticleNumber[i];
-					NbodyParticleMassTemp[*count] = ParticleMass[i]*dv;
+					NbodyParticleMassTemp[*count] = ParticleMass[i]*dv*EnzoMass;
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
-						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i];
+						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i]*EnzoAcceleration;
 					} // ENDFOR dim
 					(*count)++;
 				} // ENDIF nbody particles
@@ -1900,24 +1902,26 @@ class grid
 				int NumberOfNbodyParticles,int NbodyParticleIDTemp[],
 			 	double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[],
 				int NewNumberOfNbodyParticles,int NewNbodyParticleIDTemp[],
-			 	double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[]) {
+			 	double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[],
+				double EnzoTime, double EnzoMass, double EnzoLength, double EnzoVelocity, double EnzoAcceleration) {
 
 			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
 
 			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+			double EscapeThreshold = 10 * NbodyClusterPosition[0];
 
 			for (int i=0; i < NumberOfParticles; i++) {
 				for (int j=0; j<NumberOfNbodyParticles; j++) {
 					if (ParticleNumber[i] == NbodyParticleIDTemp[j]) {
 						//fprintf(stdout,"Escaped PID=%d, x=%lf\n", ParticleNumber[i], NbodyParticlePositionTemp[0][j]);
-						if (NbodyParticlePositionTemp[0][j] < -10 ) {
+						if (NbodyParticlePositionTemp[0][j] < -0.5 * EscapeThreshold) {
 							fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[i]);
-							NbodyParticlePositionTemp[0][j] += 20;
+							NbodyParticlePositionTemp[0][j] += EscapeThreshold;
 							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
 						} // particle removal
 						for (int dim=0; dim<MAX_DIMENSION; dim++) {
-							ParticlePosition[dim][i] = NbodyParticlePositionTemp[dim][j];
-							ParticleVelocity[dim][i] = NbodyParticleVelocityTemp[dim][j];
+							ParticlePosition[dim][i] = NbodyParticlePositionTemp[dim][j]/EnzoLength;
+							ParticleVelocity[dim][i] = NbodyParticleVelocityTemp[dim][j]/EnzoVelocity;
 						} // ENDFOR dim
 						(*count)++;
 						break;
@@ -1926,13 +1930,13 @@ class grid
 				for (int j=0; j<NewNumberOfNbodyParticles; j++) {
 					if (ParticleNumber[i] == NewNbodyParticleIDTemp[j]) {
 						ParticleType[i] = PARTICLE_TYPE_NBODY;
-						if (NewNbodyParticlePositionTemp[0][j] < -10 ) {
-							NewNbodyParticlePositionTemp[0][j] += 20;
+						if (NewNbodyParticlePositionTemp[0][j] < -0.5 * EscapeThreshold ) {
+							NewNbodyParticlePositionTemp[0][j] += EscapeThreshold;
 							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
 						} // particle removal
 						for (int dim=0; dim<MAX_DIMENSION; dim++) {
-							ParticlePosition[dim][i] = NewNbodyParticlePositionTemp[dim][j];
-							ParticleVelocity[dim][i] = NewNbodyParticleVelocityTemp[dim][j];
+							ParticlePosition[dim][i] = NewNbodyParticlePositionTemp[dim][j]/EnzoLength;
+							ParticleVelocity[dim][i] = NewNbodyParticleVelocityTemp[dim][j]/EnzoVelocity;
 						} // ENDFOR dim
 						(*count)++;
 						break;

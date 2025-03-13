@@ -31,16 +31,16 @@ LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.8
 # Compiler settings
 #-----------------------------------------------------------------------
 
-MACH_CPP       = cpp # C preprocessor command
+MACH_CPP       = icpc # C preprocessor command
 
 # With MPI
 
 
-MACH_CC_MPI    =  mpicc     #/home/kerex/intel/bin/icc 
-MACH_CXX_MPI   =  mpicxx    #/home/kerex/intel/bin/icpc
+MACH_CC_MPI    =  mpiicc     #/home/kerex/intel/bin/icc 
+MACH_CXX_MPI   =  mpiicpc    #/home/kerex/intel/bin/icpc
 MACH_FC_MPI    =  mpifc   #/home/kerex/intel/bin/ifort 
 MACH_F90_MPI   =  mpif90   #/home/kerex/intel/bin/ifort
-MACH_LD_MPI    =  mpicxx    #/home/kerex/intel/bin/icpc
+MACH_LD_MPI    =  mpiicpc    #/home/kerex/intel/bin/icpc
 
 MACH_CUDACOMPILER = $(LOCAL_CUDA_INSTALL)/bin/nvcc
 
@@ -68,9 +68,9 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 #-----------------------------------------------------------------------
 
 
-MACH_CPPFLAGS = -P -traditional 
+MACH_CPPFLAGS = -P -traditional -std=c++11
 MACH_CFLAGS   = 
-MACH_CXXFLAGS = 
+MACH_CXXFLAGS = -std=c++11
 MACH_FFLAGS   = -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi
 MACH_F90FLAGS = 
 MACH_LDFLAGS  = 
