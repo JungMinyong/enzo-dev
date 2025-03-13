@@ -169,6 +169,9 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 
 			if ((NumberOfNbodyParticles+NumberOfNewNbodyParticles)!=0 && isNbodyParticleIdentification && isIdentificationOnTheFly) {
 				ierr = MPI_Recv(NbodyClusterPosition, 3, MPI_DOUBLE, 1, 700, inter_comm, &status);
+				NbodyClusterPosition[0] /= EnzoLength;
+				NbodyClusterPosition[1] /= EnzoLength;
+				NbodyClusterPosition[2] /= EnzoLength;
 				//fprintf(stdout, "In Final, NbodyClusterPosition = (%e, %e, %e)\n", NbodyClusterPosition[0], NbodyClusterPosition[1], NbodyClusterPosition[2]);
 				//fprintf(stderr, "In Final, NbodyClusterPosition = (%e, %e, %e)\n", NbodyClusterPosition[0], NbodyClusterPosition[1], NbodyClusterPosition[2]);
 			}
