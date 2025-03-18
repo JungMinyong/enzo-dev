@@ -43,7 +43,6 @@ void Particle::computeAccelerationIrr() {
 	}
 
 	std::unordered_set<int> CMPtclsSet;
-	CMPtclsSet.reserve(CMPtclWorker.size());
 
 	/*******************************************************
 	 * Irregular Acceleartion Calculation

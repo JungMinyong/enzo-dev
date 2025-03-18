@@ -694,7 +694,8 @@ int ReceiveFromEnzo() {
 }
 
 
-// (Query) How to deal with merged zero-mass particles, and PISN?
+// (Query) For binary mergers and SEVN, mass should be sent to Enzo as it was changed in Abyss by EW 2025.3.13
+// (Query) For SEVN, not only mass but also dm should be sent to Enzo, and it should be distributed into the grid by EW 2025.3.13
 int SendToEnzo(Worker *workers) { 
 
 	std::cout << "NBODY+: Entering SendToEnzo..." << std::endl;
@@ -797,7 +798,12 @@ int SendToEnzo(Worker *workers) {
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
 					if(ptcl->Mass == 0.0) { // merger induced zero-mass particles, PISN case // EW: Position -= 20 here?
-
+						/* // Example code by EW 2025.3.13
+						// (Query to YS) This particle should be deleted in Enzo too!
+						Position[0][i] = -20; // Position is not initialized yet
+						deleteParticle(EnzoPIDs[i],index); // delete this particle in Abyss
+						NumberOfEscapeParticle++;
+						*/ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
 					} 
 				}
 			}
@@ -829,6 +835,9 @@ int SendToEnzo(Worker *workers) {
 			if (ptcl->isActive && IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
 				Position[0][i] -= 20;
 				deleteParticle(EnzoPIDs[i],index);
+#ifdef FEWBODY
+				NumberOfParticle--;
+#endif
 				NumberOfEscapeParticle++;
 			}
 			//fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
@@ -873,7 +882,12 @@ int SendToEnzo(Worker *workers) {
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
 					if(ptcl->Mass == 0.0) { // merger induced zero-mass particles, PISN case // EW: newPosition -= 20 here?
-
+						/* // Example code by EW 2025.3.13
+						// (Query to YS) This particle should be deleted in Enzo too!
+						newPosition[0][i] = -20;  // newPosition is not initialized yet
+						deleteParticle(EnzoPIDs[i+offset],index); // delete this particle in Abyss
+						NumberOfEscapeParticle++;
+						*/ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
 					} 
 				}
 			}
@@ -903,6 +917,9 @@ int SendToEnzo(Worker *workers) {
 			if (ptcl->isActive && IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) {
 				newPosition[0][i] -= 20;
 				deleteParticle(EnzoPIDs[i+offset],index);
+#ifdef FEWBODY
+				NumberOfParticle--;
+#endif
 				NumberOfEscapeParticle++;
 				// (Query) binary termination?
 			}
