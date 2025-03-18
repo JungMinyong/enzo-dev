@@ -255,6 +255,7 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		TimeStep *= EnzoTime;
 		Time *= EnzoTime;
 		NbodySmoothingLength *= EnzoLength;
+		NbodyNeighborRadius *= EnzoLength;
 
 		double NbodyClusterPositionTemp[4];
 		NbodyClusterPositionTemp[0] = NbodyClusterPosition[0] * EnzoLength;
