@@ -781,31 +781,14 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 				this->Neighbors[this->NumberOfNeighbor] = ptcl_mem->ParticleIndex;
 			}
 		}
-
-		r2 = 0;
-		vx = 0;
-		v2 = 0;
-
-		for (int dim=0; dim<Dim; dim++) {
-			x[dim] = ptcl_neighbor->Position[dim] - this->Position[dim];
-			v[dim] = ptcl_neighbor->Velocity[dim] - this->Velocity[dim];
-			r2    += x[dim]*x[dim];
-			vx    += v[dim]*x[dim];
-			v2    += v[dim]*v[dim];
-		}
-
-		m_r3 = ptcl_neighbor->Mass/r2/sqrt(r2); 
-
-		for (int dim=0; dim<Dim; dim++) {
-			this->a_irr[dim][0] += m_r3*x[dim];
-			this->a_irr[dim][1] += m_r3*(v[dim] - 3*x[dim]*vx/r2);
-		}
 	}
 	assert(this->NumberOfNeighbor >= NewNumberOfNeighborGPU);
 
 	for (int dim = 0; dim < Dim; dim++) {
 		this->a_tot[dim][0] = this->a_irr[dim][0] + this->a_reg[dim][0];
 		this->a_tot[dim][1] = this->a_irr[dim][1] + this->a_reg[dim][1];
+		this->a_tot[dim][2] = this->a_irr[dim][2] + this->a_reg[dim][2];
+		this->a_tot[dim][3] = this->a_irr[dim][3] + this->a_reg[dim][3];
 	}
 	
 }

@@ -20,8 +20,8 @@ void InitialAssignmentOfTasks(int* data, int NumTask, int TAG);
 void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList, int *IndexList);
 void CalculateAccelerationOnDevice(int *NumTargetTotal, int *h_target_list, double acc[][3], double adot[][3], int NumNeighbor[], int *NeighborList);
 
-void InitializationOnGPU(QueueScheduler &queue_scheduler);
-void sendAllParticlesToGPU_init(int *IndexList);
+void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
+void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& RegularList_init, int *IndexList);
 void CalculateAccelerationOnDevice(int *NumTargetTotal, int *h_target_list, 
 	double areg[][3], double areg_dot[][3], double airr[][3], double airr_dot[][3], 
 	double areg_dotdot[][3], double areg_dotdotdot[][3], double airr_dotdot[][3], double airr_dotdotdot[][3], 
@@ -443,7 +443,7 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
  *  Date    : 2025.03.18  by Eunwoo Chung
  *
  */
-void InitializationOnGPU(QueueScheduler &queue_scheduler) {
+void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 
 	std::unordered_set<int> RegularList_init;
 	assert(RegularList_init.empty());
@@ -489,11 +489,6 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler) {
 
 	// need to make array to send to GPU
 	// allocate memory to the temporary variables
-	//PotSend         = new double[ListSize];
-	AccRegReceive    = new double[ListSize][Dim];
-	AccRegDotReceive = new double[ListSize][Dim];
-	AccIrr           = new double[ListSize][Dim];
-	AccIrrDot        = new double[ListSize][Dim];
 
 #ifdef CUDA_FLOAT
 	AccRegReceive_f		= new CUDA_REAL[ListSize][Dim];
@@ -514,13 +509,16 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler) {
 	for (int i=0; i<ListSize; i++) {
 		// ACListReceive[i] = new int[NumNeighborMax];
 		for (int dim=0; dim<Dim; dim++) {
-			AccRegReceive[i][dim]    = 0;
-			AccRegDotReceive[i][dim] = 0;
-			AccIrr[i][dim]           = 0;
-			AccIrrDot[i][dim]        = 0;
 #ifdef CUDA_FLOAT
 			AccRegReceive_f[i][dim]		= 0;
 			AccRegDotReceive_f[i][dim]	= 0;
+			AccIrrReceive_f[i][dim]		= 0;
+			AccIrrDotReceive_f[i][dim]	= 0;
+
+			AccRegDotDotReceive_f[i][dim]		= 0;
+			AccRegDotDotDotReceive_f[i][dim]	= 0;
+			AccIrrDotDotReceive_f[i][dim]		= 0;
+			AccIrrDotDotDotReceive_f[i][dim]	= 0;
 #endif 
 		}
 	}
@@ -726,7 +724,7 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler) {
 	//CloseDevice();
 } // calculate 0th, 1st derivative of force + neighbors on GPU ends
 
-void sendAllParticlesToGPU_init(std::unordered_set<int>& RegularList_init, int *IndexList) {
+void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& RegularList_init, int *IndexList) {
 
 	assert(RegularList_init.empty());
 
@@ -753,10 +751,27 @@ void sendAllParticlesToGPU_init(std::unordered_set<int>& RegularList_init, int *
 	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl       = &particles[i];
 
+		ptcl->CurrentTimeIrr = 0.;
+        ptcl->CurrentBlockIrr = 0;
+        ptcl->CurrentTimeReg = 0.;
+        ptcl->CurrentBlockReg = 0;
+        ptcl->NewCurrentBlockIrr = 0;
+
 		if (!ptcl->isActive) {
 			// fprintf(stdout, "Skipping inactive particle (%d)\n", ptcl->PID);
 			continue;
 		}
+#ifdef FEWBODY
+		if (ptcl->isCMptcl) { // We have to reset the SDAR clock;
+			Queue queue;
+			int rank = CMPtclWorker[ptcl->ParticleIndex];
+			queue.task = ResetSDARTime;
+			queue.pid = ptcl->ParticleIndex;
+			workers[rank].addQueue(queue);
+			workers[rank].runQueue();
+			workers[rank].callback();
+		}
+#endif
 
 		RegularList_init.insert(i);
 

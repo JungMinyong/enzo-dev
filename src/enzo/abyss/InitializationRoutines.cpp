@@ -27,6 +27,8 @@ void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vecto
 
 void formPrimordialBinaries(int beforeLastParticleIndex);
 
+void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
+
 /* Initialization */
 void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
@@ -357,34 +359,42 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
     /* Since we're not doing full-initialization, we have to do more work on time steps
     e.g., if enzo time can be smaller than regualr time steps. we gotta re-normalize it.
     but this part is not complete yet. */
-    Particle *ptcl;
-    for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
-        ptcl = &particles[i];
-        // ParticleIndices.push_back(i); // commented out by EW 2025.3.11
-        ptcl->setNewTimeStepWithNewEnzoTimeStep(global_variable->OldEnzoTimeStep, global_variable->EnzoTimeStep);
-        ptcl->CurrentTimeIrr = 0.;
-        ptcl->CurrentBlockIrr = 0;
-        ptcl->CurrentTimeReg = 0.;
-        ptcl->CurrentBlockReg = 0;
-        ptcl->NewCurrentBlockIrr = 0;
-        ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
-#ifdef FEWBODY
-        if (ptcl->isCMptcl) { // We have to reset the SDAR clock;
-            Queue queue;
-            int rank = CMPtclWorker[ptcl->ParticleIndex];
-            queue.task = ResetSDARTime;
-            queue.pid = ptcl->ParticleIndex;
-            workers[rank].addQueue(queue);
-            workers[rank].runQueue();
-            workers[rank].callback();
-        }
-#endif
-    }
 
     // Example code by EW 2025.3.18
     if (newNumberOfSingleParticle > 0) {
-        // GPU Initialization code
+
+        InitializationOnGPU(queue_scheduler, workers); // GPU Initialization code
+
+    } else {
+
+        Particle *ptcl;
+
+        for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
+
+            ptcl = &particles[i];
+
+            ptcl->setNewTimeStepWithNewEnzoTimeStep(global_variable->OldEnzoTimeStep, global_variable->EnzoTimeStep);
+            ptcl->CurrentTimeIrr = 0.;
+            ptcl->CurrentBlockIrr = 0;
+            ptcl->CurrentTimeReg = 0.;
+            ptcl->CurrentBlockReg = 0;
+            ptcl->NewCurrentBlockIrr = 0;
+            ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+#ifdef FEWBODY
+            if (ptcl->isCMptcl) { // We have to reset the SDAR clock;
+                Queue queue;
+                int rank = CMPtclWorker[ptcl->ParticleIndex];
+                queue.task = ResetSDARTime;
+                queue.pid = ptcl->ParticleIndex;
+                workers[rank].addQueue(queue);
+                workers[rank].runQueue();
+                workers[rank].callback();
+            }
+#endif
+        }
     }
+
+    
 
     //initializeTime(queue_scheduler, workers, ParticleIndices);
     // ParticleIndices.clear(); // commented out by EW 2025.3.11
