@@ -25,6 +25,8 @@ void broadcastFromRoot(ULL &data);
 void broadcastFromRoot(int &data);
 void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vector<int> ParticleIndices);
 
+void formPrimordialBinaries(int beforeLastParticleIndex);
+
 /* Initialization */
 void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
@@ -89,6 +91,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     Queue queue;
     int rank;
     int OriginalLastParticleIndex = global_variable->LastParticleIndex;
+    LastParticleIndex = global_variable->LastParticleIndex; // for formPrimordialBinaires function by EW 2025.3.11
     formPrimordialBinaries(OriginalLastParticleIndex);
     assert(OriginalLastParticleIndex <= global_variable->LastParticleIndex); // for debugging by EW 2025.1.4
     assert(CMPtclWorker.empty());                           // for debugging by EW 2025.1.4
@@ -118,6 +121,17 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             queue_scheduler.runQueueAuto();
             queue_scheduler.waitQueue(0);
         } while (queue_scheduler.isComplete());
+
+        // Erase member particles from ParticleIndices by EW 2025.3.11
+        ParticleIndices.erase(
+            std::remove_if(ParticleIndices.begin(), ParticleIndices.end(),
+                [](int i) {
+                return !particles[i].isActive;
+                }
+            ),
+            ParticleIndices.end()
+        );
+
     }
     else
     {
@@ -144,64 +158,64 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             fprintf(nbpout, "\n");
         }
     }
-        for (int i=0; i<=global_variable->LastParticleIndex; i++) {
-            ptcl = &particles[i];
-            fprintf(nbpout, "PID=%d(%d), CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"\
-                    "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"\
-                    "NumNeighbor= %d\n",
-                    ptcl->PID,
-                    ptcl->ParticleIndex,
-                    ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e10/1e6,
-                    ptcl->CurrentBlockIrr,
-                    ptcl->CurrentTimeReg*global_variable->EnzoTimeStep*1e10/1e6,
-                    ptcl->CurrentBlockReg,
-                    //NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
-                    //NextRegTimeBlock,
-                    ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e10/1e6,
-                    ptcl->TimeStepReg*global_variable->EnzoTimeStep*1e10/1e6,
-                    ptcl->TimeBlockIrr,
-                    ptcl->TimeLevelIrr,
-                    ptcl->TimeBlockReg,
-                    ptcl->TimeLevelReg,
-                    ptcl->NumberOfNeighbor
+    for (int i=0; i<=global_variable->LastParticleIndex; i++) {
+        ptcl = &particles[i];
+        fprintf(nbpout, "PID=%d(%d), CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"\
+                "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"\
+                "NumNeighbor= %d\n",
+                ptcl->PID,
+                ptcl->ParticleIndex,
+                ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->CurrentBlockIrr,
+                ptcl->CurrentTimeReg*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->CurrentBlockReg,
+                //NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
+                //NextRegTimeBlock,
+                ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->TimeStepReg*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->TimeBlockIrr,
+                ptcl->TimeLevelIrr,
+                ptcl->TimeBlockReg,
+                ptcl->TimeLevelReg,
+                ptcl->NumberOfNeighbor
+                );
+
+        fprintf(nbpout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
+                a1_reg = (%.4e,%.4e,%.4e), a2_reg = (%.4e,%.4e,%.4e), a3_reg = (%.4e,%.4e,%.4e)\n\
+                a1_irr = (%.4e,%.4e,%.4e), a2_irr = (%.4e,%.4e,%.4e), a3_irr = (%.4e,%.4e,%.4e)\n",
+                ptcl->a_tot[0][0],
+                ptcl->a_tot[1][0],
+                ptcl->a_tot[2][0],
+                ptcl->a_reg[0][0],
+                ptcl->a_reg[1][0],
+                ptcl->a_reg[2][0],
+                ptcl->a_irr[0][0],
+                ptcl->a_irr[1][0],
+                ptcl->a_irr[2][0],
+                ptcl->NumberOfNeighbor,
+                ptcl->RadiusOfNeighbor,
+                ptcl->a_reg[0][1],
+                ptcl->a_reg[1][1],
+                ptcl->a_reg[2][1],
+                ptcl->a_reg[0][2],
+                ptcl->a_reg[1][2],
+                ptcl->a_reg[2][2],
+                ptcl->a_reg[0][3],
+                ptcl->a_reg[1][3],
+                ptcl->a_reg[2][3],
+                ptcl->a_irr[0][1],
+                ptcl->a_irr[1][1],
+                ptcl->a_irr[2][1],
+                ptcl->a_irr[0][2],
+                ptcl->a_irr[1][2],
+                ptcl->a_irr[2][2],
+                ptcl->a_irr[0][3],
+                ptcl->a_irr[1][3],
+                ptcl->a_irr[2][3]
                     );
 
-            fprintf(nbpout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
-                    a1_reg = (%.4e,%.4e,%.4e), a2_reg = (%.4e,%.4e,%.4e), a3_reg = (%.4e,%.4e,%.4e)\n\
-                    a1_irr = (%.4e,%.4e,%.4e), a2_irr = (%.4e,%.4e,%.4e), a3_irr = (%.4e,%.4e,%.4e)\n",
-                    ptcl->a_tot[0][0],
-                    ptcl->a_tot[1][0],
-                    ptcl->a_tot[2][0],
-                    ptcl->a_reg[0][0],
-                    ptcl->a_reg[1][0],
-                    ptcl->a_reg[2][0],
-                    ptcl->a_irr[0][0],
-                    ptcl->a_irr[1][0],
-                    ptcl->a_irr[2][0],
-                    ptcl->NumberOfNeighbor,
-                    ptcl->RadiusOfNeighbor,
-                    ptcl->a_reg[0][1],
-                    ptcl->a_reg[1][1],
-                    ptcl->a_reg[2][1],
-                    ptcl->a_reg[0][2],
-                    ptcl->a_reg[1][2],
-                    ptcl->a_reg[2][2],
-                    ptcl->a_reg[0][3],
-                    ptcl->a_reg[1][3],
-                    ptcl->a_reg[2][3],
-                    ptcl->a_irr[0][1],
-                    ptcl->a_irr[1][1],
-                    ptcl->a_irr[2][1],
-                    ptcl->a_irr[0][2],
-                    ptcl->a_irr[1][2],
-                    ptcl->a_irr[2][2],
-                    ptcl->a_irr[0][3],
-                    ptcl->a_irr[1][3],
-                    ptcl->a_irr[2][3]
-                        );
-
-        }
-        fflush(nbpout);
+    }
+    fflush(nbpout);
     /* Particle Initialization Check */
     // /*
         //, NextRegTime= %.3e Myr(%llu),
@@ -334,8 +348,8 @@ void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vecto
 
 
 void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers) {
-    std::vector<int> ParticleIndices;
-    ParticleIndices.reserve(global_variable->LastParticleIndex);
+    // std::vector<int> ParticleIndices; // commented out by EW 2025.3.11
+    // ParticleIndices.reserve(global_variable->LastParticleIndex); // commented out by EW 2025.3.11
     /* Initialize New Particle */ 
     /*  Neighbor inclusion might be needed (to be updated) */
 
@@ -346,7 +360,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
     Particle *ptcl;
     for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
         ptcl = &particles[i];
-        ParticleIndices.push_back(i);
+        // ParticleIndices.push_back(i); // commented out by EW 2025.3.11
         ptcl->setNewTimeStepWithNewEnzoTimeStep(global_variable->OldEnzoTimeStep, global_variable->EnzoTimeStep);
         ptcl->CurrentTimeIrr = 0.;
         ptcl->CurrentBlockIrr = 0;
@@ -354,31 +368,44 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
         ptcl->CurrentBlockReg = 0;
         ptcl->NewCurrentBlockIrr = 0;
         ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+#ifdef FEWBODY
+        if (ptcl->isCMptcl) { // We have to reset the SDAR clock;
+            Queue queue;
+            int rank = CMPtclWorker[ptcl->ParticleIndex];
+            queue.task = ResetSDARTime;
+            queue.pid = ptcl->ParticleIndex;
+            workers[rank].addQueue(queue);
+            workers[rank].runQueue();
+            workers[rank].callback();
+        }
+#endif
     }
     //initializeTime(queue_scheduler, workers, ParticleIndices);
-    ParticleIndices.clear();
-    ParticleIndices.shrink_to_fit();
+    // ParticleIndices.clear(); // commented out by EW 2025.3.11
+    // ParticleIndices.shrink_to_fit(); // commented out by EW 2025.3.11
 
-        for (int i = 0; i <= global_variable->LastParticleIndex; i++)
-        {
-            ptcl = &particles[i];
-            fprintf(nbpout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
-                            "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"
-                            "NumNeighbor= %d\n",
-                    ptcl->PID,
-                    ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->CurrentBlockIrr,
-                    ptcl->CurrentTimeReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->CurrentBlockReg,
-                    // NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
-                    // NextRegTimeBlock,
-                    ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->TimeStepReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
-                    ptcl->TimeBlockIrr,
-                    ptcl->TimeLevelIrr,
-                    ptcl->TimeBlockReg,
-                    ptcl->TimeLevelReg,
-                    ptcl->NumberOfNeighbor);
-        }
-        fflush(nbpout);
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++)
+    {
+        ptcl = &particles[i];
+        if (!ptcl->isActive)
+            continue;
+        fprintf(nbpout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr\n"
+                        "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d)\n"
+                        "NumNeighbor= %d\n",
+                ptcl->PID,
+                ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                ptcl->CurrentBlockIrr,
+                ptcl->CurrentTimeReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                ptcl->CurrentBlockReg,
+                // NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
+                // NextRegTimeBlock,
+                ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                ptcl->TimeStepReg * global_variable->EnzoTimeStep * 1e10 / 1e6,
+                ptcl->TimeBlockIrr,
+                ptcl->TimeLevelIrr,
+                ptcl->TimeBlockReg,
+                ptcl->TimeLevelReg,
+                ptcl->NumberOfNeighbor);
+    }
+    fflush(nbpout);
 }

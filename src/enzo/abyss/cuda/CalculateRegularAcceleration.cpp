@@ -105,7 +105,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 #endif 
 		}
 	}
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 	std::cout << "sendAllParticlesToGPU starts" << std::endl;
 #endif
 
@@ -117,7 +117,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	nvtxRangePop();
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 	std::cout << "sendAllParticlesToGPU ended" << std::endl;
 #endif
 	
@@ -149,7 +149,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 #endif
 */
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 	std::cout << "CalculateAccelerationOnDevice starts" << std::endl;
 #endif
   
@@ -167,7 +167,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	nvtxRangePop();
 #endif
   
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 	std::cout << "CalculateAccelerationOnDevice ended" << std::endl;
 #endif
 
@@ -209,7 +209,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 
 	
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 	std::cout << "Adjust Regular Gravity starts" << std::endl;
 #endif
 
@@ -245,23 +245,23 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 				*/
                 worker = queue_scheduler.WorkersToGo.erase(worker);
 				i++;
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 				//std::cout << "i: " << i << std::endl;
 #endif
             }
 			else
 			{
                 ++worker;
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 				std::cout << "worker MyRank: " << (*worker)->MyRank << std::endl;
 #endif
 			}
         }
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 		//std::cout << "queue_scheduler.waitQueue(0) starts" << std::endl;
 #endif
 		queue_scheduler.waitQueue(0); // blocking wait
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 		//std::cout << "queue_scheduler.waitQueue(0) ended" << std::endl;
 #endif
 	} while (queue_scheduler.isComplete());
@@ -270,7 +270,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	nvtxRangePop();
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 	std::cout << "Adjust Regular Gravity ended" << std::endl;
 #endif
 

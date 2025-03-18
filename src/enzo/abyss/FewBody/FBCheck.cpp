@@ -45,7 +45,7 @@ void Particle::checkNewGroup() {
         }
 
         // if (ptcl2->TimeStepIrr > this->TimeStepIrr) // test_1e5_4 & 5: this must make the same result!
-        if (ptcl2->TimeStepIrr*EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
+        if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
             continue;
 
         double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
@@ -90,63 +90,61 @@ void Particle::checkNewGroup() {
             }
         }
     }
-    if (!CMPtclsSet.empty()) {
-        for (int i: CMPtclsSet) {
-			ptcl2 = &particles[i];
+    for (int i: CMPtclsSet) {
+        ptcl2 = &particles[i];
 
-            if (this->PID == ptcl2->PID) {
-				continue;
-			}
+        if (this->PID == ptcl2->PID) {
+            continue;
+        }
 
-			if (!ptcl2->isActive) {
-				fprintf(stderr, "Why inactive CM ptcl? this PID: %d, neighbor PID: %d\n", this->PID, ptcl2->PID);
-				assert(ptcl2->isActive);
-			}
+        if (!ptcl2->isActive) {
+            fprintf(stderr, "Why inactive CM ptcl? this PID: %d, neighbor PID: %d\n", this->PID, ptcl2->PID);
+            assert(ptcl2->isActive);
+        }
 
-            // if (ptcl2->TimeStepIrr > this->TimeStepIrr) // test_1e5_4 & 5: this must make the same result!
-            if (ptcl2->TimeStepIrr*EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
-                continue;
+        // if (ptcl2->TimeStepIrr > this->TimeStepIrr) // test_1e5_4 & 5: this must make the same result!
+        if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
+            continue;
 
-            double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                            this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
+                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
 
-            double pos2[Dim], vel2[Dim];
-            
-            this->predictParticleSecondOrder(dt, pos1, vel1);
-            ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
+        double pos2[Dim], vel2[Dim];
+        
+        this->predictParticleSecondOrder(dt, pos1, vel1);
+        ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-            const Float dr = dist(pos1, pos2);
-            
-            if (dr < r_crit) {
+        const Float dr = dist(pos1, pos2);
+        
+        if (dr < r_crit) {
 
-                Float drdv = calcDrDv(pos1, pos2, vel1, vel2);
-                // only inwards
-                if(drdv<0.0) {
+            Float drdv = calcDrDv(pos1, pos2, vel1, vel2);
+            // only inwards
+            if(drdv<0.0) {
 // /* // test_1e4_2
-                    Float fcm[3] = {this->Mass*this->a_irr[0][0] + ptcl2->Mass*ptcl2->a_irr[0][0], 
-                                    this->Mass*this->a_irr[1][0] + ptcl2->Mass*ptcl2->a_irr[1][0], 
-                                    this->Mass*this->a_irr[2][0] + ptcl2->Mass*ptcl2->a_irr[2][0]};
+                Float fcm[3] = {this->Mass*this->a_irr[0][0] + ptcl2->Mass*ptcl2->a_irr[0][0], 
+                                this->Mass*this->a_irr[1][0] + ptcl2->Mass*ptcl2->a_irr[1][0], 
+                                this->Mass*this->a_irr[2][0] + ptcl2->Mass*ptcl2->a_irr[2][0]};
 
-                    AR::SlowDown sd;
-                    Interaction interaction;
-                    Float mcm = this->Mass + ptcl2->Mass;
+                AR::SlowDown sd;
+                Interaction interaction;
+                Float mcm = this->Mass + ptcl2->Mass;
 
-                    // sd.initialSlowDownReference(ar_manager->slowdown_pert_ratio_ref, ar_manager->slowdown_timescale_max);
-                    sd.initialSlowDownReference(1e-6, NUMERIC_FLOAT_MAX);
+                // sd.initialSlowDownReference(ar_manager->slowdown_pert_ratio_ref, ar_manager->slowdown_timescale_max);
+                sd.initialSlowDownReference(1e-6, NUMERIC_FLOAT_MAX);
 
-                    sd.pert_in = interaction.calcPertFromMR(dr, this->Mass, ptcl2->Mass);
-                    sd.pert_out = interaction.calcPertFromForce(fcm, mcm, mcm);
+                sd.pert_in = interaction.calcPertFromMR(dr, this->Mass, ptcl2->Mass);
+                sd.pert_out = interaction.calcPertFromForce(fcm, mcm, mcm);
 
-                    sd.calcSlowDownFactor();
-                    Float kappa_org = sd.getSlowDownFactorOrigin();
+                sd.calcSlowDownFactor();
+                Float kappa_org = sd.getSlowDownFactorOrigin();
 
-                    // avoid strong perturbed case, estimate perturbation
-                    // if kappa_org < criterion, avoid to form new group, should be consistent as checkbreak
-                    if(kappa_org<kappa_org_crit) continue;
+                // avoid strong perturbed case, estimate perturbation
+                // if kappa_org < criterion, avoid to form new group, should be consistent as checkbreak
+                if(kappa_org<kappa_org_crit) continue;
 // */ // test_1e4_2
-                    this->NewNeighbors[this->NewNumberOfNeighbor] = i;
-                    this->NewNumberOfNeighbor++;
-                }
+                this->NewNeighbors[this->NewNumberOfNeighbor] = i;
+                this->NewNumberOfNeighbor++;
             }
         }
     }
@@ -194,40 +192,169 @@ void Particle::checkNewGroup2() {
             this->NewNumberOfNeighbor++;
         }
     }
-    if (!CMPtclsSet.empty()) {
-        for (int i: CMPtclsSet) {
-			ptcl2 = &particles[i];
+    for (int i: CMPtclsSet) {
+        ptcl2 = &particles[i];
 
-            if (this->PID == ptcl2->PID) {
-				continue;
-			}
+        if (this->PID == ptcl2->PID) {
+            continue;
+        }
 
-			if (!ptcl2->isActive) {
-				fprintf(stderr, "Why inactive CM ptcl? this PID: %d, neighbor PID: %d\n", this->PID, ptcl2->PID);
-				assert(ptcl2->isActive);
-			}
+        if (!ptcl2->isActive) {
+            fprintf(stderr, "Why inactive CM ptcl? this PID: %d, neighbor PID: %d\n", this->PID, ptcl2->PID);
+            assert(ptcl2->isActive);
+        }
 
-            double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                            this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
+                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
 
-            double pos2[Dim], vel2[Dim];
-            
-            this->predictParticleSecondOrder(dt, pos1, vel1);
-            ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
+        double pos2[Dim], vel2[Dim];
+        
+        this->predictParticleSecondOrder(dt, pos1, vel1);
+        ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-            const Float dr = dist(pos1, pos2);
+        const Float dr = dist(pos1, pos2);
 
-            double v2 = std::pow(dist(vel1, vel2), 2);
-            double energy = v2/2 - (this->Mass + ptcl2->Mass)/dr; // determine they are bound or not
-            
-            if (dr < r_crit && energy < 0) {
+        double v2 = std::pow(dist(vel1, vel2), 2);
+        double energy = v2/2 - (this->Mass + ptcl2->Mass)/dr; // determine they are bound or not
+        
+        if (dr < r_crit && energy < 0) {
+            this->NewNeighbors[this->NewNumberOfNeighbor] = i;
+            this->NewNumberOfNeighbor++;
+        }
+    }
+}
+
+void Particle::checkNewGroup3() {
+
+    const Float kappa_org_crit = 1e-2; // kappa_org criterion for new group kappa_org>kappa_org_crit
+    Particle* ptcl2;
+
+    int NumberOfGroupCandidate = this->NewNumberOfNeighbor;
+
+    this->NewNumberOfNeighbor = 0;
+
+    double pos1[Dim], vel1[Dim];
+    double pos2[Dim], vel2[Dim];
+
+    for (int i=0; i < NumberOfGroupCandidate; i++) {
+        ptcl2 = &particles[this->NewNeighbors[i]];
+
+        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
+                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+
+        this->predictParticleSecondOrder(dt, pos1, vel1);
+        ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
+
+        const Float dr = dist(pos1, pos2);
+
+        Float fcm[3] = {this->Mass*this->a_irr[0][0] + ptcl2->Mass*ptcl2->a_irr[0][0], 
+        this->Mass*this->a_irr[1][0] + ptcl2->Mass*ptcl2->a_irr[1][0], 
+        this->Mass*this->a_irr[2][0] + ptcl2->Mass*ptcl2->a_irr[2][0]};
+    
+        AR::SlowDown sd;
+        Interaction interaction;
+        Float mcm = this->Mass + ptcl2->Mass;
+    
+        // sd.initialSlowDownReference(ar_manager->slowdown_pert_ratio_ref, ar_manager->slowdown_timescale_max);
+        sd.initialSlowDownReference(1e-6, NUMERIC_FLOAT_MAX);
+    
+        sd.pert_in = interaction.calcPertFromMR(dr, this->Mass, ptcl2->Mass);
+        sd.pert_out = interaction.calcPertFromForce(fcm, mcm, mcm);
+    
+        sd.calcSlowDownFactor();
+        Float kappa_org = sd.getSlowDownFactorOrigin();
+    
+        // avoid strong perturbed case, estimate perturbation
+        // if kappa_org < criterion, avoid to form new group, should be consistent as checkbreak
+        if(kappa_org<kappa_org_crit) continue;
+
+        this->NewNeighbors[this->NewNumberOfNeighbor] = this->NewNeighbors[i];
+        this->NewNumberOfNeighbor++;
+    }
+}
+
+void Particle::checkNewGroup4() {
+
+    const double r_crit = RSEARCH/position_unit; // distance criterion
+
+    double pos1[Dim], vel1[Dim];
+
+    Particle* ptcl2;
+
+    std::unordered_set<int> CMPtclsSet;
+
+    // check only active particles 
+    // single case
+    for (int i=0; i < this->NumberOfNeighbor; i++) {
+        ptcl2 = &particles[this->Neighbors[i]];
+        if (!ptcl2->isActive) {
+            if (ptcl2->CMPtclIndex != -1) {
+                CMPtclsSet.insert(ptcl2->CMPtclIndex);
+            }
+            continue;
+        }
+
+        // if (ptcl2->TimeStepIrr > this->TimeStepIrr) // test_1e5_4 & 5: this must make the same result!
+        if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
+            continue;
+
+        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
+                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+
+        double pos2[Dim], vel2[Dim];
+        
+		this->predictParticleSecondOrder(dt, pos1, vel1);
+		ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
+
+        const Float dr = dist(pos1, pos2);
+        
+        if (dr < r_crit) {
+
+            Float drdv = calcDrDv(pos1, pos2, vel1, vel2);
+            // only inwards
+            if(drdv<0.0) {
+                this->NewNeighbors[this->NewNumberOfNeighbor] = this->Neighbors[i];
+                this->NewNumberOfNeighbor++;
+            }
+        }
+    }
+    for (int i: CMPtclsSet) {
+        ptcl2 = &particles[i];
+
+        if (this->PID == ptcl2->PID) {
+            continue;
+        }
+
+        if (!ptcl2->isActive) {
+            fprintf(stderr, "Why inactive CM ptcl? this PID: %d, neighbor PID: %d\n", this->PID, ptcl2->PID);
+            assert(ptcl2->isActive);
+        }
+
+        // if (ptcl2->TimeStepIrr > this->TimeStepIrr) // test_1e5_4 & 5: this must make the same result!
+        if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
+            continue;
+
+        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
+                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+
+        double pos2[Dim], vel2[Dim];
+        
+        this->predictParticleSecondOrder(dt, pos1, vel1);
+        ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
+
+        const Float dr = dist(pos1, pos2);
+        
+        if (dr < r_crit) {
+
+            Float drdv = calcDrDv(pos1, pos2, vel1, vel2);
+            // only inwards
+            if(drdv<0.0) {
                 this->NewNeighbors[this->NewNumberOfNeighbor] = i;
                 this->NewNumberOfNeighbor++;
             }
         }
     }
 }
-
 
 // reference: checkBreak in hermite_integrator.h (SDAR)
 bool Group::CheckBreak() {
@@ -247,7 +374,7 @@ bool Group::CheckBreak() {
     if (bin_root.semi*(1-bin_root.ecc) > RSEARCH/position_unit && bin_root.r > 2 * RSEARCH/position_unit) { // test8 // fiducial
     // if (bin_root.semi*(1-bin_root.ecc) > 1.2e-3/position_unit){ // test12
         fprintf(workerout, "Break group: too far periapsis! (CM PID: %d)\n\t", groupCM->PID);
-        fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+        fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
         fprintf(workerout, "N_member: %d\n\t", n_member);
         fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
         fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -306,7 +433,7 @@ bool Group::CheckBreak() {
         if (bin_root.r > sym_int.info.r_break_crit && bin_root.r > 2 * RSEARCH/position_unit) { // test8 // fiducial
         // if (bin_root.r > sym_int.info.r_break_crit && bin_root.r > 1.2e-3/position_unit) { // test12
             fprintf(workerout, "Break group: binary escape! (CM PID: %d)\n\t", groupCM->PID);
-            fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+            fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
             fprintf(workerout, "N_member: %d\n\t", n_member);
             fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
             fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -360,7 +487,7 @@ bool Group::CheckBreak() {
         if (n_member == 2) {
             if (bin_root.r > sym_int.info.r_break_crit && bin_root.r > 2e-3/position_unit) {
                 fprintf(workerout, "Break group: binary escape!\n\t");
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
                 fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -376,7 +503,7 @@ bool Group::CheckBreak() {
         else {
             if (bin_root.r > 2e-3/position_unit) {
                 fprintf(workerout, "Break group: binary escape!\n\t");
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
                 fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -403,7 +530,7 @@ bool Group::CheckBreak() {
             if (bin_root.r > 2 * RSEARCH/position_unit) { // test8 // seems good! // fiducial
             // if (bin_root.r > 1.2e-3/position_unit) { // test12
                 fprintf(workerout, "Break group: hyperbolic escape! (CM PID: %d)\n\t", groupCM->PID);
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit); 
                 fprintf(workerout, "ecc: %e\n\t", bin_root.ecc);
@@ -455,7 +582,7 @@ bool Group::CheckBreak() {
                 if (bin_root.r > 1e-3/position_unit) { // original
                     // if (bin_root.r > 2e-3/position_unit) { // test
                     fprintf(workerout, "Break group: hyperbolic escape!\n\t");
-                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
                     fprintf(workerout, "N_member: %d\n\t", n_member);
                     fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit); 
                     fprintf(workerout, "ecc: %e\n\t", bin_root.ecc);
@@ -470,7 +597,7 @@ bool Group::CheckBreak() {
                 if (bin_root.r > 2e-3/position_unit) { // original
                     // if (bin_root.r > 2e-3/position_unit) { // test
                     fprintf(workerout, "Break group: hyperbolic escape!\n\t");
-                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
                     fprintf(workerout, "N_member: %d\n\t", n_member);
                     fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit); 
                     fprintf(workerout, "ecc: %e\n\t", bin_root.ecc);
@@ -518,7 +645,7 @@ bool Group::CheckBreak() {
                 auto& sd_root = sym_int.info.getBinaryTreeRoot().slowdown;
 
                 fprintf(workerout, "Break group: strong perturbed! (CM PID: %d)\n\t", groupCM->PID);
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "pert_in: %e \n\t", sd_root.pert_in);
                 fprintf(workerout, "pert_out: %e \n\t", sd_root.pert_out);

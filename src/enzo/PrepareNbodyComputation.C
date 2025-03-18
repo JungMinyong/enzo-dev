@@ -232,6 +232,8 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		/*--------------------------------------------------------*/
 		fprintf(stdout, "ENZO: Waiting for NBODY+ to send data (first) \n");
 		fprintf(stderr, "ENZO: Waiting for NBODY+ to send data (first) \n");
+
+
 		//fprintf(stderr,"NewNumberOfParticles=%d\n",NumberOfNewNbodyParticles);
 		CommunicationInterBarrier();
 		MPI_Send(&NumberOfNbodyParticles, 1, MPI_INT, 1, 100, inter_comm);

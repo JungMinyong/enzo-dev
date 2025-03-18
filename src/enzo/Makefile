@@ -495,7 +495,7 @@ clean:
           auto_show*.C hydro_rk/*.o *.oo hydro_rk/*.oo \
 					abyss/*.o \
 					abyss/Particle/*.o \
-					abyss/Binary/*.o \
+					abyss/FewBody/*.o \
 					abyss/cuda/*.o \
           uuid/*.oo DEPEND TAGS \
           libconfig/*.o \

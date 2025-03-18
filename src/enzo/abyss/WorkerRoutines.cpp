@@ -68,7 +68,7 @@ void WorkerRoutines() {
 			case RegForce: // Regular Acceleration
 				//std::cout << "RegCal start " << AbyssProcessorNumber << std::endl;
 				MPI_Recv(&ptcl_index,   1, MPI_INT,    ROOT, PTCL_TAG, abyss_comm, &status);
-				MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status);
+				// MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status);
 
 				particles[ptcl_index].computeAccelerationReg();
 				//ComputeAcceleration(ptcl_index, next_time);
@@ -103,7 +103,7 @@ void WorkerRoutines() {
 				ptcl->CurrentBlockReg += ptcl->TimeBlockReg;
 				ptcl->CurrentTimeReg   = ptcl->CurrentBlockReg*global_variable->time_step;
 				ptcl->calculateTimeStepReg();
-				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockReg;
+				// ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockReg; // commented out by EW 2025.3.3 to match with RegCudaUpdate task
 				ptcl->calculateTimeStepIrr();
 				ptcl->updateRadius();
 				if (ptcl->NumberOfNeighbor == 0) {
@@ -139,18 +139,20 @@ void WorkerRoutines() {
 				ptcl->calculateTimeStepReg();
 				ptcl->calculateTimeStepIrr();
 				if (ptcl->NumberOfNeighbor == 0) {
-					//ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
-					//ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*time_step;
-					if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentBlockReg*global_variable->time_step) {
+					/*
+					if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentBlockReg*time_step) {
 						fprintf(stderr, "PID: %d\n", ptcl->PID);
-						fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", ptcl->TimeBlockIrr, ptcl->TimeBlockReg);
 						fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", ptcl->CurrentBlockIrr, ptcl->CurrentBlockReg);
+						fprintf(stderr, "CurrentBlockIrr * time_step: %e, CurrentBlockReg * time_step: %e\n", ptcl->CurrentBlockIrr*time_step, ptcl->CurrentBlockReg*time_step);
 						fprintf(stderr, "CurrentTimeIrr: %e, CurrentTimeReg: %e\n", ptcl->CurrentTimeIrr, ptcl->CurrentTimeReg);
 						fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
 						fflush(stderr);
 						assert(ptcl->CurrentBlockIrr == ptcl->CurrentBlockReg);
-						assert(ptcl->CurrentTimeIrr == ptcl->CurrentBlockReg*global_variable->time_step);
+						assert(ptcl->CurrentTimeIrr == ptcl->CurrentBlockReg*time_step);
 					}
+					*/
+					ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
+					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*global_variable->time_step;
 				}
 				ptcl->updateRadius();
 				ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of ptcl particle
@@ -250,7 +252,7 @@ void WorkerRoutines() {
 				ptcl = &particles[ptcl_index];
 
 				NewFBInitialization(ptcl);
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 				std::cout << "FewBody object of particle " << ptcl->PID
 						  << " is successfully initialized on rank " << AbyssProcessorNumber << "." <<std::endl;
 #endif
@@ -290,11 +292,11 @@ void WorkerRoutines() {
 						ptcl->setBinaryInterruptState(BinaryInterruptState::terminated);
 
 					delete ptcl->GroupInfo;
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " deleted!" <<std::endl;
 #endif
 				}
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
 				else
 					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " done!" <<std::endl;
 #endif
@@ -318,6 +320,17 @@ void WorkerRoutines() {
 				ptcl->setBinaryInterruptState(BinaryInterruptState::none);
 
 				std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " NewFBInitialization3 done!" <<std::endl;
+				break;
+			
+			case ResetSDARTime:
+
+				MPI_Recv(&ptcl_index,   1, MPI_INT   , ROOT, PTCL_TAG, abyss_comm, &status);
+				
+				ptcl = &particles[ptcl_index];
+
+				ptcl->GroupInfo->CurrentTime = 0.;
+				ptcl->GroupInfo->sym_int.initialIntegration(0.);
+
 				break;
 #endif 
 

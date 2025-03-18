@@ -301,6 +301,8 @@ int CommunicationInitialize(int &argc, char *argv[])
   CommunicationDirection = 0; //COMMUNICATION_SEND_RECEIVE
  
 
+//   return SUCCESS;
+  return 1; // SUCCESS -> 1 by EW 2025.3.11
   return 1; //SUCCESS;
 }
  
@@ -334,6 +336,8 @@ int CommunicationFinalize()
   MPI_Finalize();
 #endif /* USE_MPI */
  
+//   return SUCCESS;
+  return 1; // SUCCESS -> 1 by EW 2025.3.11
   return 1; //SUCCESS;
 }
 

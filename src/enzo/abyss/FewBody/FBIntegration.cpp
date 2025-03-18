@@ -24,12 +24,13 @@ void Group::ARIntegration(double next_time){
         for (int j=0; j<HERMITE_ORDER; j++)
             sym_int.particles.cm.a_irr[dim][j] = groupCM->a_irr[dim][j];
     }
-    
+// /*
+if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were updated in regular routine
     sym_int.particles.cm.NumberOfNeighbor = groupCM->NumberOfNeighbor;
     for (int i=0; i<groupCM->NumberOfNeighbor; i++)
         sym_int.particles.cm.Neighbors[i] = groupCM->Neighbors[i];
-
-
+}
+// */
 #ifdef SEVN
     bool evolved = false;
     bool kicked = false;
@@ -47,7 +48,7 @@ void Group::ARIntegration(double next_time){
     if (!kicked && evolved) { // Eunwoo: orbital parameters should be re-calculated due to mass changes during stellar evolution!
         sym_int.particles.shiftToOriginFrame();
         sym_int.info.generateBinaryTree(sym_int.particles,manager.interaction.gravitational_constant);
-        sym_int.initialIntegration(next_time*EnzoTimeStep);
+        sym_int.initialIntegration(next_time*global_variable->EnzoTimeStep);
     }
     if (kicked) {
         for (int i = 0; i < sym_int.particles.getSize(); i++) {
@@ -60,7 +61,7 @@ void Group::ARIntegration(double next_time){
 #endif    
     
     assert(next_time > CurrentTime);
-    // auto bin_interrupt = sym_int.integrateToTime(next_time*EnzoTimeStep); // original AR integrator
+    // auto bin_interrupt = sym_int.integrateToTime(next_time*global_variable->EnzoTimeStep); // original AR integrator
 
 // /* // Let's use Kepler solver for unperturbed binary. AR integrator might be very slow if there is a hard binary.
     AR::InterruptBinary<Particle> bin_interrupt;
@@ -71,19 +72,19 @@ void Group::ARIntegration(double next_time){
         auto& bin_root = sym_int.info.getBinaryTreeRoot();
         bin_root.calcOrbit(double(1.0));
 
-        bin_root.evolve((next_time - CurrentTime)*EnzoTimeStep);
+        bin_root.evolve((next_time - CurrentTime)*global_variable->EnzoTimeStep);
         bin_root.calcParticles(double(1.0));
-        bin_interrupt.time_now = next_time*EnzoTimeStep;
+        bin_interrupt.time_now = next_time*global_variable->EnzoTimeStep;
 
         if (manager.interrupt_detection_option > 0) {
             Interaction interaction;
-            interaction.modifyAndInterruptKepler(bin_interrupt, bin_root, (next_time - CurrentTime)*EnzoTimeStep);
+            interaction.modifyAndInterruptKepler(bin_interrupt, bin_root, (next_time - CurrentTime)*global_variable->EnzoTimeStep);
         }
         if (bin_interrupt.status == AR::InterruptStatus::none)  
-            sym_int.initialIntegration(next_time*EnzoTimeStep);
+            sym_int.initialIntegration(next_time*global_variable->EnzoTimeStep);
     }
     else {
-        bin_interrupt = sym_int.integrateToTime(next_time*EnzoTimeStep);
+        bin_interrupt = sym_int.integrateToTime(next_time*global_variable->EnzoTimeStep);
     }
 // */
 
@@ -95,7 +96,7 @@ void Group::ARIntegration(double next_time){
         GR_energy_loss_iter(bin_interrupt, bin_root, CurrentTime, next_time);
 
         if (bin_interrupt.status == AR::InterruptStatus::none)
-            sym_int.initialIntegration(next_time*EnzoTimeStep); // Eunwoo: this should be fixed later // Eunwoo: I don't think so!
+            sym_int.initialIntegration(next_time*global_variable->EnzoTimeStep); // Eunwoo: this should be fixed later // Eunwoo: I don't think so!
     }    
 // */
 
@@ -108,7 +109,7 @@ void Group::ARIntegration(double next_time){
 
             double pos[Dim], vel[Dim];
 
-            groupCM->predictParticleSecondOrder(bin_interrupt.time_now/EnzoTimeStep - CurrentTime, pos, vel);
+            groupCM->predictParticleSecondOrder(bin_interrupt.time_now/global_variable->EnzoTimeStep - CurrentTime, pos, vel);
             // This might be changed later because changing Pos & Vel during Irregular Acceleration calculation is not good
             // But if SDAR integration is done after Irregular Acceleration calculation, this is fine
             // (Query) by EW 2025.1.6
@@ -116,7 +117,7 @@ void Group::ARIntegration(double next_time){
                 groupCM->Position[dim] = pos[dim];
                 groupCM->Velocity[dim] = vel[dim];
             }
-            CurrentTime = bin_interrupt.time_now/EnzoTimeStep;
+            CurrentTime = bin_interrupt.time_now/global_variable->EnzoTimeStep;
             groupCM->CurrentTimeIrr = CurrentTime;
 
             assert(!sym_int.particles.isOriginFrame()); // for debugging by EW 2025.1.6
@@ -138,7 +139,7 @@ void Group::ARIntegration(double next_time){
         }
         else {
 
-            CurrentTime = bin_interrupt.time_now/EnzoTimeStep;
+            CurrentTime = bin_interrupt.time_now/global_variable->EnzoTimeStep;
 
             assert(!sym_int.particles.isOriginFrame()); // for debugging by EW 2025.1.6
             for (int i = 0; i < sym_int.particles.getSize(); i++) {
@@ -191,7 +192,7 @@ void GR_energy_loss(AR::InterruptBinary<Particle>& _bin_interrupt, AR::BinaryTre
     const double mtot = m1 + m2;
     const double cost = pow(c, -5) * m1 * m2 * mtot;
 
-    double dt = (next_time - current_time) * EnzoTimeStep;
+    double dt = (next_time - current_time) * global_variable->EnzoTimeStep;
 
     double e = _bin.ecc;
     double semi = _bin.semi;
@@ -247,8 +248,8 @@ void GR_energy_loss(AR::InterruptBinary<Particle>& _bin_interrupt, AR::BinaryTre
         fprintf(workerout, "ecc: %e, semi: %e pc, dsemi: %e pc, timestep: %e Myr\n", _bin.ecc, _bin.semi*position_unit, (k1_dsemi + 2 * k2_dsemi + 2 * k3_dsemi + k4_dsemi) / 6.0*position_unit, dt*1e4);
         fflush(workerout);
 
-        // _bin_interrupt.time_now = current_time * EnzoTimeStep + dt * num;
-        _bin_interrupt.time_now = next_time * EnzoTimeStep;
+        // _bin_interrupt.time_now = current_time * global_variable->EnzoTimeStep + dt * num;
+        _bin_interrupt.time_now = next_time * global_variable->EnzoTimeStep;
 
         auto* p1 = _bin.getLeftMember();
         auto* p2 = _bin.getRightMember();
@@ -307,7 +308,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "r_ISCO: %e pc\n", radius*position_unit);
 
         fprintf(mergerout, "GW driven merger happens!!! (PID: %d, PID: %d)\n", p1->PID, p2->PID);
-        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*EnzoTimeStep*1e4);
+        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
         // fprintf(mergerout, "In center-of-mass frame...\n");
         fprintf(mergerout, "PID: %d. Position (pc) - x:%e, y:%e, z:%e, \n", p1->PID, p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "PID: %d. Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->PID, p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -350,7 +351,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "r_TDE: %e pc\n", radius*position_unit);
 
         fprintf(mergerout, "TDE happens!!! (PID: %d, PID: %d)\n", p1->PID, p2->PID);
-        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*EnzoTimeStep*1e4);
+        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
         // fprintf(mergerout, "In center-of-mass frame...\n");
         fprintf(mergerout, "PID: %d. Position (pc) - x:%e, y:%e, z:%e, \n", p1->PID, p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "PID: %d. Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->PID, p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -384,7 +385,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "r1 + r2: %e pc\n", radius*position_unit);
 
         fprintf(mergerout, "Stellar merger happens!!! (PID: %d, PID: %d)\n", p1->PID, p2->PID);
-        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*EnzoTimeStep*1e4);
+        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
         // fprintf(mergerout, "In center-of-mass frame...\n");
         fprintf(mergerout, "PID: %d. Position (pc) - x:%e, y:%e, z:%e, \n", p1->PID, p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "PID: %d. Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->PID, p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -441,8 +442,8 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 size_t id = p1->PID;
                 p1->StellarEvolution = new Star(sevnio, init_params, id, false);
 
-                p1->FormationTime = p1->CurrentTimeIrr*EnzoTimeStep*1e4;
-                p1->WorldTime = p1->CurrentTimeIrr*EnzoTimeStep*1e4;
+                p1->FormationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4;
+                p1->WorldTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4;
                 SetRadius(p1);
                 fprintf(stdout, "New Star class made!\n");
                 fprintf(stdout, "PID: %d. Mass: %e Msol, Radius: %e pc\n", p1->PID, p1->Mass*mass_unit, p1->radius*position_unit);

@@ -39,14 +39,14 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     nvtxRangePushA("calculateRegAccelerationOnGPU");
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "calculateRegAccelerationOnGPU starts" << std::endl;
     std::cout << "RegularList size: " << RegularList.size() << std::endl;
 #endif
 
     calculateRegAccelerationOnGPU(RegularList, queue_scheduler);
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "calculateRegAccelerationOnGPU ended" << std::endl;
 #endif
 
@@ -58,7 +58,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     nvtxRangePushA("RegCudaUpdate");
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "update regular starts" << std::endl;
 #endif
 
@@ -71,7 +71,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         queue_scheduler.runQueueAuto();
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     std::cout << "update regular ended" << std::endl;
 #endif
 
@@ -85,7 +85,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ABYSS
     {
         Particle *ptcl;
         for (int index: RegularList)
@@ -242,69 +242,67 @@ void RegularRoutines()
         completed_tasks++;
     }
 
-        //, NextRegTime= %.3e Myr(%llu),
-        for (int i=0; i<total_tasks; i++) {
-            ptcl = &particles[RegularList[i]];
-            fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr, NextReg = %.3e (%llu)\n"\
-                    "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d), NextBlockIrr= %.3e(%llu)\n"\
-                    "NumNeighbor= %d\n",
-                    ptcl->PID,
-                    ptcl->CurrentTimeIrr*EnzoTimeStep*1e10/1e6,
-                    ptcl->CurrentBlockIrr,
-                    ptcl->CurrentTimeReg*EnzoTimeStep*1e10/1e6,
-                    ptcl->CurrentBlockReg,
-                    NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
-                    NextRegTimeBlock,
-                    ptcl->TimeStepIrr*EnzoTimeStep*1e10/1e6,
-                    ptcl->TimeStepReg*EnzoTimeStep*1e10/1e6,
-                    ptcl->TimeBlockIrr,
-                    ptcl->TimeLevelIrr,
-                    ptcl->TimeBlockReg,
-                    ptcl->TimeLevelReg,
-                    ptcl->NextBlockIrr*time_step*EnzoTimeStep*1e10/1e6,
-                    ptcl->NextBlockIrr,
-                    ptcl->NumberOfNeighbor
-                    );
+    //, NextRegTime= %.3e Myr(%llu),
+    for (int i=0; i<total_tasks; i++) {
+        ptcl = &particles[RegularList[i]];
+        fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr, NextReg = %.3e (%llu)\n"\
+                "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d), NextBlockIrr= %.3e(%llu)\n"\
+                "NumNeighbor= %d\n",
+                ptcl->PID,
+                ptcl->CurrentTimeIrr*EnzoTimeStep*1e10/1e6,
+                ptcl->CurrentBlockIrr,
+                ptcl->CurrentTimeReg*EnzoTimeStep*1e10/1e6,
+                ptcl->CurrentBlockReg,
+                NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
+                NextRegTimeBlock,
+                ptcl->TimeStepIrr*EnzoTimeStep*1e10/1e6,
+                ptcl->TimeStepReg*EnzoTimeStep*1e10/1e6,
+                ptcl->TimeBlockIrr,
+                ptcl->TimeLevelIrr,
+                ptcl->TimeBlockReg,
+                ptcl->TimeLevelReg,
+                ptcl->NextBlockIrr*time_step*EnzoTimeStep*1e10/1e6,
+                ptcl->NextBlockIrr,
+                ptcl->NumberOfNeighbor
+                );
 
 /*
-            fprintf(stdout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
-                    a1_reg = (%.4e,%.4e,%.4e), a2_reg = (%.4e,%.4e,%.4e), a3_reg = (%.4e,%.4e,%.4e)\n\
-                    a1_irr = (%.4e,%.4e,%.4e), a2_irr = (%.4e,%.4e,%.4e), a3_irr = (%.4e,%.4e,%.4e)\n",
-                    ptcl->a_tot[0][0],
-                    ptcl->a_tot[1][0],
-                    ptcl->a_tot[2][0],
-                    ptcl->a_reg[0][0],
-                    ptcl->a_reg[1][0],
-                    ptcl->a_reg[2][0],
-                    ptcl->a_irr[0][0],
-                    ptcl->a_irr[1][0],
-                    ptcl->a_irr[2][0],
-                    ptcl->NewNumberOfNeighbor,
-                    ptcl->RadiusOfNeighbor,
-                    ptcl->a_reg[0][1],
-                    ptcl->a_reg[1][1],
-                    ptcl->a_reg[2][1],
-                    ptcl->a_reg[0][2],
-                    ptcl->a_reg[1][2],
-                    ptcl->a_reg[2][2],
-                    ptcl->a_reg[0][3],
-                    ptcl->a_reg[1][3],
-                    ptcl->a_reg[2][3],
-                    ptcl->a_irr[0][1],
-                    ptcl->a_irr[1][1],
-                    ptcl->a_irr[2][1],
-                    ptcl->a_irr[0][2],
-                    ptcl->a_irr[1][2],
-                    ptcl->a_irr[2][2],
-                    ptcl->a_irr[0][3],
-                    ptcl->a_irr[1][3],
-                    ptcl->a_irr[2][3]
-                        );
-        }
-        //fflush(stdout);
+        fprintf(stdout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
+                a1_reg = (%.4e,%.4e,%.4e), a2_reg = (%.4e,%.4e,%.4e), a3_reg = (%.4e,%.4e,%.4e)\n\
+                a1_irr = (%.4e,%.4e,%.4e), a2_irr = (%.4e,%.4e,%.4e), a3_irr = (%.4e,%.4e,%.4e)\n",
+                ptcl->a_tot[0][0],
+                ptcl->a_tot[1][0],
+                ptcl->a_tot[2][0],
+                ptcl->a_reg[0][0],
+                ptcl->a_reg[1][0],
+                ptcl->a_reg[2][0],
+                ptcl->a_irr[0][0],
+                ptcl->a_irr[1][0],
+                ptcl->a_irr[2][0],
+                ptcl->NewNumberOfNeighbor,
+                ptcl->RadiusOfNeighbor,
+                ptcl->a_reg[0][1],
+                ptcl->a_reg[1][1],
+                ptcl->a_reg[2][1],
+                ptcl->a_reg[0][2],
+                ptcl->a_reg[1][2],
+                ptcl->a_reg[2][2],
+                ptcl->a_reg[0][3],
+                ptcl->a_reg[1][3],
+                ptcl->a_reg[2][3],
+                ptcl->a_irr[0][1],
+                ptcl->a_irr[1][1],
+                ptcl->a_irr[2][1],
+                ptcl->a_irr[0][2],
+                ptcl->a_irr[1][2],
+                ptcl->a_irr[2][2],
+                ptcl->a_irr[0][3],
+                ptcl->a_irr[1][3],
+                ptcl->a_irr[2][3]
+                    );
+*/
     }
 
-    */
     // current_time_irr = particles[ThisLevelNode->ParticleList[0]].CurrentBlockIrr;
 } // Regular Done.
 

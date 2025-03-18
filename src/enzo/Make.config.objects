@@ -1278,6 +1278,11 @@ OBJS_NBODY= \
 						abyss/Particle/Initialize.o\
 						abyss/Particle/ComputeAcceleration.o\
  						abyss/cuda/cuda_kernels.o\
+                                                abyss/FewBody/FBCheck.o\
+                                                abyss/FewBody/FBInitialization.o\
+                                                abyss/FewBody/FBIntegration.o\
+                                                abyss/FewBody/FBTermination.o\
+                                                abyss/FewBody/GroupAccelerationRoutine.o\
  						#abyss/cuda/cuda_routines.o\
 						#abyss/cuda/CalculateAccelerationForAll.o\
 

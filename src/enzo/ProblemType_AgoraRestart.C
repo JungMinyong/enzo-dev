@@ -804,7 +804,7 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 			// just for tests
 			for (int j = 0; j < nParticles; j++) {
 				Attribute[0][j] = -99999;
-				Attribute[1][j] = StarMakerMinimumDynamicalTime*3.15e7/TimeUnits;
+				Attribute[1][j] = StarMakerMinimumDynamicalTime*3.15e7/TimeUnits; // Dynamical time
 			}
 #endif
 
@@ -812,18 +812,23 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 
 			// Read them in and assign them as we go
 			int count = 0;
-			this->ReadParticlesFromFile(
+			if (nBulge > 0)
+				this->ReadParticlesFromFile(
 					Number, Type, Position, Velocity, Mass,
 					"bulge.dat", PARTICLE_TYPE_STAR, count, dx);
-			this->ReadParticlesFromFile(
+			if (nDisk > 0)
+				this->ReadParticlesFromFile(
 					Number, Type, Position, Velocity, Mass,
 					"disk.dat", PARTICLE_TYPE_STAR, count, dx);
-			this->ReadParticlesFromFile(
+			if (nHalo > 0)
+				this->ReadParticlesFromFile(
 					Number, Type, Position, Velocity, Mass,
 					"halo.dat", PARTICLE_TYPE_DARK_MATTER, count, dx);
-			this->ReadParticlesFromFile(
+			if (nNbody > 0)
+				this->ReadParticlesFromFile(
 					Number, Type, Position, Velocity, Mass,
 					NbodyDir, PARTICLE_TYPE_NBODY, count, dx);
+
 
 #ifdef NBODY_old
 
@@ -1086,7 +1091,8 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 				// Particle masses are actually densities.
 				Mass[c] = mass * 1e9 * SolarMass / MassUnits / dx / dx / dx;
 				Type[c] = particle_type;
-				Number[c] = c++;
+				Number[c] = c;
+				c++;
 			}
 
 			fclose(fptr);
