@@ -20,6 +20,7 @@ enum TaskName {
     ARIntegration = 26,
     MergeManyBody = 27,
     ResetSDARTime = 28,
+    InitOnGPU = 29,
     Synchronize = 100,
     Ends = -100,
     Error = -1

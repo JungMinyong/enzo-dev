@@ -742,3 +742,70 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 		}
 	}
 }
+
+// Update acceleration after Enzo-Abyss acceleration
+// made by EW 2025.3.18
+void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberOfNeighborGPU, double *new_a, double *new_adot) {
+
+	this->NumberOfNeighbor = 0;
+	for (int dim = 0; dim < Dim; dim++) {
+		this->a_irr[dim][0] = 0.;
+		this->a_irr[dim][1] = 0.;
+		this->a_reg[dim][0] = new_a[dim];
+		this->a_reg[dim][1] = new_adot[dim];
+	}
+
+	double x[Dim], v[Dim];
+	double m_r3;
+	double r2;
+	double vx;
+	double v2;
+
+	Particle* ptcl_neighbor;
+
+	for (int i = 0; i < NewNumberOfNeighborGPU; i++) {
+
+		NewNeighborsGPU[i] = ActiveIndexToOriginalIndex[NewNeighborsGPU[i]];
+		ptcl_neighbor = &particles[NewNeighborsGPU[i]];
+
+		if (!ptcl_neighbor->isActive) {
+			fprintf(stderr, "In GPU, this PID: %d, inActive PID: %d\n", this->PID, ptcl_neighbor->PID);
+			assert(ptcl_neighbor->isActive); // for debugging by EW 2025.1.23
+		}
+		if (!ptcl_neighbor->isCMptcl)
+			this->Neighbors[this->NumberOfNeighbor++] = ptcl_neighbor->ParticleIndex;
+		else {
+			Particle* ptcl_mem;
+			for (int j = 0; j < ptcl_neighbor->NumberOfMember; j++) {
+				ptcl_mem = &particles[ptcl_neighbor->Members[j]];
+				this->Neighbors[this->NumberOfNeighbor] = ptcl_mem->ParticleIndex;
+			}
+		}
+
+		r2 = 0;
+		vx = 0;
+		v2 = 0;
+
+		for (int dim=0; dim<Dim; dim++) {
+			x[dim] = ptcl_neighbor->Position[dim] - this->Position[dim];
+			v[dim] = ptcl_neighbor->Velocity[dim] - this->Velocity[dim];
+			r2    += x[dim]*x[dim];
+			vx    += v[dim]*x[dim];
+			v2    += v[dim]*v[dim];
+		}
+
+		m_r3 = ptcl_neighbor->Mass/r2/sqrt(r2); 
+
+		for (int dim=0; dim<Dim; dim++) {
+			this->a_irr[dim][0] += m_r3*x[dim];
+			this->a_irr[dim][1] += m_r3*(v[dim] - 3*x[dim]*vx/r2);
+		}
+	}
+	assert(this->NumberOfNeighbor >= NewNumberOfNeighborGPU);
+
+	for (int dim = 0; dim < Dim; dim++) {
+		this->a_tot[dim][0] = this->a_irr[dim][0] + this->a_reg[dim][0];
+		this->a_tot[dim][1] = this->a_irr[dim][1] + this->a_reg[dim][1];
+	}
+	
+}

@@ -332,7 +332,47 @@ void WorkerRoutines() {
 				ptcl->GroupInfo->sym_int.initialIntegration(0.);
 
 				break;
-#endif 
+#endif
+			case InitOnGPU: // Update Regular Particle CUDA II
+				MPI_Recv(&ptcl_index, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, MPI_STATUS_IGNORE);
+				//std::cout << "(REG_UPDATE) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
+				MPI_Recv(&NewNumberOfNeighbor, 1, MPI_INT, ROOT, 10, abyss_comm, &status);
+				MPI_Recv(NewNeighbors, NewNumberOfNeighbor, MPI_INT, ROOT, 11, abyss_comm, &status);
+				MPI_Recv(new_a, 3, MPI_DOUBLE, ROOT, 12, abyss_comm, &status);
+				MPI_Recv(new_adot, 3, MPI_DOUBLE, ROOT, 13, abyss_comm, &status);
+
+				ptcl = &particles[ptcl_index];
+
+				ptcl->initializeAfterCommunication(NewNeighbors, NewNumberOfNeighbor, new_a, new_adot);
+
+				for (int j = 0; j < ptcl->NewNumberOfNeighbor; j++)
+					ptcl->Neighbors[j] = ptcl->NewNeighbors[j];
+				ptcl->NumberOfNeighbor = ptcl->NewNumberOfNeighbor;
+
+				ptcl->updateParticle();
+				ptcl->CurrentBlockReg = ptcl->CurrentBlockReg + ptcl->TimeBlockReg;
+				ptcl->CurrentTimeReg = ptcl->CurrentBlockReg * global_variable->time_step;
+				ptcl->calculateTimeStepReg();
+				ptcl->calculateTimeStepIrr();
+				if (ptcl->NumberOfNeighbor == 0) {
+					/*
+					if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentBlockReg*time_step) {
+						fprintf(stderr, "PID: %d\n", ptcl->PID);
+						fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", ptcl->CurrentBlockIrr, ptcl->CurrentBlockReg);
+						fprintf(stderr, "CurrentBlockIrr * time_step: %e, CurrentBlockReg * time_step: %e\n", ptcl->CurrentBlockIrr*time_step, ptcl->CurrentBlockReg*time_step);
+						fprintf(stderr, "CurrentTimeIrr: %e, CurrentTimeReg: %e\n", ptcl->CurrentTimeIrr, ptcl->CurrentTimeReg);
+						fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
+						fflush(stderr);
+						assert(ptcl->CurrentBlockIrr == ptcl->CurrentBlockReg);
+						assert(ptcl->CurrentTimeIrr == ptcl->CurrentBlockReg*time_step);
+					}
+					*/
+					ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
+					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*global_variable->time_step;
+				}
+				ptcl->updateRadius();
+				ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of ptcl particle
+				break;
 
 			case Synchronize: // Synchronize
 				MPI_Win_sync(win);  // Synchronize memory

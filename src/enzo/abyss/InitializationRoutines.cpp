@@ -380,6 +380,12 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
         }
 #endif
     }
+
+    // Example code by EW 2025.3.18
+    if (newNumberOfSingleParticle > 0) {
+        // GPU Initialization code
+    }
+
     //initializeTime(queue_scheduler, workers, ParticleIndices);
     // ParticleIndices.clear(); // commented out by EW 2025.3.11
     // ParticleIndices.shrink_to_fit(); // commented out by EW 2025.3.11

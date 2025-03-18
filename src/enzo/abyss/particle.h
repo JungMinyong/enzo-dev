@@ -272,6 +272,7 @@ struct Particle {
 	void calculateTimeStepReg();
 
 	void updateRegularParticleCuda(int *NewNeighbors, int NewNumberOfNeighbor, double *new_a, double *new_adot);
+	void initializeAfterCommunication(int *NewNeighbors, int NewNumberOfNeighbor, double *new_a, double *new_adot); // by EW 2025.3.18
 
 	// SDAR
 	void checkNewGroup();
