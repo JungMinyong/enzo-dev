@@ -41,6 +41,7 @@ extern CUDA_REAL *h_ptcl, *d_ptcl; //, *background;
 extern CUDA_REAL *h_result, *d_result;
 extern CUDA_REAL *d_r2, *d_diff; //, *d_magnitudes
 extern int *d_target;
+
 // extern double3 *d_acc, *d_adot;
 
 CUDA_REAL *h_ptcl=nullptr, *d_ptcl=nullptr;; //, *background;
@@ -51,10 +52,10 @@ extern int *h_num_neighbor, *d_num_neighbor, *d_neighbor_block;
 int *h_neighbor=nullptr, *d_neighbor=nullptr;
 int *h_num_neighbor=nullptr, *d_num_neighbor=nullptr; // added by wispedia
 int *d_neighbor_block=nullptr; // added by wispedia
-
+// (to do): define variables for the gpu initialization
 
 #ifdef MultiGPU
-CUDA_REAL **d_diff_array = new CUDA_REAL*[4]; //Maximum 4 GPUs
+CUDA_REAL **d_ABlock_array = new CUDA_REAL*[4]; //Maximum 4 GPUs
 int **d_neighbor_block_array = new int*[4];
 int **d_neighbor_array = new int*[4];
 int **d_num_neighbor_array = new int*[4];
@@ -66,6 +67,20 @@ CUDA_REAL **h_result_array = new CUDA_REAL*[4];
 int **NeighborList_array = new int*[4];
 int **h_num_neighbor_array = new int*[4];
 int **d_num_neighbor_block_array = new int*[4];
+
+// for gpu initialization
+CUDA_REAL **h_AIrr_array = new CUDA_REAL*[4];
+CUDA_REAL *h_AIrr = nullptr;
+CUDA_REAL *h_atot = nullptr;
+CUDA_REAL **d_atot_array = new CUDA_REAL*[4];
+CUDA_REAL **d_AIrr_array = new CUDA_REAL*[4];
+CUDA_REAL **h_AdotReg_array = new CUDA_REAL*[4];
+CUDA_REAL **h_AdotIrr_array = new CUDA_REAL*[4];
+CUDA_REAL **d_AdotReg_array = new CUDA_REAL*[4];
+CUDA_REAL **d_AdotIrr_array = new CUDA_REAL*[4];
+CUDA_REAL **d_AdotRegBlock_array = new CUDA_REAL*[4];
+CUDA_REAL **d_AdotIrrBlock_array = new CUDA_REAL*[4];
+CUDA_REAL **d_AIrrBlock_array = new CUDA_REAL*[4]; //Maximum 4 GPUs
 #endif
 
 
@@ -109,7 +124,7 @@ void GetAcceleration(
     // MULTI-GPU PATH (illustration)
     // -----------------------------------------------------------------
     // Instead of a single handle, each GPU has cublasHandles[i].
-    // Also, each GPU has its own d_ptcl_array[i], d_diff_array[i], etc.
+    // Also, each GPU has its own d_ptcl_array[i], d_ABlock_array[i], etc.
 	cudaGetDeviceCount(&deviceCount);
 	// cublasHandle_t cublasHandles[4];
 #ifdef DEBUG
@@ -167,7 +182,7 @@ void GetAcceleration(
             compute_forces<<<gridDim, blockDim, 0, streams[i]>>>(
                 d_ptcl_array[i],
                 d_r2_array[i],
-                d_diff_array[i],
+                d_ABlock_array[i],
                 NumTarget,
                 deviceNumJ, //NNB
                 d_target_array[i],
@@ -183,7 +198,7 @@ void GetAcceleration(
             // Next do reduce_forces_cublas on GPU i
             reduce_forces_cublas(
                 cublasHandles[i], 
-                d_diff_array[i], 
+                d_ABlock_array[i], 
                 d_result_array[i], 
                 GridDimY, 
                 NumTarget
@@ -191,7 +206,7 @@ void GetAcceleration(
 			*/
 			dim3 blockDim3(16, 6);       // 16 threads along X, 6 along Y
 			dim3 gridDim3((NumTarget+15)/16, 1);
-			reduce_forces_kernel<<<gridDim3, blockDim3>>>(d_diff_array[i], d_result_array[i], GridDimY, NumTarget);
+			reduce_forces_kernel<<<gridDim3, blockDim3>>>(d_ABlock_array[i], d_result_array[i], GridDimY, NumTarget);
 
 
 			//cudaStreamSynchronize(streams[i]);
@@ -364,7 +379,7 @@ void GetAcceleration(
     // MULTI-GPU PATH (illustration)
     // -----------------------------------------------------------------
     // Instead of a single handle, each GPU has cublasHandles[i].
-    // Also, each GPU has its own d_ptcl_array[i], d_diff_array[i], etc.
+    // Also, each GPU has its own d_ptcl_array[i], d_ABlock_array[i], etc.
 	cudaGetDeviceCount(&deviceCount);
 	// cublasHandle_t cublasHandles[4];
 #ifdef DEBUG
@@ -423,7 +438,8 @@ void GetAcceleration(
             compute_forces_init01<<<gridDim, blockDim, 0, streams[i]>>>(
                 d_ptcl_array[i],
                 d_r2_array[i],
-                d_diff_array[i],
+                d_ABlock_array[i],
+                d_AIrrBlock_array[i],
                 NumTarget,
                 deviceNumJ, //NNB
                 d_target_array[i],
@@ -435,47 +451,11 @@ void GetAcceleration(
             );
 			//cudaStreamSynchronize(streams[i]);
 
-			// (EW to MY) Now we have to calculate a_tot[0] = a_reg[0] + a_irr[0], a_tot[1] = a_reg[1] + a_irr[1]
-			// (EW to MY) Then, we should send a_tot[0], a_tot[1] and calculate 3rd, 4th order acceleration
-
-			// Launch compute_forces on GPU i
-			// (EW to MY) example code, there is no a_tot send yet. How can I send them?
-            compute_forces_init23<<<gridDim, blockDim, 0, streams[i]>>>(
-                d_ptcl_array[i],
-                d_r2_array[i],
-                d_diff_array[i],
-                NumTarget,
-                deviceNumJ, //NNB
-                d_target_array[i],
-                d_neighbor_block_array[i],
-                d_num_neighbor_block_array[i],
-                TargetStart,   // i_start
-				deviceJStart, // j_start
-				NNB
-            );
-
-			/*
-            // Next do reduce_forces_cublas on GPU i
-            reduce_forces_cublas(
-                cublasHandles[i], 
-                d_diff_array[i], 
-                d_result_array[i], 
-                GridDimY, 
-                NumTarget
-            );
-			*/
 			dim3 blockDim3(16, 6);       // 16 threads along X, 6 along Y
 			dim3 gridDim3((NumTarget+15)/16, 1);
-			reduce_forces_kernel<<<gridDim3, blockDim3>>>(d_diff_array[i], d_result_array[i], GridDimY, NumTarget);
+			reduce_forces_kernel<<<gridDim3, blockDim3>>>(d_ABlock_array[i], d_result_array[i], GridDimY, NumTarget);
+			reduce_forces_kernel<<<gridDim3, blockDim3>>>(d_AIrrBlock_array[i], d_AIrr_array[i], GridDimY, NumTarget);
 
-
-			//cudaStreamSynchronize(streams[i]);
-			/*
-			fprintf(stdout, "debug_print2-3 %d %d\n",i, NumTarget); // 90 or 32300?
-			cudaStreamSynchronize(streams[i]);
-			print_forces_subset<<<gridDim2, blockDim2, 0, streams[i]>>>(d_result_array[i], NumTarget, 6);
-			cudaStreamSynchronize(streams[i]);
-			*/
             gather_neighbor<<<gridDim2, blockDim2, 0, streams[i]>>>(
                 d_neighbor_block_array[i], 
                 d_num_neighbor_block_array[i], 
@@ -483,17 +463,11 @@ void GetAcceleration(
                 NumTarget
             );
 
-			//fprintf(stdout, "debug_print2-2 %d \n",i);
-			//print_forces_subset<<<gridDim2, blockDim2, 0, streams[i]>>>(d_result_array[i], NumTarget, 6);
-			//cudaStreamSynchronize(streams[i]);
-
-
             gather_numneighbor<<<gridDim2, blockDim2, 0, streams[i]>>>(
                 d_num_neighbor_block_array[i], 
                 d_num_neighbor_array[i], 
                 NumTarget
             );
-			//cudaStreamSynchronize(streams[i]);
 
             // Copy back partial results
             toHost(h_result_array[i],
@@ -501,6 +475,10 @@ void GetAcceleration(
                    _six * NumTarget,
                    streams[i]);
 
+            toHost(h_AIrr_array[i],
+                   d_AIrr_array[i],
+                   _six * NumTarget,
+                   streams[i]);
 
             toHost(NeighborList_array[i],
                    d_neighbor_array[i],
@@ -521,18 +499,20 @@ void GetAcceleration(
 		
 		for (int j = 0; j < NumTarget; j++) {
 			int target_idx = TargetStart + j;  // Precompute base index
-			int result_idx = 24 * target_idx;  // Precompute h_result index
+			int result_idx = _six * target_idx;  // Precompute h_result index
 			NumNeighbor[j] = 0;
 
 			// Initialize h_result for this target
-			for (int k = 0; k < 24; k++) {
+			for (int k = 0; k < _six; k++) {
 				h_result[result_idx + k] = 0.0;
+				h_AIrr[result_idx + k] = 0.0;
 			}
 
 			// Accumulate results across devices
 			for (int i = 0; i < deviceCount; i++) {
-				for (int k = 0; k < 24; k++) {
-					h_result[result_idx + k] += h_result_array[i][j * 24 + k];
+				for (int k = 0; k < _six; k++) {
+					h_result[result_idx + k] += h_result_array[i][j * _six + k];
+					h_AIrr[result_idx + k] += h_AIrr_array[i][j * _six + k];
 				}
 				NumNeighbor[j] += h_num_neighbor_array[i][j];
 			}
@@ -565,68 +545,160 @@ void GetAcceleration(
 		nvtxRangePushA("h_result to acc and adot");
 		#endif
 		for (int i=0; i<NumTarget; i++) {
-			areg[i+TargetStart][0]  = h_result[24*i];
-			areg[i+TargetStart][1]  = h_result[24*i+1];
-			areg[i+TargetStart][2]  = h_result[24*i+2];
-			areg_dot[i+TargetStart][0] = h_result[24*i+3];
-			areg_dot[i+TargetStart][1] = h_result[24*i+4];
-			areg_dot[i+TargetStart][2] = h_result[24*i+5];
+			areg[i+TargetStart][0]  = h_result[_six*i];
+			areg[i+TargetStart][1]  = h_result[_six*i+1];
+			areg[i+TargetStart][2]  = h_result[_six*i+2];
+			areg_dot[i+TargetStart][0] = h_result[_six*i+3];
+			areg_dot[i+TargetStart][1] = h_result[_six*i+4];
+			areg_dot[i+TargetStart][2] = h_result[_six*i+5];
 
-			airr[i+TargetStart][0]  = h_result[24*i+6];
-			airr[i+TargetStart][1]  = h_result[24*i+7];
-			airr[i+TargetStart][2]  = h_result[24*i+8];
-			airr_dot[i+TargetStart][0] = h_result[24*i+9];
-			airr_dot[i+TargetStart][1] = h_result[24*i+10];
-			airr_dot[i+TargetStart][2] = h_result[24*i+11];
+			airr[i+TargetStart][0]  = h_AIrr[_six*i];
+			airr[i+TargetStart][1]  = h_AIrr[_six*i+1];
+			airr[i+TargetStart][2]  = h_AIrr[_six*i+2];
+			airr_dot[i+TargetStart][0] = h_AIrr[_six*i+3];
+			airr_dot[i+TargetStart][1] = h_AIrr[_six*i+4];
+			airr_dot[i+TargetStart][2] = h_AIrr[_six*i+5];
 
-			areg_dotdot[i+TargetStart][0]  = h_result[24*i+12];
-			areg_dotdot[i+TargetStart][1]  = h_result[24*i+13];
-			areg_dotdot[i+TargetStart][2]  = h_result[24*i+14];
-			areg_dotdotdot[i+TargetStart][0] = h_result[24*i+15];
-			areg_dotdotdot[i+TargetStart][1] = h_result[24*i+16];
-			areg_dotdotdot[i+TargetStart][2] = h_result[24*i+17];
-
-			airr_dotdot[i+TargetStart][0]  = h_result[24*i+18];
-			airr_dotdot[i+TargetStart][1]  = h_result[24*i+19];
-			airr_dotdot[i+TargetStart][2]  = h_result[24*i+20];
-			airr_dotdotdot[i+TargetStart][0] = h_result[24*i+21];
-			airr_dotdotdot[i+TargetStart][1] = h_result[24*i+22];
-			airr_dotdotdot[i+TargetStart][2] = h_result[24*i+23];
-
-			#ifdef debuggig_verification
-			cudaSetDevice(0);
-			toHost(h_r2, d_r2_array[0], NNB); // only for verification
-
-			fprintf(stderr, "%d (%d) neighbors of %d = ", i, h_target_list[i], NumNeighbor[i]);
-			for (int j=0;j<NumNeighbor[i];j++) {
-				fprintf(stderr, "%d, ", NeighborList[i * NumNeighborMax + j]);
+			// save atot for the next step
+			for (int j=0; j<_six; j++) {
+				h_atot[_six*(i + TargetStart) + j] = h_result[_six*i + j] + h_AIrr[_six*i + j];
 			}
-			fprintf(stderr, "\n");
+		}
 
-			// verification
-			fprintf(stderr, "%d (%d) neighbors of %d (veri)= ", i, h_target_list[i], NumNeighbor[i]);
-			double ix = h_ptcl[h_target_list[i]];
-			double iy = h_ptcl[h_target_list[i] + NNB * 1];
-			double iz = h_ptcl[h_target_list[i] + NNB * 2];
-			double i_r2 = h_r2[h_target_list[i]];
+		#ifdef NSIGHT
+		nvtxRangePop();
+		#endif
+    } // end of TargetStart loop
+
+	for (int i = 0; i < deviceCount; i++) {
+        cudaSetDevice(i);
+		toDevice(h_atot,
+				d_atot_array[i],
+				NumTargetTotal,
+				streams[i]);
+		}
+
+    for (int TargetStart = 0; TargetStart < NumTargetTotal; TargetStart += target_size) {
+        // How many targets remain in this chunk
+        // int bigChunk = std::min(target_size, NumTargetTotal - TargetStart);
+		NumTarget = std::min(target_size, NumTargetTotal-TargetStart);
+#ifdef DEBUG
+		fprintf(stderr, "TargetStart = %d, NumTargetTotal = %d, NumTarget = %d\n", TargetStart, NumTargetTotal, NumTarget);
+#endif
+
+        // 1) Launch a kernel on each GPU with an offset
+        for (int i = 0; i < deviceCount; i++) {
+            cudaSetDevice(i);
+			dim3 gridDim2(NumTarget, 1);
+            dim3 blockDim2(GridDimY, 1);
+
+            int deviceJStart = i * chunkPerGpu;
+            // int deviceNumJ   = std::min(chunkPerGpu, variable_size - deviceJStart);
+			int deviceNumJ   = std::min(chunkPerGpu, NNB - deviceJStart);
+
+            if (deviceNumJ <= 0) break;  // No more work
+#ifdef DEBUG
+			fprintf(stderr, "%d, deviceJStart = %d, deviceNumJ = %d\n", i, deviceJStart, deviceNumJ);
+#endif
+
+            // Copy the relevant portion of h_target_list to d_target_array[i],
+            // e.g., if needed:
+            toDevice(h_target_list + TargetStart,
+                     d_target_array[i],
+                     NumTarget,
+                     streams[i]);
+
+			//cudaStreamSynchronize(streams[i]);
 			
-			fprintf(stderr, "h_r2 = %e \n", i_r2);
+            // Prepare kernel dimensions
+            dim3 blockDim(BatchSize, 1, 1);
+            dim3 gridDim(
+                (NumTarget + BatchSize + blockDim.x - 1) / blockDim.x, 
+                GridDimY
+            );
 
-			for (int j=0; j<NNB; j++) {
-				double dx = ix - h_ptcl[j];
-				double dy = iy - h_ptcl[j + NNB * 1];
-				double dz = iz - h_ptcl[j + NNB * 2];
-				double r2_temp = dx*dx + dy*dy + dz*dz;
-				if (r2_temp < i_r2) {
-					fprintf(stderr, "(%d, %e), ", j, r2_temp);
-				}
-				else {
-					//fprintf(stderr, "(%d, too far), ", j);
+			// (EW to MY) Now we have to calculate a_tot[0] = a_reg[0] + a_irr[0], a_tot[1] = a_reg[1] + a_irr[1]
+			// (EW to MY) Then, we should send a_tot[0], a_tot[1] and calculate 3rd, 4th order acceleration
+
+			// Launch compute_forces on GPU i
+			// (EW to MY) example code, there is no a_tot send yet. How can I send them?
+            compute_forces_init23<<<gridDim, blockDim, 0, streams[i]>>>(
+                d_ptcl_array[i],
+                d_r2_array[i],
+				d_atot_array[i],
+                d_ABlock_array[i],
+                d_AIrrBlock_array[i],
+                NumTarget,
+                deviceNumJ, //NNB
+                d_target_array[i],
+                TargetStart,   // i_start
+				deviceJStart, // j_start
+				NNB
+            );
+
+
+			//cudaStreamSynchronize(streams[i]);
+
+			dim3 blockDim3(16, 6);       // 16 threads along X, 6 along Y
+			dim3 gridDim3((NumTarget+15)/16, 1);
+			reduce_forces_kernel<<<gridDim3, blockDim3>>>(d_ABlock_array[i], d_result_array[i], GridDimY, NumTarget);
+			reduce_forces_kernel<<<gridDim3, blockDim3>>>(d_AIrrBlock_array[i], d_AIrr_array[i], GridDimY, NumTarget);
+
+            // Copy back partial results
+            toHost(h_result_array[i],
+                   d_result_array[i],
+                   _six * NumTarget,
+                   streams[i]);
+
+            toHost(h_AIrr_array[i],
+                   d_AIrr_array[i],
+                   _six * NumTarget,
+                   streams[i]);
+        }
+
+        // 2) Synchronize all devices, then copy results to host
+        for (int i = 0; i < deviceCount; i++) {
+            cudaSetDevice(i);
+			cudaStreamSynchronize(streams[i]);
+        }
+		
+		for (int j = 0; j < NumTarget; j++) {
+			int target_idx = TargetStart + j;  // Precompute base index
+			int result_idx = _six * target_idx;  // Precompute h_result index
+
+			// Initialize h_result for this target
+			for (int k = 0; k < _six; k++) {
+				h_result[result_idx + k] = 0.0;
+				h_AIrr[result_idx + k] = 0.0;
+			}
+
+			// Accumulate results across devices
+			for (int i = 0; i < deviceCount; i++) {
+				for (int k = 0; k < _six; k++) {
+					h_result[result_idx + k] += h_result_array[i][j * _six + k];
+					h_AIrr[result_idx + k] += h_AIrr_array[i][j * _six + k];
 				}
 			}
-			fprintf(stderr, "\n");
-			//exit(1);
-			#endif
+		}
+
+		#ifdef NSIGHT
+		nvtxRangePushA("h_result to acc and adot");
+		#endif
+
+		for (int i=0; i<NumTarget; i++) {
+			areg_dotdot[i+TargetStart][0]  = h_result[_six*i];
+			areg_dotdot[i+TargetStart][1]  = h_result[_six*i+1];
+			areg_dotdot[i+TargetStart][2]  = h_result[_six*i+2];
+			areg_dotdotdot[i+TargetStart][0] = h_result[_six*i+3];
+			areg_dotdotdot[i+TargetStart][1] = h_result[_six*i+4];
+			areg_dotdotdot[i+TargetStart][2] = h_result[_six*i+5];
+
+			airr_dotdot[i+TargetStart][0]  = h_AIrr[_six*i];
+			airr_dotdot[i+TargetStart][1]  = h_AIrr[_six*i+1];
+			airr_dotdot[i+TargetStart][2]  = h_AIrr[_six*i+2];
+			airr_dotdotdot[i+TargetStart][0] = h_AIrr[_six*i+3];
+			airr_dotdotdot[i+TargetStart][1] = h_AIrr[_six*i+4];
+			airr_dotdotdot[i+TargetStart][2] = h_AIrr[_six*i+5];
 		}
 
 		#ifdef NSIGHT
@@ -634,13 +706,6 @@ void GetAcceleration(
 		#endif
 
     } // end of TargetStart loop
-	/*
-	for (int i = 0; i < deviceCount; i++){
-		cudaSetDevice(i);
-		cublasDestroy(cublasHandles[i]);
-	}
-	*/
-
 }
 #else
 void GetAcceleration(
@@ -947,15 +1012,28 @@ void _ReceiveFromHost(
 			my_free_d(d_num_neighbor_block_array, deviceCount);
 			my_free_d(d_target_array, deviceCount);
 			my_free_d(d_r2_array, deviceCount);
-			my_free_d(d_diff_array, deviceCount);
+			my_free_d(d_ABlock_array, deviceCount);
 			my_free_d(d_neighbor_block_array, deviceCount);
 			// my_free(h_neighbor, d_neighbor_array, deviceCount);
 			my_free_d(d_neighbor_array, deviceCount);
+
+			my_free(h_AIrr, d_AIrr_array, deviceCount);
+			my_free(h_atot, d_atot_array, deviceCount);
+			my_free_d(d_AIrrBlock_array, deviceCount);
+			my_free_d(d_AdotReg_array, deviceCount);
+			my_free_d(d_AdotRegBlock_array, deviceCount);
+			my_free_d(d_AdotIrr_array, deviceCount);
+			my_free_d(d_AdotIrrBlock_array, deviceCount);
+
 			for (int i = 0; i < deviceCount; i++) {
 				cudaSetDevice(i);
 				cudaFreeHost(h_result_array[i]);
 				cudaFreeHost(h_num_neighbor_array[i]);
 				cudaFreeHost(NeighborList_array[i]);
+				cudaFreeHost(h_AdotReg_array[i]);
+				cudaFreeHost(h_AdotIrr_array[i]);
+				cudaFreeHost(h_AIrr_array[i]);
+
 			}
 			#else
 			my_free(h_ptcl				 , d_ptcl);
@@ -965,6 +1043,8 @@ void _ReceiveFromHost(
 			cudaFree(d_target);
 			cudaFree(d_r2);
 			cudaFree(d_diff);
+			// add free for d_adot
+
 			#ifdef newGather
 			cudaFree(d_neighbor_block);
 			my_free(h_neighbor     , d_neighbor);
@@ -985,9 +1065,16 @@ void _ReceiveFromHost(
 		my_allocate(&h_num_neighbor , d_num_neighbor_array, variable_size, deviceCount, 0);
 		my_allocate_d(d_r2_array,        variable_size, deviceCount, 0);
 		my_allocate_d(d_target_array,        variable_size, deviceCount, 0);
-		my_allocate_d(d_diff_array      , _six * GridDimY * target_size, deviceCount, 0);
-		// C * m / N_device
-		// C * (m / N_device)
+		my_allocate_d(d_ABlock_array      , _six * GridDimY * target_size, deviceCount, 0);
+
+		my_allocate(&h_atot, d_atot_array, _six*variable_size, deviceCount, 0); // x,v,m
+		my_allocate(&h_AIrr, d_AIrr_array, _six*variable_size, deviceCount, 0);
+		my_allocate_d(d_AIrrBlock_array      , _six * GridDimY * target_size, deviceCount, 0);
+		my_allocate_d(d_AdotReg_array      , _six * variable_size, deviceCount, 0);
+		my_allocate_d(d_AdotIrr_array      , _six * variable_size, deviceCount, 0);
+		my_allocate_d(d_AdotRegBlock_array      , _six * GridDimY * target_size, deviceCount, 0);
+		my_allocate_d(d_AdotIrrBlock_array      , _six * GridDimY * target_size, deviceCount, 0);
+
 		my_allocate_d(d_num_neighbor_block_array, GridDimY * target_size, deviceCount, 0);
 		my_allocate_d(d_neighbor_block_array, GridDimY * NNB_per_block * target_size, deviceCount, 0);
 		my_allocate_d(d_neighbor_array, NumNeighborMax * target_size, deviceCount, 0);
@@ -996,6 +1083,10 @@ void _ReceiveFromHost(
 			cudaMallocHost(&h_result_array[i], _six*variable_size * sizeof(CUDA_REAL));
 			cudaMallocHost(&h_num_neighbor_array[i], variable_size * sizeof(int));
 			cudaMallocHost(&NeighborList_array[i], variable_size * NumNeighborMax * sizeof(int));
+			cudaMallocHost(&h_AdotReg_array[i], _six*variable_size * sizeof(CUDA_REAL));
+			cudaMallocHost(&h_AdotIrr_array[i], _six*variable_size * sizeof(CUDA_REAL));
+			cudaMallocHost(&h_AIrr_array[i], _six*variable_size * sizeof(CUDA_REAL));
+
 		}
 		#else
 		my_allocate(&h_ptcl         , &d_ptcl        ,         _seven*variable_size); // x,v,m

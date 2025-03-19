@@ -22,11 +22,10 @@ MACH_FILE  = Make.mach.ubuntu-hardy
 #-----------------------------------------------------------------------
 
 
-LOCAL_HDF5_INSTALL = /home/vinicius/install/hdf5-1.12.1/hdf5_n15
-#LOCAL_MPI = /appl/intel/oneapi/mpi/latest
-LOCAL_MPI = /home/wispedia/install/mpich-15
-LOCAL_GRACKLE_INSTALL = /home/wispedia/install/grackle15
-LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.5
+LOCAL_HDF5_INSTALL = /home/sykim/local/hdf5-1.12.1
+LOCAL_MPI = /appl/intel/oneapi/mpi/latest
+LOCAL_GRACKLE_INSTALL = /home/sykim/local/grackle
+LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.8
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -37,11 +36,11 @@ MACH_CPP       = icpc # C preprocessor command
 # With MPI
 
 
-MACH_CC_MPI    =  $(LOCAL_MPI)/bin/mpicc     #/home/kerex/intel/bin/icc 
-MACH_CXX_MPI   =  $(LOCAL_MPI)/bin/mpicxx    #/home/kerex/intel/bin/icpc
-MACH_FC_MPI    =  $(LOCAL_MPI)/bin/mpifort #mpifort   #/home/kerex/intel/bin/ifort 
-MACH_F90_MPI   =  $(LOCAL_MPI)/bin/mpifort #mpifort   #/home/kerex/intel/bin/ifort
-MACH_LD_MPI    =  $(LOCAL_MPI)/bin/mpicxx    #/home/kerex/intel/bin/icpc
+MACH_CC_MPI    =  mpiicc     #/home/kerex/intel/bin/icc 
+MACH_CXX_MPI   =  mpiicpc    #/home/kerex/intel/bin/icpc
+MACH_FC_MPI    =  mpifc   #/home/kerex/intel/bin/ifort 
+MACH_F90_MPI   =  mpif90   #/home/kerex/intel/bin/ifort
+MACH_LD_MPI    =  mpiicpc    #/home/kerex/intel/bin/icpc
 
 MACH_CUDACOMPILER = $(LOCAL_CUDA_INSTALL)/bin/nvcc
 
@@ -130,4 +129,4 @@ MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
 MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
 MACH_LIBS_GRACKLE = $(LOCAL_LIBS_GRACKLE)
-MACH_LIBS_NBODY = -L$(LOCAL_CUDA_INSTALL)/lib64 -lcudart -lcublas
+MACH_LIBS_NBODY = -L$(LOCAL_CUDA_INSTALL)/lib64 -lcudart

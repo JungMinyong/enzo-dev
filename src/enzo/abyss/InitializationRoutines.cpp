@@ -359,6 +359,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
     /* Since we're not doing full-initialization, we have to do more work on time steps
     e.g., if enzo time can be smaller than regualr time steps. we gotta re-normalize it.
     but this part is not complete yet. */
+    Particle* ptcl;
 
     // Example code by EW 2025.3.18
     if (newNumberOfSingleParticle > 0) {
@@ -367,7 +368,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
 
     } else {
 
-        Particle *ptcl;
+        // Particle *ptcl;
 
         for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
 

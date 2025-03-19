@@ -22,7 +22,7 @@ void CalculateAccelerationOnDevice(int *NumTargetTotal, int *h_target_list, doub
 
 void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
 void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& RegularList_init, int *IndexList);
-void CalculateAccelerationOnDevice(int *NumTargetTotal, int *h_target_list, 
+void InitializationOnDevice(int *NumTargetTotal, int *h_target_list, 
 	double areg[][3], double areg_dot[][3], double airr[][3], double airr_dot[][3], 
 	double areg_dotdot[][3], double areg_dotdotdot[][3], double airr_dotdot[][3], double airr_dotdotdot[][3], 
 	int NumNeighbor[], int *NeighborList);
@@ -529,7 +529,7 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 #ifdef NSIGHT
 	nvtxRangePushA("sendAllParticlesToGPU");
 #endif
-	sendAllParticlesToGPU_init(IndexList);  // needs to be updated
+	sendAllParticlesToGPU_init(workers, IndexList);  // needs to be updated
 	assert(RegularList_init.size() == NumberOfParticle);
 #ifdef NSIGHT
 	nvtxRangePop();
@@ -581,7 +581,7 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	// (EW to MY): Then, send acc_tot[0] & acc_tot[1] to GPU and calculate acc_irr[2], acc_reg[2], acc_irr[3], acc_reg[3]
 	// (EW to MY): Reference: Particle/Initialize.cpp CalculateAcceleration23 function
 	// CalculateAccelerationOnDevice(&ListSize, IndexList, AccRegReceive_f, AccRegDotReceive_f, NumNeighborReceive, ACListReceive);
-	CalculateAccelerationOnDevice(&ListSize, IndexList, 
+	InitializationOnDevice(&ListSize, IndexList, 
 		AccRegReceive_f, AccRegDotReceive_f, AccIrrReceive_f, AccIrrDotReceive_f,
 		AccRegDotDotReceive_f, AccRegDotDotDotReceive_f, AccIrrDotDotReceive_f, AccIrrDotDotDotReceive_f,
 		NumNeighborReceive, ACListReceive);
