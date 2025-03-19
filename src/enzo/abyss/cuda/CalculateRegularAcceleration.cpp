@@ -740,6 +740,9 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl       = &particles[i];
 
+		if (ptcl->TimeStepIrr != 0)
+			ptcl->setNewTimeStepWithNewEnzoTimeStep(global_variable->OldEnzoTimeStep, global_variable->EnzoTimeStep);
+			
 		ptcl->CurrentTimeIrr = 0.;
         ptcl->CurrentBlockIrr = 0;
         ptcl->CurrentTimeReg = 0.;

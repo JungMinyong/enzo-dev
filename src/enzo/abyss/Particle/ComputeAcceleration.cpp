@@ -790,8 +790,29 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 	}
 	assert(this->NumberOfNeighbor >= NewNumberOfNeighborGPU);
 
-	this->calculateTimeStepReg();
-	this->calculateTimeStepIrr();
 	this->updateRadius();
-	this->NextBlockIrr = this->CurrentBlockIrr + this->TimeBlockIrr; // of ptcl particle	
+
+	if (this->TimeStepIrr != 0) { // originally existing nbody particles
+
+		this->calculateTimeStepReg();
+		this->calculateTimeStepIrr();
+
+	} else { // newly detected nbody particles
+
+		this->initializeTimeStep();
+		
+		// Timestep correction
+		if (this->NumberOfNeighbor != 0) {
+			while (this->TimeLevelIrr >= this->TimeLevelReg)
+			{
+				this->TimeStepIrr *= 0.5;
+				this->TimeBlockIrr *= 0.5;
+				this->TimeLevelIrr--;
+			}
+		}
+		this->TimeBlockIrr = static_cast<ULL>(pow(2, this->TimeLevelIrr - global_variable->time_block));
+		this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg - global_variable->time_block));
+	}
+
+	this->NextBlockIrr = this->CurrentBlockIrr + this->TimeBlockIrr;
 }
