@@ -553,7 +553,6 @@ __global__ void compute_forces_init23(const CUDA_REAL* __restrict__ ptcl, const 
 		CUDA_REAL ax_reg_ddd=0, ay_reg_ddd=0, az_reg_ddd=0;
 		CUDA_REAL ax_irr_dd=0, ay_irr_dd=0, az_irr_dd=0;
 		CUDA_REAL ax_irr_ddd=0, ay_irr_ddd=0, az_irr_ddd=0;
-		int* BlockNeighbor = &neighbor[NNB_per_block*idx_save]; // Pointer to the neighbor list of the current block
 
 		for (int j=j_begin; j < j_end; j+=BatchSize){ // total particles
 			int current_batch_size = min(BatchSize, j_end - j);
@@ -610,12 +609,11 @@ __global__ void compute_forces_init23(const CUDA_REAL* __restrict__ ptcl, const 
 					CUDA_REAL dvx = sh_vel_x[jj] - pi_vx;
 					CUDA_REAL dvy = sh_vel_y[jj] - pi_vy;
 					CUDA_REAL dvz = sh_vel_z[jj] - pi_vz;
+
 					CUDA_REAL dax = a1x - sh_acc_x[jj]; // verification needed
 					CUDA_REAL day = a1y - sh_acc_y[jj];
 					CUDA_REAL daz = a1z - sh_acc_z[jj];
-					CUDA_REAL dax = a1x - sh_acc_x[jj];
-					CUDA_REAL day = a1y - sh_acc_y[jj];
-					CUDA_REAL daz = a1z - sh_acc_z[jj];
+
 					CUDA_REAL dadotx = a1dotx - sh_adot_x[jj];
 					CUDA_REAL dadoty = a1doty - sh_adot_y[jj];
 					CUDA_REAL dadotz = a1dotz - sh_adot_z[jj];
@@ -630,9 +628,9 @@ __global__ void compute_forces_init23(const CUDA_REAL* __restrict__ ptcl, const 
 					CUDA_REAL a21y = m_r3 * dy;
 					CUDA_REAL a21z = m_r3 * dz;
 					
-					CUDA_REAL a21dotx[dim] = m_r3 * (dvx - 3 * dx * vr / magnitude0);
-					CUDA_REAL a21doty[dim] = m_r3 * (dvy - 3 * dy * vr / magnitude0);
-					CUDA_REAL a21dotz[dim] = m_r3 * (dvz - 3 * dz * vr / magnitude0);
+					CUDA_REAL a21dotx = m_r3 * (dvx - 3 * dx * vr / magnitude0);
+					CUDA_REAL a21doty = m_r3 * (dvy - 3 * dy * vr / magnitude0);
+					CUDA_REAL a21dotz = m_r3 * (dvz - 3 * dz * vr / magnitude0);
 
 					CUDA_REAL rdf_r2 = ((dx * dax) + (dy * day) + (dz * daz)) / magnitude0;
 					CUDA_REAL vdf_r2 = ((dvx * dax) + (dvy * day) + (dvz * daz)) / magnitude0;
@@ -647,20 +645,20 @@ __global__ void compute_forces_init23(const CUDA_REAL* __restrict__ ptcl, const 
 					CUDA_REAL adot2z = - m_r3 * daz - 6 * a * a21dotz - 3 * b * a21z;
 
 					if (magnitude0 > i_r2) { // regular force
-						ax_reg_dd += adot2x
-						ax_reg_dd += adot2y
-						ax_reg_dd += adot2z
+						ax_reg_dd += adot2x;
+						ay_reg_dd += adot2y;
+						az_reg_dd += adot2z;
 						ax_reg_ddd += - m_r3 * dadotx - 9 * a * adot2x - 9 * b * a21dotx - 3 * c * a21x;
-						ax_reg_ddd += - m_r3 * dadoty - 9 * a * adot2y - 9 * b * a21doty - 3 * c * a21y;
-						ax_reg_ddd += - m_r3 * dadotz - 9 * a * adot2z - 9 * b * a21dotz - 3 * c * a21z;
+						ay_reg_ddd += - m_r3 * dadoty - 9 * a * adot2y - 9 * b * a21doty - 3 * c * a21y;
+						az_reg_ddd += - m_r3 * dadotz - 9 * a * adot2z - 9 * b * a21dotz - 3 * c * a21z;
 					}
 					else if (i_ptcl != j_start + j + jj) { // irregular force					
-						ax_irr_dd += adot2x
-						ax_irr_dd += adot2y
-						ax_irr_dd += adot2z
-						ax_irr_ddd += - m_r3 * (a1dotx-a2dotx) - 9 * a * adot2x - 9 * b * a21dotx - 3 * c * a21x;
-						ax_irr_ddd += - m_r3 * (a1doty-a2doty) - 9 * a * adot2y - 9 * b * a21doty - 3 * c * a21y;
-						ax_irr_ddd += - m_r3 * (a1dotz-a2dotz) - 9 * a * adot2z - 9 * b * a21dotz - 3 * c * a21z;
+						ax_irr_dd += adot2x;
+						ay_irr_dd += adot2y;
+						az_irr_dd += adot2z;
+						ax_irr_ddd += - m_r3 * dadotx - 9 * a * adot2x - 9 * b * a21dotx - 3 * c * a21x;
+						ay_irr_ddd += - m_r3 * dadoty - 9 * a * adot2y - 9 * b * a21doty - 3 * c * a21y;
+						az_irr_ddd += - m_r3 * dadotz - 9 * a * adot2z - 9 * b * a21dotz - 3 * c * a21z;
 					}
 				} // end of if (i < m)
 			} // end of jj loop

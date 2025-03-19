@@ -745,21 +745,27 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 
 // Update acceleration after Enzo-Abyss acceleration
 // made by EW 2025.3.18
-void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberOfNeighborGPU, double *new_a, double *new_adot) {
+void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberOfNeighborGPU, 
+												double *new_areg, double *new_areg_dot, double *new_airr, double *new_airr_dot,
+												double *new_areg_dotdot, double *new_areg_dotdotdot, double *new_airr_dotdot, double *new_airr_dotdotdot) {
 
 	this->NumberOfNeighbor = 0;
 	for (int dim = 0; dim < Dim; dim++) {
-		this->a_irr[dim][0] = 0.;
-		this->a_irr[dim][1] = 0.;
-		this->a_reg[dim][0] = new_a[dim];
-		this->a_reg[dim][1] = new_adot[dim];
-	}
+		this->a_reg[dim][0] = new_areg[dim];
+		this->a_reg[dim][1] = new_areg_dot[dim];
+		this->a_reg[dim][2] = new_areg_dotdot[dim];
+		this->a_reg[dim][3] = new_areg_dotdotdot[dim];
 
-	double x[Dim], v[Dim];
-	double m_r3;
-	double r2;
-	double vx;
-	double v2;
+		this->a_irr[dim][0] = new_airr[dim];
+		this->a_irr[dim][1] = new_airr_dot[dim];
+		this->a_irr[dim][2] = new_airr_dotdot[dim];
+		this->a_irr[dim][3] = new_airr_dotdotdot[dim];
+
+		this->a_tot[dim][0] = this->a_irr[dim][0] + this->a_reg[dim][0];
+		this->a_tot[dim][1] = this->a_irr[dim][1] + this->a_reg[dim][1];
+		this->a_tot[dim][2] = this->a_irr[dim][2] + this->a_reg[dim][2];
+		this->a_tot[dim][3] = this->a_irr[dim][3] + this->a_reg[dim][3];
+	}
 
 	Particle* ptcl_neighbor;
 
@@ -778,17 +784,14 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 			Particle* ptcl_mem;
 			for (int j = 0; j < ptcl_neighbor->NumberOfMember; j++) {
 				ptcl_mem = &particles[ptcl_neighbor->Members[j]];
-				this->Neighbors[this->NumberOfNeighbor] = ptcl_mem->ParticleIndex;
+				this->Neighbors[this->NumberOfNeighbor++] = ptcl_mem->ParticleIndex;
 			}
 		}
 	}
 	assert(this->NumberOfNeighbor >= NewNumberOfNeighborGPU);
 
-	for (int dim = 0; dim < Dim; dim++) {
-		this->a_tot[dim][0] = this->a_irr[dim][0] + this->a_reg[dim][0];
-		this->a_tot[dim][1] = this->a_irr[dim][1] + this->a_reg[dim][1];
-		this->a_tot[dim][2] = this->a_irr[dim][2] + this->a_reg[dim][2];
-		this->a_tot[dim][3] = this->a_irr[dim][3] + this->a_reg[dim][3];
-	}
-	
+	this->calculateTimeStepReg();
+	this->calculateTimeStepIrr();
+	this->updateRadius();
+	this->NextBlockIrr = this->CurrentBlockIrr + this->TimeBlockIrr; // of ptcl particle	
 }

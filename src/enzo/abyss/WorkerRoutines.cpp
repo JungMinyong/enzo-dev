@@ -31,6 +31,17 @@ void WorkerRoutines() {
 	int size=0;
 	double new_a[Dim];
 	double new_adot[Dim];
+
+	double new_areg[Dim];
+	double new_areg_dot[Dim];
+	double new_airr[Dim];
+	double new_airr_dot[Dim];
+
+	double new_areg_dotdot[Dim];
+	double new_areg_dotdotdot[Dim];
+	double new_airr_dotdot[Dim];
+	double new_airr_dotdotdot[Dim];
+
 	Particle *ptcl;
 	std::chrono::high_resolution_clock::time_point start_point;
 	std::chrono::high_resolution_clock::time_point end_point;
@@ -338,40 +349,22 @@ void WorkerRoutines() {
 				//std::cout << "(REG_UPDATE) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
 				MPI_Recv(&NewNumberOfNeighbor, 1, MPI_INT, ROOT, 10, abyss_comm, &status);
 				MPI_Recv(NewNeighbors, NewNumberOfNeighbor, MPI_INT, ROOT, 11, abyss_comm, &status);
-				MPI_Recv(new_a, 3, MPI_DOUBLE, ROOT, 12, abyss_comm, &status);
-				MPI_Recv(new_adot, 3, MPI_DOUBLE, ROOT, 13, abyss_comm, &status);
+				MPI_Recv(new_areg, 3, MPI_DOUBLE, ROOT, 12, abyss_comm, &status);
+				MPI_Recv(new_areg_dot, 3, MPI_DOUBLE, ROOT, 13, abyss_comm, &status);
+				MPI_Recv(new_airr, 3, MPI_DOUBLE, ROOT, 14, abyss_comm, &status);
+				MPI_Recv(new_airr_dot, 3, MPI_DOUBLE, ROOT, 15, abyss_comm, &status);
+
+				MPI_Recv(new_areg_dotdot, 3, MPI_DOUBLE, ROOT, 16, abyss_comm, &status);
+				MPI_Recv(new_areg_dotdotdot, 3, MPI_DOUBLE, ROOT, 17, abyss_comm, &status);
+				MPI_Recv(new_airr_dotdot, 3, MPI_DOUBLE, ROOT, 18, abyss_comm, &status);
+				MPI_Recv(new_airr_dotdotdot, 3, MPI_DOUBLE, ROOT, 19, abyss_comm, &status);
 
 				ptcl = &particles[ptcl_index];
 
-				ptcl->initializeAfterCommunication(NewNeighbors, NewNumberOfNeighbor, new_a, new_adot);
+				ptcl->initializeAfterCommunication(NewNeighbors, NewNumberOfNeighbor, 
+													new_areg, new_areg_dot, new_airr, new_airr_dot,
+													new_areg_dotdot, new_areg_dotdotdot, new_airr_dotdot, new_airr_dotdotdot);
 
-				for (int j = 0; j < ptcl->NewNumberOfNeighbor; j++)
-					ptcl->Neighbors[j] = ptcl->NewNeighbors[j];
-				ptcl->NumberOfNeighbor = ptcl->NewNumberOfNeighbor;
-
-				ptcl->updateParticle();
-				ptcl->CurrentBlockReg = ptcl->CurrentBlockReg + ptcl->TimeBlockReg;
-				ptcl->CurrentTimeReg = ptcl->CurrentBlockReg * global_variable->time_step;
-				ptcl->calculateTimeStepReg();
-				ptcl->calculateTimeStepIrr();
-				if (ptcl->NumberOfNeighbor == 0) {
-					/*
-					if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentBlockReg*time_step) {
-						fprintf(stderr, "PID: %d\n", ptcl->PID);
-						fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", ptcl->CurrentBlockIrr, ptcl->CurrentBlockReg);
-						fprintf(stderr, "CurrentBlockIrr * time_step: %e, CurrentBlockReg * time_step: %e\n", ptcl->CurrentBlockIrr*time_step, ptcl->CurrentBlockReg*time_step);
-						fprintf(stderr, "CurrentTimeIrr: %e, CurrentTimeReg: %e\n", ptcl->CurrentTimeIrr, ptcl->CurrentTimeReg);
-						fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
-						fflush(stderr);
-						assert(ptcl->CurrentBlockIrr == ptcl->CurrentBlockReg);
-						assert(ptcl->CurrentTimeIrr == ptcl->CurrentBlockReg*time_step);
-					}
-					*/
-					ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
-					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*global_variable->time_step;
-				}
-				ptcl->updateRadius();
-				ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of ptcl particle
 				break;
 
 			case Synchronize: // Synchronize

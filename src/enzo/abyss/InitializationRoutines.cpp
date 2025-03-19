@@ -350,8 +350,7 @@ void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vecto
 
 
 void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers) {
-    // std::vector<int> ParticleIndices; // commented out by EW 2025.3.11
-    // ParticleIndices.reserve(global_variable->LastParticleIndex); // commented out by EW 2025.3.11
+    
     /* Initialize New Particle */ 
     /*  Neighbor inclusion might be needed (to be updated) */
 

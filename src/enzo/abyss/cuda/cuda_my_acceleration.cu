@@ -1493,7 +1493,7 @@ extern "C" {
 	void CalculateAccelerationOnDevice(int *NumTargetTotal, int *h_target_list, CUDA_REAL acc[][3], CUDA_REAL adot[][3], int NumNeighbor[], int *NeighborList) {
 		GetAcceleration(*NumTargetTotal, h_target_list, acc, adot, NumNeighbor, NeighborList);
 	}
-	void CalculateAccelerationOnDevice(int *NumTargetTotal, int *h_target_list, 
+	void InitializationOnDevice(int *NumTargetTotal, int *h_target_list, 
 		CUDA_REAL areg[][3], CUDA_REAL areg_dot[][3], CUDA_REAL airr[][3], CUDA_REAL airr_dot[][3], 
 		CUDA_REAL areg_dotdot[][3], CUDA_REAL areg_dotdotdot[][3], CUDA_REAL airr_dotdot[][3], CUDA_REAL airr_dotdotdot[][3], 
 		int NumNeighbor[], int *NeighborList) {

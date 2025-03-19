@@ -22,10 +22,6 @@ void CalculateAccelerationOnDevice(int *NumTargetTotal, int *h_target_list, doub
 
 void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
 void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& RegularList_init, int *IndexList);
-void InitializationOnDevice(int *NumTargetTotal, int *h_target_list, 
-	double areg[][3], double areg_dot[][3], double airr[][3], double airr_dot[][3], 
-	double areg_dotdot[][3], double areg_dotdotdot[][3], double airr_dotdot[][3], double airr_dotdotdot[][3], 
-	int NumNeighbor[], int *NeighborList);
 
 /*
  *  Purporse: calculate acceleration and neighbors of regular particles by sending them to GPU
@@ -455,8 +451,14 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	// only regular particle informations are stored here
 	double (*AccRegReceive)[Dim];
 	double (*AccRegDotReceive)[Dim];
-	double (*AccIrr)[Dim];
-	double (*AccIrrDot)[Dim];
+	double (*AccIrrReceive)[Dim];
+	double (*AccIrrDotReceive)[Dim];
+
+	double (*AccRegDotDotReceive)[Dim];
+	double (*AccRegDotDotDotReceive)[Dim];
+	double (*AccIrrDotDotReceive)[Dim];
+	double (*AccIrrDotDotDotReceive)[Dim];
+	
 #ifdef CUDA_FLOAT
 	CUDA_REAL (*AccRegReceive_f)[Dim];
 	CUDA_REAL (*AccRegDotReceive_f)[Dim];
@@ -476,19 +478,18 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	int *NumNeighborReceive;
 	int MassFlag;
 
-
-	double a_tmp[Dim]{0}, adot_tmp[Dim]{0};
-	double da, dadot;
-	double a2, a3, da_dt2, adot_dt, dt2, dt3, dt4, dt5;
-
-
-	double DFR, FRD, SUM, AT3, BT2;
-	double DTR, DTSQ, DT2, DT6,DTSQ12, DTR13;
-
-	Particle *ptcl;
-
 	// need to make array to send to GPU
 	// allocate memory to the temporary variables
+
+	AccRegReceive    = new double[ListSize][Dim];
+	AccRegDotReceive = new double[ListSize][Dim];
+	AccIrrReceive		= new double[ListSize][Dim];
+	AccIrrDotReceive	= new double[ListSize][Dim];
+
+	AccRegDotDotReceive		= new double[ListSize][Dim];
+	AccRegDotDotDotReceive	= new double[ListSize][Dim];
+	AccIrrDotDotReceive		= new double[ListSize][Dim];
+	AccIrrDotDotDotReceive	= new double[ListSize][Dim];
 
 #ifdef CUDA_FLOAT
 	AccRegReceive_f		= new CUDA_REAL[ListSize][Dim];
@@ -506,22 +507,6 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	// ACListReceive      = new int*[ListSize];
 	ACListReceive = new int[ListSize * NumNeighborMax];
 
-	for (int i=0; i<ListSize; i++) {
-		// ACListReceive[i] = new int[NumNeighborMax];
-		for (int dim=0; dim<Dim; dim++) {
-#ifdef CUDA_FLOAT
-			AccRegReceive_f[i][dim]		= 0;
-			AccRegDotReceive_f[i][dim]	= 0;
-			AccIrrReceive_f[i][dim]		= 0;
-			AccIrrDotReceive_f[i][dim]	= 0;
-
-			AccRegDotDotReceive_f[i][dim]		= 0;
-			AccRegDotDotDotReceive_f[i][dim]	= 0;
-			AccIrrDotDotReceive_f[i][dim]		= 0;
-			AccIrrDotDotDotReceive_f[i][dim]	= 0;
-#endif 
-		}
-	}
 #ifdef DEBUG_ABYSS
 	std::cout << "sendAllParticlesToGPU starts" << std::endl;
 #endif
@@ -529,7 +514,7 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 #ifdef NSIGHT
 	nvtxRangePushA("sendAllParticlesToGPU");
 #endif
-	sendAllParticlesToGPU_init(workers, IndexList);  // needs to be updated
+	sendAllParticlesToGPU_init(workers, RegularList_init, IndexList);  // needs to be updated
 	assert(RegularList_init.size() == NumberOfParticle);
 #ifdef NSIGHT
 	nvtxRangePop();
@@ -585,8 +570,6 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 		AccRegReceive_f, AccRegDotReceive_f, AccIrrReceive_f, AccIrrDotReceive_f,
 		AccRegDotDotReceive_f, AccRegDotDotDotReceive_f, AccIrrDotDotReceive_f, AccIrrDotDotDotReceive_f,
 		NumNeighborReceive, ACListReceive);
-#else
-	CalculateAccelerationOnDevice(&ListSize, IndexList, AccRegReceive, AccRegDotReceive, NumNeighborReceive, ACListReceive);
 #endif
   
 #ifdef NSIGHT
@@ -599,31 +582,17 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 
 	for (int i=0; i<ListSize; i++) {
 		for (int dim=0; dim<Dim; dim++) {
-			AccRegReceive[i][dim]    = (CUDA_REAL) AccRegReceive_f[i][dim];
-			AccRegDotReceive[i][dim] = (CUDA_REAL) AccRegDotReceive_f[i][dim];
+			AccRegReceive[i][dim]    	= (CUDA_REAL) AccRegReceive_f[i][dim];
+			AccRegDotReceive[i][dim] 	= (CUDA_REAL) AccRegDotReceive_f[i][dim];
+			AccIrrReceive[i][dim]		= (CUDA_REAL) AccIrrReceive_f[i][dim];
+			AccIrrDotReceive[i][dim]	= (CUDA_REAL) AccIrrDotReceive_f[i][dim];
+
+			AccRegDotDotReceive[i][dim]		= (CUDA_REAL) AccRegDotDotReceive_f[i][dim];
+			AccRegDotDotDotReceive[i][dim]	= (CUDA_REAL) AccRegDotDotDotReceive_f[i][dim];
+			AccIrrDotDotReceive[i][dim]		= (CUDA_REAL) AccIrrDotDotReceive_f[i][dim];
+			AccIrrDotDotDotReceive[i][dim]	= (CUDA_REAL) AccIrrDotDotDotReceive_f[i][dim];
 		}
 	}
-	/*
-#ifdef time_trace
-	_time.reg_gpu.markEnd();
-	_time.reg_gpu.getDuration();
-
-	_time.reg_cpu1.markStart();
-#endif
-*/
-
-
-
-	/*
-#ifdef time_trace
-	_time.reg_cpu2.markEnd();
-	_time.reg_cpu2.getDuration();
-
-	_time.reg_cpu3.markStart();
-#endif
-*/
-
-
 
 /*
 	std::cout << "(REG_CUDA) RegularList, PID= ";
@@ -661,8 +630,16 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 				MPI_Send(&ActiveIndexToOriginalIndex[IndexList[i]], 1, MPI_INT, (*worker)->MyRank, PTCL_TAG, abyss_comm);
 				MPI_Send(&NumNeighborReceive[i], 1, MPI_INT, (*worker)->MyRank, 10, abyss_comm);
 				MPI_Send(&ACListReceive[i * NumNeighborMax], NumNeighborReceive[i], MPI_INT, (*worker)->MyRank, 11, abyss_comm);
+
 				MPI_Send(&AccRegReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 12, abyss_comm);
 				MPI_Send(&AccRegDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 13, abyss_comm);
+				MPI_Send(&AccIrrReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 14, abyss_comm);
+				MPI_Send(&AccIrrDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 15, abyss_comm);
+
+				MPI_Send(&AccRegDotDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 16, abyss_comm);
+				MPI_Send(&AccRegDotDotDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 17, abyss_comm);
+				MPI_Send(&AccIrrDotDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 18, abyss_comm);
+				MPI_Send(&AccIrrDotDotDotReceive[i][0], 3, MPI_DOUBLE, (*worker)->MyRank, 19, abyss_comm);
 				((*worker))->onDuty = true;
 				/*
 				(*worker)->CurrentQueue++;
@@ -705,12 +682,24 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 
 	delete[] AccRegReceive;
 	delete[] AccRegDotReceive;
-	delete[] AccIrr;
-	delete[] AccIrrDot;
+	delete[] AccIrrReceive;
+	delete[] AccIrrDotReceive;
+
+	delete[] AccRegDotDotReceive;
+	delete[] AccRegDotDotDotReceive;
+	delete[] AccIrrDotDotReceive;
+	delete[] AccIrrDotDotDotReceive;
 
 #ifdef CUDA_FLOAT
 	delete[] AccRegReceive_f;
 	delete[] AccRegDotReceive_f;
+	delete[] AccIrrReceive_f;
+	delete[] AccIrrDotReceive_f;
+
+	delete[] AccRegDotDotReceive_f;
+	delete[] AccRegDotDotDotReceive_f;
+	delete[] AccIrrDotDotReceive_f;
+	delete[] AccIrrDotDotDotReceive_f;
 #endif 
 
 	delete[] NumNeighborReceive;
@@ -783,7 +772,7 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 
 		for (int dim = 0; dim < Dim; dim++) {
 			Position[size][dim] = ptcl->Position[dim];
-			Position[size][dim] = ptcl->Velocity[dim];
+			Velocity[size][dim] = ptcl->Velocity[dim];
 		}
 
 		assert(Position[size][0] == Position[size][0]);
@@ -833,7 +822,7 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 
 		for (int dim = 0; dim < Dim; dim++) {
 			Position[size][dim] = ptcl->Position[dim];
-			Position[size][dim] = ptcl->Velocity[dim];
+			Velocity[size][dim] = ptcl->Velocity[dim];
 		}
 
 		assert(Position[size][0] == Position[size][0]);
