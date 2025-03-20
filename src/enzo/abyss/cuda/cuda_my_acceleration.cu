@@ -699,6 +699,10 @@ void GetAcceleration(
 			airr_dotdotdot[i+TargetStart][0] = h_AIrr[_six*i+3];
 			airr_dotdotdot[i+TargetStart][1] = h_AIrr[_six*i+4];
 			airr_dotdotdot[i+TargetStart][2] = h_AIrr[_six*i+5];
+
+			// fprintf(stdout, "areg and airr (%d, %d) = %e, %e\n", i, NumNeighbor[i], areg[i+TargetStart][0], airr[i+TargetStart][0]);
+			// fprintf(stdout, "aregdot and airrdot (%d, %d) = %e, %e\n", i, NumNeighbor[i], areg_dot[i+TargetStart][0], airr_dot[i+TargetStart][0]);
+			// fprintf(stdout, "areg2dot and airr2dot (%d, %d) = %e, %e\n", i, NumNeighbor[i], h_result[_six*i], h_AIrr[_six*i]);
 		}
 
 		#ifdef NSIGHT

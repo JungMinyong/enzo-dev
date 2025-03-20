@@ -582,15 +582,15 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 
 	for (int i=0; i<ListSize; i++) {
 		for (int dim=0; dim<Dim; dim++) {
-			AccRegReceive[i][dim]    	= (CUDA_REAL) AccRegReceive_f[i][dim];
-			AccRegDotReceive[i][dim] 	= (CUDA_REAL) AccRegDotReceive_f[i][dim];
-			AccIrrReceive[i][dim]		= (CUDA_REAL) AccIrrReceive_f[i][dim];
-			AccIrrDotReceive[i][dim]	= (CUDA_REAL) AccIrrDotReceive_f[i][dim];
+			AccRegReceive[i][dim]    	= AccRegReceive_f[i][dim];
+			AccRegDotReceive[i][dim] 	= AccRegDotReceive_f[i][dim];
+			AccIrrReceive[i][dim]		= AccIrrReceive_f[i][dim];
+			AccIrrDotReceive[i][dim]	= AccIrrDotReceive_f[i][dim];
 
-			AccRegDotDotReceive[i][dim]		= (CUDA_REAL) AccRegDotDotReceive_f[i][dim];
-			AccRegDotDotDotReceive[i][dim]	= (CUDA_REAL) AccRegDotDotDotReceive_f[i][dim];
-			AccIrrDotDotReceive[i][dim]		= (CUDA_REAL) AccIrrDotDotReceive_f[i][dim];
-			AccIrrDotDotDotReceive[i][dim]	= (CUDA_REAL) AccIrrDotDotDotReceive_f[i][dim];
+			AccRegDotDotReceive[i][dim]		= AccRegDotDotReceive_f[i][dim];
+			AccRegDotDotDotReceive[i][dim]	= AccRegDotDotDotReceive_f[i][dim];
+			AccIrrDotDotReceive[i][dim]		= AccIrrDotDotReceive_f[i][dim];
+			AccIrrDotDotDotReceive[i][dim]	= AccIrrDotDotDotReceive_f[i][dim];
 		}
 	}
 
@@ -616,7 +616,7 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	int i=0;
 	TaskName task=InitOnGPU;
 	queue_scheduler.initialize(InitOnGPU);
-	queue_scheduler.takeQueueRegularList(RegularList);
+	queue_scheduler.takeQueueRegularList(RegularList_init);
 	do
 	{
 		queue_scheduler.assignQueueRegularList();

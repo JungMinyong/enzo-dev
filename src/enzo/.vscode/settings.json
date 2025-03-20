@@ -90,7 +90,8 @@
         "Grid_TransferSubgridActiveParticles.C": "cpp",
         "Grid_TransferSubgridParticles.C": "cpp",
         "Grid_TransferSubgridStars.C": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "WriteParameterFile.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

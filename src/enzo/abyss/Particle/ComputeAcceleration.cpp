@@ -794,8 +794,8 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 
 	if (this->TimeStepIrr != 0) { // originally existing nbody particles
 
-		this->calculateTimeStepReg();
-		this->calculateTimeStepIrr();
+		// this->calculateTimeStepReg();
+		// this->calculateTimeStepIrr();
 
 	} else { // newly detected nbody particles
 
