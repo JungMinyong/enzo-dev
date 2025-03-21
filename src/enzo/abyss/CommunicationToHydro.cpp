@@ -357,17 +357,19 @@ int ReceiveFromEnzo() {
 	MPI_Recv(&EnzoCurrentTime, 1, MPI_DOUBLE, 0, 700, inter_comm, &status);
 	CommunicationInterBarrier();
 
-	std::cout << "Enzo  Time    :" << EnzoCurrentTime << std::endl;
+	// std::cout << "Enzo  Time    :" << EnzoCurrentTime << std::endl;
 	//std::cout << "Nbody Time    :" << OldEnzoCurrentTime+particle[0]->CurrentTimeReg*EnzoTimeStep << std::endl;
 	global_variable->OldEnzoTimeStep = global_variable->EnzoTimeStep;
 	global_variable->EnzoTimeStep = TimeStep; // *EnzoTime;
 
-	std::cout << "NBODY+: Data trnsferred!" << std::endl;
-	fprintf(stdout, "NBODY+: Data trnsferred!\n");
+	std::cout << "NBODY+: Data transferred!" << std::endl;
+	fprintf(stdout, "NBODY+: Data transferred!\n");
 	EnzoCurrentTime = EnzoCurrentTime; // *EnzoTime;
 	std::cout << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
+	std::cerr << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
 	std::cout << "Enzo TimeStep:" << TimeStep  << std::endl;
 	std::cout << "EnzoTimeStep :" << global_variable->EnzoTimeStep*1e4 << " Myr" << std::endl;
+	std::cerr << "Next EnzoTimeStep :" << global_variable->EnzoTimeStep*1e4 << " Myr" << std::endl;
 	//std::cout << "Nbody Mass    :" << particle[0]->Mass << std::endl;
 	//std::cout << "Enzo  Mass    :" << Mass[0]*EnzoMass << std::endl;
 	//std::cout << "enzo Time :" << TimeStep << std::endl;
@@ -704,11 +706,7 @@ int SendToEnzo(Worker *workers) {
 	std::cout << "NBODY+: Entering SendToEnzo..." << std::endl;
 	if (NumberOfSingleParticle == 0 && newNumberOfSingleParticle == 0) {
 		std::cout << "NBODY+: Skipping SendToEnzo..." << std::endl;
-		fflush(stdout);
-		// fflush(stderr);
 		return 1; // SUCCESS -> 1 by EW 2025.3.11
-		fflush(stderr);
-		return 1; //SUCCESS;
 	}
 	MPI_Request request;
 	MPI_Status status;
@@ -802,13 +800,13 @@ int SendToEnzo(Worker *workers) {
 				}
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
-					if(ptcl->Mass == 0.0) { // merger induced zero-mass particles, PISN case // EW: Position -= 20 here?
-						/* // Example code by EW 2025.3.13
-						// (Query to YS) This particle should be deleted in Enzo too!
-						Position[0][i] = -20; // Position is not initialized yet
+					if (ptcl->Mass == 0.0) { // merger induced zero-mass particles, PISN case // EW: Position -= 20 here?
+						// /* // Example code by EW 2025.3.13
+						// (Query to YS) This particle should be deleted in Enzo too!!!
+						Position[0][i] = -10*EnzoClusterPosition[0]; // Position is not initialized yet
 						deleteParticle(EnzoPIDs[i],index); // delete this particle in Abyss
 						NumberOfEscapeParticle++;
-						*/ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
+						// */ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
 					} 
 				}
 			}
@@ -888,12 +886,12 @@ int SendToEnzo(Worker *workers) {
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
 					if(ptcl->Mass == 0.0) { // merger induced zero-mass particles, PISN case // EW: newPosition -= 20 here?
-						/* // Example code by EW 2025.3.13
-						// (Query to YS) This particle should be deleted in Enzo too!
-						newPosition[0][i] = -20;  // newPosition is not initialized yet
+						// /* // Example code by EW 2025.3.13
+						// (Query to YS) This particle should be deleted in Enzo too!!!
+						newPosition[0][i] = -10*EnzoClusterPosition[0];  // newPosition is not initialized yet
 						deleteParticle(EnzoPIDs[i+offset],index); // delete this particle in Abyss
 						NumberOfEscapeParticle++;
-						*/ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
+						// */ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
 					} 
 				}
 			}

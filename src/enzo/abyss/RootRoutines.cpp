@@ -105,7 +105,8 @@ void RootRoutines()
 		fflush(stdout);
 	}*/
 
-	InitializationRoutines(queue_scheduler, workers);
+	if (NumberOfParticle >= 2)
+		InitializationRoutines(queue_scheduler, workers);
 
 	/* Main Loop */
 	while (1)
@@ -118,47 +119,53 @@ void RootRoutines()
 		}
 		*/
 
-		start_point_routine = std::chrono::high_resolution_clock::now();
+		if (NumberOfParticle >= 2) {
+
+			start_point_routine = std::chrono::high_resolution_clock::now();
 
 #ifdef NSIGHT
-		nvtxRangePushA("updateNextRegTime");
+			nvtxRangePushA("updateNextRegTime");
 #endif
 
-		updateNextRegTime(RegularList);
+			updateNextRegTime(RegularList);
 
 #ifdef NSIGHT
-		nvtxRangePop();
+			nvtxRangePop();
 #endif
-		/*
-		std::cout << "NextRegTimeBlock=" << NextRegTimeBlock << std::endl;
-		std::cout << "PID= ";
-		for (int i : RegularList)
-			std::cout << i<< ", ";
-		std::cout << std::endl;
-		std::cout << "size of regularlist= " << RegularList.size() << std::endl;
-		*/	
+			/*
+			std::cout << "NextRegTimeBlock=" << NextRegTimeBlock << std::endl;
+			std::cout << "PID= ";
+			for (int i : RegularList)
+				std::cout << i<< ", ";
+			std::cout << std::endl;
+			std::cout << "size of regularlist= " << RegularList.size() << std::endl;
+			*/	
 
-		if (!IrregularRoutines(queue_scheduler, workers)) {
+			if (!IrregularRoutines(queue_scheduler, workers)) {
+				end_point_routine = std::chrono::high_resolution_clock::now();
+				nbody_durationtime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
+				continue;
+			}
+
+			RegularRoutines(queue_scheduler, workers);
+
+			global_time = NextRegTimeBlock * global_variable->time_step;
+
+#ifdef SEVN // (Query) EW: PISN should be deleted in PIDtoIndexMap, EnzoPID, ...
+			StellarEvolution(); // How about evolving particles inside RegularList only? by EW 2025.1.19
+								// Currently, evolving all the particles upto global_time
+#endif
+
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			nbody_durationtime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
-			continue;
+
 		}
-
-		RegularRoutines(queue_scheduler, workers);
-
-		global_time = NextRegTimeBlock * global_variable->time_step;
-#ifdef SEVN // (Query) EW: PISN should be deleted in PIDtoIndexMap, EnzoPID, ...
-		StellarEvolution(); // How about evolving particles inside RegularList only? by EW 2025.1.19
-							// Currently, evolving all the particles upto global_time
-#endif
-
-		end_point_routine = std::chrono::high_resolution_clock::now();
-		nbody_durationtime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
+		else // NumberOfParticle < 2 case
+			global_time = 1;
 
 		// Time to communicate with enzo
 		if (global_time >= 1)
 		{
-			fprintf(stderr, "Enzo Time: %e Myr\n", global_time * global_variable->EnzoTimeStep*1e4);
 			fprintf(stderr, "NbodyRoutine: %e (s)\n", nbody_durationtime*1e-9);
 			nbody_durationtime = 0;
 

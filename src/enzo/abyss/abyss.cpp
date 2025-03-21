@@ -39,11 +39,9 @@ int ABYSS() {
 	/*********************************************************************
 	 *  Configuration for outputing log files
 	 *********************************************************************/
-	binout = fopen("binary_output.txt", "w");
 	nbpout = fopen("abyss_output.txt", "w");
 	//gpuout = fopen("cuda_output.txt", "w");
 	fprintf(nbpout, "Abyss Output Starts!\n");
-	//fprintf(binout, "Binary Output Starts!\n");
 	//fprintf(gpuout, "CUDA Output Starts!\n");
 
 	binout = fopen("binary_output.txt", "w"); // (Query) EW: how to open output files?

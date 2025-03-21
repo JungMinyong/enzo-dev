@@ -797,9 +797,6 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 		this->calculateTimeStepReg();
 		this->calculateTimeStepIrr();
 
-		// this->TimeBlockIrr = static_cast<ULL>(pow(2, this->TimeLevelIrr - global_variable->time_block));
-		// this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg - global_variable->time_block));
-
 	} else { // newly detected nbody particles
 
 		this->initializeTimeStep();
