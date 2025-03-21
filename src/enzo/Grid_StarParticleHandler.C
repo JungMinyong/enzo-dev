@@ -1072,12 +1072,34 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     }
 
     if (STARMAKE_METHOD(MBH_PARTICLE)) {
+      
+      #ifdef NBODY
+      int NbodyStarType = NbodyStar;
+      NumberOfNewParticlesSoFar = NumberOfNewParticles;
 
+      if (mbh_maker(GridDimension, GridDimension+1, GridDimension+2, &size, 
+		    BaryonField[DensNum], BaryonField[Vel1Num],
+		    BaryonField[Vel2Num], BaryonField[Vel3Num],
+		    &dtFixed, BaryonField[NumberOfBaryonFields],
+		    &CellWidthTemp, &Time, 
+		    &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
+		    &MaximumNumberOfNewParticles, CellLeftEdge[0], 
+		    CellLeftEdge[1], CellLeftEdge[2], &GhostZones, 
+		    &level, &NumberOfNewParticles, tg->ParticlePosition[0], 
+		    tg->ParticlePosition[1], tg->ParticlePosition[2], 
+		    tg->ParticleVelocity[0], tg->ParticleVelocity[1], 
+		    tg->ParticleVelocity[2], tg->ParticleMass, 
+		    tg->ParticleAttribute[0], tg->ParticleAttribute[1], 
+		    tg->ParticleType, &NbodyStarType) == FAIL) {
+	ENZO_FAIL("Error in mbh_maker.");
+      }
+
+
+      #else
       //---- MASSIVE BLACK HOLE PARTICLE 
       //     (particles are put by hand; location picked at MBHInsertLocationFilename, 
       //      once MBH particles are inserted throughout the whole grid hierarchy,
       //      turn off MBH creation --> this is done in EvolveLevel at the bottom of the hierarchy)
-
       NumberOfNewParticlesSoFar = NumberOfNewParticles;
 
       if (mbh_maker(GridDimension, GridDimension+1, GridDimension+2, &size, 
@@ -1096,7 +1118,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 		    tg->ParticleType, &MBHParticleType) == FAIL) {
 	ENZO_FAIL("Error in mbh_maker.");
       }
-      
+      #endif
     }
 
     if (STARMAKE_METHOD(SINGLE_SUPERNOVA)) {
