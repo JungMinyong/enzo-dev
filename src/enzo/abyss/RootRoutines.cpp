@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <cassert>
 #include <mpi.h>
+#include <chrono>
 #include "global.h"
 #include "SkipList.h"
 #include "Worker.h"
@@ -52,6 +53,10 @@ void RootRoutines()
 	TaskName task;
 	int total_tasks;
 	int remaining_tasks = 0, completed_tasks = 0, completed_rank;
+
+	std::chrono::high_resolution_clock::time_point start_point_routine;
+	std::chrono::high_resolution_clock::time_point end_point_routine;
+	long nbody_durationtime = 0;
 
 	std::vector<int> EmptyIndex;				   // by EW 2025.1.7  empty slots in particles e.g., due to mergers
 	// unordered_set? by EW 2025.1.11
@@ -113,6 +118,8 @@ void RootRoutines()
 		}
 		*/
 
+		start_point_routine = std::chrono::high_resolution_clock::now();
+
 #ifdef NSIGHT
 		nvtxRangePushA("updateNextRegTime");
 #endif
@@ -131,8 +138,11 @@ void RootRoutines()
 		std::cout << "size of regularlist= " << RegularList.size() << std::endl;
 		*/	
 
-		if (!IrregularRoutines(queue_scheduler, workers))
+		if (!IrregularRoutines(queue_scheduler, workers)) {
+			end_point_routine = std::chrono::high_resolution_clock::now();
+			nbody_durationtime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
 			continue;
+		}
 
 		RegularRoutines(queue_scheduler, workers);
 
@@ -141,12 +151,32 @@ void RootRoutines()
 		StellarEvolution(); // How about evolving particles inside RegularList only? by EW 2025.1.19
 							// Currently, evolving all the particles upto global_time
 #endif
+
+		end_point_routine = std::chrono::high_resolution_clock::now();
+		nbody_durationtime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
+
 		// Time to communicate with enzo
 		if (global_time >= 1)
 		{
+			fprintf(stderr, "Enzo Time: %e Myr\n", global_time * global_variable->EnzoTimeStep*1e4);
+			fprintf(stderr, "NbodyRoutine: %e (s)\n", nbody_durationtime*1e-9);
+			nbody_durationtime = 0;
+
+			start_point_routine = std::chrono::high_resolution_clock::now();
 			SendToEnzo(workers);
+			end_point_routine = std::chrono::high_resolution_clock::now();
+			fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+
+			start_point_routine = std::chrono::high_resolution_clock::now();
 			ReceiveFromEnzo();
+			end_point_routine = std::chrono::high_resolution_clock::now();
+			fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+
+			start_point_routine = std::chrono::high_resolution_clock::now();
 			InitializationAfterCommunication(queue_scheduler, workers);
+			end_point_routine = std::chrono::high_resolution_clock::now();
+			fprintf(stderr, "InitializationAfterCommunication: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+
 			NextRegTimeBlock = 0;
 			global_time = 0;
 		}

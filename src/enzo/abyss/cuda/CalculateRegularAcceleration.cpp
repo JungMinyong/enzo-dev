@@ -725,7 +725,7 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 	CUDA_REAL(*Position)[Dim];
 	CUDA_REAL(*Velocity)[Dim];
 	//int size = NumberOfParticle;
-	int size=0;
+	int size=0, j=0;
 	
 	// allocate memory to the temporary variables
 	Mass     = new CUDA_REAL[NumberOfParticle];
@@ -753,6 +753,11 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 			// fprintf(stdout, "Skipping inactive particle (%d)\n", ptcl->PID);
 			continue;
 		}
+
+		RegularList_init.insert(i);
+		IndexList[j] = size;
+		j++;
+
 #ifdef FEWBODY
 		if (ptcl->isCMptcl) { // We have to reset the SDAR clock;
 			Queue queue;
@@ -764,10 +769,7 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 			workers[rank].callback();
 		}
 #endif
-
-		RegularList_init.insert(i);
-
-		IndexList[size] = i;
+		
 
 		Mass[size]    = (CUDA_REAL)ptcl->Mass;
 		Mdot[size]    = 0; //particle[i]->Mass;
