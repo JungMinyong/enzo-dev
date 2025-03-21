@@ -956,6 +956,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        tg->ParticleAttribute[2],
        &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3]);
 
+      #define no_DEBUG_SS
+      #ifdef DEBUG_SS
+      tg->StarSplitter(NumberOfNewParticlesSoFar, &NumberOfNewParticles);
+      #endif
 
 			for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
 #ifdef NBODY
