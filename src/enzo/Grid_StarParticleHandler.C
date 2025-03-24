@@ -1218,7 +1218,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
       // make it back to original 
       if (ComovingCoordinates)
-	StarMakerOverDensityThreshold /= mh / DensityUnits;  
+	StarMakerOverDensityThreshold /= mh / DensityUnits;
+
+   #ifdef DEBUG_SS
+   tg->StarSplitter(NumberOfNewParticlesSoFar, &NumberOfNewParticles);
+   #endif
 
       for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
 				//fprintf(stderr, "%d, star_maker7: particle position = (%.10lf, %.10lf, %.10lf)\n",

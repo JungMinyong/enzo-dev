@@ -39,10 +39,12 @@
 int generate_plummer(int N, double **star, double Rh, double rtide,
                 double xp, double yp, double zp, double up, double vp, double wp);
 
+int generate_random(int N, double **star, double xp, double yp, double zp, double up, double vp, double wp);
+
 int grid::StarSplitter(int np, int* nnp)
 {
     // (1) Split particles into a fixed number of particles.
-    const int Nsplit = 8;
+    const int Nsplit = 30;
     const double Rh = 0.3;    /* pc */
     const double rtide = 10.0;/* pc */
     int numinput = *nnp - np;
@@ -66,12 +68,21 @@ int grid::StarSplitter(int np, int* nnp)
 
     /* Loop over each parent particle */
     for (int ii = 0; ii < numinput; ii++){
+        // fprintf(stderr, "Inside StarSplitter... np: %d, nnp: %d\n", np, *nnp);
+        // fprintf(stderr, "ii: %d\n", ii);
         // Initialize the mass for each child particle based on the parent's mass.
         for (int i = 0; i < Nsplit; i++){
             star[i][0] = this->ParticleMass[np+ii] / Nsplit;
         }
         // Call generate_plummer to fill star[][1..6]
-        generate_plummer(Nsplit, star, Rh, rtide, 
+        // generate_plummer(Nsplit, star, Rh, rtide, 
+        //             this->ParticlePosition[0][np+ii],
+        //             this->ParticlePosition[1][np+ii],
+        //             this->ParticlePosition[2][np+ii],
+        //             this->ParticleVelocity[0][np+ii],  // Correct velocity component
+        //             this->ParticleVelocity[1][np+ii],
+        //             this->ParticleVelocity[2][np+ii]);
+        generate_random(Nsplit, star, 
                     this->ParticlePosition[0][np+ii],
                     this->ParticlePosition[1][np+ii],
                     this->ParticlePosition[2][np+ii],
@@ -92,11 +103,15 @@ int grid::StarSplitter(int np, int* nnp)
         }
         nsplits[ii] = Nsplit;  // Save the number of splits for this parent
         numoutput += Nsplit;
+        // fprintf(stderr, "\tnumoutput: %d\n", numoutput);
     } // end of parent loop
+
+    *nnp = np + numoutput;
 
     // Broadcast parent's ParticleAttribute values into the child particles.
     // Process in reverse order to avoid overwriting parent's attributes.
     for (int ii = numinput - 1; ii >= 0; ii--){
+        fprintf(stderr, "ii: %d\n", ii);
         int Nsplitcurr = nsplits[ii];  // (Currently always equal to Nsplit.)
         numoutput -= Nsplitcurr;
         for (int i = 0; i < Nsplitcurr; i++){
@@ -105,9 +120,24 @@ int grid::StarSplitter(int np, int* nnp)
                     this->ParticleAttribute[j][np + ii];
             }
         }
+        // fprintf(stderr, "\tnumoutput: %d\n", numoutput);
     } // end of reverse attribute broadcast loop
 
-    *nnp = np + numoutput;
+
+    // fflush(stderr);
+    return 0;
+}
+
+int generate_random(int N, double **star, double xp, double yp, double zp, double up, double vp, double wp)
+{
+    for (int i = 0; i < N; i++){
+        star[i][1] = 2.0 * 1e-6 * drand48() - 1e-6 + xp;  // x
+        star[i][2] = 2.0 * 1e-6 * drand48() - 1e-6 + yp;  // y
+        star[i][3] = 2.0 * 1e-6 * drand48() - 1e-6 + zp;  // z
+        star[i][4] = 2.0 * 1e-6 * drand48() - 1e-6 + up;  // vx
+        star[i][5] = 2.0 * 1e-6 * drand48() - 1e-6 + vp;  // vy
+        star[i][6] = 2.0 * 1e-6 * drand48() - 1e-6 + wp;  // vz
+    }
     return 0;
 }
 

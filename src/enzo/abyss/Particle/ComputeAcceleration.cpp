@@ -812,6 +812,19 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 		}
 		this->TimeBlockIrr = static_cast<ULL>(pow(2, this->TimeLevelIrr - global_variable->time_block));
 		this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg - global_variable->time_block));
+		fprintf(stderr, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", this->PID, this->TimeStepIrr*global_variable->EnzoTimeStep*1e4, this->TimeStepReg*global_variable->EnzoTimeStep*1e4);
+		fprintf(stdout, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", this->PID, this->TimeStepIrr*global_variable->EnzoTimeStep*1e4, this->TimeStepReg*global_variable->EnzoTimeStep*1e4);
+		/*
+		if (this->TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-5) {
+			fprintf(stderr, "TimeStepReg correction until > 1e-5 Myr\n");
+			fprintf(stdout, "TimeStepReg correction until > 1e-5 Myr\n");
+			while (this->TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-5) {
+				this->TimeLevelReg++;
+				this->TimeStepReg  = static_cast<double>(pow(2, this->TimeLevelReg));
+				this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg-global_variable->time_block));
+			}
+		}
+		*/
 	}
 
 	this->NextBlockIrr = this->CurrentBlockIrr + this->TimeBlockIrr;

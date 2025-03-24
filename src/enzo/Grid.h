@@ -2981,6 +2981,8 @@ class grid
 #ifdef NBODY
 								void CalculatePotentialFieldNoStar(float *PotentialField, int DensNum, float DensityUnits,
 										float TimeUnits, float LengthUnits);
+
+								int grid::StarSplitter(int np, int* nnp);
 #endif
 								void CalculatePotentialField(float *PotentialField, int DensNum, float DensityUnits,
 										float TimeUnits, float LengthUnits);

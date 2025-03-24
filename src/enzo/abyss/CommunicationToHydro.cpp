@@ -174,7 +174,7 @@ int InitialCommunication() {
 	fprintf(nbpout, "Nbody Time               = %lf\n", EnzoCurrentTime);
 	fprintf(nbpout, "Nbody TimeStep           = %lf\n", global_variable->EnzoTimeStep);
 	fprintf(nbpout, "EPS2                     = %lf pc**2\n", EPS2*position_unit*position_unit);
-	fprintf(nbpout, "InitialNeighborRadius2        = %.2e pc\n", InitialNeighborRadius2*position_unit*position_unit);
+	fprintf(nbpout, "InitialNeighborRadius2        = %.2e pc**2\n", InitialNeighborRadius2*position_unit*position_unit);
 	fprintf(nbpout, "eta                      = %lf\n", eta);
 	fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n", ClusterRadius2*position_unit*position_unit);
 	fprintf(nbpout, "StarMassEjectionFraction = %lf\n", StarMassEjectionFraction);
@@ -535,6 +535,11 @@ int ReceiveFromEnzo() {
 			particles[index].ParticleIndex = index;
 			PIDtoIndexMap.insert({newPID[i], index});
 			EnzoPIDs[NumberOfSingleParticle+i] = newPID[i];
+			fprintf(stderr, "PID: %d is newly added from Enzo!\n", newPID[i]);
+			fprintf(stderr, "PID: %d. Mass: %e Msun\n", newPID[i], particles[index].Mass*mass_unit);
+			fprintf(stderr, "PID: %d. x: %e pc, y: %e pc, z: %e pc\n", newPID[i], particles[index].Position[0]*position_unit, particles[index].Position[1]*position_unit, particles[index].Position[2]*position_unit);
+			fprintf(stderr, "PID: %d. vx: %e km/s, vy: %e km/s, vz: %e km/s\n", newPID[i], particles[index].Velocity[0]*velocity_unit/yr*pc/1e5, particles[index].Velocity[1]*velocity_unit/yr*pc/1e5, particles[index].Velocity[2]*velocity_unit/yr*pc/1e5);
+
 
 #ifdef star_formation_location_test
 			new_particle.push_back(particles[NumberOfSingleParticle+i]);
@@ -667,26 +672,26 @@ int ReceiveFromEnzo() {
 
 
 	//  (Query) Do I need this?
-	fprintf(nbpout, "NBODY+    : Acceleration for particles on GPU.\n");
+	// fprintf(nbpout, "NBODY+    : Acceleration for particles on GPU.\n");
 	/*
 	if (NumberOfSingleParticle > 1) {
 		CalculateAllAccelerationOnGPU(particle);
 	}*/
 
 	//UpdateNextRegTime(particle);
-	fprintf(nbpout, "NBODY+    : Acceleration and neighbors are updated.\n");
+	// fprintf(nbpout, "NBODY+    : Acceleration and neighbors are updated.\n");
 
-	fprintf(nbpout, "NBODY+    : In ReceiveFromEzno (after new particle might be added): \n");
+	fprintf(nbpout, "NBODY+    : In ReceiveFromEnzo (after new particle might be added): \n");
 	fprintf(nbpout, "NBODY+    : original NumberOfSingleParticle      = %d (+%d)\n", NumberOfSingleParticle-newNumberOfSingleParticle, newNumberOfSingleParticle);
 	fprintf(nbpout, "NBODY+    : newly updated NumberOfSingleParticle = %d\n", NumberOfSingleParticle, newNumberOfSingleParticle);
 	//fprintf(nbpout, "NBODY+    : Particle size     = %d\n", particle.size());
-	fprintf(nbpout, "NBODY+    : NextRegTimeStep   = %.3e\n", NextRegTimeBlock*global_variable->time_step);
-	fprintf(nbpout, "NBODY+    : NextRegTimeBlock  = %d\n", NextRegTimeBlock);
+	// fprintf(nbpout, "NBODY+    : NextRegTimeStep   = %.3e\n", NextRegTimeBlock*global_variable->time_step);
+	// fprintf(nbpout, "NBODY+    : NextRegTimeBlock  = %d\n", NextRegTimeBlock);
 	//fprintf(nbpout, "NBODY+    : RegularList size  = %d\n", RegularList.size());
 	fprintf(nbpout, "NBODY+    : FixNumNeighbor    = %d\n", FixNumNeighbor);
 
 
-	fprintf(stderr, "NBODY+    : In ReceiveFromEzno (after new particle might be added): \n");
+	fprintf(stderr, "NBODY+    : In ReceiveFromEnzo (after new particle might be added): \n");
 	fprintf(stderr, "NBODY+    : original NumberOfSingleParticle      = %d (+%d)\n", NumberOfSingleParticle-newNumberOfSingleParticle, newNumberOfSingleParticle);
 	fprintf(stderr, "NBODY+    : newly updated NumberOfSingleParticle = %d\n", NumberOfSingleParticle, newNumberOfSingleParticle);
 	//fprintf(stderr, "NBODY+    : Particle size     = %d\n", particle.size());
@@ -977,6 +982,8 @@ int SendToEnzo(Worker *workers) {
 				//fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
 			}
 			if (memEscape) {
+				fprintf(stderr, "Binary escape!\n");
+				fprintf(stdout, "Binary escape!\n");
 				NumberOfParticle--; // CM particle should be removed from active particles
 
 				int rank_delete = CMPtclWorker[ptcl->ParticleIndex];

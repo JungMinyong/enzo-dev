@@ -1283,6 +1283,7 @@ OBJS_NBODY= \
                                                 abyss/FewBody/FBIntegration.o\
                                                 abyss/FewBody/FBTermination.o\
                                                 abyss/FewBody/GroupAccelerationRoutine.o\
+                                                StarSplitter.o\
  						#abyss/cuda/cuda_routines.o\
 						#abyss/cuda/CalculateAccelerationForAll.o\
 
