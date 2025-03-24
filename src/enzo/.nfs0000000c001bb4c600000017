@@ -1,0 +1,170 @@
+nvcc warning : '--device-debug (-G)' overrides '--generate-line-info (-lineinfo)'
+abyss/cuda/cuda_my_acceleration.cu:1113:10: warning: extra tokens at end of #endif directive [enabled by default]
+   #endif debuggig_verification
+          ^
+abyss/cuda/cuda_my_acceleration.cu(593): warning #177-D: variable "blockDim2" was declared but never referenced
+
+abyss/cuda/cuda_my_acceleration.cu(989): warning #177-D: variable "cudaStatus" was declared but never referenced
+
+abyss/cuda/cuda_my_acceleration.cu(26): warning #550-D: variable "time_send" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(26): warning #550-D: variable "time_grav" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(26): warning #550-D: variable "time_out" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(26): warning #550-D: variable "time_nb" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(27): warning #550-D: variable "numInter" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(28): warning #550-D: variable "icall" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(28): warning #550-D: variable "ini" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(31): warning #550-D: variable "target_size_per_gpu" was set but never used
+
+abyss/cuda/cuda_my_acceleration.cu(35): warning #177-D: variable "devinit" was declared but never referenced
+
+ptxas warning : Conflicting options --device-debug and --generate-line-info specified, ignoring --generate-line-info option
+abyss/cuda/cuda_my_acceleration.cu:1113:10: warning: extra tokens at end of #endif directive [enabled by default]
+   #endif debuggig_verification
+          ^
+nvcc warning : '--device-debug (-G)' overrides '--generate-line-info (-lineinfo)'
+abyss/cuda/cuda_kernels.cu(549): warning #177-D: variable "NumNeighbor" was declared but never referenced
+
+abyss/cuda/cuda_kernels.cu(721): warning #177-D: variable "t" was declared but never referenced
+
+abyss/cuda/cuda_kernels.cu(817): warning #177-D: variable "j" was declared but never referenced
+
+abyss/cuda/cuda_kernels.cu(849): warning #177-D: variable "i" was declared but never referenced
+
+ptxas warning : Conflicting options --device-debug and --generate-line-info specified, ignoring --generate-line-info option
+abyss/FewBody/GroupAccelerationRoutine.cpp: In function ‘void deleteNeighbors(int)’:
+abyss/FewBody/GroupAccelerationRoutine.cpp:218:6: warning: capture of variable ‘particles’ with non-automatic storage duration [enabled by default]
+    [&particles](int j) {
+      ^
+In file included from abyss/FewBody/GroupAccelerationRoutine.cpp:4:0:
+abyss/FewBody/../global.h:19:18: note: ‘Particle* particles’ declared here
+ extern Particle *particles;
+                  ^
+AdiabaticExpansionInitialize.C(124): warning #267: the format string requires additional arguments
+        fprintf(stderr, "warning: mu =%f assumed in initialization; setting Mu = %f for consistency.\n", DEFAULT_MU);
+                                                                                                                   ^
+
+CollapseTestInitialize.C(583): warning #268: the format string ends before this argument
+              CollapseTestWind);
+              ^
+
+In file included from abyss/./FewBody/Group.h(13),
+                 from abyss/global.h(6),
+                 from CommunicationInitialize.C(43):
+./abyss/SDAR/src/AR/symplectic_integrator.h(3495): warning #3180: unrecognized OpenMP #pragma
+  #pragma omp critical
+  ^
+
+EvolveLevel.C(596): warning #268: the format string ends before this argument
+  				if (debug1) fprintf(stderr,"PNC done.\n", level);  // by YS
+  				                                          ^
+
+ffte4X.F90:787.21:
+
+        call settbl0(w(j),8_IKIND,l)
+                     1
+Warning: Type mismatch in argument 'w' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:793.21:
+
+        call settbl0(w(j),5_IKIND,l)
+                     1
+Warning: Type mismatch in argument 'w' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:799.21:
+
+        call settbl0(w(j),4_IKIND,l)
+                     1
+Warning: Type mismatch in argument 'w' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:805.21:
+
+        call settbl0(w(j),3_IKIND,l)
+                     1
+Warning: Type mismatch in argument 'w' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:750.19:
+
+        call fft8a(a,b,w,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:752.19:
+
+        call fft8b(a,b,w,m,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:731.19:
+
+        call fft5a(a,b,w,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:733.19:
+
+        call fft5b(a,b,w,m,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:712.19:
+
+        call fft4a(a,b,w,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:714.19:
+
+        call fft4b(a,b,w,m,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:693.19:
+
+        call fft3a(a,b,w,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:695.19:
+
+        call fft3b(a,b,w,m,l)
+                   1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:673.20:
+
+          call fft2(a,a,m)
+                    1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:675.20:
+
+          call fft2(b,a,m)
+                    1
+Warning: Type mismatch in argument 'a' at (1); passed COMPLEX(8) to REAL(8)
+ffte4X.F90:136.23:
+
+          call settbls(ww,ww(nw2+1),ww(nw3+1),ww(nw4+1),n1,n2,m1,m2)
+                       1
+Warning: Type mismatch in argument 'w1' at (1); passed COMPLEX(8) to REAL(8)
+FofLib.C(810): warning #47: incompatible redefinition of macro "HUGE" (declared at line 340 of "/usr/include/math.h")
+  #define HUGE 1.0e33
+          ^
+
+Grid_GrackleWrapper.C(308): warning #14: extra text after expected end of preprocessing directive
+  #endif TRANSFER
+         ^
+
+New_Grid_ReadGrid.C(200): warning #268: the format string ends before this argument
+        fscanf(fptr, "CourantSafetyNumber    = %*"FSYM"\n", NULL);
+                                                            ^
+
+New_Grid_ReadGrid.C(201): warning #268: the format string ends before this argument
+        fscanf(fptr, "PPMFlatteningParameter = %*"ISYM"\n", NULL);
+                                                            ^
+
+New_Grid_ReadGrid.C(202): warning #268: the format string ends before this argument
+        fscanf(fptr, "PPMDiffusionParameter  = %*"ISYM"\n", NULL);
+                                                            ^
+
+New_Grid_ReadGrid.C(203): warning #268: the format string ends before this argument
+        fscanf(fptr, "PPMSteepeningParameter = %*"ISYM"\n", NULL);
+                                                            ^
+
+New_Grid_ReadGrid.C(519): warning #47: incompatible redefinition of macro "NBODY"
+  #define NBODY
+          ^
+

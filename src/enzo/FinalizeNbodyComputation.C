@@ -31,7 +31,6 @@
 #include "CommunicationUtilities.h"
 #include "NbodyRoutines.h"  //added  
 #include "phys_constants.h"
-#include "abyss/def.h" // for nbody units
 
 
 void InitializeNbodyArrays(int);
@@ -45,23 +44,6 @@ int GetUnits(double *DensityUnits, double *LengthUnits,
 int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 {
 
-	/* Do direct calculation!*/
-	double dt = 1e-3, scale_factor=1.0;
-	double DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1,
-				TemperatureUnits=1;
-	double MassUnits=1;
-	double Time, TimeStep;
-	Time = LevelArray[level]->GridData->ReturnTime(); // Not sure ?
-	TimeStep = LevelArray[level]->GridData->ReturnTimeStep(); // Not sure ?
-	if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-				&TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
-		ENZO_FAIL("Error in GetUnits.");
-	}
-	double EnzoTime = TimeUnits/yr/time_unit;
-	double EnzoMass = MassUnits/Msun/mass_unit;
-	double EnzoLength = LengthUnits/pc/position_unit;
-	double EnzoVelocity = VelocityUnits/pc*yr/velocity_unit;
-	double EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
 
 	if (LevelArray[level+1] == NULL) {
 		int i, GridNum, LocalNumberOfNbodyParticles=0, NewLocalNumberOfNbodyParticles=0;
@@ -169,9 +151,6 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 
 			if ((NumberOfNbodyParticles+NumberOfNewNbodyParticles)!=0 && isNbodyParticleIdentification && isIdentificationOnTheFly) {
 				ierr = MPI_Recv(NbodyClusterPosition, 3, MPI_DOUBLE, 1, 700, inter_comm, &status);
-				NbodyClusterPosition[0] /= EnzoLength;
-				NbodyClusterPosition[1] /= EnzoLength;
-				NbodyClusterPosition[2] /= EnzoLength;
 				//fprintf(stdout, "In Final, NbodyClusterPosition = (%e, %e, %e)\n", NbodyClusterPosition[0], NbodyClusterPosition[1], NbodyClusterPosition[2]);
 				//fprintf(stderr, "In Final, NbodyClusterPosition = (%e, %e, %e)\n", NbodyClusterPosition[0], NbodyClusterPosition[1], NbodyClusterPosition[2]);
 			}
@@ -318,8 +297,7 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 							LocalNumberOfNbodyParticles, NbodyParticleIDTemp, 
 							NbodyParticlePositionTemp, NbodyParticleVelocityTemp,
 							NewLocalNumberOfNbodyParticles, NewNbodyParticleIDTemp, 
-							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp,
-							EnzoTime, EnzoMass, EnzoLength, EnzoVelocity, EnzoAcceleration
+							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp
 							) == FAIL) {
 					ENZO_FAIL("Error in grid::CopyNbodyParticles.");
 				}
