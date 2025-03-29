@@ -241,6 +241,15 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         Particle *accretor = &particles[ptcl->Members[1]];
 
                         Merge(donor, accretor);
+#ifdef SEVN
+                        if (donor->StellarEvolution != nullptr && accretor->StellarEvolution != nullptr) {
+                            fprintf(nbpout, "After Merge... Donor (PID: %d). Mass: %e Msun,  StellarEvolution->get_zams: %e Msun\n", donor->PID, donor->Mass*mass_unit, donor->StellarEvolution->get_zams());
+                            fprintf(nbpout, "After Merge... Accretor (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", accretor->PID, accretor->Mass*mass_unit, accretor->StellarEvolution->get_zams());
+                            fprintf(nbpout, "Donor: amiempty(): %d\n", donor->StellarEvolution->amiempty());
+                            fprintf(nbpout, "Accretor: amiempty(): %d\n", accretor->StellarEvolution->amiempty());
+                            fflush(nbpout);
+                        }
+#endif
                     }
                     else
                     { // from NewFBInitialization3
@@ -264,8 +273,15 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         }
 
                         Merge(donor, accretor);
-
-                        queue_scheduler.initialize(MergeManyBody);
+#ifdef SEVN
+                        if (donor->StellarEvolution != nullptr && accretor->StellarEvolution != nullptr) {
+                            fprintf(nbpout, "After Merge... Donor (PID: %d). Mass: %e Msun,  StellarEvolution->get_zams: %e Msun\n", donor->PID, donor->Mass*mass_unit, donor->StellarEvolution->get_zams());
+                            fprintf(nbpout, "After Merge... Accretor (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", accretor->PID, accretor->Mass*mass_unit, accretor->StellarEvolution->get_zams());
+                            fprintf(nbpout, "Donor: amiempty(): %d\n", donor->StellarEvolution->amiempty());
+                            fprintf(nbpout, "Accretor: amiempty(): %d\n", accretor->StellarEvolution->amiempty());
+                            fflush(nbpout);
+                        }
+#endif
                         int rank = CMPtclWorker[ptcl->ParticleIndex];
                         queue.task = MergeManyBody;
                         queue.pid = ptcl->ParticleIndex;
@@ -292,7 +308,29 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 for (int j = 0; j < ptcl->NumberOfMember; j++)
                 {
                     particles[ptcl->Members[j]].CMPtclIndex = -1;
-                    if (particles[ptcl->Members[j]].Mass == 0.0) {
+                    if (particles[ptcl->Members[j]].Mass < 0.0) {
+#ifdef SEVN
+                        Particle* ptcl_erased = &particles[ptcl->Members[j]];
+                        fprintf(nbpout, "ptcl_erased... PID: %d\n", ptcl_erased->PID);
+                        if (ptcl_erased->StellarEvolution != nullptr) {
+
+                            auto it = SEVNList.begin();
+                            while (it != SEVNList.end()) {
+                                if (it->second == ptcl_erased->ParticleIndex) {
+                                    it = SEVNList.erase(it);
+                                    fprintf(nbpout, "Merger induced zero mass particle (PID: %d) is deleted from SEVNList\n", ptcl_erased->PID);
+                                    break;
+                                }
+                                else
+                                    it++;
+                            }
+
+                            delete ptcl_erased->StellarEvolution;
+                            ptcl_erased->StellarEvolution = nullptr;
+                            fprintf(nbpout, "Merger induced zero mass particle (PID: %d) SEVN memory is free now\n", ptcl_erased->PID);
+                        }
+                        fflush(nbpout);
+#endif
                         
                         /* // (Query) EW: Here? I don't think so
                         NumberOfSingleParticle--;

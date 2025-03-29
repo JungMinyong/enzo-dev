@@ -124,6 +124,86 @@ void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls,
 	ParticleList.insert(ParticleList.end(), newCMptcls.begin(), newCMptcls.end());
 }
 
+void formBinariesAfterCommunication(std::vector<int>& newCMptcls, 
+	std::unordered_map<int,int>& existing, std::unordered_map<int,int>& terminated) {
+
+	assert(newCMptcls.empty());
+
+	Particle* ptcl;
+	Particle* NewCM;
+
+	int OriginalLastParticleIndex = LastParticleIndex;
+
+	for (int i = 0; i <= OriginalLastParticleIndex; i++) {
+		ptcl = &particles[i];
+		if (!ptcl->isActive)
+			continue;
+		if (ptcl->NewNumberOfNeighbor > 0) {
+			// fprintf(stdout, "GAR. Num: %d\n", ptcl->NewNumberOfNeighbor + 1); // for debugging by EW 2025.1.23
+			// fprintf(stdout, "GAR. PID: %d\n", ptcl->PID); // for debugging by EW 2025.1.23
+			NewCM = &particles[LastParticleIndex+1];
+			NewCM->clear();
+			NewCM->copyNewNeighbor(ptcl);
+			/* // for debugging by EW 2025.1.23
+			for (int j = 0; j < ptcl->NewNumberOfNeighbor; j++) {
+				fprintf(stdout, "GAR. PID: %d\n", particles[ptcl->NewNeighbors[j]].PID);
+			}
+			*/
+			NewCM->NewNeighbors[ptcl->NewNumberOfNeighbor] = ptcl->ParticleIndex;
+			NewCM->NewNumberOfNeighbor++;
+
+			LastParticleIndex++;
+		}
+	}
+
+	if (OriginalLastParticleIndex == LastParticleIndex) return;
+
+	// fprintf(stdout, "A. global_variable->NOP: %d, NOP: %d\n", global_variable->LastParticleIndex, LastParticleIndex);
+
+	mergeGroupCandidates(OriginalLastParticleIndex);	// Merge group candidates
+					// ex) A & B form a group and B & C form a group --> Merge so that A & B & C become one group!
+	
+	// fprintf(stdout, "B. global_variable->NOP: %d, NOP: %d\n", global_variable->LastParticleIndex, LastParticleIndex);
+
+	assert(LastParticleIndex > OriginalLastParticleIndex); 
+
+	while (terminated.size() != 0) {
+
+		Particle* ptcl = &particles[LastParticleIndex];
+		auto it = terminated.begin();
+		particles[it->first].copyNewNeighbor(ptcl);
+
+		existing.insert({it->first, it->second});
+		newCMptcls.push_back(it->first);
+		terminated.erase(it);
+		LastParticleIndex--;
+		if (OriginalLastParticleIndex == LastParticleIndex)
+			break;
+	}
+	if (OriginalLastParticleIndex != LastParticleIndex) {
+		for (int i = OriginalLastParticleIndex+1; i <= LastParticleIndex; i++) {
+			existing.insert({i, existing.size() % NumberOfWorker + 1});
+			newCMptcls.push_back(i);
+		}
+	}
+
+	for (int i: newCMptcls) {
+		// deleteNeighbors(i);
+		NewCM = &particles[i];
+		NewCM->ParticleIndex = i;
+		NewCM->PID = NewPID;
+		NewPID--;
+#ifdef DEBUG_ABYSS
+		std::cout << "New CM ParticleIndex: " << i << std::endl;
+		std::cout << "New CM PID: " << NewCM->PID << std::endl;
+#endif
+		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
+
+		NumberOfParticle += 1 - NewCM->NewNumberOfNeighbor;
+	}
+	global_variable->LastParticleIndex = LastParticleIndex;
+}
+
 
 void mergeGroupCandidates(int OriginalLastParticleIndex) {
 

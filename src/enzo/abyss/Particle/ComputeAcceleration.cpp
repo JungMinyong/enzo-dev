@@ -750,6 +750,11 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 												double *new_areg_dotdot, double *new_areg_dotdotdot, double *new_airr_dotdot, double *new_airr_dotdotdot) {
 
 	this->NumberOfNeighbor = 0;
+	this->NewNumberOfNeighbor = 0;
+
+	double x[Dim], v[Dim]; // 0 for current and 1 for predicted positions and velocities
+	double r2, vx; // 0 for current and 1 for predicted values
+
 	for (int dim = 0; dim < Dim; dim++) {
 		this->a_reg[dim][0] = new_areg[dim];
 		this->a_reg[dim][1] = new_areg_dot[dim];
@@ -786,6 +791,23 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 				ptcl_mem = &particles[ptcl_neighbor->Members[j]];
 				this->Neighbors[this->NumberOfNeighbor++] = ptcl_mem->ParticleIndex;
 			}
+		}
+		// Primordial binary search by EW 2025.3.27
+		if (this->TimeStepIrr == 0.0) {
+			r2 = 0.0;
+			vx = 0.0;
+			for (int dim=0; dim<Dim; dim++) {
+
+				x[dim] = ptcl_neighbor->Position[dim] - this->Position[dim];
+				v[dim] = ptcl_neighbor->Velocity[dim] - this->Velocity[dim];
+	
+				r2 += x[dim]*x[dim];
+				vx += v[dim]*x[dim];
+			}
+	
+			// if (sqrt(r2) < RSEARCH/position_unit && vx < 0)
+			if (sqrt(r2) < RSEARCH/position_unit) // not considering vx < 0 because this primordial binary search is for avoiding too small time step case
+				this->NewNeighbors[this->NewNumberOfNeighbor++] = ptcl_neighbor->ParticleIndex;
 		}
 	}
 	assert(this->NumberOfNeighbor >= NewNumberOfNeighborGPU);

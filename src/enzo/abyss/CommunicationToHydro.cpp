@@ -46,8 +46,11 @@ void broadcastFromRoot(int &data);
 void broadcastFromRoot(double &data);
 void broadcastFromRoot(ULL &data);
 //void CalculateAllAccelerationOnGPU(std::vector<Particle*> &particle);
-//void KSTermination(Particle* ptclCM, std::vector<Particle*> &particle, double current_time, ULL current_block);
 void InitializationAfterCommunication();
+
+#ifdef SEVN
+void initializeStellarEvolution();
+#endif
 
 
 using namespace std;
@@ -227,6 +230,10 @@ int InitialCommunication() {
 			particles[i].ParticleIndex = i;
 		}
 
+#ifdef SEVN
+		EnzoElapsedTime = EnzoCurrentTime; // This is 0.0 Myr
+		initializeStellarEvolution();
+#endif
 		
 		std::cerr << "nbody Pos     :" << Position[0][0] << ", " << Position[0][1] << std::endl;
 		// std::cerr << "nbody Pos    :" << Position[0][0]*EnzoLength << ", " << Position[0][1]*EnzoLength << std::endl;
@@ -257,9 +264,9 @@ int InitialCommunication() {
 
 
 	FixNumNeighbor = std::min((int) std::floor(NumberOfSingleParticle/2), FixNumNeighbor0);
-
+	/*
 	Particle *ptcl;
-	for (int i = 0; i < global_variable->LastParticleIndex; i++)
+	for (int i = 0; i <= global_variable->LastParticleIndex; i++)
 	{
 		ptcl = &particles[i];
 		fprintf(nbpout, "NBODY0: PID=%d\n", ptcl->PID);
@@ -275,6 +282,7 @@ int InitialCommunication() {
 		fprintf(nbpout, "NBODY0: Back Acc  Of news=(%.3e, %.3e, %.3e)\n",
 				ptcl->BackgroundAcceleration[0], ptcl->BackgroundAcceleration[1], ptcl->BackgroundAcceleration[2]);
 	}
+	*/
 
 	fprintf(nbpout, "NBODY+: %d particles loaded!\n", NumberOfSingleParticle);
 	// fflush(stdout);
@@ -303,6 +311,7 @@ int ReceiveFromEnzo() {
 	fprintf(stdout, "NBODY+: Waiting for Enzo to receive data...\n");
 	CommunicationInterBarrier();
 	fprintf(nbpout, "NBODY+: Receiving data from Enzo...\n");
+	fprintf(stdout, "NBODY+: Receiving data from Enzo...\n");
 
 	// Existing Particle Information
 	
@@ -367,6 +376,9 @@ int ReceiveFromEnzo() {
 	std::cout << "NBODY+: Data transferred!" << std::endl;
 	fprintf(stdout, "NBODY+: Data transferred!\n");
 	EnzoCurrentTime = EnzoCurrentTime*EnzoTime;
+#ifdef SEVN
+	EnzoElapsedTime = EnzoCurrentTime*1e4; // in Myr unit
+#endif
 	std::cout << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
 	std::cerr << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
 	std::cout << "Enzo TimeStep:" << TimeStep  << std::endl;
@@ -376,7 +388,8 @@ int ReceiveFromEnzo() {
 	//std::cout << "Enzo  Mass    :" << Mass[0]*EnzoMass << std::endl;
 	//std::cout << "enzo Time :" << TimeStep << std::endl;
 	//std::cout << "nbody Time:" << EnzoTimeStep << std::endl;
-	FixNumNeighbor = std::min((int) std::floor((NumberOfSingleParticle+newNumberOfSingleParticle-1)/2.0), FixNumNeighbor0);
+	// FixNumNeighbor = std::min((int) std::floor((NumberOfSingleParticle+newNumberOfSingleParticle-1)/2.0), FixNumNeighbor0); // original by EW 2025.3.27
+	FixNumNeighbor = static_cast<int>(sqrt(NumberOfSingleParticle+newNumberOfSingleParticle)); // test by EW 2025.3.27
 
 
 
@@ -794,26 +807,23 @@ int SendToEnzo(Worker *workers) {
 #ifdef FEWBODY
 			if (!ptcl->isActive) {
 				if (ptcl->CMPtclIndex != -1) {
+					ptclCM = &particles[ptcl->CMPtclIndex];
 					if (CMPtclsSet.find(ptcl->CMPtclIndex) == CMPtclsSet.end()) {
 
 						CMPtclsSet.insert(ptcl->CMPtclIndex);
-
-						ptclCM = &particles[ptcl->CMPtclIndex];
 						ptclCM->NewNumberOfNeighbor = 0;
-						ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = i;
 					}
-					else
-						ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = i;
+					ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = i;
 				}
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
-					if (ptcl->Mass == 0.0) { // merger induced zero-mass particles, PISN case // EW: Position -= 20 here?
+					if (ptcl->Mass < 0.0) { // merger induced zero-mass particles, PISN case // EW: Position -= 20 here?
 						// /* // Example code by EW 2025.3.13
 						// (Query to YS) This particle should be deleted in Enzo too!!!
 						Position[0][i] = -10*EnzoClusterPosition[0]; // Position is not initialized yet
 						deleteParticle(EnzoPIDs[i],index); // delete this particle in Abyss
 						NumberOfEscapeParticle++;
-						// */ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
+						// */ // (SEVN Query) this particle should be deleted in Enzo too
 					} 
 				}
 			}
@@ -879,26 +889,23 @@ int SendToEnzo(Worker *workers) {
 #ifdef FEWBODY
 			if (!ptcl->isActive) {
 				if (ptcl->CMPtclIndex != -1) {
+					ptclCM = &particles[ptcl->CMPtclIndex];
 					if (CMPtclsSet.find(ptcl->CMPtclIndex) == CMPtclsSet.end()) {
 
 						CMPtclsSet.insert(ptcl->CMPtclIndex);
-
-						ptclCM = &particles[ptcl->CMPtclIndex];
 						ptclCM->NewNumberOfNeighbor = 0;
-						ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = i+offset;
 					}
-					else
-						ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = i+offset;
+					ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = i+offset;
 				}
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
-					if(ptcl->Mass == 0.0) { // merger induced zero-mass particles, PISN case // EW: newPosition -= 20 here?
+					if(ptcl->Mass < 0.0) { // merger induced zero-mass particles, PISN case // EW: newPosition -= 20 here?
 						// /* // Example code by EW 2025.3.13
 						// (Query to YS) This particle should be deleted in Enzo too!!!
 						newPosition[0][i] = -10*EnzoClusterPosition[0];  // newPosition is not initialized yet
 						deleteParticle(EnzoPIDs[i+offset],index); // delete this particle in Abyss
 						NumberOfEscapeParticle++;
-						// */ // (Query to YS) After this routine, initialization process (neighbor search) is necessary in Abyss, if this index will be reused
+						// */ // (SEVN Query) this particle should be deleted in Enzo too
 					} 
 				}
 			}

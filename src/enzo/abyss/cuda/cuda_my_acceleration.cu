@@ -558,11 +558,20 @@ void GetAcceleration(
 			airr_dot[i+TargetStart][0] = h_AIrr[_six*i+3];
 			airr_dot[i+TargetStart][1] = h_AIrr[_six*i+4];
 			airr_dot[i+TargetStart][2] = h_AIrr[_six*i+5];
-
+			// /* // corrected version by EW 2025.3.29
+			h_atot[i + TargetStart] = h_result[_six * i] + h_AIrr[_six * i];                     // atotx
+			h_atot[i + TargetStart + NumTargetTotal] = h_result[_six * i + 1] + h_AIrr[_six * i + 1]; // atoty
+			h_atot[i + TargetStart + 2 * NumTargetTotal] = h_result[_six * i + 2] + h_AIrr[_six * i + 2]; // atotz
+			h_atot[i + TargetStart + 3 * NumTargetTotal] = h_result[_six * i + 3] + h_AIrr[_six * i + 3]; // atotx_dot
+			h_atot[i + TargetStart + 4 * NumTargetTotal] = h_result[_six * i + 4] + h_AIrr[_six * i + 4]; // atoty_dot
+			h_atot[i + TargetStart + 5 * NumTargetTotal] = h_result[_six * i + 5] + h_AIrr[_six * i + 5]; // atotz_dot
+			// */
+			/* // origianl version by MY
 			// save atot for the next step
 			for (int j=0; j<_six; j++) {
 				h_atot[_six*(i + TargetStart) + j] = h_result[_six*i + j] + h_AIrr[_six*i + j];
 			}
+			*/
 		}
 
 		#ifdef NSIGHT

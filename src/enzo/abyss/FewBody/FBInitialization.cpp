@@ -57,7 +57,7 @@ void Group::initialManager() {
 	// 1000000 in PeTar & ar.cxx
 	manager.step.initialSymplecticCofficients(-6); // Symplectic integrator order, should be even number
 	// -6 in PeTar & ar.cxx
-	manager.interrupt_detection_option = 2; // modify orbit or check interruption using modifyAndInterruptIter function
+	manager.interrupt_detection_option = 0; // modify orbit or check interruption using modifyAndInterruptIter function
 											// 0: turn off
 											// 1: modify the binary orbits based on detetion criterion
 											// 2. modify and also interrupt integrations
@@ -382,6 +382,7 @@ void NewFBInitialization(Particle* ptclCM) {
 
 	fprintf(workerout, "---------------------END-OF-NEW-GROUP---------------------\n\n");
 	fflush(workerout);
+	assert(bin_root.r*position_unit < 1.0); // for debugging by EW 2025.3.29
 }
 
 // Use this function when many-body (>3) group breaks during SDAR integration.
@@ -401,7 +402,7 @@ void NewFBInitialization3(Group* group) {
 	ptclCM->NewNumberOfNeighbor = 0;
 	for (int i = 0; i < ptclCM->NumberOfMember; i++) {
 		Particle* members = &particles[ptclCM->Members[i]];
-		if (members->Mass == 0)
+		if (members->Mass < 0)
 			members->CMPtclIndex = -1;
 		else {
 			ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor] = ptclCM->Members[i];

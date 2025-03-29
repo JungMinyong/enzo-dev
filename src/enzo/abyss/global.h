@@ -11,6 +11,7 @@
 
 #ifdef SEVN
 #include "IO.h"
+#include <map>
 #endif
 
 
@@ -105,6 +106,8 @@ extern FILE* mergerout;
 #ifdef SEVN
 extern FILE* SEVNout;
 extern IO* sevnio;
+extern std::multimap<double, int> SEVNList;
+extern double EnzoElapsedTime;
 #endif
 extern FILE* workerout;
 

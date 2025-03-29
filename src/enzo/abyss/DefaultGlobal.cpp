@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include "global.h"
 #include <unordered_map>
+#ifdef SEVN
+#include <map>
+#endif
 
 std::unordered_set<int> RegularList;
 int NumberOfWorker;
@@ -54,6 +57,8 @@ FILE* mergerout;
 #ifdef SEVN
 FILE* SEVNout;
 IO* sevnio = nullptr;
+std::multimap<double, int> SEVNList; // This constains the time of next SEVN evolution time and the particle index by EW 2025.3.27
+double EnzoElapsedTime; // (SEVN Query) [in Myr unit] I introduced this value for SEVN stellar evolution by EW 2025.3.27
 #endif
 FILE* workerout;
 
@@ -116,9 +121,8 @@ void DefaultGlobal() {
 		"-snmode", "delayed",
 		"-Z", "0.0002",
 		"-spin", "0.0",
-		"-tini", "zams", 
+		"-tini", "zams",
 		"-tf", "end",
-		// "-tf", "0.000122",
 		"-dtout", "events",
 		"-xspinmode", "geneva"};
 	std::vector<char*> c_args;
@@ -126,7 +130,7 @@ void DefaultGlobal() {
 		c_args.push_back(&arg[0]);
 	}
 
-	sevnio = new IO;
+	sevnio = new IO; // (SEVN Query) We should initialize sevnio only once. Here in Abyss, and somewhere else in Enzo by EW 2025.3.27
 	sevnio->load(c_args.size(), c_args.data());
 #endif
 

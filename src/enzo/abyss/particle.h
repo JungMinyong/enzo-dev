@@ -77,6 +77,9 @@ struct Particle {
 
 #ifdef SEVN
 	// For SEVN
+	// (SEVN Query) It seems that FormationTime = CreationTime. I didn't change this yet because there might be subtlety in unit conversion
+	// (SEVN Query) I think we also need Metallicity at the time of formation.
+	// (SEVN Query) InitialMass == ZAMS mass? Can I change InitialMass if steller merger happenes?
 	Star* StellarEvolution;
 	double FormationTime; // Myr // for restart
 	double WorldTime; // Myr // FormationTime + EvolutionTime
@@ -84,12 +87,10 @@ struct Particle {
 
 	Particle() {__initialize__();};
 	void __initialize__()
-	 {
-		InitialMass = 0.;	
+	{
+		InitialMass = 0.;
 		CreationTime = 0.;
 		DynamicalTime = 0.;
-		Position[0] = Position[1] = Position[2] = 0.0;
-		Velocity[0] = Velocity[1] = Velocity[2] = 0.0;
 		PID             = -1;
 		Mass            = 0;
 		RadiusOfNeighbor= -1;
@@ -108,8 +109,8 @@ struct Particle {
 		TimeBlockIrr    = 0;
 		TimeBlockReg    = 0;
 		for (int i=0; i<Dim; i++) {
-			Velocity[i]     = 0.;
 			Position[i]     = 0.;
+			Velocity[i]     = 0.;
 			NewPosition[i] = 0.;
 			NewVelocity[i] = 0.;
 			BackgroundAcceleration[i] = 0.;

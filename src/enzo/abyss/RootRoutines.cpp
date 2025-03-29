@@ -152,8 +152,8 @@ void RootRoutines()
 			global_time = NextRegTimeBlock * global_variable->time_step;
 
 #ifdef SEVN // (Query) EW: PISN should be deleted in PIDtoIndexMap, EnzoPID, ...
-			StellarEvolution(); // How about evolving particles inside RegularList only? by EW 2025.1.19
-								// Currently, evolving all the particles upto global_time
+			if (!SEVNList.empty() && SEVNList.begin()->first <= global_time*EnzoTimeStep*1e4 + EnzoElapsedTime)
+				StellarEvolution(); // Currently, evolving all the particles upto global_time
 #endif
 
 			end_point_routine = std::chrono::high_resolution_clock::now();

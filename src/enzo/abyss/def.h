@@ -25,6 +25,9 @@
 #define RSEARCH 1e-4 // 1e-4 // pc
 #define TSEARCH 1e-6 // 1e-6 // Myr
 
+// (SEVN Query) How to deal with particle type? How about following Enzo particle type or SEVN type?
+// (SEVN Query) Following Enzo looks fine because feedback will be processed inside Enzo.
+// (SEVN Query) But following SEVN also seems reasonable. 
 #define NormalStar 1
 #define Blackhole 32
 #define SingleStar 64

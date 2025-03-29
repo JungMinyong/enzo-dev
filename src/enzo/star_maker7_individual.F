@@ -124,6 +124,7 @@ c
       R_PREC   div, tdyn, dtot
       R_PREC   sndspdC
       R_PREC   isosndsp2, starmass, starfraction, bmass, jeanmass
+      R_PREC   x_rand, y_rand, z_rand
       parameter (sndspdC=1.3095d8)
 c
       ii = np
@@ -266,13 +267,18 @@ c  original             mp(ii)  = starfraction * d(i,j,k)
 c original               xp(ii) = xstart + (REAL(i,RKIND)-0.5_RKIND)*dx
 c original               yp(ii) = ystart + (REAL(j,RKIND)-0.5_RKIND)*dx
 c original               zp(ii) = zstart + (REAL(k,RKIND)-0.5_RKIND)*dx
-               call gaussian_random(dx, x1, xp(ii))
-               xp(ii) = xp(ii) + xstart + (REAL(i,RKIND)-0.5_RKIND)*dx
-               call gaussian_random(dx, x1, yp(ii))
-               yp(ii) = yp(ii) + ystart + (REAL(j,RKIND)-0.5_RKIND)*dx
-               call gaussian_random(dx, x1, zp(ii))
-               zp(ii) = zp(ii) + zstart + (REAL(k,RKIND)-0.5_RKIND)*dx
-c               
+               call random_number(x_rand)
+               xp(ii) = xstart + (REAL(i,RKIND)-1.0_RKIND + x_rand)*dx
+               call random_number(y_rand)
+               yp(ii) = ystart + (REAL(j,RKIND)-1.0_RKIND + y_rand)*dx
+               call random_number(z_rand)
+               zp(ii) = zstart + (REAL(k,RKIND)-1.0_RKIND + z_rand)*dx
+c gaussian               call gaussian_random(dx, x1, xp(ii))
+c gaussian               xp(ii) = xp(ii) + xstart + (REAL(i,RKIND)-0.5_RKIND)*dx
+c gaussian               call gaussian_random(dx, x1, yp(ii))
+c gaussian               yp(ii) = yp(ii) + ystart + (REAL(j,RKIND)-0.5_RKIND)*dx
+c gaussian               call gaussian_random(dx, x1, zp(ii))
+c gaussian               zp(ii) = zp(ii) + zstart + (REAL(k,RKIND)-0.5_RKIND)*dx     
                if (imethod .eq. 2) then
                   up(ii) = 0.5_RKIND*(u(i,j,k)+u(i+1,j,k))
                   vp(ii) = 0.5_RKIND*(v(i,j,k)+v(i,j+1,k))

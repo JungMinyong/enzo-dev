@@ -129,6 +129,9 @@ class grid
 		float *ParticleAccelerationNoStar[MAX_DIMENSION+1];  //  by YS
 		int NumberOfNbodyParticlesInGrid;
 		int NumberOfNewNbodyParticlesInGrid;
+		/* // (Feedback Query) by EW 2025.3.28
+		double *ParticleMassLoss; // mass loss of particles
+		*/
 #endif
 		float *ParticleMass;                     // pointer to mass array
 		PINT  *ParticleNumber;                   // unique identifier
@@ -2982,7 +2985,7 @@ class grid
 								void CalculatePotentialFieldNoStar(float *PotentialField, int DensNum, float DensityUnits,
 										float TimeUnits, float LengthUnits);
 
-								int grid::StarSplitter(int np, int* nnp);
+								// int grid::StarSplitter(int np, int* nnp);
 #endif
 								void CalculatePotentialField(float *PotentialField, int DensNum, float DensityUnits,
 										float TimeUnits, float LengthUnits);

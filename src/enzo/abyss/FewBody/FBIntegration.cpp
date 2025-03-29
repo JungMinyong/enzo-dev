@@ -1,6 +1,7 @@
 #ifdef FEWBODY
 #include "../global.h"
 #include <random>
+#include <map>
 
 #ifdef SEVN
 void Mix(Star* star1, Star* star2);
@@ -88,7 +89,7 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
     }
 // */
 
-// /* PN corrections
+/* PN corrections
     if (bin_interrupt.status == AR::InterruptStatus::none) { // Every bound orbit
         
         auto& bin_root = sym_int.info.getBinaryTreeRoot();
@@ -98,7 +99,7 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
         if (bin_interrupt.status == AR::InterruptStatus::none)
             sym_int.initialIntegration(next_time*global_variable->EnzoTimeStep); // Eunwoo: this should be fixed later // Eunwoo: I don't think so!
     }    
-// */
+*/
 
     if (bin_interrupt.status != AR::InterruptStatus::none) {
 
@@ -331,7 +332,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         remnantSpinMass(p1, p2);
         p1->radius = 2*p1->Mass/pow(299752.458/(velocity_unit/yr*pc/1e5), 2); // Schwartzschild radius
 
-        p2->Mass = 0.0;
+        p2->Mass = -1.0;
         fprintf(mergerout, "---------------Merger remnant properties---------------\n");
         fprintf(mergerout, "Position (pc) - x:%e, y:%e, z:%e, \n", p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -370,7 +371,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
 
         p1->dm += 0.5 * p2->Mass;
         p1->Mass = mcm;
-        p2->Mass = 0.0;
+        p2->Mass = -1.0;
         fprintf(mergerout, "---------------Merger remnant properties---------------\n");
         fprintf(mergerout, "Position (pc) - x:%e, y:%e, z:%e, \n", p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -409,41 +410,21 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
             // p1->dm = mcm - p1->Mass;
             // p2->dm = -p2->Mass;
             p1->Mass = mcm;
-            p2->Mass = 0.0;
+            p2->Mass = -1.0;
 
             p1->radius = 2.25461e-8/position_unit*pow(p1->Mass*mass_unit, 1./3); // stellar radius in code unit
 
             if (mcm*mass_unit > 2.2 && mcm*mass_unit < 600) {
-/*
-                std::vector<std::string> args = {"empty", // Not used
-                                            // "-myself", "/data/vinicius/sevn/build",
-                                            "-tables", "/data/vinicius/sevn/tables/SEVNtracks_parsec_ov04_AGB", 
-                                            //  "-tables", "/data/vinicius/NbodyPlus/SEVN/tables/SEVNtracks_MIST_AGB",
-                                            // "-tables_HE", "/data/vinicius/NbodyPlus/SEVN/tables/SEVNtracks_parsec_pureHe36",
-                                            // "-turn_WR_to_pureHe", "false",
-                                            "-snmode", "delayed",
-                                            "-Z", "0.0002",
-                                            "-spin", "0.0",
-                                            "-tini", "zams", 
-                                            "-tf", "end",
-                                            // "-tf", "0.000122",
-                                            "-dtout", "events",
-                                            "-xspinmode", "geneva"};
-                std::vector<char*> c_args;
-                for (auto& arg : args) {
-                    c_args.push_back(&arg[0]);
-                }
 
-                IO* sevnio; // Eunwoo: global variable -> We can initialize Star and Binstar class anywhere.
-                sevnio = new IO;
-                sevnio->load(c_args.size(), c_args.data());
-*/
                 std::vector<std::string> init_params{std::to_string(double(p1->Mass*mass_unit)), "0.0002", "0.0", "delayed", "zams", "end", "events"};
                 size_t id = p1->PID;
                 p1->StellarEvolution = new Star(sevnio, init_params, id, false);
 
-                p1->FormationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4;
-                p1->WorldTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4;
+                p1->FormationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime;
+                p1->WorldTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime;
+
+                SEVNList.insert({p1->WorldTime + p1->StellarEvolution->getp(Timestep::ID), p1->ParticleIndex});
+
                 SetRadius(p1);
                 fprintf(stdout, "New Star class made!\n");
                 fprintf(stdout, "PID: %d. Mass: %e Msol, Radius: %e pc\n", p1->PID, p1->Mass*mass_unit, p1->radius*position_unit);
@@ -457,13 +438,20 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         }
         else if (p1->StellarEvolution != nullptr && p2->StellarEvolution != nullptr) {
 
+            fprintf(nbpout, "Before Mix... p1 (PID: %d). Phase: %d, p2 (PID: %d). Phase: %d\n", p1->PID, int(p1->StellarEvolution->getp(Phase::ID)), p2->PID, int(p2->StellarEvolution->getp(Phase::ID)));
+
             Mix(p1->StellarEvolution, p2->StellarEvolution);
             fprintf(stdout, "Mix done!\n");
 
             if (p1->StellarEvolution->amiempty() && !p2->StellarEvolution->amiempty()) {
-                p1->Mass = 0.0;
+                p1->Mass = -1.0;
 
                 p2->Mass = p2->StellarEvolution->getp(Mass::ID)/mass_unit;
+
+                fprintf(nbpout, "After Mix... p1 (PID: %d). Mass: %e Msun,  StellarEvolution->get_zams: %e Msun\n", p1->PID, p1->Mass*mass_unit, p1->StellarEvolution->get_zams());
+                fprintf(nbpout, "After Mix... p2 (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", p2->PID, p2->Mass*mass_unit, p2->StellarEvolution->get_zams());
+                fprintf(nbpout, "p1: amiempty(): %d\n", p1->StellarEvolution->amiempty());
+                fprintf(nbpout, "p2: amiempty(): %d\n", p2->StellarEvolution->amiempty());
                 // p2->dm += p1->dm // not yet by EW 2025.1.20
                 // p1->dm = 0.0; // not yet by EW 2025.1.20
                 SetRadius(p2);
@@ -479,9 +467,14 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 fprintf(mergerout, "---------------------END-OF-MERGER---------------------\n\n");
             }
             else if (!p1->StellarEvolution->amiempty() && p2->StellarEvolution->amiempty()) {
-                p2->Mass = 0.0;
+                p2->Mass = -1.0;
 
                 p1->Mass = p1->StellarEvolution->getp(Mass::ID)/mass_unit;
+
+                fprintf(stdout, "After Mix... p1 (PID: %d). Mass: %e Msun,  StellarEvolution->get_zams: %e Msun\n", p1->PID, p1->Mass*mass_unit, p1->StellarEvolution->get_zams());
+                fprintf(stdout, "After Mix... p2 (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", p2->PID, p2->Mass*mass_unit, p2->StellarEvolution->get_zams());
+                fprintf(stdout, "p1: amiempty(): %d\n", p1->StellarEvolution->amiempty());
+                fprintf(stdout, "p2: amiempty(): %d\n", p2->StellarEvolution->amiempty());
                 // p1->dm += p2->dm // not yet by EW 2025.1.20
                 // p2->dm = 0.0; // not yet by EW 2025.1.20
                 SetRadius(p1);
@@ -498,9 +491,9 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
             }
             else if (p1->StellarEvolution->amiempty() && p2->StellarEvolution->amiempty()) { // Type Ia supernova
                 p1->dm += p1->Mass;
-                p1->Mass = 0.0;
+                p1->Mass = -1.0;
                 p2->dm += p2->Mass;
-                p2->Mass = 0.0;
+                p2->Mass = -1.0;
                 fprintf(mergerout, "---------------Merger remnant properties---------------\n");
                 fprintf(mergerout, "Type Ia Supernova event! Both of the stars becomes empty!\n");
                 fprintf(mergerout, "---------------------END-OF-MERGER---------------------\n\n");
@@ -520,7 +513,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
 
                 p2->Mass = p2->StellarEvolution->getp(Mass::ID)/mass_unit;
                 SetRadius(p2);
-                p1->Mass = 0.0;
+                p1->Mass = -1.0;
             }            
 
             fprintf(stdout, "Mix with no done!\n");
@@ -546,7 +539,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
 
                 p1->Mass = p1->StellarEvolution->getp(Mass::ID)/mass_unit;
                 SetRadius(p1);
-                p2->Mass = 0.0;
+                p2->Mass = -1.0;
             }
 
             fprintf(stdout, "Mix with no done!\n");
@@ -565,12 +558,17 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
     fflush(mergerout);
     fflush(stdout);
 #else
-        p1->radius = 2.25461e-8/position_unit*pow(p1->Mass*mass_unit, 1./3); // stellar radius in code unit
-
         p1->dm = mcm - p1->Mass;
         p2->dm = -p2->Mass;
         p1->Mass = mcm;
-        p2->Mass = 0.0;
+        p2->Mass = -1.0;
+        p1->radius = 2.25461e-8/position_unit*pow(p1->Mass*mass_unit, 1./3); // stellar radius in code unit
+
+        fprintf(mergerout, "---------------Merger remnant properties---------------\n");
+        fprintf(mergerout, "Position (pc) - x:%e, y:%e, z:%e, \n", p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
+        fprintf(mergerout, "Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
+        fprintf(mergerout, "Mass (Msol) - %e, \n", p1->Mass*mass_unit);
+        fprintf(mergerout, "---------------------END-OF-MERGER---------------------\n\n");
     }
     fflush(mergerout);   
 #endif
