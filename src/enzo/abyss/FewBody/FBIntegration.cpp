@@ -301,7 +301,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
 
     double radius;
 
-    if (p1->ParticleType == (Blackhole+SingleStar) && p2->ParticleType == (Blackhole+SingleStar)) {
+    if (p1->ParticleType >= BH && p2->ParticleType >= BH) {
 
         radius = (p1->radius > p2->radius) ? 3*p1->radius : 3*p2->radius; // r_ISCO == 3 * Schwartzschild radius
         fprintf(mergerout, "Separation: %e pc\n", dist(p1->Position, p2->Position)*position_unit);
@@ -339,10 +339,10 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "Mass (Msol) - %e, \n", p1->Mass*mass_unit);
         fprintf(mergerout, "---------------------END-OF-MERGER---------------------\n\n");
     }
-    else if ((p1->ParticleType == (Blackhole+SingleStar) && p2->ParticleType == (NormalStar+SingleStar)) ||
-            (p1->ParticleType == (NormalStar+SingleStar) && p2->ParticleType == (Blackhole+SingleStar))) {
+    else if ((p1->ParticleType >= BH && p2->ParticleType < BH) ||
+            (p1->ParticleType < BH && p2->ParticleType >= BH)) {
 
-        if (p2->ParticleType == (Blackhole+SingleStar)) 
+        if (p2->ParticleType >= BH) 
             std::swap(p1, p2); // p1 should be BH
 
         radius = 1.3*pow((p1->Mass + p2->Mass)/p2->Mass, 1./3)*p2->radius; // TDE radius
@@ -378,7 +378,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "Mass (Msol) - %e, \n", p1->Mass*mass_unit);
         fprintf(mergerout, "---------------------END-OF-MERGER---------------------\n\n");
     }
-    else if (p1->ParticleType == (NormalStar+SingleStar) && p2->ParticleType == (NormalStar+SingleStar)) {
+    else if (p1->ParticleType < BH && p2->ParticleType < BH) {
 
         radius = p1->radius + p2->radius; // Sum of two stellar radius
         // fprintf(mergerout, "Separation: %e pc\n", dist(p1->Position, p2->Position)*position_unit);
@@ -420,7 +420,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 size_t id = p1->PID;
                 p1->StellarEvolution = new Star(sevnio, init_params, id, false);
 
-                p1->FormationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime;
+                p1->CreationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime;
                 p1->WorldTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime;
 
                 SEVNList.insert({p1->WorldTime + p1->StellarEvolution->getp(Timestep::ID), p1->ParticleIndex});

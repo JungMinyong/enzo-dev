@@ -115,6 +115,7 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 	double *NbodyParticleMassTemp;
 	double *NbodyParticleCreationTimeTemp;
 	double *NbodyParticleDynamicalTimeTemp;
+	double *NbodyParticleMetallicityTemp;
 	double *NbodyParticlePositionTemp[MAX_DIMENSION];
 	double *NbodyParticleVelocityTemp[MAX_DIMENSION];
 	double *NbodyParticleAccelerationNoStarTemp[MAX_DIMENSION];
@@ -123,6 +124,7 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 	NbodyParticleMassTemp          = new double[LocalNumberOfNbodyParticles];
 	NbodyParticleCreationTimeTemp  = new double[LocalNumberOfNbodyParticles];
 	NbodyParticleDynamicalTimeTemp = new double[LocalNumberOfNbodyParticles];
+	NbodyParticleMetallicityTemp = new double[LocalNumberOfNbodyParticles];
 
 	for (int dim=0; dim<MAX_DIMENSION; dim++) {
 		NbodyParticlePositionTemp[dim]            = new double[LocalNumberOfNbodyParticles];
@@ -139,7 +141,7 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 			for (Temp = LevelArray[level1]; Temp; Temp = Temp->NextGridThisLevel) {
 				if (Temp->GridData->CopyNbodyParticlesFirst(&count, NbodyParticleIDTemp, NbodyParticleMassTemp,
 							NbodyParticlePositionTemp, NbodyParticleVelocityTemp, NbodyParticleAccelerationNoStarTemp,
-							NbodyParticleCreationTimeTemp, NbodyParticleDynamicalTimeTemp) == FAIL) {
+							NbodyParticleCreationTimeTemp, NbodyParticleDynamicalTimeTemp, NbodyParticleMetallicityTemp) == FAIL) {
 					ENZO_FAIL("Error in grid::CopyNbodyParticlesFirst.");
 				}
 			}
@@ -165,9 +167,11 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		char err_buffer[MPI_MAX_ERROR_STRING];
 		double *NbodyParticleCreationTime;
 		double *NbodyParticleDynamicalTime;
+		double *NbodyParticleMetallicity;
 
 		NbodyParticleCreationTime  = new double[NumberOfNbodyParticles];
 		NbodyParticleDynamicalTime = new double[NumberOfNbodyParticles];
+		NbodyParticleMetallicity   = new double[NumberOfNbodyParticles]; 
 
 
 		MPI_Gather(&LocalNumberOfNbodyParticles, 1, IntDataType, LocalNumberAll, 1, IntDataType, ROOT_PROCESSOR, enzo_comm);
@@ -194,6 +198,9 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		MPI_Wait(&request, &status);
 		MPI_Igatherv(NbodyParticleDynamicalTimeTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE,
 				NbodyParticleDynamicalTime, LocalNumberAll, start_index_all, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
+		MPI_Wait(&request, &status);
+		MPI_Igatherv(NbodyParticleMetallicityTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE,
+				NbodyParticleMetallicity, LocalNumberAll, start_index_all, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
 		MPI_Wait(&request, &status);
 
 		for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -234,6 +241,7 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 			MPI_Send(NbodyParticleMass         , NumberOfNbodyParticles, MPI_DOUBLE, 1, 201, inter_comm);
 			MPI_Send(NbodyParticleCreationTime , NumberOfNbodyParticles, MPI_DOUBLE, 1, 202, inter_comm);
 			MPI_Send(NbodyParticleDynamicalTime, NumberOfNbodyParticles, MPI_DOUBLE, 1, 203, inter_comm);
+			MPI_Send(NbodyParticleMetallicity  , NumberOfNbodyParticles, MPI_DOUBLE, 1, 204, inter_comm);
 
 			for (int dim=0; dim<MAX_DIMENSION; dim++) {
 				MPI_Send(NbodyParticlePosition[dim], NumberOfNbodyParticles, MPI_DOUBLE, 1, 300, inter_comm);
@@ -304,6 +312,9 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		if (NbodyParticleDynamicalTime != NULL)
 			delete [] NbodyParticleDynamicalTime;
 		NbodyParticleDynamicalTime = NULL;
+		if (NbodyParticleMetallicity != NULL)
+			delete [] NbodyParticleMetallicity;
+		NbodyParticleMetallicity = NULL;
 	} // endif : root processor
 	else {
 		/* Sending Index, NumberOfParticles, NbodyArrays to the root processs */
@@ -325,6 +336,9 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		MPI_Wait(&request, &status);
 		MPI_Igatherv(NbodyParticleDynamicalTimeTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE,
 				NULL, NULL, NULL, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
+		MPI_Wait(&request, &status);
+		MPI_Igatherv(NbodyParticleMetallicityTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE,
+			NULL, NULL, NULL, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
 		MPI_Wait(&request, &status);
 
 		for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -375,6 +389,10 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		delete [] NbodyParticleDynamicalTimeTemp;
 	NbodyParticleDynamicalTimeTemp = NULL;
 
+	if (NbodyParticleMetallicityTemp != NULL)
+		delete [] NbodyParticleMetallicityTemp;
+	NbodyParticleMetallicityTemp = NULL;
+
 	return SUCCESS;
 }
 
@@ -420,6 +438,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	double *NewNbodyParticleMassTemp;
 	double *NewNbodyParticleCreationTimeTemp;
 	double *NewNbodyParticleDynamicalTimeTemp;
+	double *NewNbodyParticleMetallicityTemp;
 	double *NewNbodyParticlePositionTemp[MAX_DIMENSION]; // feedback can affect velocity
 	double *NewNbodyParticleVelocityTemp[MAX_DIMENSION]; // feedback can affect velocity
 	double *NewNbodyParticleAccelerationNoStarTemp[MAX_DIMENSION];
@@ -431,6 +450,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	NewNbodyParticleMassTemp          = new double[NewLocalNumberOfNbodyParticles];
 	NewNbodyParticleCreationTimeTemp  = new double[NewLocalNumberOfNbodyParticles];
 	NewNbodyParticleDynamicalTimeTemp = new double[NewLocalNumberOfNbodyParticles];
+	NewNbodyParticleMetallicityTemp   = new double[NewLocalNumberOfNbodyParticles];
 	for (int dim=0; dim<MAX_DIMENSION; dim++) {
 		NewNbodyParticlePositionTemp[dim]            = new double[NewLocalNumberOfNbodyParticles];
 		NewNbodyParticleVelocityTemp[dim]            = new double[NewLocalNumberOfNbodyParticles];
@@ -447,7 +467,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 				if (Temp->GridData->CopyNbodyParticles(&count, NbodyParticleIDTemp, NbodyParticleMassTemp, NbodyParticleAccelerationNoStarTemp,
 							&count_new, NewNbodyParticleIDTemp, NewNbodyParticleMassTemp,
 							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp, NewNbodyParticleAccelerationNoStarTemp,
-							NewNbodyParticleCreationTimeTemp, NewNbodyParticleDynamicalTimeTemp
+							NewNbodyParticleCreationTimeTemp, NewNbodyParticleDynamicalTimeTemp, NewNbodyParticleMetallicityTemp
 							) == FAIL) {
 
 					//NbodyParticleAccelerationTemp
@@ -469,6 +489,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	double *NewNbodyParticleMass;
 	double *NewNbodyParticleCreationTime;
 	double *NewNbodyParticleDynamicalTime;
+	double *NewNbodyParticleMetallicity;
 	double *NewNbodyParticleVelocity[MAX_DIMENSION]; // feedback can affect velocity
 	double *NewNbodyParticlePosition[MAX_DIMENSION]; // feedback can affect velocity
 	double *NewNbodyParticleAccelerationNoStar[MAX_DIMENSION];
@@ -478,6 +499,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	NewNbodyParticleMass          = new double[NumberOfNewNbodyParticles];
 	NewNbodyParticleCreationTime  = new double[NumberOfNewNbodyParticles];
 	NewNbodyParticleDynamicalTime = new double[NumberOfNewNbodyParticles];
+	NewNbodyParticleMetallicity	  = new double[NumberOfNewNbodyParticles];
 
 	for (int dim=0; dim<MAX_DIMENSION; dim++) {
 		NewNbodyParticlePosition[dim]            = new double[NumberOfNewNbodyParticles];
@@ -540,6 +562,8 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 			MPI_Wait(&request, &status);
 			MPI_Igatherv(NewNbodyParticleDynamicalTimeTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE,
 					NewNbodyParticleDynamicalTime, NewLocalNumberAll, start_index_all_new, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
+			MPI_Igatherv(NewNbodyParticleMetallicityTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE,
+				NewNbodyParticleMetallicity, NewLocalNumberAll, start_index_all_new, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
 			MPI_Wait(&request, &status);
 
 			for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -604,6 +628,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 			MPI_Send(NewNbodyParticleMass         , NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 201, inter_comm);
 			MPI_Send(NewNbodyParticleCreationTime , NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 202, inter_comm);
 			MPI_Send(NewNbodyParticleDynamicalTime, NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 203, inter_comm);
+			MPI_Send(NewNbodyParticleMetallicity  , NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 204, inter_comm);
 
 			for (int dim=0; dim<MAX_DIMENSION; dim++) {
 				MPI_Send(NewNbodyParticlePosition[dim]          , NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 300, inter_comm);
@@ -676,6 +701,10 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 			delete [] NewNbodyParticleDynamicalTime;
 		NewNbodyParticleDynamicalTime = NULL;
 
+		if (NewNbodyParticleMetallicity != NULL)
+			delete [] NewNbodyParticleMetallicity;
+		NewNbodyParticleMetallicity = NULL;
+
 		fprintf(stdout, "ENZO: 2\n");
 
 	} // endif : root processor
@@ -723,6 +752,9 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 			MPI_Wait(&request, &status);
 			MPI_Igatherv(NewNbodyParticleDynamicalTimeTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE,
 					NULL, NULL, NULL, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
+			MPI_Wait(&request, &status);
+			MPI_Igatherv(NewNbodyParticleMetallicityTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE,
+				NULL, NULL, NULL, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,&request);
 			MPI_Wait(&request, &status);
 
 			for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -785,6 +817,9 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	if (NewNbodyParticleDynamicalTimeTemp != NULL)
 		delete [] NewNbodyParticleDynamicalTimeTemp;
 	NewNbodyParticleDynamicalTimeTemp = NULL;
+	if (NewNbodyParticleMetallicityTemp != NULL)
+		delete [] NewNbodyParticleMetallicityTemp;
+	NewNbodyParticleMetallicityTemp = NULL;
 
 	fprintf(stdout, "ENZO: 4\n");
 	return SUCCESS;

@@ -129,9 +129,6 @@ class grid
 		float *ParticleAccelerationNoStar[MAX_DIMENSION+1];  //  by YS
 		int NumberOfNbodyParticlesInGrid;
 		int NumberOfNewNbodyParticlesInGrid;
-		/* // (Feedback Query) by EW 2025.3.28
-		double *ParticleMassLoss; // mass loss of particles
-		*/
 #endif
 		float *ParticleMass;                     // pointer to mass array
 		PINT  *ParticleNumber;                   // unique identifier
@@ -1824,7 +1821,7 @@ class grid
 
 		int CopyNbodyParticlesFirst(int* count,int NbodyParticleIDTemp[], double NbodyParticleMassTemp[], 
 				double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[], double *NbodyParticleAccelerationNoStarTemp[],
-				double *NbodyParticleCreationTimeTmp, double *NbodyParticleDynamicalTimeTmp) {
+				double *NbodyParticleCreationTimeTemp, double *NbodyParticleDynamicalTimeTemp, double *NbodyParticleMetallicityTemp) {
 
 			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
 
@@ -1835,8 +1832,9 @@ class grid
 				if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
 					NbodyParticleMassTemp[*count]         = ParticleMass[i]*dv;
 					NbodyParticleIDTemp[*count]           = ParticleNumber[i];
-					NbodyParticleCreationTimeTmp[*count]  = ParticleAttribute[0][i];
-					NbodyParticleDynamicalTimeTmp[*count] = ParticleAttribute[1][i];
+					NbodyParticleCreationTimeTemp[*count]  = ParticleAttribute[0][i];
+					NbodyParticleDynamicalTimeTemp[*count] = ParticleAttribute[1][i];
+					NbodyParticleMetallicityTemp[*count]   = ParticleAttribute[2][i];
 
 					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -1860,7 +1858,7 @@ class grid
 		int CopyNbodyParticles(int* count,int NbodyParticleIDTemp[], double NbodyParticleMassTemp[], double *NbodyParticleAccelerationNoStarTemp[],
 				int* count_new, int NewNbodyParticleIDTemp[], double NewNbodyParticleMassTemp[],
 				double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[], double *NewNbodyParticleAccelerationNoStarTemp[],
-				double *NewNbodyParticleCreationTimeTmp, double *NewNbodyParticleDynamicalTimeTmp
+				double *NewNbodyParticleCreationTimeTemp, double *NewNbodyParticleDynamicalTimeTemp, double *NewNbodyParticleMetallicityTemp
 				) {
 
 			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
@@ -1873,8 +1871,9 @@ class grid
 					//fprintf(stderr, "Mass Of NewNbodyParticles=%lf in Copy\n", ParticleMass[i]*dv);
 					NewNbodyParticleMassTemp[*count_new]         = ParticleMass[i]*dv;
 					NewNbodyParticleIDTemp[*count_new]           = ParticleNumber[i];
-					NewNbodyParticleCreationTimeTmp[*count_new]  = ParticleAttribute[0][i];
-					NewNbodyParticleDynamicalTimeTmp[*count_new] = ParticleAttribute[1][i];
+					NewNbodyParticleCreationTimeTemp[*count_new]  = ParticleAttribute[0][i];
+					NewNbodyParticleDynamicalTimeTemp[*count_new] = ParticleAttribute[1][i];
+					NewNbodyParticleMetallicityTemp[*count_new]    = ParticleAttribute[2][i];
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
 						//if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
 						NewNbodyParticlePositionTemp[dim][*count_new] = ParticlePosition[dim][i];
@@ -1944,6 +1943,61 @@ class grid
 			} // ENDFOR number of particles
 			return SUCCESS;
 		}
+#ifdef SEVN
+		// /*
+		int UpdateNbodyParticles(int* count,
+				int NumberOfNbodyParticles,int NbodyParticleIDTemp[],
+				double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[],
+				int *NbodyParticleFeedbackTypeTemp[], double *NbodyParticleMassLossTemp[],
+				int NewNumberOfNbodyParticles,int NewNbodyParticleIDTemp[],
+				double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[],
+				int *NewNbodyParticleFeedbackTypeTemp[], double *NewNbodyParticleMassLossTemp[]) {
+
+			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+			for (int i=0; i < NumberOfParticles; i++) {
+				for (int j=0; j<NumberOfNbodyParticles; j++) {
+					if (ParticleNumber[i] == NbodyParticleIDTemp[j]) {
+						//fprintf(stdout,"Escaped PID=%d, x=%lf\n", ParticleNumber[i], NbodyParticlePositionTemp[0][j]);
+						if (NbodyParticlePositionTemp[0][j] < -10 ) {
+							fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[i]);
+							NbodyParticlePositionTemp[0][j] += 20;
+							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
+						} // particle removal
+						for (int dim=0; dim<MAX_DIMENSION; dim++) {
+							ParticlePosition[dim][i] = NbodyParticlePositionTemp[dim][j];
+							ParticleVelocity[dim][i] = NbodyParticleVelocityTemp[dim][j];
+						} // ENDFOR dim
+						ParticleFeedbackType[i] = NbodyParticleFeedbackTypeTemp[j];
+						ParticleMassLoss[i]		= NbodyParticleMassLossTemp[j];
+						(*count)++;
+						break;
+					} // ENDIF partID matched
+				} // ENDFOR nbody particles
+				for (int j=0; j<NewNumberOfNbodyParticles; j++) {
+					if (ParticleNumber[i] == NewNbodyParticleIDTemp[j]) {
+						ParticleType[i] = PARTICLE_TYPE_NBODY;
+						if (NewNbodyParticlePositionTemp[0][j] < -10 ) {
+							NewNbodyParticlePositionTemp[0][j] += 20;
+							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
+						} // particle removal
+						for (int dim=0; dim<MAX_DIMENSION; dim++) {
+							ParticlePosition[dim][i] = NewNbodyParticlePositionTemp[dim][j];
+							ParticleVelocity[dim][i] = NewNbodyParticleVelocityTemp[dim][j];
+						} // ENDFOR dim
+						ParticleFeedbackType[i] = NewNbodyParticleFeedbackTypeTemp[j];
+						ParticleMassLoss[i]		= NewNbodyParticleMassLossTemp[j];
+						(*count)++;
+						break;
+					} // ENDIF partID matched
+				} // ENDFOR new nbody particles
+			} // ENDFOR number of particles
+			return SUCCESS;
+		}
+		// */
+#endif
 
 		int IdentifyNbodyParticles() {
 

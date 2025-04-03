@@ -423,7 +423,8 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
         Particle *mem_ptclCM;
         for (int i = 0; i < newCMptcls.size(); i++)
         {
-            ptclCM = &particles[newCMptcls[i]]; // 2025.01.10 edited to newCMptcls[i] by YS
+            ptclCM = &particles[newCMptcls[i]];
+            fprintf(stdout, "New primordial binary is detected! (PID: %d)\n", ptclCM->PID);
 
             Queue queue;
             int rank_new, rank_delete;
@@ -524,7 +525,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
     //initializeTime(queue_scheduler, workers, ParticleIndices);
     // ParticleIndices.clear(); // commented out by EW 2025.3.11
     // ParticleIndices.shrink_to_fit(); // commented out by EW 2025.3.11
-    // /*
+    /*
     if (newNumberOfSingleParticle > 0) {
         for (int i = 0; i <= global_variable->LastParticleIndex; i++)
         {
@@ -538,6 +539,6 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
                     ptcl->a_irr[0][0], ptcl->a_irr[1][0], ptcl->a_irr[2][0]);
         }
     }
-    // */
+    */
     fflush(nbpout);
 }

@@ -2187,10 +2187,17 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		}
 
 		// this is for background acceleration
+  #ifdef SEVN
+    if (NumberOfParticleAttributes < 11) {
+      NumberOfParticleAttributes = 11;
+      fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
+    }
+  #else
 		if (NumberOfParticleAttributes < 7) {
 			NumberOfParticleAttributes = 7;
 			fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
 		}
+  #endif
 
 		if (isNbodyParticleIdentification) {
 			fprintf(stdout, "LengthUnits=%e\n", LengthUnits);

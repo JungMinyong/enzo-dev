@@ -22,12 +22,11 @@ void initializeStellarEvolution() {
 
         Particle* ptcl = &particles[i];
 
-        ptcl->ParticleType = NormalStar+SingleStar;
-        ptcl->FormationTime = 0.0;
         ptcl->WorldTime = 0.0;
 
         if (ptcl->Mass*mass_unit < 2.2) {
 			ptcl->radius = 2.25461e-8/position_unit*pow(ptcl->Mass*mass_unit, 1/3);
+            ptcl->ParticleType = NoFeedbackStar;
             // stellar radius in code unit
             // extrapolated from the solar radius (it is assumed that low-mass stars have the same stellar density to the sun)
 
@@ -35,8 +34,11 @@ void initializeStellarEvolution() {
 			continue;
 		}
 
+        // ptcl->ParticleType = (ptcl->Mass*mass_unit >= 8.0) ? HighmassStar : LowmassStar;
+        ptcl->ParticleType = NormalStar;
+
         // Mass, metallicity, spin, sn model, tini, tf, dtout, random seed(optional)
-		std::vector<std::string> init_params{std::to_string(double(ptcl->Mass*mass_unit)), "0.0002", "0.0", "delayed", "zams", "end", "events"};
+		std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(double(ptcl->InitialMetallicity)), "0.0", "delayed", "zams", "end", "events"};
 
         size_t id = ptcl->PID;
         ptcl->StellarEvolution = new Star(sevnio, init_params, id, false);
@@ -87,7 +89,6 @@ void UpdateEvolution(Particle* ptcl) {
 
     if (!ptcl->StellarEvolution->amiremnant()) {
         SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
-        // fprintf(SEVNout, "PID: %d, Phase: %d, Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, int(ptcl->StellarEvolution->getp(Phase::ID)), ptcl->StellarEvolution->getp(Mass::ID), ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit;
@@ -96,13 +97,15 @@ void UpdateEvolution(Particle* ptcl) {
         fprintf(SEVNout, "PID: %d, Phase: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, int(ptcl->StellarEvolution->getp(Phase::ID)), ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
     }
     else if (ptcl->StellarEvolution->amiWD()) {
-        // SEVNList.erase(ptcl->ParticleIndex);
-        // fprintf(SEVNout, "WD. PID: %d, Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->StellarEvolution->getp(Mass::ID), ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+
+        ptcl->ParticleType = NS_WD;
+
         ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit;
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
         fprintf(SEVNout, "WD. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+        /* // WD is not kicked in SEVN by EW 2025.4.1
         if (ptcl->StellarEvolution->vkick[3] > 0.0) {
             fprintf(SEVNout, "\tKicked velocity: (%e, %e, %e) [km/s]\n", ptcl->StellarEvolution->vkick[0], ptcl->StellarEvolution->vkick[1], ptcl->StellarEvolution->vkick[2]);
             for(int i=0; i<Dim; i++)
@@ -110,15 +113,20 @@ void UpdateEvolution(Particle* ptcl) {
             if (ptcl->CMPtclIndex != -1)
                 ptcl->setBinaryInterruptState(BinaryInterruptState::kicked);
         }
+        */
     }
     else if (ptcl->StellarEvolution->amiNS()) {
-        // SEVNList.erase(ptcl->ParticleIndex);
-        // fprintf(SEVNout, "NS. PID: %d, Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->StellarEvolution->getp(Mass::ID), ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+
+        ptcl->ParticleType = NS_WD;
+
+        /* // (SEVN Query) dm set to be 0 as SN is processed in Enzo by EW 2025.4.1
         ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
+        */
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // this might be wrong!
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
         fprintf(SEVNout, "NS. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+        /* // (SEVN Query) This particle will be kicked after SN feedback in Enzo by EW 2025.4.1
         if (ptcl->StellarEvolution->vkick[3] > 0.0) {
             fprintf(SEVNout, "\tKicked velocity: (%e, %e, %e) [km/s]\n", ptcl->StellarEvolution->vkick[0], ptcl->StellarEvolution->vkick[1], ptcl->StellarEvolution->vkick[2]);
             for(int i=0; i<Dim; i++)
@@ -126,18 +134,22 @@ void UpdateEvolution(Particle* ptcl) {
             if (ptcl->CMPtclIndex != -1)
                 ptcl->setBinaryInterruptState(BinaryInterruptState::kicked);
         }
+        */
     }
     else if (ptcl->StellarEvolution->amiBH()) {
-        // SEVNList.erase(ptcl->ParticleIndex);
-        // fprintf(SEVNout, "BH. PID: %d, Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->StellarEvolution->getp(Mass::ID), ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+
+        ptcl->ParticleType = BH;
+
         setBHspin(ptcl);
+        /* // (SEVN Query) dm set to be 0 as SN is processed in Enzo by EW 2025.4.1
         ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
+        */
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // this might be wrong!
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
         fprintf(SEVNout, "BH. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         fprintf(SEVNout, "\tDimless spin. mag: %e, (%e, %e, %e)\n", ptcl->StellarEvolution->getp(Xspin::ID), ptcl->a_spin[0], ptcl->a_spin[1], ptcl->a_spin[2]);
-        ptcl->ParticleType = Blackhole+SingleStar;
+        /* // (SEVN Query) This particle will be kicked after SN feedback in Enzo by EW 2025.4.1
         if (ptcl->StellarEvolution->vkick[3] > 0.0) {
             fprintf(SEVNout, "\tKicked velocity: (%e, %e, %e) [km/s]\n", ptcl->StellarEvolution->vkick[0], ptcl->StellarEvolution->vkick[1], ptcl->StellarEvolution->vkick[2]);
             for(int i=0; i<Dim; i++)
@@ -145,11 +157,15 @@ void UpdateEvolution(Particle* ptcl) {
             if (ptcl->CMPtclIndex != -1)
                 ptcl->setBinaryInterruptState(BinaryInterruptState::kicked);
         }
+        */
     }
     else if (ptcl->StellarEvolution->amiempty()) {
-        // SEVNList.erase(ptcl->ParticleIndex);
-        // fprintf(SEVNout, "Empty. PID: %d, Mass: %e Msol, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->StellarEvolution->getp(Mass::ID), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+
+        ptcl->ParticleType = BH; // (SEVN Query) Actually, this is not a BH, but this will become empty star after processing SN feedback in Enzo
+
+        /* // (SEVN Query) dm set to be 0 as SN is processed in Enzo by EW 2025.4.1
         ptcl->dm += ptcl->Mass; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
+        */
         ptcl->Mass = -1.0;
         fprintf(SEVNout, "Empty. PID: %d, ZAMS Mass: %e Msol, Time: %e Myr, Worldtime: %e Myr\n", ptcl->PID, ptcl->StellarEvolution->get_zams(), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         if (ptcl->CMPtclIndex != -1) {
@@ -165,8 +181,10 @@ void UpdateEvolution(Particle* ptcl) {
             ptcl->isActive = false;
             NumberOfParticle--;
         }
+        /* // (SEVN Query) Let's delete later... by EW 2025.4.1
         delete ptcl->StellarEvolution;
         ptcl->StellarEvolution = nullptr;
+        */
     }
 }
 

@@ -61,7 +61,7 @@ int InitialCommunication() {
 
 	int *PID;
 	double *Mass, *Position[Dim], *Velocity[Dim], *BackgroundAcceleration[Dim];
-	double *CreationTime, *DynamicalTime;
+	double *CreationTime, *DynamicalTime, *Metallicity;
 	double TimeStep, TimeUnits, LengthUnits, VelocityUnits, DensityUnits;//MassUnits;
 
 	MPI_Request request;
@@ -78,10 +78,12 @@ int InitialCommunication() {
 		Mass          = new double[NumberOfSingleParticle];
 		CreationTime  = new double[NumberOfSingleParticle];
 		DynamicalTime = new double[NumberOfSingleParticle];
+		Metallicity   = new double[NumberOfSingleParticle];
 		MPI_Recv(PID          , NumberOfSingleParticle, MPI_INT   , 0, 200, inter_comm, &status);
 		MPI_Recv(Mass         , NumberOfSingleParticle, MPI_DOUBLE, 0, 201, inter_comm, &status);
 		MPI_Recv(CreationTime , NumberOfSingleParticle, MPI_DOUBLE, 0, 202, inter_comm, &status);
 		MPI_Recv(DynamicalTime, NumberOfSingleParticle, MPI_DOUBLE, 0, 203, inter_comm, &status);
+		MPI_Recv(Metallicity  , NumberOfSingleParticle, MPI_DOUBLE, 0, 204, inter_comm, &status);
 
 		for (int dim=0; dim<Dim; dim++) {
 			Position[dim] = new double[NumberOfSingleParticle];
@@ -224,8 +226,8 @@ int InitialCommunication() {
 				Position[dim][i]               -= ClusterPosition[dim];
 			}
 			EnzoPIDs[i] = PID[i];
-			particles[i].set(PID, Mass, CreationTime, DynamicalTime, Position, Velocity,
-							BackgroundAcceleration, i);
+			particles[i].set(PID, Mass, CreationTime, DynamicalTime, Metallicity, 
+								Position, Velocity, BackgroundAcceleration, i);
 			PIDtoIndexMap.insert({PID[i], i});
 			particles[i].ParticleIndex = i;
 		}
@@ -252,6 +254,7 @@ int InitialCommunication() {
 		delete [] Mass;
 		delete [] CreationTime;
 		delete [] DynamicalTime;
+		delete [] Metallicity;
 		for (int dim=0; dim<Dim; dim++) {
 			delete[] Position[dim];
 			delete[] Velocity[dim];
@@ -300,7 +303,7 @@ int ReceiveFromEnzo() {
 	int *PID, *newPID;
 	double *BackgroundAcceleration[Dim];
 	double *Mass, *newMass, *newPosition[Dim], *newVelocity[Dim], *newBackgroundAcceleration[Dim];
-	double *newCreationTime, *newDynamicalTime;
+	double *newCreationTime, *newDynamicalTime, *newMetallicity;
 	double TimeStep;
 
 	MPI_Request request;
@@ -343,10 +346,12 @@ int ReceiveFromEnzo() {
 		newMass          = new double[newNumberOfSingleParticle];
 		newCreationTime  = new double[newNumberOfSingleParticle];
 		newDynamicalTime = new double[newNumberOfSingleParticle];
+		newMetallicity   = new double[newNumberOfSingleParticle];
 		MPI_Recv(newPID          , newNumberOfSingleParticle, MPI_INT   , 0, 200, inter_comm, &status);
 		MPI_Recv(newMass         , newNumberOfSingleParticle, MPI_DOUBLE, 0, 201, inter_comm, &status);
 		MPI_Recv(newCreationTime , newNumberOfSingleParticle, MPI_DOUBLE, 0, 202, inter_comm, &status);
 		MPI_Recv(newDynamicalTime, newNumberOfSingleParticle, MPI_DOUBLE, 0, 203, inter_comm, &status);
+		MPI_Recv(newMetallicity  , newNumberOfSingleParticle, MPI_DOUBLE, 0, 204, inter_comm, &status);
 
 		for (int dim=0; dim<Dim; dim++) {
 			newPosition[dim]               = new double[newNumberOfSingleParticle];
@@ -357,6 +362,15 @@ int ReceiveFromEnzo() {
 			MPI_Recv(newBackgroundAcceleration[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 500, inter_comm, &status);
 		}
 	}
+
+#ifdef SEVN
+	// (SEVN Query) We should receive ParticleFeedbackType!
+	// (SEVN Query) After processing, wind & SN feedback, 
+	// 1. dm should be set to 0
+	// 2. ParticleType should be changed. ex) BH_preFB -> BH
+	// 3. If the particle is kicked, kicked velocity should be accounted
+	// 4. For PISN case, SEVN memory should be free
+#endif
 
 	/***************************************************
 	 * at some point we have to reconstruct *particle* vector because there is redundance due to particle removal.
@@ -542,9 +556,8 @@ int ReceiveFromEnzo() {
 				global_variable->LastParticleIndex++;
 			}
 
-			particles[index].set(newPID, newMass, newCreationTime, newDynamicalTime, newPosition, newVelocity,
-					//newBackgroundAcceleration, NormalStar+SingleParticle+NewParticle, i);
-					newBackgroundAcceleration, NormalStar, i);
+			particles[index].set(newPID, newMass, newCreationTime, newDynamicalTime, newMetallicity,
+									newPosition, newVelocity, newBackgroundAcceleration, i);
 			particles[index].ParticleIndex = index;
 			PIDtoIndexMap.insert({newPID[i], index});
 			EnzoPIDs[NumberOfSingleParticle+i] = newPID[i];
@@ -674,8 +687,9 @@ int ReceiveFromEnzo() {
 	if (newNumberOfSingleParticle != 0) {
 		delete[] newPID;
 		delete[] newMass;
-		delete[] newDynamicalTime;
 		delete[] newCreationTime;
+		delete[] newDynamicalTime;
+		delete[] newMetallicity;
 		for (int dim=0; dim<Dim; dim++) {
 			delete[] newBackgroundAcceleration[dim];
 			delete[] newPosition[dim];
@@ -732,6 +746,10 @@ int SendToEnzo(Worker *workers) {
 	MPI_Status status;
 
 	double *Position[Dim], *Velocity[Dim], *newPosition[Dim], *newVelocity[Dim];
+#ifdef SEVN
+	int *ParticleType, *newParticleType;
+	double *MassLoss, *newMassLoss;
+#endif
 	int index;
 	Particle *ptcl;
 
@@ -739,11 +757,19 @@ int SendToEnzo(Worker *workers) {
 		if (NumberOfSingleParticle-newNumberOfSingleParticle != 0) {
 			Position[dim]    = new double[NumberOfSingleParticle-newNumberOfSingleParticle];
 			Velocity[dim]    = new double[NumberOfSingleParticle-newNumberOfSingleParticle];
+#ifdef SEVN
+			ParticleType	= new int[NumberOfSingleParticle-newNumberOfSingleParticle];
+			MassLoss		= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
+#endif
 		}
 
 		if (newNumberOfSingleParticle > 0) {
 			newPosition[dim] = new double[newNumberOfSingleParticle];
 			newVelocity[dim] = new double[newNumberOfSingleParticle];
+#ifdef SEVN
+			newParticleType	= new int[newNumberOfSingleParticle];
+			newMassLoss		= new double[newNumberOfSingleParticle];
+#endif
 		}
 	}
 
@@ -863,6 +889,11 @@ int SendToEnzo(Worker *workers) {
 			}
 			//fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
 
+#ifdef SEVN
+			ParticleType[i] = ptcl->ParticleType;
+			MassLoss[i]     = ptcl->MassLoss/EnzoMass; // (SEVN Query) Is this right unit conversion?
+#endif
+
 			if ((ptcl == nullptr) && (i != NumberOfSingleParticle-newNumberOfSingleParticle-1)) // (Query) EW: this seems unnecessary. particles is no longer dynamically allocated
 			{
 				std::cout << "NBODY+: Warning! ParticleChain for Communication has been broken!" << std::endl;
@@ -942,6 +973,11 @@ int SendToEnzo(Worker *workers) {
 				NumberOfEscapeParticle++;
 				// (Query) binary termination?
 			}
+
+#ifdef SEVN
+			newParticleType[i] = ptcl->ParticleType;
+			newMassLoss[i]     = ptcl->MassLoss/EnzoMass; // (SEVN Query) Is this right unit conversion?
+#endif
 		}
 		
 #ifdef FEWBODY
@@ -1035,6 +1071,10 @@ int SendToEnzo(Worker *workers) {
 			MPI_Send(Position[dim], NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 300, inter_comm);
 			MPI_Send(Velocity[dim], NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 400, inter_comm);
 		}
+#ifdef SEVN
+		MPI_Send(ParticleType, NumberOfSingleParticle - newNumberOfSingleParticle, MPI_INT, 0, 800, inter_comm);
+		MPI_Send(MassLoss, NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 900, inter_comm);
+#endif
 	}
 	//std::cerr << "NBODY+: Escape particles=" << EscapeParticleNum << std::endl;
 
@@ -1044,6 +1084,10 @@ int SendToEnzo(Worker *workers) {
 			MPI_Send(newPosition[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 500, inter_comm);
 			MPI_Send(newVelocity[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 600, inter_comm);
 		}
+#ifdef SEVN
+		MPI_Send(newParticleType, newNumberOfSingleParticle, MPI_INT, 0, 1000, inter_comm);
+		MPI_Send(newMassLoss, newNumberOfSingleParticle, MPI_DOUBLE, 0, 1100, inter_comm);
+#endif
 	}
 
 
@@ -1137,6 +1181,12 @@ int SendToEnzo(Worker *workers) {
 			delete[] newVelocity[dim];
 		}
 	}
+#ifdef SEVN
+	delete[] ParticleType;
+	delete[] MassLoss;
+	delete[] newParticleType;
+	delete[] newMassLoss;
+#endif
 
 	NumberOfSingleParticle -= NumberOfEscapeParticle;
 #ifdef FEWBODY

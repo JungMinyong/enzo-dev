@@ -57,15 +57,16 @@ struct Particle {
 	double NewVelocity[Dim]; // this might be initialized in NewFBInitialization by EW 2025.1.7
 	double RadiusOfNeighbor; //this should be squared of it. // this might be initialized in NewFBInitialization by EW 2025.1.7
 	double BackgroundAcceleration[Dim]; // this might be initialized in NewFBInitialization by EW 2025.1.7
-	double InitialMass;
-	double CreationTime;
+	double InitialMass;				// [in Msun] for SEVN by EW 2025.4.3
+	double CreationTime;			// [in Myr] for SEVN by EW 2025.4.3
 	double DynamicalTime;
+	double InitialMetallicity; 		// [in Absolute unit] for SEVN by EW 2025.4.3
 
 	// For SDAR
 	bool isActive;
 	bool isUpdateToDate;
 	double radius; // used in SEVN too
-	double dm; // Stellar mass which will be distributed to nearby gas cells // used in SEVN too
+	double dm; // Stellar mass which will be distributed to nearby gas cells // used in SEVN too // code unit, this means WindEjectedMass by EW 2025.4.3
 	double time_check; // time to check next interrupt
 	long long int binary_state; // contain two parts, low bits (first BINARY_STATE_ID_SHIFT bits) is binary interrupt state and high bits are pair ID
 	double a_spin[3]; // dimensionless spin parameter a
@@ -77,18 +78,17 @@ struct Particle {
 
 #ifdef SEVN
 	// For SEVN
-	// (SEVN Query) It seems that FormationTime = CreationTime. I didn't change this yet because there might be subtlety in unit conversion
-	// (SEVN Query) I think we also need Metallicity at the time of formation.
 	// (SEVN Query) InitialMass == ZAMS mass? Can I change InitialMass if steller merger happenes?
 	Star* StellarEvolution;
-	double FormationTime; // Myr // for restart
-	double WorldTime; // Myr // FormationTime + EvolutionTime
+	double WorldTime; // Myr // CreationTime + EvolutionTime
+	double SNEjectedMass; // Msol
 #endif
 
 	Particle() {__initialize__();};
 	void __initialize__()
 	{
 		InitialMass = 0.;
+		InitialMetallicity = 0.;
 		CreationTime = 0.;
 		DynamicalTime = 0.;
 		PID             = -1;
@@ -96,7 +96,7 @@ struct Particle {
 		RadiusOfNeighbor= -1;
 		NumberOfNeighbor= 0;
 		NewNumberOfNeighbor= 0;
-		ParticleType    = -9999;
+		ParticleType    = NoFeedbackStar;
 		CurrentTimeIrr  = 0.; // consistent with actual current time
 		CurrentTimeReg  = 0.;
 		CurrentBlockIrr = 0; // consistent with actual current time
@@ -134,8 +134,8 @@ struct Particle {
 		NumberOfMember = 0;
 #ifdef SEVN
 		StellarEvolution = nullptr;
-		FormationTime = 0.0; // Myr
 		WorldTime = 0.0; // Myr
+		SNEjectedMass = 0.0; // Msol
 #endif
 	}
 
@@ -147,6 +147,7 @@ struct Particle {
 		}
 		*/
 
+	// This function is not used in Enzo-Abyss
 	void initialize(double *data, int PID) {
 		this->PID          = PID;
 		this->Position[0]  = data[0];
@@ -181,7 +182,7 @@ struct Particle {
 		this->NumberOfMember = 0;
 
 #ifndef SEVN
-		this->ParticleType = NormalStar+SingleStar;
+		this->ParticleType = NoFeedbackStar;
 		this->radius = 2.25461e-8/position_unit*pow(this->Mass*1e9, 1./3); // stellar radius in code unit
 		/*
 		if (this->Mass*1e9 > 8) {
@@ -349,11 +350,7 @@ struct Particle {
 			this->NewNeighbors[i] = ptcl->NewNeighbors[i];
 	}
 
-	void set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime,
-			 double *Position[Dim], double *Velocity[Dim], double *BackgroundAcceleration[Dim],
-			 int ParticleType, int &i);
-
-	void set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime,
+	void set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime, double *Metallicity,
 			 double *Position[Dim], double *Velocity[Dim],
 			 double *BackgroundAcceleration[Dim], int &i);
 	void update(double *Mass, double *BackgroundAcceleration[Dim], int &i);

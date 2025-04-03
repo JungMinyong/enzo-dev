@@ -803,8 +803,9 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 #ifdef NBODY
 			// just for tests
 			for (int j = 0; j < nParticles; j++) {
-				Attribute[0][j] = -99999;
+				Attribute[0][j] = 0.0; // (SEVN Query) modified by EW 2025.4.3 // It should be changed if we consider restart case...
 				Attribute[1][j] = StarMakerMinimumDynamicalTime*3.15e7/TimeUnits; // Dynamical time
+				Attribute[2][j] = TestProblemData.MetalFractionByMass; // test by EW 2025.4.3
 			}
 #endif
 
@@ -828,6 +829,17 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 				this->ReadParticlesFromFile(
 					Number, Type, Position, Velocity, Mass,
 					NbodyDir, PARTICLE_TYPE_NBODY, count, dx);
+
+#ifdef NBODY
+#ifdef SEVN
+			// just for tests
+			for (int j = 0; j < nParticles; j++) {
+				Attribute[NumberOfParticleAttributes-8+0][j] = Mass[j] / (SolarMass / MassUnits / dx / dx / dx); // InitialMass [Msol]
+				Attribute[NumberOfParticleAttributes-8+1][j] = 0.0; 	// WindEjectedMass
+				Attribute[NumberOfParticleAttributes-8+2][j] = 0.0; 	// SNEjectedMass
+			}
+#endif
+#endif
 
 
 #ifdef NBODY_old

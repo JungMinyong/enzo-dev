@@ -80,11 +80,20 @@
 
 #define MAX_REFINE_REGIONS               8000
 
+
 #ifdef NBODY
 #ifdef WINDS 
+#ifdef SEVN
+#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  14
+#else
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  10
+#endif
+#else
+#ifdef SEVN
+#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  11
 #else
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  7
+#endif
 #endif
 #else
 #ifdef WINDS 
@@ -573,6 +582,10 @@ typedef long long int   HDF5_hid_t;
 #define SINGLE_SUPERNOVA 12
 #define DISTR_FEEDBACK 13
 #define MOM_STAR 14
+
+#ifdef NBODY
+#define INDIVIDUAL 20
+#endif
 
 #define STARMAKE_METHOD(A) (StarParticleCreation >> (A) & 1)
 #define STARFEED_METHOD(A) (StarParticleFeedback >> (A) & 1)
