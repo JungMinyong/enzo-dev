@@ -830,14 +830,14 @@ int SendToEnzo(Worker *workers) {
 #ifdef SEVN
 			InitialMass[i]		= ptcl->InitialMass; // This is already in Msun unit!!!
 			WindEjectedMass[i]	= ptcl->dm*mass_unit;
-			if (WindEjectedMass[i] > 0.0) {
-				fprintf(stderr, "Wind!!! PID: %d. WindMassEjected: %e Msun\n", ptcl->PID, WindEjectedMass[i]);
-			}
 			SNEjectedMass[i]	= ptcl->SNEjectedMass*mass_unit;
-			if (SNEjectedMass[i] > 0.0) {
-				fprintf(stderr, "SN!!! PID: %d. SNEjectedMass: %e Msun\n", ptcl->PID, SNEjectedMass[i]);
-			}
 			Temperature[i]		= ptcl->T_eff;
+
+			if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
+				fprintf(stderr, "Feedback info send to Enzo...\n");
+				fprintf(stderr, "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
+						ptcl->PID, InitialMass[i], WindEjectedMass[i], SNEjectedMass[i], Temperature[i]);
+			}
 #endif
 
 			if ((ptcl == nullptr) && (i != NumberOfSingleParticle-newNumberOfSingleParticle-1)) // (Query) EW: this seems unnecessary. particles is no longer dynamically allocated
@@ -925,6 +925,12 @@ int SendToEnzo(Worker *workers) {
 			newWindEjectedMass[i]	= ptcl->dm*mass_unit;
 			newSNEjectedMass[i]		= ptcl->SNEjectedMass*mass_unit;
 			newTemperature[i]		= ptcl->T_eff;
+
+			if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
+				fprintf(stderr, "Feedback info send to Enzo...\n");
+				fprintf(stderr, "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
+						ptcl->PID, InitialMass[i], WindEjectedMass[i], SNEjectedMass[i], Temperature[i]);
+			}
 #endif
 		}
 		
