@@ -152,7 +152,7 @@ void RootRoutines()
 			global_time = NextRegTimeBlock * global_variable->time_step;
 
 #ifdef SEVN // (Query) EW: PISN should be deleted in PIDtoIndexMap, EnzoPID, ...
-			if (!SEVNList.empty() && SEVNList.begin()->first <= global_time*EnzoTimeStep*1e4 + EnzoElapsedTime)
+			if (!SEVNList.empty() && SEVNList.begin()->first <= global_time*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime)
 				StellarEvolution(); // Currently, evolving all the particles upto global_time
 #endif
 

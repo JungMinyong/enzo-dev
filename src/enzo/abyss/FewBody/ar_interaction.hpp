@@ -678,16 +678,16 @@ public:
 
         Float radius = 0.0;
 
-        if (p1->ParticleType >= BH && p2->ParticleType == BH) {
+        if (p1->ParticleType >= BlackHole && p2->ParticleType == BlackHole) {
             radius = (p1->radius > p2->radius) ? 3*p1->radius : 3*p2->radius; // r_ISCO == 3 * Schwartzschild raiuds
         }
-        else if (p1->ParticleType >= BH && p2->ParticleType < BH) {
+        else if (p1->ParticleType >= BlackHole && p2->ParticleType < BlackHole) {
             radius = 1.3*pow((p1->Mass + p2->Mass)/p2->Mass, 1./3)*p2->radius; // TDE radius
         }
-        else if (p1->ParticleType < BH && p2->ParticleType >= BH) {
+        else if (p1->ParticleType < BlackHole && p2->ParticleType >= BlackHole) {
             radius = 1.3*pow((p1->Mass + p2->Mass)/p1->Mass, 1./3)*p1->radius; // TDE radius
         }
-        else if (p1->ParticleType < BH && p2->ParticleType < BH) {
+        else if (p1->ParticleType < BlackHole && p2->ParticleType < BlackHole) {
             radius = p1->radius + p2->radius; // Sum of two stellar radius
         }
 

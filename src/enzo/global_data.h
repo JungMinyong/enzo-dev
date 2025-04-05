@@ -57,6 +57,12 @@ EXTERN int *NewNbodyParticleIDTemp;
 EXTERN double *NbodyParticleMass;
 EXTERN double *NbodyParticlePosition[MAX_DIMENSION];
 EXTERN double *NbodyParticleVelocity[MAX_DIMENSION];
+#ifdef SEVN
+EXTERN double *NbodyParticleInitialMass;
+EXTERN double *NbodyParticleWindEjectedMass;
+EXTERN double *NbodyParticleSNEjectedMass;
+EXTERN double *NbodyParticleTemperature;
+#endif
 EXTERN double *NbodyParticleAcceleration[MAX_DIMENSION][HERMITE_ORDER];
 EXTERN double *NbodyParticleAccelerationOld[MAX_DIMENSION][HERMITE_ORDER];
 EXTERN double *NbodyParticleAccelerationNoStar[MAX_DIMENSION];

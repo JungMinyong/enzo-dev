@@ -118,6 +118,24 @@ void InitializeNbodyArrays(int) {
 		NbodyParticleVelocity[dim] = new double[NumberOfNbodyParticles];
 
 	}
+
+#ifdef SEVN
+	if (NbodyParticleInitialMass != NULL)
+		delete [] NbodyParticleInitialMass;
+	NbodyParticleInitialMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleWindEjectedMass != NULL)
+		delete [] NbodyParticleWindEjectedMass;
+	NbodyParticleWindEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleSNEjectedMass != NULL)
+		delete [] NbodyParticleSNEjectedMass;
+	NbodyParticleSNEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleTemperature != NULL)
+		delete [] NbodyParticleTemperature;
+	NbodyParticleTemperature = new double[NumberOfNbodyParticles];
+#endif
 }
 
 
@@ -158,6 +176,24 @@ void DeleteNbodyArrays(void) {
 			NbodyParticleAcceleration[dim][i] = NULL;
 		}
 		*/
+
+#ifdef SEVN
+	if (NbodyParticleInitialMass != NULL)
+		delete [] NbodyParticleInitialMass;
+	NbodyParticleInitialMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleWindEjectedMass != NULL)
+		delete [] NbodyParticleWindEjectedMass;
+	NbodyParticleWindEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleSNEjectedMass != NULL)
+		delete [] NbodyParticleSNEjectedMass;
+	NbodyParticleSNEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleTemperature != NULL)
+		delete [] NbodyParticleTemperature;
+	NbodyParticleTemperature = new double[NumberOfNbodyParticles];
+#endif
 }
 
 

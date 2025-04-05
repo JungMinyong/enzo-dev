@@ -81,7 +81,8 @@ struct Particle {
 	// (SEVN Query) InitialMass == ZAMS mass? Can I change InitialMass if steller merger happenes?
 	Star* StellarEvolution;
 	double WorldTime; // Myr // CreationTime + EvolutionTime
-	double SNEjectedMass; // Msol
+	double SNEjectedMass; // code unit
+	double T_eff; // [Kelvin] for wind feedback
 #endif
 
 	Particle() {__initialize__();};
@@ -135,7 +136,8 @@ struct Particle {
 #ifdef SEVN
 		StellarEvolution = nullptr;
 		WorldTime = 0.0; // Myr
-		SNEjectedMass = 0.0; // Msol
+		SNEjectedMass = 0.0; // code unit
+		T_eff = 0.0; // [Kelvin] for wind feedback
 #endif
 	}
 

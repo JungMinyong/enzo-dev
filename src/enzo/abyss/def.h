@@ -29,9 +29,9 @@
 // (SEVN Query) Particle types for SEVN and feedback in Enzo (for AEOS someday...)
 #define NoFeedbackStar 0 // No SEVN (M_zams < 2.2 Msun) // No feedback in Enzo
 #define NormalStar 1
-#define NS_WD 2
-#define BH 3
-#define MBH 4 // Massive BH, which acceretes gas and AGN feedback in Enzo
+#define NeutronStar_WhiteDwarf 2
+#define BlackHole 3
+#define MassiveBlackHole 4 // Massive BH, which acceretes gas and AGN feedback in Enzo
 
 
 #define MIN_LEVEL_BUFFER 30

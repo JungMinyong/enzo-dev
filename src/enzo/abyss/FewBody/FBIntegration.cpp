@@ -301,7 +301,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
 
     double radius;
 
-    if (p1->ParticleType >= BH && p2->ParticleType >= BH) {
+    if (p1->ParticleType >= BlackHole && p2->ParticleType >= BlackHole) {
 
         radius = (p1->radius > p2->radius) ? 3*p1->radius : 3*p2->radius; // r_ISCO == 3 * Schwartzschild radius
         fprintf(mergerout, "Separation: %e pc\n", dist(p1->Position, p2->Position)*position_unit);
@@ -339,10 +339,10 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "Mass (Msol) - %e, \n", p1->Mass*mass_unit);
         fprintf(mergerout, "---------------------END-OF-MERGER---------------------\n\n");
     }
-    else if ((p1->ParticleType >= BH && p2->ParticleType < BH) ||
-            (p1->ParticleType < BH && p2->ParticleType >= BH)) {
+    else if ((p1->ParticleType >= BlackHole && p2->ParticleType < BlackHole) ||
+            (p1->ParticleType < BlackHole && p2->ParticleType >= BlackHole)) {
 
-        if (p2->ParticleType >= BH) 
+        if (p2->ParticleType >= BlackHole) 
             std::swap(p1, p2); // p1 should be BH
 
         radius = 1.3*pow((p1->Mass + p2->Mass)/p2->Mass, 1./3)*p2->radius; // TDE radius
@@ -378,7 +378,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "Mass (Msol) - %e, \n", p1->Mass*mass_unit);
         fprintf(mergerout, "---------------------END-OF-MERGER---------------------\n\n");
     }
-    else if (p1->ParticleType < BH && p2->ParticleType < BH) {
+    else if (p1->ParticleType < BlackHole && p2->ParticleType < BlackHole) {
 
         radius = p1->radius + p2->radius; // Sum of two stellar radius
         // fprintf(mergerout, "Separation: %e pc\n", dist(p1->Position, p2->Position)*position_unit);

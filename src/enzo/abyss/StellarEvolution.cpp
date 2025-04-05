@@ -45,7 +45,24 @@ void initializeStellarEvolution() {
         SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
 
 		ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
+        ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
     }
+}
+
+void initializeStellarEvolution(int ParticleIndex) {
+
+    Particle* ptcl = &particles[ParticleIndex];
+
+    ptcl->WorldTime = EnzoElapsedTime;
+    ptcl->ParticleType = NormalStar;
+    std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(double(ptcl->InitialMetallicity)), "0.0", "delayed", "zams", "end", "events"};
+
+    size_t id = ptcl->PID;
+    ptcl->StellarEvolution = new Star(sevnio, init_params, id, false);
+    SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
+
+    ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
+    ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
 }
 
 void setBHspin(Particle* ptcl) {
@@ -63,23 +80,38 @@ void setBHspin(Particle* ptcl) {
 void StellarEvolution() {
 
     Particle* ptcl;
+    double Mass_before = 0; // in Msol unit
     while (!SEVNList.empty()) {
          
         auto it = SEVNList.begin();
         ptcl = &particles[it->second];
 
         ptcl->WorldTime += ptcl->StellarEvolution->getp(Timestep::ID);
+        Mass_before = ptcl->StellarEvolution->getp(Mass::ID);
         ptcl->StellarEvolution->evolve();
+        if (!ptcl->StellarEvolution->amiremnant()) {
+            ptcl->dm += (Mass_before - ptcl->StellarEvolution->getp(Timestep::ID))/mass_unit;
+            ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
+        }
+        else
+            ptcl->SNEjectedMass = (Mass_before - ptcl->StellarEvolution->getp(Timestep::ID))/mass_unit;
 
-        while (ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID) <= global_time * EnzoTimeStep * 1e4 + EnzoElapsedTime) {
+        while (ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID) <= global_time * global_variable->EnzoTimeStep * 1e4 + EnzoElapsedTime) {
             ptcl->WorldTime += ptcl->StellarEvolution->getp(Timestep::ID);
+            Mass_before = ptcl->StellarEvolution->getp(Mass::ID);
             ptcl->StellarEvolution->evolve();
+            if (!ptcl->StellarEvolution->amiremnant()) {
+                ptcl->dm += (Mass_before - ptcl->StellarEvolution->getp(Timestep::ID))/mass_unit;
+                ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
+            }
+            else
+                ptcl->SNEjectedMass = (Mass_before - ptcl->StellarEvolution->getp(Timestep::ID))/mass_unit;
         }
 
         it = SEVNList.erase(it);
         UpdateEvolution(ptcl);
 
-        if (SEVNList.empty() || SEVNList.begin()->first > global_time * EnzoTimeStep * 1e4 + EnzoElapsedTime)
+        if (SEVNList.empty() || SEVNList.begin()->first > global_time * global_variable->EnzoTimeStep * 1e4 + EnzoElapsedTime)
             break;
     }
     fflush(SEVNout);
@@ -89,7 +121,7 @@ void UpdateEvolution(Particle* ptcl) {
 
     if (!ptcl->StellarEvolution->amiremnant()) {
         SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
-        ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
+        // ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit;
         if (ptcl->Mass*mass_unit > ptcl->StellarEvolution->get_max_zams()) // VMS correction; constant stellar density is assumed
@@ -98,9 +130,9 @@ void UpdateEvolution(Particle* ptcl) {
     }
     else if (ptcl->StellarEvolution->amiWD()) {
 
-        ptcl->ParticleType = NS_WD;
+        ptcl->ParticleType = NeutronStar_WhiteDwarf;
 
-        ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
+        // ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit;
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
@@ -117,7 +149,7 @@ void UpdateEvolution(Particle* ptcl) {
     }
     else if (ptcl->StellarEvolution->amiNS()) {
 
-        ptcl->ParticleType = NS_WD;
+        ptcl->ParticleType = NeutronStar_WhiteDwarf;
 
         /* // (SEVN Query) dm set to be 0 as SN is processed in Enzo by EW 2025.4.1
         ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
@@ -138,7 +170,7 @@ void UpdateEvolution(Particle* ptcl) {
     }
     else if (ptcl->StellarEvolution->amiBH()) {
 
-        ptcl->ParticleType = BH;
+        ptcl->ParticleType = BlackHole;
 
         setBHspin(ptcl);
         /* // (SEVN Query) dm set to be 0 as SN is processed in Enzo by EW 2025.4.1
@@ -161,7 +193,7 @@ void UpdateEvolution(Particle* ptcl) {
     }
     else if (ptcl->StellarEvolution->amiempty()) {
 
-        ptcl->ParticleType = BH; // (SEVN Query) Actually, this is not a BH, but this will become empty star after processing SN feedback in Enzo
+        ptcl->ParticleType = BlackHole; // (SEVN Query) Actually, this is not a BH, but this will become empty star after processing SN feedback in Enzo
 
         /* // (SEVN Query) dm set to be 0 as SN is processed in Enzo by EW 2025.4.1
         ptcl->dm += ptcl->Mass; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.

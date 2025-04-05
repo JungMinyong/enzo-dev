@@ -838,9 +838,9 @@
 
     ifeq ($(CONFIG_NBODY),yes)
         ERROR_NBODY = 0
-	    ASSEMBLE_NBODY_DEFINES = -DNBODY -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DFEWBODY -D GPU #-D SIMD #-D OMP
-	    ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY)
-	    ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES) -I/data/vinicius/enzo-abyss-EW/src/enzo/abyss/SDAR/src
+	    ASSEMBLE_NBODY_DEFINES = -DNBODY -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DFEWBODY -DSEVN #-D GPU #-D SIMD #-D OMP
+	    ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY) -L/data/vinicius/sevn/build/lib64/sevn -lsevn_lib_shared
+	    ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES) -I/data/vinicius/enzo-abyss-EW/src/enzo/abyss/SDAR/src -I/data/vinicius/sevn/build/include/sevn
 	    OBJS_NBODY_LIB = $(OBJS_NBODY_ALL)
     endif
 

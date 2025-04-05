@@ -833,11 +833,8 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 #ifdef NBODY
 #ifdef SEVN
 			// just for tests
-			for (int j = 0; j < nParticles; j++) {
+			for (int j = 0; j < nParticles; j++)
 				Attribute[NumberOfParticleAttributes-8+0][j] = Mass[j] / (SolarMass / MassUnits / dx / dx / dx); // InitialMass [Msol]
-				Attribute[NumberOfParticleAttributes-8+1][j] = 0.0; 	// WindEjectedMass
-				Attribute[NumberOfParticleAttributes-8+2][j] = 0.0; 	// SNEjectedMass
-			}
 #endif
 #endif
 
