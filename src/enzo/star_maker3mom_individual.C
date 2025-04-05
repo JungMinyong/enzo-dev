@@ -1,19 +1,41 @@
+#ifdef NBODY
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <algorithm> 
+#include "ErrorExceptions.h"
+#include "macros_and_parameters.h"
 #include "phys_constants.h"
+#include "typedefs.h"
+#include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
 #include "Grid.h"
+#include "Hierarchy.h"
+#include "TopGridData.h"
+#include "LevelHierarchy.h"
+#include "CommunicationUtilities.h"
+
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
     float *TemperatureUnits, float *TimeUnits,
     float *VelocityUnits, FLOAT Time);
 
+void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, float *mu, const float &yield) {
 
+	int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num;
+	if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
+		Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
+		ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
+	}
 
+    int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum, MetalIaNum, MetalIINum;
+    if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+        ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
-int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, float *mu, const float &yield) {
-
-    // We need ParticleInitialMass, ParticleWindMassLoss, ParticleSNejectedMass
-
-    // ds - CellWidthTemp
-    // sn_param - StarEnergyToThermalFeedback
+    // We need InitialMass, WindEjectedLoss, SNEjectedMass, Effective_temperature
 
     // dx = CellWidthTemp == float(CellWidth[0][0])
 
@@ -27,18 +49,11 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
 
 
     int nx = this->GridDimension[0], ny = this->GridDimension[1], nz = this->GridDimension[2];
-    int ibuff = this->GhostZones;
+    int ibuff = NumberOfGhostZones;
     float xstart = this->CellLeftEdge[0][0];
     float ystart = this->CellLeftEdge[1][0];
     float zstart = this->CellLeftEdge[2][0];
 
-
-
-    // int ip, jp, kp; // index of the cell that the star particle resides in
-    int distrad; // feedback distribution radius in cells
-    float dist_mass_cells; 
-    float mass_per_cell;
-    float energy, energy_per_cell;
     float xfc, yfc, zfc, xfcshift, yfcshift, zfcshift;
     float fbuff;
     float face_shift;
@@ -47,10 +62,16 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
     float xface, yface, zface, xpos, ypos, zpos;
     int ic, jc, kc;
     float dxc, dyc, dzc;
+
+    // Assuming 3x3x3 cube, calculate cell distribution
+    int distrad = 3; // feedback distribution radius in cells
+    float dist_mass_cells = distrad*distrad*distrad;
+
+    float mass_per_cell;
+    float energy, energy_per_cell;
+    
     float kinf;
-    float realmass;
     float energy51;
-    float msolar_e51 = 1800.0; // one solar rest mass energy divided by 10^51 erg
     float Zsol, num_d, d_ave;
     float mu_cell;
     float t_PDS, R_PDS;
@@ -63,6 +84,11 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
     float m_eject;
     float energy_before, energy_after, mass_before, mass_after, kin_energy_before, kin_energy_after;
     float ke_injected;
+
+    float mass_ejected_Msun;
+    float T_eff;
+    float v_wind_low_cgs = 20.0 * km_cm;
+    float v_wind_high_cgs = 100.0 * km_cm;
 
     // Allocate a 3D array using pointers to pointers
     float*** u1 = new float**[4];
@@ -98,56 +124,11 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
         }
     }
 
-
-
     for (int n=0; n < this->NumberOfParticles; n++) {
-        // creation time >= 0 && mass > 0 and particle_type == star or nbody_star
+        // Feedback condition: creation time >= 0 && (WindEjectedMass > 0.0 || SNejectedMass > 0.0)
         // (SEVN Query) This conditions might need to be fixed later!
-        if (this->ParticleAttribute[0][n] >= 0 && ParticleMass[n] > 0 && (ParticleType[n] == 2 || ParticleType[n] == 101)) {
-
-            // Mass loss by stellar wind feedback
-            // Mass loss & momentum feedback
-            if (this->ParticleWindMassLoss[n] >= 0) {
-
-                // 1.5 * k_B * N * T +  kinetic energy of wind ==> Let's assume fully thermalized wind as AEOS did!
-
-                // Stellar mass for AGB stars (M <= 8 Msun, v_wind = 20 km/s)
-                if (this->ParticleInitialMass[n] <= 8.0) {
-
-                } 
-                // Stellar mass for massive stars (M > 8 Msun, v_wind = 100 km/s)
-                else {
-
-                }
-            }
-
-            // Supernova feedback
-            if (this->ParticleSNejectedMass[n] >= 0) {
-                
-                // Compute index of the cell that the star particle resides in.
-                // ip = int((this->ParticlePosition[0][n] - xstart)/dx) + 1;
-                // jp = int((this->ParticlePosition[1][n] - ystart)/dx) + 1;
-                // kp = int((this->ParticlePosition[2][n] - zstart)/dx) + 1;
-
-                // Assuming 3x3x3 cube, calculate cell distribution
-                distrad = 3;
-                dist_mass_cells = distrad*distrad*distrad;
-
-                // Subtract ejected mass from particle (ejection due to winds)
-                // (SEVN Query) // I think this is redundant
-                // this->ParticleMass[n] -= this->ParticleMassLoss[n];
-
-                // Calculate mass per cell (total 27) ejected
-                // (SEVN Query) ParticleSNejectedMass might be Msol unit?s
-                mass_per_cell = this->ParticleSNejectedMass[n] * SolarMass / MassUnits / dist_mass_cells; // (SEVN Query) This should be code unit!!!
-
-                // Calculate how much of the star formation in this timestep would have gone into supernova energy
-                // (SEVN Query) Let's use 10^51 erg here!
-                // energy = sn_param * mform * (clight/vunits) * (clight/vunits);
-                // energy_per_cell = energy / dist_mass_cells;
-
-                energy = 1e51 / EnergyUnits; // (SEVN Query) This should be code unit!!!
-                energy_per_cell = energy / dist_mass_cells;
+        if (this->ParticleAttribute[0][n] >= 0 && (
+            ParticleAttribute[NumberOfParticleAttributes-8+1][n] > 0.0 || ParticleAttribute[NumberOfParticleAttributes-8+2][n] > 0.0)) {
 
                 if (this->ParticlePosition[0][n] < xstart || this->ParticlePosition[0][n] > xstart + dx * nx ||
                     this->ParticlePosition[1][n] < ystart || this->ParticlePosition[1][n] > ystart + dx * ny ||
@@ -214,13 +195,283 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
                 dyc = jc + 1.0 - ypos;
                 dzc = kc + 1.0 - zpos;
 
+            // Stellar wind feedback
+            if (this->ParticleAttribute[NumberOfParticleAttributes-8+1][n] > 0.0) {
+
+                mass_ejected_Msun = this->ParticleAttribute[NumberOfParticleAttributes-8+1][n];
+                T_eff = this->ParticleAttribute[NumberOfParticleAttributes-8+3][n];
+                assert(T_eff > 0.0);
+
+                // Stellar mass for AGB stars (M <= 8 Msun, v_wind = 20 km/s)
+                if (this->ParticleAttribute[NumberOfParticleAttributes-8+0][n] <= 8.0) {
+
+                    fprintf(stderr, "PID: %d. Weak wind!!! WindEjectedMass: %e Msun\n", this->ParticleNumber[n], mass_ejected_Msun);
+
+                    // Calculate mass per cell (total 27) ejected
+                    mass_per_cell = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / dist_mass_cells; // (SEVN Query) This should be code unit!!!
+
+                    // 1.5 * k_B * N * T +  kinetic energy of wind ==> Let's assume fully thermalized wind as AEOS did!
+                    energy = 1.5 * T_eff * (mass_ejected_Msun * SolarMass / (mh)) * kboltz; // current T of wind
+                    energy += 0.5 * (mass_ejected_Msun * SolarMass) * v_wind_low_cgs * v_wind_low_cgs; // assume 100% KE thermalization
+                    energy = energy / EnergyUnits / (dx*dx*dx); // (SEVN Query) This should be code unit!!!
+                    energy_per_cell = energy / dist_mass_cells;
+                    
+                    // Fully thermalized wind energy
+                    kinf = 0.0;
+
+                    // Finished computing kinf; now compute the amount of thermal energy that needs to be added to each cell
+                    thermal_energy_per_cell = (1.0 - kinf) * energy_per_cell;
+
+                    // Inject energy, mass & metals
+                    // Zero local dummy field and kinetic energy field
+                    for (int k = 0; k < 4; k++) {
+                        for (int j = 0; j < 4; j++) {
+                            for (int i = 0; i < 4; i++) {
+                                u1[i][j][k] = 0.0f;
+                                v1[i][j][k] = 0.0f;
+                                w1[i][j][k] = 0.0f;
+                                d1[i][j][k] = 0.0f;
+                                ge1[i][j][k] = 0.0f;
+                                te1[i][j][k] = 0.0f;
+                                metal1[i][j][k] = 0.0f;
+                            }
+                        }
+                    }
+
+                    // Compute the kinetic energy in the affected region before momentum is added (except for ZEUS).
+                    // This is needed at the end of the calculation to update the total energy (te) field.
+                    if (HydroMethod != 2) {
+                        for (int k = -1; k <= 2; k++) {
+                            for (int j = -1; j <= 2; j++) {
+                                for (int i = -1; i <= 2; i++) {
+                                    int index = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
+                                    ke_before[i+1][j+1][k+1] = 0.5 * this->BaryonField[DensNum][index] * (
+                                        this->BaryonField[Vel1Num][index] * this->BaryonField[Vel1Num][index] +
+                                        this->BaryonField[Vel2Num][index] * this->BaryonField[Vel2Num][index] +
+                                        this->BaryonField[Vel3Num][index] * this->BaryonField[Vel3Num][index]
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+                    // First convert velocities to momenta and transform into frame comoving with particle
+                    idir = +1;
+                    this->momentum(n, ic, jc, kc, iface, jface, kface, idir);
+
+                    // Sum mass and energy before
+                    this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_before, kin_energy_before);
+
+                    // Now add mass and momentum terms (normalization 1.0) to local dummy fields
+                    m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / 
+                                ((mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) + this->ParticleMass[n]);
+                    this->add_feedback1(u1, v1, w1, d1, ge1, te1, metal1, 
+                        dxf, dyf, dzf, dxc, dyc, dzc, m_eject, yield, this->ParticleAttribute[2][n],
+                        mass_per_cell, 1.0, 0.0);
+
+                    // Fully thermalized wind energy
+                    mom_per_cell = 0.0;
+
+                    // Now add mass and momentum, using three-point CIC
+                    // Note that if the te field is being used, it is only updated with the thermal energy
+                    this->add_feedback2(nx, ny, nz,
+                        ic, jc, kc, iface, jface, kface,
+                        dxf, dyf, dzf, dxc, dyc, dzc,
+                        m_eject, yield, this->ParticleAttribute[2][n],
+                        mass_per_cell, mom_per_cell, thermal_energy_per_cell);
+
+                    // Sum mass and energy after
+                    this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_after, kin_energy_after);
+
+                    if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kin_energy_after) > 0.01) {
+                        fprintf(stderr, "Kinetic energy added to mesh does not match!!!\n");
+                        fprintf(stderr, "kinf: %e\n", kinf);
+                        fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
+                        fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
+                        fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before - kinf*energy)/kin_energy_before);
+                    }
+                    if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_after) > 0.01) {
+                        fprintf(stderr, "Mass added to mesh does not match!!!\n");
+                        fprintf(stderr, "kinf: %e\n", kinf);
+                        fprintf(stderr, "mass_after: %e, mass_before: %e\n", mass_after, mass_before);
+                        fprintf(stderr, "mass_per_cell*dist_mass_cells: %e\n", mass_per_cell*dist_mass_cells);
+                        fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
+                        fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
+                        fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/mass_before);
+                    }
+
+                    // Convert momenta back to velocities and transform back to lab frame
+                    idir = -1;
+                    this->momentum(n, ic, jc, kc, iface, jface, kface, idir);
+
+                    // Add the increase in the kinetic energy to the total energy field (unless we're using Zeus).
+                    // If using dual energy formalism, we might want to enforce consistency.
+                    if (HydroMethod != 2) {
+                        for (int k = -1; k <= 2; k++) {
+                            for (int j = -1; j <= 2; j++) {
+                                for (int i = -1; i <= 2; i++) {
+                                    int index = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
+                                    
+                                    ke_after = 0.5 * this->BaryonField[DensNum][index] * (
+                                        this->BaryonField[Vel1Num][index] * this->BaryonField[Vel1Num][index] +
+                                        this->BaryonField[Vel2Num][index] * this->BaryonField[Vel2Num][index] +
+                                        this->BaryonField[Vel3Num][index] * this->BaryonField[Vel3Num][index]
+                                    );
+                                    delta_ke = ke_after - ke_before[i+1][j+1][k+1];
+                                    this->BaryonField[TENum][index] += delta_ke/this->BaryonField[DensNum][index];
+                                    ke_injected += delta_ke;
+                                }
+                            }
+                        }
+                    }
+                } // Low-mass star wind feedback
+                // Stellar mass for massive stars (M > 8 Msun, v_wind = 100 km/s)
+                else {
+
+                    fprintf(stderr, "PID: %d. Strong wind!!! WindEjectedMass: %e Msun\n", this->ParticleNumber[n], mass_ejected_Msun);
+
+                    // Calculate mass per cell (total 27) ejected
+                    mass_per_cell = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / dist_mass_cells; // (SEVN Query) This should be code unit!!!
+
+                    // 1.5 * k_B * N * T +  kinetic energy of wind ==> Let's assume fully thermalized wind as AEOS did!
+                    energy = 1.5 * T_eff * (mass_ejected_Msun * SolarMass / (mh)) * kboltz; // current T of wind
+                    energy += 0.5 * (mass_ejected_Msun * SolarMass) * v_wind_high_cgs * v_wind_high_cgs; // assume 100% KE thermalization
+                    energy = energy / EnergyUnits / (dx*dx*dx); // (SEVN Query) This should be code unit!!!
+                    energy_per_cell = energy / dist_mass_cells;
+                    
+                    // Fully thermalized wind energy
+                    kinf = 0.0;
+
+                    // Finished computing kinf; now compute the amount of thermal energy that needs to be added to each cell
+                    thermal_energy_per_cell = (1.0 - kinf) * energy_per_cell;
+
+                    // Inject energy, mass & metals
+                    // Zero local dummy field and kinetic energy field
+                    for (int k = 0; k < 4; k++) {
+                        for (int j = 0; j < 4; j++) {
+                            for (int i = 0; i < 4; i++) {
+                                u1[i][j][k] = 0.0f;
+                                v1[i][j][k] = 0.0f;
+                                w1[i][j][k] = 0.0f;
+                                d1[i][j][k] = 0.0f;
+                                ge1[i][j][k] = 0.0f;
+                                te1[i][j][k] = 0.0f;
+                                metal1[i][j][k] = 0.0f;
+                            }
+                        }
+                    }
+
+                    // Compute the kinetic energy in the affected region before momentum is added (except for ZEUS).
+                    // This is needed at the end of the calculation to update the total energy (te) field.
+                    if (HydroMethod != 2) {
+                        for (int k = -1; k <= 2; k++) {
+                            for (int j = -1; j <= 2; j++) {
+                                for (int i = -1; i <= 2; i++) {
+                                    int index = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
+                                    ke_before[i+1][j+1][k+1] = 0.5 * this->BaryonField[DensNum][index] * (
+                                        this->BaryonField[Vel1Num][index] * this->BaryonField[Vel1Num][index] +
+                                        this->BaryonField[Vel2Num][index] * this->BaryonField[Vel2Num][index] +
+                                        this->BaryonField[Vel3Num][index] * this->BaryonField[Vel3Num][index]
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+                    // First convert velocities to momenta and transform into frame comoving with particle
+                    idir = +1;
+                    this->momentum(n, ic, jc, kc, iface, jface, kface, idir);
+
+                    // Sum mass and energy before
+                    this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_before, kin_energy_before);
+
+                    // Now add mass and momentum terms (normalization 1.0) to local dummy fields
+                    m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / 
+                                ((mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) + this->ParticleMass[n]);
+                    this->add_feedback1(u1, v1, w1, d1, ge1, te1, metal1, 
+                        dxf, dyf, dzf, dxc, dyc, dzc, m_eject, yield, this->ParticleAttribute[2][n],
+                        mass_per_cell, 1.0, 0.0);
+
+                    // Fully thermalized wind energy
+                    mom_per_cell = 0.0;
+
+                    // Now add mass and momentum, using three-point CIC
+                    // Note that if the te field is being used, it is only updated with the thermal energy
+                    this->add_feedback2(nx, ny, nz,
+                        ic, jc, kc, iface, jface, kface,
+                        dxf, dyf, dzf, dxc, dyc, dzc,
+                        m_eject, yield, this->ParticleAttribute[2][n],
+                        mass_per_cell, mom_per_cell, thermal_energy_per_cell);
+
+                    // Sum mass and energy after
+                    this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_after, kin_energy_after);
+
+                    if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kin_energy_after) > 0.01) {
+                        fprintf(stderr, "Kinetic energy added to mesh does not match!!!\n");
+                        fprintf(stderr, "kinf: %e\n", kinf);
+                        fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
+                        fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
+                        fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before - kinf*energy)/kin_energy_before);
+                    }
+                    if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_after) > 0.01) {
+                        fprintf(stderr, "Mass added to mesh does not match!!!\n");
+                        fprintf(stderr, "kinf: %e\n", kinf);
+                        fprintf(stderr, "mass_after: %e, mass_before: %e\n", mass_after, mass_before);
+                        fprintf(stderr, "mass_per_cell*dist_mass_cells: %e\n", mass_per_cell*dist_mass_cells);
+                        fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
+                        fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
+                        fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/mass_before);
+                    }
+
+                    // Convert momenta back to velocities and transform back to lab frame
+                    idir = -1;
+                    this->momentum(n, ic, jc, kc, iface, jface, kface, idir);
+
+                    // Add the increase in the kinetic energy to the total energy field (unless we're using Zeus).
+                    // If using dual energy formalism, we might want to enforce consistency.
+                    if (HydroMethod != 2) {
+                        for (int k = -1; k <= 2; k++) {
+                            for (int j = -1; j <= 2; j++) {
+                                for (int i = -1; i <= 2; i++) {
+                                    int index = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
+                                    
+                                    ke_after = 0.5 * this->BaryonField[DensNum][index] * (
+                                        this->BaryonField[Vel1Num][index] * this->BaryonField[Vel1Num][index] +
+                                        this->BaryonField[Vel2Num][index] * this->BaryonField[Vel2Num][index] +
+                                        this->BaryonField[Vel3Num][index] * this->BaryonField[Vel3Num][index]
+                                    );
+                                    delta_ke = ke_after - ke_before[i+1][j+1][k+1];
+                                    this->BaryonField[TENum][index] += delta_ke/this->BaryonField[DensNum][index];
+                                    ke_injected += delta_ke;
+                                }
+                            }
+                        }
+                    }
+                } // High-mass star wind feedback
+            }
+
+            // Supernova feedback
+            if (this->ParticleAttribute[NumberOfParticleAttributes-8+2][n] > 0.0) {
+
+                mass_ejected_Msun = this->ParticleAttribute[NumberOfParticleAttributes-8+2][n];
+
+                fprintf(stderr, "PID: %d. Supernova!!! SNEjectedMass: %e Msun\n", this->ParticleNumber[n], mass_ejected_Msun);
+
+                // Calculate mass per cell (total 27) ejected
+                mass_per_cell = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / dist_mass_cells; // (SEVN Query) This should be code unit!!!
+
+                // Calculate how much of the star formation in this timestep would have gone into supernova energy
+                // (SEVN Query) Let's use 10^51 erg here!
+                // energy = sn_param * mform * (clight/vunits) * (clight/vunits);
+                // energy_per_cell = energy / dist_mass_cells;
+
+                energy = 1e51 / EnergyUnits / (dx*dx*dx); // (SEVN Query) This should be code unit!!!
+                energy_per_cell = energy / dist_mass_cells;
+
                 // Use fixed kinf value, unless kinf < 0 - then compute variable kinf
                 kinf = kinf_in;
                 if (kinf < 0) {
-                    // Calculate variable kinf based on R_PDS from Cioffi et al. 1988
-                    // realmass = mform * DensityUnits * dx * x1 * dx * x1 * dx * x1;
-                    // realmass = realmass / SolarMass;
-                    // energy51 = sn_param * msolar_e51 * realmass;
+
                     energy51 = 1.0; // (SEVN Query) We are setting supernova energy into fixed value of 10**51 erg
 
                     Zsol = 0.0;
@@ -236,9 +487,9 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
 
                                 // Access mu_field just like mu(ic+i, jc+j, kc+k) in Fortran
                                 mu_cell = mu[index];
-                                Zsol += this->BaryonField[this->MetalNum][index] / 0.02;
-                                num_d += this->BaryonField[this->DensNum][index] * DensityUnits / (mu_cell * mh);
-                                d_ave += this->BaryonField[this->DensNum][index] * DensityUnits;
+                                Zsol += this->BaryonField[MetalNum][index] / 0.02;
+                                num_d += this->BaryonField[DensNum][index] * DensityUnits / (mu_cell * mh);
+                                d_ave += this->BaryonField[DensNum][index] * DensityUnits;
                             }
                         }
                     }
@@ -297,10 +548,10 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
                         for (int j = -1; j <= 2; j++) {
                             for (int i = -1; i <= 2; i++) {
                                 int index = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
-                                ke_before[i+1][j+1][k+1] = 0.5 * this->BaryonField[this->DensNum][index] * (
-                                    this->BaryonField[this->Vel1Num][index] * this->BaryonField[this->Vel1Num][index] +
-                                    this->BaryonField[this->Vel2Num][index] * this->BaryonField[this->Vel2Num][index] +
-                                    this->BaryonField[this->Vel3Num][index] * this->BaryonField[this->Vel3Num][index]
+                                ke_before[i+1][j+1][k+1] = 0.5 * this->BaryonField[DensNum][index] * (
+                                    this->BaryonField[Vel1Num][index] * this->BaryonField[Vel1Num][index] +
+                                    this->BaryonField[Vel2Num][index] * this->BaryonField[Vel2Num][index] +
+                                    this->BaryonField[Vel3Num][index] * this->BaryonField[Vel3Num][index]
                                 );
                             }
                         }
@@ -315,7 +566,8 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
                 this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_before, kin_energy_before);
 
                 // Now add mass and momentum terms (normalization 1.0) to local dummy fields
-                m_eject = this->ParticleSNejectedMass[n] / this->ParticleInitialMass[n];
+                m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / 
+                                ((mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) + this->ParticleMass[n]);
                 this->add_feedback1(u1, v1, w1, d1, ge1, te1, metal1, 
                     dxf, dyf, dzf, dxc, dyc, dzc, m_eject, yield, this->ParticleAttribute[2][n],
                     mass_per_cell, 1.0, 0.0);
@@ -347,23 +599,24 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
                     m_eject, yield, this->ParticleAttribute[2][n],
                     mass_per_cell, mom_per_cell, thermal_energy_per_cell);
 
-                // Sum mass and energy before
+                // Sum mass and energy after
                 this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_after, kin_energy_after);
 
-                if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kinf*energy) > 0.01) {
+                if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kin_energy_after) > 0.01) {
                     fprintf(stderr, "Kinetic energy added to mesh does not match!!!\n");
                     fprintf(stderr, "kinf: %e\n", kinf);
-                    fprintf(stderr, "kin_energy_after - kin_energy_before: %e\n", kin_energy_after - kin_energy_before);
-                    fprintf(stderr, "energy*fkin: %e\n", kinf*energy);
-                    fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before)/kin_energy_before);
+                    fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
+                    fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
+                    fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before - kinf*energy)/kin_energy_before);
                 }
-                if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_per_cell*dist_mass_cells) > 0.01) {
+                if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_after) > 0.01) {
                     fprintf(stderr, "Mass added to mesh does not match!!!\n");
                     fprintf(stderr, "kinf: %e\n", kinf);
                     fprintf(stderr, "mass_after: %e, mass_before: %e\n", mass_after, mass_before);
-                    fprintf(stderr, "kin_energy_after - kin_energy_before: %e\n", kin_energy_after - kin_energy_before);
-                    fprintf(stderr, "energy*fkin: %e\n", kinf*energy);
-                    fprintf(stderr, " diff: %e %\n", abs(mass_after - mass_before)/mass_before);
+                    fprintf(stderr, "mass_per_cell*dist_mass_cells: %e\n", mass_per_cell*dist_mass_cells);
+                    fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
+                    fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
+                    fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/mass_before);
                 }
 
                 // Convert momenta back to velocities and transform back to lab frame
@@ -378,13 +631,13 @@ int grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, fl
                             for (int i = -1; i <= 2; i++) {
                                 int index = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
                                 
-                                ke_after = 0.5 * this->BaryonField[this->DensNum][index] * (
-                                    this->BaryonField[this->Vel1Num][index] * this->BaryonField[this->Vel1Num][index] +
-                                    this->BaryonField[this->Vel2Num][index] * this->BaryonField[this->Vel2Num][index] +
-                                    this->BaryonField[this->Vel3Num][index] * this->BaryonField[this->Vel3Num][index]
+                                ke_after = 0.5 * this->BaryonField[DensNum][index] * (
+                                    this->BaryonField[Vel1Num][index] * this->BaryonField[Vel1Num][index] +
+                                    this->BaryonField[Vel2Num][index] * this->BaryonField[Vel2Num][index] +
+                                    this->BaryonField[Vel3Num][index] * this->BaryonField[Vel3Num][index]
                                 );
                                 delta_ke = ke_after - ke_before[i+1][j+1][k+1];
-                                this->BaryonField[this->TENum][index] += delta_ke/this->BaryonField[this->DensNum][index];
+                                this->BaryonField[TENum][index] += delta_ke/this->BaryonField[DensNum][index];
                                 ke_injected += delta_ke;
                             }
                         }
@@ -431,11 +684,23 @@ void grid::momentum(const int &ParticleIndex,
     const int &iface, const int &jface, const int &kface,
     const int &idir) {
 
+	int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num;
+	if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
+		Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
+		ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
+	}
+
+    int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum, MetalIaNum, MetalIINum;
+    if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+        ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
+
+    int MetallicityField = (MetalNum != -1 || SNColourNum != -1);
+
     int nx = this->GridDimension[0], ny = this->GridDimension[1], nz = this->GridDimension[2];
 
     int index1, index2;
 
-    if (idir != -1 || idir != 1) {
+    if (idir != -1 && idir != 1) {
         ENZO_FAIL("Invalid direction for momentum calculation");
     }
 
@@ -449,31 +714,31 @@ void grid::momentum(const int &ParticleIndex,
 
                         index1 = (iface + i) + (jc + j) * nx + (kc + k) * nx * ny;
                         index2 = (iface + i + 1) + (jc + j) * nx + (kc + k) * nx * ny;
-                        this->BaryonField[this->Vel1Num][index1] = (this->BaryonField[this->Vel1Num][index1] - this->ParticleVelocity[0][ParticleIndex]) * 0.5 * 
-                                                                        (this->BaryonField[this->DensNum][index1] + this->BaryonField[this->DensNum][index2]);
+                        this->BaryonField[Vel1Num][index1] = (this->BaryonField[Vel1Num][index1] - this->ParticleVelocity[0][ParticleIndex]) * 0.5 * 
+                                                                        (this->BaryonField[DensNum][index1] + this->BaryonField[DensNum][index2]);
                         
                         index1 = (ic + i) + (jface + j) * nx + (kc + k) * nx * ny;
                         index2 = (ic + i) + (jface + j + 1) * nx + (kc + k) * nx * ny;                                  
-                        this->BaryonField[this->Vel2Num][index1] = (this->BaryonField[this->Vel2Num][index1] - this->ParticleVelocity[1][ParticleIndex]) * 0.5 * 
-                                                                        (this->BaryonField[this->DensNum][index1] + this->BaryonField[this->DensNum][index2]);
+                        this->BaryonField[Vel2Num][index1] = (this->BaryonField[Vel2Num][index1] - this->ParticleVelocity[1][ParticleIndex]) * 0.5 * 
+                                                                        (this->BaryonField[DensNum][index1] + this->BaryonField[DensNum][index2]);
                         
                         index1 = (ic + i) + (jc + j) * nx + (kface + k) * nx * ny;
                         index2 = (ic + i) + (jc + j) * nx + (kface + k + 1) * nx * ny;
-                        this->BaryonField[this->Vel3Num][index1] = (this->BaryonField[this->Vel3Num][index1] - this->ParticleVelocity[2][ParticleIndex]) * 0.5 * 
-                                                                        (this->BaryonField[this->DensNum][index1] + this->BaryonField[this->DensNum][index2]);
+                        this->BaryonField[Vel3Num][index1] = (this->BaryonField[Vel3Num][index1] - this->ParticleVelocity[2][ParticleIndex]) * 0.5 * 
+                                                                        (this->BaryonField[DensNum][index1] + this->BaryonField[DensNum][index2]);
                     } else {
                         index1 = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
-                        this->BaryonField[this->Vel1Num][index1] = (this->BaryonField[this->Vel1Num][index1] - this->ParticleVelocity[0][ParticleIndex]) * 
-                                                                        this->BaryonField[this->DensNum][index1];
-                        this->BaryonField[this->Vel2Num][index1] = (this->BaryonField[this->Vel2Num][index1] - this->ParticleVelocity[1][ParticleIndex]) * 
-                                                                        this->BaryonField[this->DensNum][index1];
-                        this->BaryonField[this->Vel3Num][index1] = (this->BaryonField[this->Vel3Num][index1] - this->ParticleVelocity[2][ParticleIndex]) *
-                                                                        this->BaryonField[this->DensNum][index1];
+                        this->BaryonField[Vel1Num][index1] = (this->BaryonField[Vel1Num][index1] - this->ParticleVelocity[0][ParticleIndex]) * 
+                                                                        this->BaryonField[DensNum][index1];
+                        this->BaryonField[Vel2Num][index1] = (this->BaryonField[Vel2Num][index1] - this->ParticleVelocity[1][ParticleIndex]) * 
+                                                                        this->BaryonField[DensNum][index1];
+                        this->BaryonField[Vel3Num][index1] = (this->BaryonField[Vel3Num][index1] - this->ParticleVelocity[2][ParticleIndex]) *
+                                                                        this->BaryonField[DensNum][index1];
                     }
-                    if (this->MetallicityField == 1) {
+                    if (MetallicityField == 1) {
                         index1 = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
-                        this->BaryonField[this->MetalNum][index1] = this->BaryonField[this->MetalNum][index1] * 
-                                                                        this->BaryonField[this->DensNum][index1];
+                        this->BaryonField[MetalNum][index1] = this->BaryonField[MetalNum][index1] * 
+                                                                        this->BaryonField[DensNum][index1];
                     }
                 }
                 // idir = -1: convert mom - >vel
@@ -481,34 +746,34 @@ void grid::momentum(const int &ParticleIndex,
                     if (HydroMethod == 2) {
                         index1 = (iface + i) + (jc + j) * nx + (kc + k) * nx * ny;
                         index2 = (iface + i + 1) + (jc + j) * nx + (kc + k) * nx * ny;
-                        this->BaryonField[this->Vel1Num][index1] = this->BaryonField[this->Vel1Num][index1] / 
-                                                                        (0.5 * (this->BaryonField[this->DensNum][index1] + this->BaryonField[this->DensNum][index2])) + 
+                        this->BaryonField[Vel1Num][index1] = this->BaryonField[Vel1Num][index1] / 
+                                                                        (0.5 * (this->BaryonField[DensNum][index1] + this->BaryonField[DensNum][index2])) + 
                                                                         this->ParticleVelocity[0][ParticleIndex];
                         
                         index1 = (ic + i) + (jface + j) * nx + (kc + k) * nx * ny;
                         index2 = (ic + i) + (jface + j + 1) * nx + (kc + k) * nx * ny;                                  
-                        this->BaryonField[this->Vel2Num][index1] = this->BaryonField[this->Vel2Num][index1] / 
-                                                                        (0.5 * (this->BaryonField[this->DensNum][index1] + this->BaryonField[this->DensNum][index2])) + 
+                        this->BaryonField[Vel2Num][index1] = this->BaryonField[Vel2Num][index1] / 
+                                                                        (0.5 * (this->BaryonField[DensNum][index1] + this->BaryonField[DensNum][index2])) + 
                                                                         this->ParticleVelocity[1][ParticleIndex];
 
                         index1 = (ic + i) + (jc + j) * nx + (kface + k) * nx * ny;
                         index2 = (ic + i) + (jc + j) * nx + (kface + k + 1) * nx * ny;
-                        this->BaryonField[this->Vel3Num][index1] = this->BaryonField[this->Vel3Num][index1] / 
-                                                                        (0.5 * (this->BaryonField[this->DensNum][index1] + this->BaryonField[this->DensNum][index2])) + 
+                        this->BaryonField[Vel3Num][index1] = this->BaryonField[Vel3Num][index1] / 
+                                                                        (0.5 * (this->BaryonField[DensNum][index1] + this->BaryonField[DensNum][index2])) + 
                                                                         this->ParticleVelocity[2][ParticleIndex];
                     } else {
                         index1 = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
-                        this->BaryonField[this->Vel1Num][index1] = this->BaryonField[this->Vel1Num][index1] / 
-                                                                        this->BaryonField[this->DensNum][index1] + this->ParticleVelocity[0][ParticleIndex];
-                        this->BaryonField[this->Vel2Num][index1] = this->BaryonField[this->Vel2Num][index1] / 
-                                                                        this->BaryonField[this->DensNum][index1] + this->ParticleVelocity[1][ParticleIndex];
-                        this->BaryonField[this->Vel3Num][index1] = this->BaryonField[this->Vel3Num][index1] /
-                                                                        this->BaryonField[this->DensNum][index1] + this->ParticleVelocity[2][ParticleIndex];
+                        this->BaryonField[Vel1Num][index1] = this->BaryonField[Vel1Num][index1] / 
+                                                                        this->BaryonField[DensNum][index1] + this->ParticleVelocity[0][ParticleIndex];
+                        this->BaryonField[Vel2Num][index1] = this->BaryonField[Vel2Num][index1] / 
+                                                                        this->BaryonField[DensNum][index1] + this->ParticleVelocity[1][ParticleIndex];
+                        this->BaryonField[Vel3Num][index1] = this->BaryonField[Vel3Num][index1] /
+                                                                        this->BaryonField[DensNum][index1] + this->ParticleVelocity[2][ParticleIndex];
                     }
-                    if (this->MetallicityField == 1) {
+                    if (MetallicityField == 1) {
                         index1 = (ic + i) + (jc + j) * nx + (kc + k) * nx * ny;
-                        this->BaryonField[this->MetalNum][index1] = this->BaryonField[this->MetalNum][index1] / 
-                                                                        this->BaryonField[this->DensNum][index1];
+                        this->BaryonField[MetalNum][index1] = this->BaryonField[MetalNum][index1] / 
+                                                                        this->BaryonField[DensNum][index1];
 
                     }
                 }
@@ -521,6 +786,12 @@ void grid::sum_mass_kinetic_energy(const int &ParticleIndex,
     const int &iface, const int &jface, const int &kface,
     const int &ic, const int &jc, const int &kc,
     float &mass_sum, float &kin_energy_sum) {
+
+	int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num;
+	if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
+		Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
+		ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
+	}
 
     int nx = this->GridDimension[0], ny = this->GridDimension[1], nz = this->GridDimension[2];
 
@@ -539,10 +810,10 @@ void grid::sum_mass_kinetic_energy(const int &ParticleIndex,
                 index3 = (ic + i) + (jface + j) * nx + (kc + k) * nx * ny;
                 index4 = (ic + i) + (jc + j) * nx + (kface + k) * nx * ny;
 
-                mass_term = this->BaryonField[this->DensNum][index1];
-                mom_term = this->BaryonField[this->Vel1Num][index2] * this->BaryonField[this->BaryonField][index2] +
-                           this->BaryonField[this->Vel2Num][index3] * this->BaryonField[this->BaryonField][index3] +
-                           this->BaryonField[this->Vel3Num][index4] * this->BaryonField[this->BaryonField][index4];
+                mass_term = this->BaryonField[DensNum][index1];
+                mom_term = this->BaryonField[Vel1Num][index2] * this->BaryonField[Vel1Num][index2] +
+                           this->BaryonField[Vel2Num][index3] * this->BaryonField[Vel2Num][index3] +
+                           this->BaryonField[Vel3Num][index4] * this->BaryonField[Vel3Num][index4];
 
                 kin_energy = mom_term / (2.0 * mass_term);
                 mass_sum += mass_term;
@@ -556,6 +827,14 @@ void grid::sum_abc(float ***u1, float ***v1, float *** d1,
     const int &iface, const int &jface, const int &kface,
     const int &ic, const int &jc, const int &kc,
     float &asum, float &bsum, float &csum) {
+
+	int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num;
+	if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
+		Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
+		ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
+	}
+
+    int nx = this->GridDimension[0], ny = this->GridDimension[1], nz = this->GridDimension[2];
     
     asum = 0.0, bsum = 0.0, csum = 0.0;
     float mass_sum = 0.0, energy_sum = 0.0;
@@ -573,10 +852,10 @@ void grid::sum_abc(float ***u1, float ***v1, float *** d1,
                 index3 = (ic + i) + (jface + j) * nx + (kc + k) * nx * ny;
                 index4 = (ic + i) + (jc + j) * nx + (kface + k) * nx * ny;
 
-                mass_term = this->BaryonField[this->DensNum][index1];
-                mom_term = this->BaryonField[this->Vel1Num][index2] * this->BaryonField[this->Vel1Num][index2] +
-                           this->BaryonField[this->Vel2Num][index3] * this->BaryonField[this->Vel2Num][index3] +
-                           this->BaryonField[this->Vel3Num][index4] * this->BaryonField[this->Vel3Num][index4];
+                mass_term = this->BaryonField[DensNum][index1];
+                mom_term = this->BaryonField[Vel1Num][index2] * this->BaryonField[Vel1Num][index2] +
+                           this->BaryonField[Vel2Num][index3] * this->BaryonField[Vel2Num][index3] +
+                           this->BaryonField[Vel3Num][index4] * this->BaryonField[Vel3Num][index4];
 
                 mass_term += d1[istart+i][jstart+j][kstart+k];
 
@@ -602,16 +881,22 @@ void grid::add_feedback1(float ***u1, float ***v1, float ***w1, float ***d1, flo
     const float &m_eject, const float &yield, const float &metalf,
     const float &mass_per_cell, const float mom_per_cell, const float therm_per_cell) {
 
+    int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum, MetalIaNum, MetalIINum;
+    if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+        ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
+
+    int MetallicityField = (MetalNum != -1 || SNColourNum != -1);
+
     const int ic = 1, jc = 1, kc = 1, iface = 1, jface = 1, kface = 1;
 
-    float delta_mass, delta_pu, delta_pv, delta_pw, delta_therm, dratio, tot_mass;
+    float delta_mass, delta_pu, delta_pv, delta_pw, delta_therm, dratio;
     float dxf1, dyf1, dzf1, dxc1, dyc1, dzc1;
 
     if (MultiMetals == 1) {
         ENZO_FAIL("momentum: not supported");
     }
 
-    tot_mass = 0.0;
+    float total_mass = 0.0;
 
     for (int k = -1; k <= 1; k++) {
         for (int j = -1; j <= 1; j++) {
@@ -647,8 +932,8 @@ void grid::add_feedback1(float ***u1, float ***v1, float ***w1, float ***d1, flo
                             dratio = d1[ic+i1][jc+j1][kc+k1] / (d1[ic+i1][jc+j1][kc+k1] + delta_mass);
                             d1[ic+i1][jc+j1][kc+k1] += delta_mass;
                             u1[iface+i1][jc+j1][kc+k1] += delta_pu;
-                            u2[ic+i1][jface+j1][kc+k1] += delta_pv;
-                            u3[ic+i1][jc+j1][kface+k1] += delta_pw;
+                            v1[ic+i1][jface+j1][kc+k1] += delta_pv;
+                            w1[ic+i1][jc+j1][kface+k1] += delta_pw;
                             total_mass += delta_mass;
 
                             te1[ic+i1][jc+j1][kc+k1] = te1[ic+i1][jc+j1][kc+k1] * dratio + delta_therm / d1[ic+i1][jc+j1][kc+k1];
@@ -657,7 +942,7 @@ void grid::add_feedback1(float ***u1, float ***v1, float ***w1, float ***d1, flo
                                 ge1[ic+i1][jc+j1][kc+k1] = ge1[ic+i1][jc+j1][kc+k1] * dratio + delta_therm / d1[ic+i1][jc+j1][kc+k1];
                             }
 
-                            if (MetalicityField == 1) {
+                            if (MetallicityField == 1) {
                                 metal1[ic+i1][jc+j1][kc+k1] += (delta_mass/m_eject) * (yield * (1.0 - metalf) + m_eject * metalf);
                             }
                         }
@@ -675,7 +960,19 @@ void grid::add_feedback2(const int &nx, const int &ny, const int &nz,
     const float &m_eject, const float &yield, const float &metalf,
     const float &mass_per_cell, const float mom_per_cell, const float therm_per_cell) {
 
-    float delta_mass, delta_pu, delta_pv, delta_pw, delta_therm, dratio, tot_mass;
+    int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum, MetalIaNum, MetalIINum;
+    if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+        ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
+
+    int MetallicityField = (MetalNum != -1 || SNColourNum != -1);
+
+	int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num;
+	if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
+		Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
+		ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
+	}
+		
+    float delta_mass, delta_pu, delta_pv, delta_pw, delta_therm, dratio;
     float dxf1, dyf1, dzf1, dxc1, dyc1, dzc1;
     int index1, index2, index3, index4;
 
@@ -683,7 +980,7 @@ void grid::add_feedback2(const int &nx, const int &ny, const int &nz,
         ENZO_FAIL("momentum: not supported");
     }
 
-    tot_mass = 0.0;
+    float total_mass = 0.0;
 
     for (int k = -1; k <= 1; k++) {
         for (int j = -1; j <= 1; j++) {
@@ -721,21 +1018,21 @@ void grid::add_feedback2(const int &nx, const int &ny, const int &nz,
                             index3 = (ic + i1) + (jface + j1) * nx + (kc + k1) * nx * ny;
                             index4 = (ic + i1) + (jc + j1) * nx + (kface + k1) * nx * ny;
 
-                            dratio = this->BaryonField[this->DensNum][index1] / (this->BaryonField[this->DensNum][index1] + delta_mass);
-                            this->BaryonField[this->DensNum][index1] += delta_mass;
+                            dratio = this->BaryonField[DensNum][index1] / (this->BaryonField[DensNum][index1] + delta_mass);
+                            this->BaryonField[DensNum][index1] += delta_mass;
                             this->ParticleVelocity[0][index2] += delta_pu;
                             this->ParticleVelocity[1][index3] += delta_pv;
                             this->ParticleVelocity[2][index4] += delta_pw;
                             total_mass += delta_mass;
 
-                            this->BaryonField[this->TENum][index1] = this->BaryonField[this->TENum][index1] * dratio + delta_therm / this->BaryonField[this->DensNum][index1];
+                            this->BaryonField[TENum][index1] = this->BaryonField[TENum][index1] * dratio + delta_therm / this->BaryonField[DensNum][index1];
 
                             if (DualEnergyFormalism == 1) {
-                                this->BaryonField[this->GENum][index1] = this->BaryonField[this->GENum][index1] * dratio + delta_therm / this->BaryonField[this->DensNum][index1];
+                                this->BaryonField[GENum][index1] = this->BaryonField[GENum][index1] * dratio + delta_therm / this->BaryonField[DensNum][index1];
                             }
 
-                            if (MetalicityField == 1) {
-                                this->BaryonField[this->MetalNum][index1] += (delta_mass/m_eject) * (yield * (1.0 - metalf) + m_eject * metalf);
+                            if (MetallicityField == 1) {
+                                this->BaryonField[MetalNum][index1] += (delta_mass/m_eject) * (yield * (1.0 - metalf) + m_eject * metalf);
                             }
                         }
                     }
@@ -744,3 +1041,4 @@ void grid::add_feedback2(const int &nx, const int &ny, const int &nz,
         }
     }
 }
+#endif

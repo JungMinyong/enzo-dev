@@ -1929,6 +1929,7 @@ class grid
 					if (ParticleNumber[i] == NewNbodyParticleIDTemp[j]) {
 						ParticleType[i] = PARTICLE_TYPE_NBODY;
 						if (NewNbodyParticlePositionTemp[0][j] < -10) {
+							fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[i]);
 							NewNbodyParticlePositionTemp[0][j] += 20;
 							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
 						} // particle removal
@@ -1969,6 +1970,7 @@ class grid
 							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
 						} // particle removal
 						else if (NbodyParticlePositionTemp[0][j] > 10) {
+							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
 							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
 							ParticleMass[i] = 0.0;
 							NbodyParticlePositionTemp[0][j] -= 20;
@@ -1989,10 +1991,12 @@ class grid
 					if (ParticleNumber[i] == NewNbodyParticleIDTemp[j]) {
 						ParticleType[i] = PARTICLE_TYPE_NBODY;
 						if (NewNbodyParticlePositionTemp[0][j] < -10) {
+							fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[i]);
 							NewNbodyParticlePositionTemp[0][j] += 20;
 							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
 						} // particle removal
 						else if (NbodyParticlePositionTemp[0][j] > 10) {
+							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
 							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
 							ParticleMass[i] = 0.0;
 							NbodyParticlePositionTemp[0][j] -= 20;
@@ -2056,6 +2060,38 @@ class grid
 			} // endfor particles
 			return SUCCESS;
 		}
+
+		/* EW Individual star formation and feedback */
+		void individual_star_feedback3mom(const float &dx, const float &kinf_in, float *mu, const float &yield);
+
+		void momentum(const int &ParticleIndex,
+			const int &ic, const int &jc, const int &kc,
+			const int &iface, const int &jface, const int &kface,
+			const int &idir);
+
+		void sum_mass_kinetic_energy(const int &ParticleIndex,
+			const int &iface, const int &jface, const int &kface,
+			const int &ic, const int &jc, const int &kc,
+			float &mass_sum, float &kin_energy_sum);
+
+		void sum_abc(float ***u1, float ***v1, float *** d1,
+			const int &iface, const int &jface, const int &kface,
+			const int &ic, const int &jc, const int &kc,
+			float &asum, float &bsum, float &csum);
+
+		void add_feedback1(float ***u1, float ***v1, float ***w1, float ***d1, float ***ge1, float ***te1, float ***metal1,
+			const float &dxf, const float &dyf, const float &dzf, 
+			const float &dxc, const float &dyc, const float &dzc,
+			const float &m_eject, const float &yield, const float &metalf,
+			const float &mass_per_cell, const float mom_per_cell, const float therm_per_cell);
+
+		void add_feedback2(const int &nx, const int &ny, const int &nz,
+			const int &ic, const int &jc, const int &kc, const int &iface, const int &jface, const int &kface,
+			const float &dxf, const float &dyf, const float &dzf, 
+			const float &dxc, const float &dyc, const float &dzc,
+			const float &m_eject, const float &yield, const float &metalf,
+			const float &mass_per_cell, const float mom_per_cell, const float therm_per_cell);
+
 #endif
 
 

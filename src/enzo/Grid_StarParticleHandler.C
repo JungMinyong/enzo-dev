@@ -1210,8 +1210,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       if (ComovingCoordinates)
 	StarMakerOverDensityThreshold *= mh / DensityUnits;   
 
-      // FORTRAN_NAME(star_maker7)(
-      FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
+      FORTRAN_NAME(star_maker7)(
+      // FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], cooling_time,
@@ -1255,6 +1255,67 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NormalStarType;
 #endif
 			}
+    } 
+
+    if (STARMAKE_METHOD(INDIVIDUAL)) {
+
+      //---- MODIFIED SF ALGORITHM (NO-JEANS MASS, NO dt DEPENDENCE, NO STOCHASTIC SF, 
+      //                            can reconsider star formation or feedback when MBH exists,
+      //                            when in cosmological sim, StarMakerOverDensity is in particles/cc, 
+      //                            not the ratio with respect to the DensityUnits, unlike others)
+
+      NumberOfNewParticlesSoFar = NumberOfNewParticles;
+
+      // change the unit for StarMakerOverDensity for cosmological run
+      if (ComovingCoordinates)
+	StarMakerOverDensityThreshold *= mh / DensityUnits;   
+
+      FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
+       GridDimension, GridDimension+1, GridDimension+2,
+       BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
+          BaryonField[Vel2Num], BaryonField[Vel3Num], cooling_time,
+       &dtFixed, BaryonField[NumberOfBaryonFields], MetalPointer,
+          &CellWidthTemp, &Time, &zred, &MyProcessorNumber,
+       &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
+       &MaximumNumberOfNewParticles, CellLeftEdge[0], CellLeftEdge[1],
+          CellLeftEdge[2], &GhostZones,
+       &MetallicityField, &HydroMethod, &StarMakerMinimumDynamicalTime,
+       &StarMakerOverDensityThreshold, &StarMakerMassEfficiency,
+       &StarMakerMinimumMass, &level, &NumberOfNewParticles, &NumberOfParticles,
+       tg->ParticlePosition[0], tg->ParticlePosition[1],
+          tg->ParticlePosition[2],
+       tg->ParticleVelocity[0], tg->ParticleVelocity[1],
+          tg->ParticleVelocity[2],
+       tg->ParticleMass, tg->ParticleAttribute[1], tg->ParticleAttribute[0],
+          tg->ParticleAttribute[2], 
+       ParticlePosition[0], ParticlePosition[1],
+          ParticlePosition[2],
+       ParticleType, &MBHParticleType, &MBHTurnOffStarFormation,
+       &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3]);
+
+      // make it back to original 
+      if (ComovingCoordinates)
+	StarMakerOverDensityThreshold /= mh / DensityUnits;
+
+   #ifdef DEBUG_SS
+   tg->StarSplitter(NumberOfNewParticlesSoFar, &NumberOfNewParticles);
+   #endif
+
+      for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
+				//fprintf(stderr, "%d, star_maker7: particle position = (%.10lf, %.10lf, %.10lf)\n",
+					 	//tg, tg->ParticlePosition[0][i], tg->ParticlePosition[1][i], tg->ParticlePosition[2][i]);
+			// by YS, have to have an option for this from config file.
+#ifdef NBODY
+				if (NbodyNewStarToNbody)
+          tg->ParticleType[i] = NbodyStar;
+				else
+          tg->ParticleType[i] = NormalStarType;
+
+         tg->ParticleAttribute[NumberOfParticleAttributes-8+0][i] = tg->ParticleMass[i];
+#else
+          tg->ParticleType[i] = NormalStarType;
+#endif
+      }
     } 
 
     if (STARMAKE_METHOD(SPRINGEL_HERNQUIST_STAR)) {
@@ -1739,7 +1800,73 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     delete [] mu_field;
  
-  } // end: if UNIGRID_STAR
+  } // end: if MOM_STAR
+
+  if (STARFEED_METHOD(INDIVIDUAL)) {
+
+   //---- UNIGRID (NON-JEANS MASS) VERSION WITH MOMENTUM
+
+   // Compute mu across grid
+   float *mu_field = new float[size];
+   for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+     for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+  for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
+    
+    index = i + j*GridDimension[0] + k*GridDimension[0]*GridDimension[1];
+    mu_field[index] = 0.0;
+    // calculate mu
+
+    if (MultiSpecies == 0) {
+      mu_field[index] = Mu;
+    } else {
+
+      if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
+                 HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
+        ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
+      }
+
+      mu_field[index] = BaryonField[DeNum][index] + BaryonField[HINum][index] + BaryonField[HIINum][index] +
+        (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0;
+      if (MultiSpecies > 1) {
+        mu_field[index] += BaryonField[HMNum][index] + (BaryonField[H2INum][index] + BaryonField[H2IINum][index])/2.0;
+      }
+      if (MultiSpecies > 2) {
+        mu_field[index] += (BaryonField[DINum][index] + BaryonField[DIINum][index])/2.0 + (BaryonField[HDINum][index]/3.0);
+      }
+      
+    }
+  }
+     }
+   }
+   
+   StarFeedbackKineticFraction = FLOAT_UNDEFINED;
+   individual_star_feedback3mom(CellWidthTemp, StarFeedbackKineticFraction, mu_field, StarMetalYield);
+
+   FORTRAN_NAME(star_feedback3mom)(
+      GridDimension, GridDimension+1, GridDimension+2,
+      BaryonField[DensNum], mu_field, dmfield,
+         BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
+         BaryonField[Vel2Num], BaryonField[Vel3Num], BaryonField[MetalNum],
+         BaryonField[MetalNum+1], BaryonField[MetalNum+2],
+      &DualEnergyFormalism, &MetallicityField, &MultiMetals, &HydroMethod,
+      &dtFixed, BaryonField[NumberOfBaryonFields], &CellWidthTemp,
+         &Time, &zred,
+      &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
+         &StarEnergyToThermalFeedback, &StarMassEjectionFraction,
+         &StarMetalYield, 
+      &NumberOfParticles,
+         CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
+      ParticlePosition[0], ParticlePosition[1],
+         ParticlePosition[2],
+      ParticleVelocity[0], ParticleVelocity[1],
+         ParticleVelocity[2],
+      ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
+      ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation,
+      &StarFeedbackKineticFraction,&StarMakerExplosionDelayTime);
+
+   delete [] mu_field;
+
+ } // end: if INDIVIDUAL
 
   if (STARFEED_METHOD(UNIGRID_STAR)) {
 
