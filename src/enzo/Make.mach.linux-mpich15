@@ -22,28 +22,25 @@ MACH_FILE  = Make.mach.ubuntu-hardy
 #-----------------------------------------------------------------------
 
 
-LOCAL_HDF5_INSTALL = /home/sykim/local/hdf5-1.12.1
-#LOCAL_MPI = /home/wispedia/install/openmpi-4.0.5
-LOCAL_MPI = /home/wispedia/install/mpich-15
-#LOCAL_MPI = /appl/intel/oneapi/mpi/latest
+LOCAL_HDF5_INSTALL    = /home/wispedia/local/hdf5-1.12.1
 LOCAL_GRACKLE_INSTALL = /home/wispedia/install/grackle15
-#/home/sykim/local/grackle
+LOCAL_MPI_INSTALL = /appl/intel/oneapi/mpi/2021.4.0/bin
 LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.5
 
 #-----------------------------------------------------------------------
 # Compiler settings
 #-----------------------------------------------------------------------
 
-MACH_CPP       = gcc # C preprocessor command
+MACH_CPP       = icc # C preprocessor command
 
 # With MPI
 
+MACH_CC_MPI    = mpiicc # C compiler when using MPI
+MACH_CXX_MPI   = mpiicpc # C++ compiler when using MPI
+MACH_FC_MPI    = mpiifort # Fortran 77 compiler when using MPI
+MACH_F90_MPI   = mpiifort # Fortran 90 compiler when using MPI
+MACH_LD_MPI    = mpiicpc # Linker when using MPI
 
-MACH_CC_MPI    =  mpicc     #/home/kerex/intel/bin/icc 
-MACH_CXX_MPI   =  mpicxx    #/home/kerex/intel/bin/icpc
-MACH_FC_MPI    =  mpifort   #/home/kerex/intel/bin/ifort 
-MACH_F90_MPI   =  mpifort   #/home/kerex/intel/bin/ifort
-MACH_LD_MPI    =  mpicxx    #/home/kerex/intel/bin/icpc
 
 MACH_CUDACOMPILER = $(LOCAL_CUDA_INSTALL)/bin/nvcc
 
@@ -76,7 +73,7 @@ MACH_CFLAGS   =
 MACH_CXXFLAGS = -std=c++11
 MACH_FFLAGS   = -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi
 MACH_F90FLAGS = 
-MACH_LDFLAGS  = 
+MACH_LDFLAGS  = -lifcore -lifport -lifcoremt -lsvml -limf
 
 
 #-----------------------------------------------------------------------
@@ -101,14 +98,15 @@ MACH_OPT_CUDA = -std=c++11
 # Includes
 #-----------------------------------------------------------------------
 
-LOCAL_INCLUDES_MPI    = -I$(LOCAL_MPI)/include # MPI includes
+LOCAL_INCLUDES_MPI    = -I/appl/intel/oneapi/mpi/2021.4.0/include # MPI includes
 LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
 LOCAL_INCLUDES_HYPRE  = # hypre includes
 LOCAL_INCLUDES_PAPI   = # PAPI includes
 LOCAL_INCLUDES_GRACKLE = -I$(LOCAL_GRACKLE_INSTALL)/include
 
-MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5) -I/usr/local/cuda-11.5/targets/x86_64-linux/include
-MACH_LIBS_NBODY    = -I
+MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5) -I$(LOCAL_CUDA_INSTALL)/include
+#$(LOCAL_INCLUDES_HDF5)
+#MACH_LIBS_NBODY    = -I
 
 MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
 MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
@@ -119,13 +117,13 @@ MACH_INCLUDES_GRACKLE  = $(LOCAL_INCLUDES_GRACKLE)
 # Libraries
 #-----------------------------------------------------------------------
 
-LOCAL_LIBS_MPI    = -L$(LOCAL_MPI)/lib -lmpi ##-lopen-rte -lopen-pal # MPI libraries
+LOCAL_LIBS_MPI    = -L/appl/intel/oneapi/mpi/2021.4.0/lib -lmpi ##-lopen-rte -lopen-pal # MPI libraries
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz # HDF5 libraries
 LOCAL_LIBS_HYPRE  = # hypre libraries
 LOCAL_LIBS_PAPI   = # PAPI libraries
 LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib -lgrackle
 
-LOCAL_LIBS_MACH   = -lgfortran # Machine-dependent libraries
+LOCAL_LIBS_MACH   = #-lgfortran # Machine-dependent libraries
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH) # -lifcore -lifport
 MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)

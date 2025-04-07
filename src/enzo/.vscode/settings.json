@@ -91,7 +91,11 @@
         "Grid_TransferSubgridParticles.C": "cpp",
         "Grid_TransferSubgridStars.C": "cpp",
         "random": "cpp",
-        "WriteParameterFile.C": "cpp"
+        "WriteParameterFile.C": "cpp",
+        "Star_HitEndpoint.C": "cpp",
+        "ProblemType.C": "cpp",
+        "New_Grid_ReadGrid.C": "cpp",
+        "Group_ReadAllData.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

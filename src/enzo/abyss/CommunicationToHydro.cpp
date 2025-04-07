@@ -190,6 +190,7 @@ int InitialCommunication() {
 	fprintf(nbpout, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
 
 
+
 	for (int dim=0; dim<Dim; dim++) {
 		ClusterAcceleration[dim] = 0;
 		ClusterPosition[dim]     = 0;
@@ -366,7 +367,22 @@ int ReceiveFromEnzo() {
 	MPI_Recv(&TimeStep       , 1, MPI_DOUBLE, 0, 600, inter_comm, &status);
 	double OldEnzoCurrentTime = EnzoCurrentTime;
 	MPI_Recv(&EnzoCurrentTime, 1, MPI_DOUBLE, 0, 700, inter_comm, &status);
+	//for cosmological runs, we need to update the units
+	double TimeUnits, LengthUnits, VelocityUnits, DensityUnits;//MassUnits;
+	MPI_Recv(&TimeUnits,                1, MPI_DOUBLE, 0,  701, inter_comm, &status);
+	MPI_Recv(&LengthUnits,              1, MPI_DOUBLE, 0,  800, inter_comm, &status);
+	MPI_Recv(&DensityUnits,             1, MPI_DOUBLE, 0,  900, inter_comm, &status);
+	MPI_Recv(&VelocityUnits,            1, MPI_DOUBLE, 0, 1000, inter_comm, &status);
 	CommunicationInterBarrier();
+
+	// for cosmological runs
+	EnzoMass         = DensityUnits*pow(LengthUnits,3.)/Msun/mass_unit;
+	EnzoLength       = LengthUnits/pc/position_unit;
+	EnzoVelocity     = VelocityUnits/pc*yr/velocity_unit;
+	EnzoTime         = TimeUnits/yr/time_unit;
+	//EnzoAcceleration = LengthUnits/TimeUnits/TimeUnits/pc*yr*yr/position_unit*time_unit*time_unit;
+	EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
+
 
 	// std::cout << "Enzo  Time    :" << EnzoCurrentTime << std::endl;
 	//std::cout << "Nbody Time    :" << OldEnzoCurrentTime+particle[0]->CurrentTimeReg*EnzoTimeStep << std::endl;
@@ -659,9 +675,7 @@ int ReceiveFromEnzo() {
 	//}
 
 	//RegularList.clear();
-
-	NumberOfSingleParticle += newNumberOfSingleParticle;
-	NumberOfParticle 	   += newNumberOfSingleParticle;
+	fprintf(stderr, "Debug: before delete[] \n");
 
 
 	if (NumberOfSingleParticle != 0) {
@@ -671,6 +685,12 @@ int ReceiveFromEnzo() {
 			delete[] BackgroundAcceleration[dim];
 		}
 	}
+
+	NumberOfSingleParticle += newNumberOfSingleParticle;
+	NumberOfParticle 	   += newNumberOfSingleParticle;
+
+
+	fprintf(stderr, "Debug: after delete[] 1\n");
 	if (newNumberOfSingleParticle != 0) {
 		delete[] newPID;
 		delete[] newMass;
@@ -682,7 +702,7 @@ int ReceiveFromEnzo() {
 			delete[] newVelocity[dim];
 		}
 	}
-
+	fprintf(stderr, "Debug: after delete[] 2\n");
 
 	//  (Query) Do I need this?
 	// fprintf(nbpout, "NBODY+    : Acceleration for particles on GPU.\n");
