@@ -10,8 +10,8 @@ cd ../../
 ./configure
 cd src/enzo/
 
-#module add icc/latest
-#module add mpi/latest
+module add icc/latest
+module add mpi/latest
 export PATH=/appl/intel/oneapi/compiler/2021.4.0/linux/bin/intel64:$PATH
 export PATH=/appl/intel/oneapi/mpi/2021.4.0/bin:$PATH
 export LD_LIBRARY_PATH=/appl/intel/oneapi/mpi/2021.4.0/lib:$LD_LIBRARY_PATH
@@ -19,7 +19,7 @@ export LD_LIBRARY_PATH=/appl/intel/oneapi/mpi/2021.4.0/lib:$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=/home/wispedia/install/mpich-15/lib:$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=/home/vinicius/install/grackle15/lib:$LD_LIBRARY_PATH
 
-make machine-linux-mpich15
+make machine-linux-mpich14
 make precision-64 integers-32 particle-id-32 max-baryons-30 opt-aggressive lcaperf-no max-tasks-per-node-36 grackle-yes new-problem-types-yes nbody-yes photon-no cuda-no
 make show-config
 make show-flags

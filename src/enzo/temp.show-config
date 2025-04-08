@@ -1,6 +1,7 @@
+make[1]: Warning: File `DEPEND' has modification time 139 s in the future
 
    MACHINE: Generic Ubuntu 8.04
-   MACHINE-NAME: linux-mpich
+   MACHINE-NAME: linux-mpich14
 
    PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000
    PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 30
@@ -40,3 +41,4 @@
    CONFIG_LOG2ALLOC  [log2alloc-{yes,no}]                    : no
    CONFIG_UUID  [uuid-{yes,no}]                              : yes
 
+make[1]: 경고:  시계가 잘못되었음이 발견되었습니다.  빌드가 불완전할 수 있습니다.

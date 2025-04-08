@@ -484,28 +484,28 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 #ifdef USE_MPI
 	if (MyProcessorNumber == ROOT_PROCESSOR) {
 
-	int *NewNbodyParticleID;
-	double *NbodyParticleMass;
-	double *NewNbodyParticleMass;
-	double *NewNbodyParticleCreationTime;
-	double *NewNbodyParticleDynamicalTime;
-	double *NewNbodyParticleMetallicity;
-	double *NewNbodyParticleVelocity[MAX_DIMENSION]; // feedback can affect velocity
-	double *NewNbodyParticlePosition[MAX_DIMENSION]; // feedback can affect velocity
-	double *NewNbodyParticleAccelerationNoStar[MAX_DIMENSION];
+		int *NewNbodyParticleID;
+		double *NbodyParticleMass;
+		double *NewNbodyParticleMass;
+		double *NewNbodyParticleCreationTime;
+		double *NewNbodyParticleDynamicalTime;
+		double *NewNbodyParticleMetallicity;
+		double *NewNbodyParticleVelocity[MAX_DIMENSION]; // feedback can affect velocity
+		double *NewNbodyParticlePosition[MAX_DIMENSION]; // feedback can affect velocity
+		double *NewNbodyParticleAccelerationNoStar[MAX_DIMENSION];
 
-	NbodyParticleMass             = new double[NumberOfNbodyParticles];
-	NewNbodyParticleID            = new int[NumberOfNewNbodyParticles];
-	NewNbodyParticleMass          = new double[NumberOfNewNbodyParticles];
-	NewNbodyParticleCreationTime  = new double[NumberOfNewNbodyParticles];
-	NewNbodyParticleDynamicalTime = new double[NumberOfNewNbodyParticles];
-	NewNbodyParticleMetallicity	  = new double[NumberOfNewNbodyParticles];
+		NbodyParticleMass             = new double[NumberOfNbodyParticles];
+		NewNbodyParticleID            = new int[NumberOfNewNbodyParticles];
+		NewNbodyParticleMass          = new double[NumberOfNewNbodyParticles];
+		NewNbodyParticleCreationTime  = new double[NumberOfNewNbodyParticles];
+		NewNbodyParticleDynamicalTime = new double[NumberOfNewNbodyParticles];
+		NewNbodyParticleMetallicity	  = new double[NumberOfNewNbodyParticles];
 
-	for (int dim=0; dim<MAX_DIMENSION; dim++) {
-		NewNbodyParticlePosition[dim]            = new double[NumberOfNewNbodyParticles];
-		NewNbodyParticleVelocity[dim]            = new double[NumberOfNewNbodyParticles];
-		NewNbodyParticleAccelerationNoStar[dim]  = new double[NumberOfNewNbodyParticles];
-	}
+		for (int dim=0; dim<MAX_DIMENSION; dim++) {
+			NewNbodyParticlePosition[dim]            = new double[NumberOfNewNbodyParticles];
+			NewNbodyParticleVelocity[dim]            = new double[NumberOfNewNbodyParticles];
+			NewNbodyParticleAccelerationNoStar[dim]  = new double[NumberOfNewNbodyParticles];
+		}
 
 		/* Receiving Index, NumberOfParticles, NbodyArrays from other processs */
 		int* start_index_all;
@@ -643,7 +643,8 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 		ierr = CommunicationInterBarrier();
 		fprintf(stdout, "ENZO: Data sent.\n");
 
-
+		fprintf(stderr, "STN root... 1 start!\n");
+		fflush(stderr);
 		if (start_index_all != NULL)
 			delete [] start_index_all;
 		start_index_all = NULL;
@@ -657,6 +658,8 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 			delete [] NewLocalNumberAll;
 		NewLocalNumberAll = NULL;
 		DeleteNbodyArrays();
+		fprintf(stderr, "STN root... 1 done!\n");
+		fflush(stderr);
 
 
 		fprintf(stdout, "ENZO: 1\n");
@@ -664,7 +667,8 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 //#Merge  part
 
 
-
+		fprintf(stderr, "STN root... 2 start!\n");
+		fflush(stderr);
 		if (NbodyParticleMass != NULL)
 			delete [] NbodyParticleMass;
 		NbodyParticleMass = NULL;
@@ -704,6 +708,9 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 		if (NewNbodyParticleMetallicity != NULL)
 			delete [] NewNbodyParticleMetallicity;
 		NewNbodyParticleMetallicity = NULL;
+
+		fprintf(stderr, "STN root... 2 done!\n");
+		fflush(stderr);
 
 		fprintf(stdout, "ENZO: 2\n");
 
@@ -787,6 +794,9 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 
 	fprintf(stdout, "ENZO: 3\n");
 
+	fprintf(stderr, "STN root... 3 start!\n");
+	fflush(stderr);
+
 	for (int dim=0; dim<MAX_DIMENSION; dim++) {
 		if (NbodyParticleAccelerationNoStarTemp[dim] != NULL)
 			delete [] NbodyParticleAccelerationNoStarTemp[dim];
@@ -820,6 +830,9 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	if (NewNbodyParticleMetallicityTemp != NULL)
 		delete [] NewNbodyParticleMetallicityTemp;
 	NewNbodyParticleMetallicityTemp = NULL;
+
+	fprintf(stderr, "STN root... 3 done!\n");
+	fflush(stderr);
 
 	fprintf(stdout, "ENZO: 4\n");
 	return SUCCESS;

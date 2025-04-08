@@ -31,11 +31,11 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
 		ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
 	}
 
+
     int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum, MetalIaNum, MetalIINum;
     if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
         ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
-    // We need InitialMass, WindEjectedLoss, SNEjectedMass, Effective_temperature
 
     // dx = CellWidthTemp == float(CellWidth[0][0])
 
@@ -128,72 +128,72 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
         // Feedback condition: creation time >= 0 && (WindEjectedMass > 0.0 || SNejectedMass > 0.0)
         // (SEVN Query) This conditions might need to be fixed later!
         if (this->ParticleAttribute[0][n] >= 0 && (
-            ParticleAttribute[NumberOfParticleAttributes-8+1][n] > 0.0 || ParticleAttribute[NumberOfParticleAttributes-8+2][n] > 0.0)) {
+                    ParticleAttribute[NumberOfParticleAttributes-8+1][n] > 0.0 || ParticleAttribute[NumberOfParticleAttributes-8+2][n] > 0.0)) {
 
-                if (this->ParticlePosition[0][n] < xstart || this->ParticlePosition[0][n] > xstart + dx * nx ||
-                    this->ParticlePosition[1][n] < ystart || this->ParticlePosition[1][n] > ystart + dx * ny ||
-                    this->ParticlePosition[2][n] < zstart || this->ParticlePosition[2][n] > zstart + dx * nz) {
+            if (this->ParticlePosition[0][n] < xstart || this->ParticlePosition[0][n] > xstart + dx * nx ||
+                this->ParticlePosition[1][n] < ystart || this->ParticlePosition[1][n] > ystart + dx * ny ||
+                this->ParticlePosition[2][n] < zstart || this->ParticlePosition[2][n] > zstart + dx * nz) {
 
-                    ENZO_FAIL("star particle out of grid");
-                }
+                ENZO_FAIL("star particle out of grid");
+            }
 
-                // Set center of feedback zone
-                xfc = this->ParticlePosition[0][n];
-                yfc = this->ParticlePosition[1][n];
-                zfc = this->ParticlePosition[2][n];
-                fbuff = ibuff + 2.0;
+            // Set center of feedback zone
+            xfc = this->ParticlePosition[0][n];
+            yfc = this->ParticlePosition[1][n];
+            zfc = this->ParticlePosition[2][n];
+            fbuff = ibuff + 2.0;
 
-                // Check bounds - if star particle is near grid edge then shift center of feedback region
-                if (xfc < xstart + fbuff*dx || xfc > xstart + dx * (nx - fbuff) ||
-                    yfc < ystart + fbuff*dx || yfc > ystart + dx * (ny - fbuff) ||
-                    zfc < zstart + fbuff*dx || zfc > zstart + dx * (nz - fbuff)) {
+            // Check bounds - if star particle is near grid edge then shift center of feedback region
+            if (xfc < xstart + fbuff*dx || xfc > xstart + dx * (nx - fbuff) ||
+                yfc < ystart + fbuff*dx || yfc > ystart + dx * (ny - fbuff) ||
+                zfc < zstart + fbuff*dx || zfc > zstart + dx * (nz - fbuff)) {
 
-                    xfcshift = xfc;
-                    yfcshift = yfc;
-                    zfcshift = zfc;
+                xfcshift = xfc;
+                yfcshift = yfc;
+                zfcshift = zfc;
 
-                    xfc = max(xfc, xstart+fbuff*dx);
-                    yfc = max(yfc, ystart+fbuff*dx);
-                    zfc = max(zfc, zstart+fbuff*dx);
+                xfc = max(xfc, xstart+fbuff*dx);
+                yfc = max(yfc, ystart+fbuff*dx);
+                zfc = max(zfc, zstart+fbuff*dx);
 
-                    xfc = min(xfc, xstart + dx * (nx - fbuff - 1));
-                    yfc = min(yfc, ystart + dx * (ny - fbuff - 1));
-                    zfc = min(zfc, zstart + dx * (nz - fbuff - 1));
+                xfc = min(xfc, xstart + dx * (nx - fbuff - 1));
+                yfc = min(yfc, ystart + dx * (ny - fbuff - 1));
+                zfc = min(zfc, zstart + dx * (nz - fbuff - 1));
 
-                    xfcshift = xfcshift - xfc;
-                    yfcshift = yfcshift - yfc;
-                    zfcshift = zfcshift - zfc;
-                }
+                xfcshift = xfcshift - xfc;
+                yfcshift = yfcshift - yfc;
+                zfcshift = zfcshift - zfc;
+            }
 
-                // If using zeus, then velocities are face-centered so shift
-                face_shift = 0.0;
-                if (HydroMethod == 2) face_shift = 0.5;
+            // If using zeus, then velocities are face-centered so shift
+            face_shift = 0.0;
+            if (HydroMethod == 2) face_shift = 0.5;
 
-                // Compute index of the first cell to add momentum. accounting for possible face-centering
-                xface = (xfc - xstart)/dx - face_shift;
-                yface = (yfc - ystart)/dx - face_shift;
-                zface = (zfc - zstart)/dx - face_shift;
+            // Compute index of the first cell to add momentum. accounting for possible face-centering
+            xface = (xfc - xstart)/dx - face_shift;
+            yface = (yfc - ystart)/dx - face_shift;
+            zface = (zfc - zstart)/dx - face_shift;
 
-                iface = int(xface);
-                jface = int(yface);
-                kface = int(zface);
+            iface = int(xface);
+            jface = int(yface);
+            kface = int(zface);
 
-                dxf = iface + 1.0 - xface;
-                dyf = jface + 1.0 - yface;
-                dzf = kface + 1.0 - zface;
+            dxf = iface + 1.0 - xface;
+            dyf = jface + 1.0 - yface;
+            dzf = kface + 1.0 - zface;
 
-                // Compute index of the first cell to add mass, assuming cell-centering
-                xpos = (xfc - xstart)/dx;
-                ypos = (yfc - ystart)/dx;
-                zpos = (zfc - zstart)/dx;
+            // Compute index of the first cell to add mass, assuming cell-centering
+            xpos = (xfc - xstart)/dx;
+            ypos = (yfc - ystart)/dx;
+            zpos = (zfc - zstart)/dx;
 
-                ic = int(xpos);
-                jc = int(ypos);
-                kc = int(zpos);
+            ic = int(xpos);
+            jc = int(ypos);
+            kc = int(zpos);
 
-                dxc = ic + 1.0 - xpos;
-                dyc = jc + 1.0 - ypos;
-                dzc = kc + 1.0 - zpos;
+            dxc = ic + 1.0 - xpos;
+            dyc = jc + 1.0 - ypos;
+            dzc = kc + 1.0 - zpos;
 
             // Stellar wind feedback
             if (this->ParticleAttribute[NumberOfParticleAttributes-8+1][n] > 0.0) {
@@ -201,6 +201,10 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                 mass_ejected_Msun = this->ParticleAttribute[NumberOfParticleAttributes-8+1][n];
                 T_eff = this->ParticleAttribute[NumberOfParticleAttributes-8+3][n];
                 assert(T_eff > 0.0);
+
+                // Ejected mass fraction
+                m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / (this->ParticleMass[n] + mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx));
+                assert(m_eject > 0.0 && m_eject <= 1.0);
 
                 // Stellar mass for AGB stars (M <= 8 Msun, v_wind = 20 km/s)
                 if (this->ParticleAttribute[NumberOfParticleAttributes-8+0][n] <= 8.0) {
@@ -262,9 +266,6 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                     // Sum mass and energy before
                     this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_before, kin_energy_before);
 
-                    // Now add mass and momentum terms (normalization 1.0) to local dummy fields
-                    m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / 
-                                ((mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) + this->ParticleMass[n]);
                     this->add_feedback1(u1, v1, w1, d1, ge1, te1, metal1, 
                         dxf, dyf, dzf, dxc, dyc, dzc, m_eject, yield, this->ParticleAttribute[2][n],
                         mass_per_cell, 1.0, 0.0);
@@ -385,9 +386,6 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                     // Sum mass and energy before
                     this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_before, kin_energy_before);
 
-                    // Now add mass and momentum terms (normalization 1.0) to local dummy fields
-                    m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / 
-                                ((mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) + this->ParticleMass[n]);
                     this->add_feedback1(u1, v1, w1, d1, ge1, te1, metal1, 
                         dxf, dyf, dzf, dxc, dyc, dzc, m_eject, yield, this->ParticleAttribute[2][n],
                         mass_per_cell, 1.0, 0.0);
@@ -448,12 +446,17 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                         }
                     }
                 } // High-mass star wind feedback
+                this->ParticleAttribute[NumberOfParticleAttributes-8+1][n] = 0.0; // Set wind mass to 0.0
             }
 
             // Supernova feedback
             if (this->ParticleAttribute[NumberOfParticleAttributes-8+2][n] > 0.0) {
 
                 mass_ejected_Msun = this->ParticleAttribute[NumberOfParticleAttributes-8+2][n];
+
+                // Ejected mass fraction
+                m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / (this->ParticleMass[n] + mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx));
+                assert(m_eject > 0.0 && m_eject <= 1.0);
 
                 fprintf(stderr, "PID: %d. Supernova!!! SNEjectedMass: %e Msun\n", this->ParticleNumber[n], mass_ejected_Msun);
 
@@ -565,9 +568,6 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                 // Sum mass and energy before
                 this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_before, kin_energy_before);
 
-                // Now add mass and momentum terms (normalization 1.0) to local dummy fields
-                m_eject = (mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) / 
-                                ((mass_ejected_Msun * SolarMass / MassUnits / (dx*dx*dx)) + this->ParticleMass[n]);
                 this->add_feedback1(u1, v1, w1, d1, ge1, te1, metal1, 
                     dxf, dyf, dzf, dxc, dyc, dzc, m_eject, yield, this->ParticleAttribute[2][n],
                     mass_per_cell, 1.0, 0.0);
@@ -642,7 +642,8 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                             }
                         }
                     }
-                } 
+                }
+                this->ParticleAttribute[NumberOfParticleAttributes-8+2][n] = 0.0; // Set SN mass to 0.0 
             } // SN feedback
         } // for proper particles only
     } // every particle loop

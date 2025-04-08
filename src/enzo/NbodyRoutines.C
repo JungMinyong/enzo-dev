@@ -75,6 +75,9 @@ void InitializeNbodyArrays(bool NbodyFirst) {
 
 void InitializeNbodyArrays(void) {
 
+	fprintf(stderr, "INA_void... 1 start!\n");
+	fflush(stderr);
+
 	if (NbodyParticleMass != NULL)
 		delete [] NbodyParticleMass;
 	NbodyParticleMass = new double[NumberOfNbodyParticles];
@@ -98,9 +101,15 @@ void InitializeNbodyArrays(void) {
 		NbodyParticleAccelerationNoStar[dim] = new double[NumberOfNbodyParticles];
 
 	}
+
+	fprintf(stderr, "INA_void... 1 done!\n");
+	fflush(stderr);
 }
 
 void InitializeNbodyArrays(int) {
+
+	fprintf(stderr, "INA_int... 1 start!\n");
+	fflush(stderr);
 
 
 	if (NbodyParticleID != NULL)
@@ -119,7 +128,12 @@ void InitializeNbodyArrays(int) {
 
 	}
 
+	fprintf(stderr, "INA_int... 1 done!\n");
+	fflush(stderr);
+
 #ifdef SEVN
+	fprintf(stderr, "INA_int... 2 start!\n");
+	fflush(stderr);
 	if (NbodyParticleInitialMass != NULL)
 		delete [] NbodyParticleInitialMass;
 	NbodyParticleInitialMass = new double[NumberOfNbodyParticles];
@@ -135,6 +149,12 @@ void InitializeNbodyArrays(int) {
 	if (NbodyParticleTemperature != NULL)
 		delete [] NbodyParticleTemperature;
 	NbodyParticleTemperature = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleMass != NULL)
+		delete [] NbodyParticleMass;
+	NbodyParticleMass = new double[NumberOfNbodyParticles];
+	fprintf(stderr, "INA_int... 2 done!\n");
+	fflush(stderr);
 #endif
 }
 
@@ -142,6 +162,8 @@ void InitializeNbodyArrays(int) {
 
 void DeleteNbodyArrays(void) {
 
+	fprintf(stderr, "DNA_void... 1 start!\n");
+	fflush(stderr);
 	if (NbodyParticleMass != NULL) {
 		delete [] NbodyParticleMass;
 	NbodyParticleMass = NULL;
@@ -170,6 +192,9 @@ void DeleteNbodyArrays(void) {
 		}
 	}
 
+	fprintf(stderr, "DNA_void... 1 done!\n");
+	fflush(stderr);
+
 		/*
 		for (int i=0; i<HERMITE_ORDER; i++) {
 			delete [] NbodyParticleAcceleration[dim][i];
@@ -178,6 +203,8 @@ void DeleteNbodyArrays(void) {
 		*/
 
 #ifdef SEVN
+	fprintf(stderr, "DNA_void... 2 start!\n");
+	fflush(stderr);
 	if (NbodyParticleInitialMass != NULL)
 		delete [] NbodyParticleInitialMass;
 	NbodyParticleInitialMass = new double[NumberOfNbodyParticles];
@@ -193,6 +220,8 @@ void DeleteNbodyArrays(void) {
 	if (NbodyParticleTemperature != NULL)
 		delete [] NbodyParticleTemperature;
 	NbodyParticleTemperature = new double[NumberOfNbodyParticles];
+	fprintf(stderr, "DNA_void... 2 done!\n");
+	fflush(stderr);
 #endif
 }
 

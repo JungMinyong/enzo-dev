@@ -485,7 +485,7 @@ int ReceiveFromEnzo() {
 			}
 #endif
 			EnzoPIDs[i] = PID[i];
-			ptcl->update(Mass, BackgroundAcceleration, i); // WindEjectedMass & SNEjectedMass set to 0 here.
+			ptcl->update(Mass, BackgroundAcceleration, i);
 		} //endfor i
 #ifdef FEWBODY
 		for (int i: CMPtclsSet) { // Calculate background acceleration on the CM particles
@@ -564,7 +564,7 @@ int ReceiveFromEnzo() {
 #endif
 
 #ifdef SEVN
-			if (newMass[i] > 2.2)
+			if (newMass[i]*EnzoMass*mass_unit > 2.2)
 				initializeStellarEvolution(index);
 #endif
 		}
@@ -613,13 +613,19 @@ int ReceiveFromEnzo() {
 
 
 	if (NumberOfSingleParticle != 0) {
+		fprintf(stderr, "RFE... 1 start!\n");
+		fflush(stderr);
 		delete[] PID;
 		delete[] Mass;
 		for (int dim=0; dim<Dim; dim++) {
 			delete[] BackgroundAcceleration[dim];
 		}
+		fprintf(stderr, "RFE... 1 done!\n");
+		fflush(stderr);
 	}
 	if (newNumberOfSingleParticle != 0) {
+		fprintf(stderr, "RFE... 2 start!\n");
+		fflush(stderr);
 		delete[] newPID;
 		delete[] newMass;
 		delete[] newCreationTime;
@@ -630,6 +636,8 @@ int ReceiveFromEnzo() {
 			delete[] newPosition[dim];
 			delete[] newVelocity[dim];
 		}
+		fprintf(stderr, "RFE... 2 done!\n");
+		fflush(stderr);
 	}
 
 
@@ -684,6 +692,7 @@ int SendToEnzo(Worker *workers) {
 #ifdef SEVN
 	double *InitialMass, *WindEjectedMass, *SNEjectedMass, *Temperature;				// Msun & K unit
 	double *newInitialMass, *newWindEjectedMass, *newSNEjectedMass, *newTemperature;	// Msun & K unit
+	double *Mass, *newMass;																// We need to update mass here
 #endif
 	int index;
 	Particle *ptcl;
@@ -694,21 +703,29 @@ int SendToEnzo(Worker *workers) {
 			Velocity[dim]    = new double[NumberOfSingleParticle-newNumberOfSingleParticle];
 		}
 
-		if (newNumberOfSingleParticle > 0) {
+		if (newNumberOfSingleParticle != 0) {
 			newPosition[dim] = new double[newNumberOfSingleParticle];
 			newVelocity[dim] = new double[newNumberOfSingleParticle];
 		}
 	}
 #ifdef SEVN
-	InitialMass			= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
-	WindEjectedMass		= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
-	SNEjectedMass		= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
-	Temperature			= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
+	if (NumberOfSingleParticle-newNumberOfSingleParticle != 0) {
+		InitialMass			= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
+		WindEjectedMass		= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
+		SNEjectedMass		= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
+		Temperature			= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
 
-	newInitialMass		= new double[newNumberOfSingleParticle];
-	newWindEjectedMass	= new double[newNumberOfSingleParticle];
-	newSNEjectedMass	= new double[newNumberOfSingleParticle];
-	newTemperature		= new double[newNumberOfSingleParticle];
+		Mass 				= new double[NumberOfSingleParticle-newNumberOfSingleParticle];
+	}
+
+	if (newNumberOfSingleParticle != 0) {
+		newInitialMass		= new double[newNumberOfSingleParticle];
+		newWindEjectedMass	= new double[newNumberOfSingleParticle];
+		newSNEjectedMass	= new double[newNumberOfSingleParticle];
+		newTemperature		= new double[newNumberOfSingleParticle];
+
+		newMass 			= new double[newNumberOfSingleParticle];
+	}
 #endif
 
 	/*
@@ -732,6 +749,13 @@ int SendToEnzo(Worker *workers) {
 		ClusterVelocity[dim] += ClusterAcceleration[dim]*TimeStep;
 	}
 #else
+
+#define UPDATE_InitialNeighborRadius2
+#ifdef UPDATE_InitialNeighborRadius2
+	std::vector<std::vector<double>> star(NumberOfSingleParticle, std::vector<double>(3, 0.0));
+	std::vector<double> rarray(NumberOfSingleParticle);
+	double NbodyCOM_nbodyunit[Dim] = {0,0,0};
+#endif
 	double NbodyCOM[Dim] = {0,0,0};
 	double mass = 0;
 	for (int i = 0; i < NumberOfSingleParticle; i++)
@@ -742,6 +766,9 @@ int SendToEnzo(Worker *workers) {
 		for (int dim = 0; dim < Dim; dim++)
 		{
 			NbodyCOM[dim] += ptcl->Mass * ptcl->Position[dim];
+#ifdef UPDATE_InitialNeighborRadius2
+			star[i][dim] = ptcl->Position[dim];
+#endif
 		}
 		mass += ptcl->Mass;
 	}
@@ -749,6 +776,9 @@ int SendToEnzo(Worker *workers) {
 	for (int dim = 0; dim < Dim; dim++)
 	{
 		NbodyCOM[dim] /= mass;
+#ifdef UPDATE_InitialNeighborRadius2
+		NbodyCOM_nbodyunit[dim] = NbodyCOM[dim];
+#endif
 		NbodyCOM[dim] /= EnzoLength;
 		NbodyCOM[dim] += ClusterPosition[dim];
 	}
@@ -768,6 +798,12 @@ int SendToEnzo(Worker *workers) {
 			index = PIDtoIndexMap[EnzoPIDs[i]];
 			ptcl = &particles[index];
 
+#ifdef UPDATE_InitialNeighborRadius2
+			for (int dim = 0; dim < Dim; dim++)
+				star[i][dim] -= NbodyCOM_nbodyunit[dim];
+			rarray[i] = sqrt(star[i][0]*star[i][0] + star[i][1]*star[i][1] + star[i][2]*star[i][2]);
+#endif
+
 #ifdef FEWBODY
 			if (!ptcl->isActive) {
 				if (ptcl->CMPtclIndex != -1) {
@@ -782,12 +818,29 @@ int SendToEnzo(Worker *workers) {
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
 					if (ptcl->Mass < 0.0) { // merger induced zero-mass particles, PISN case
-						// /* // Example code by EW 2025.3.13
-						// (Query to YS) This particle should be deleted in Enzo too!!!
-						Position[0][i] += 20; // Position is not initialized yet
+						for (int dim=0; dim<Dim; dim++) {
+							Position[dim][i] = ptcl->Position[dim]/EnzoLength + ClusterPosition[dim];
+							Velocity[dim][i] = ptcl->Velocity[dim]/EnzoVelocity + ClusterVelocity[dim];
+						}
+						// (SEVN Query) This particle should be deleted in Enzo too!!!
+#ifdef SEVN
+						InitialMass[i]		= ptcl->InitialMass; // This is already in Msun unit!!!
+						WindEjectedMass[i]	= ptcl->dm*mass_unit;
+						SNEjectedMass[i]	= ptcl->SNEjectedMass*mass_unit;
+						Temperature[i]		= ptcl->T_eff;
+
+						if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
+							fprintf(stderr, "Feedback info send to Enzo...\n");
+							fprintf(stderr, "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
+									ptcl->PID, InitialMass[i], WindEjectedMass[i], SNEjectedMass[i], Temperature[i]);
+						}
+
+						Mass[i] 			= ptcl->Mass/EnzoMass;
+#endif
+						fprintf(stdout, "In CommunicationToHydro... PID: %d should be removed!\n", ptcl->PID);
 						deleteParticle(EnzoPIDs[i],index); // delete this particle in Abyss
 						NumberOfEscapeParticle++;
-						// */ // (SEVN Query) this particle should be deleted in Enzo too
+						continue;
 					} 
 				}
 			}
@@ -838,6 +891,8 @@ int SendToEnzo(Worker *workers) {
 				fprintf(stderr, "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
 						ptcl->PID, InitialMass[i], WindEjectedMass[i], SNEjectedMass[i], Temperature[i]);
 			}
+
+			Mass[i] 			= ptcl->Mass/EnzoMass;
 #endif
 
 			if ((ptcl == nullptr) && (i != NumberOfSingleParticle-newNumberOfSingleParticle-1)) // (Query) EW: this seems unnecessary. particles is no longer dynamically allocated
@@ -863,6 +918,12 @@ int SendToEnzo(Worker *workers) {
 			index = PIDtoIndexMap[EnzoPIDs[i+offset]];
 			ptcl = &particles[index];
 
+#ifdef UPDATE_InitialNeighborRadius2
+			for (int dim = 0; dim < Dim; dim++)
+				star[i+offset][dim] -= NbodyCOM_nbodyunit[dim];
+			rarray[i+offset] = sqrt(star[i+offset][0]*star[i+offset][0] + star[i+offset][1]*star[i+offset][1] + star[i+offset][2]*star[i+offset][2]);
+#endif
+
 #ifdef FEWBODY
 			if (!ptcl->isActive) {
 				if (ptcl->CMPtclIndex != -1) {
@@ -876,13 +937,30 @@ int SendToEnzo(Worker *workers) {
 				}
 				// continue; // (Query) EW: merger induced zero-mass particles, PISN case should be treated
 				else {
-					if(ptcl->Mass < 0.0) { // merger induced zero-mass particles, PISN case
-						// /* // Example code by EW 2025.3.13
-						// (Query to YS) This particle should be deleted in Enzo too!!!
-						newPosition[0][i] += 20;  // newPosition is not initialized yet
+					if (ptcl->Mass < 0.0) { // merger induced zero-mass particles, PISN case
+						for (int dim=0; dim<Dim; dim++) {
+							newPosition[dim][i] = ptcl->Position[dim]/EnzoLength + ClusterPosition[dim];
+							newVelocity[dim][i] = ptcl->Velocity[dim]/EnzoVelocity + ClusterVelocity[dim];
+						}
+						// (SEVN Query) This particle should be deleted in Enzo too!!!
+#ifdef SEVN
+						newInitialMass[i]		= ptcl->InitialMass; // This is already in Msun unit!!!
+						newWindEjectedMass[i]	= ptcl->dm*mass_unit;
+						newSNEjectedMass[i]		= ptcl->SNEjectedMass*mass_unit;
+						newTemperature[i]		= ptcl->T_eff;
+
+						if (newWindEjectedMass[i] > 0.0 || newSNEjectedMass[i] > 0.0) {
+							fprintf(stderr, "Feedback info send to Enzo...\n");
+							fprintf(stderr, "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
+									ptcl->PID, newInitialMass[i], newWindEjectedMass[i], newSNEjectedMass[i], newTemperature[i]);
+						}
+
+						newMass[i] 				= ptcl->Mass/EnzoMass;
+#endif
+						fprintf(stdout, "In CommunicationToHydro... PID: %d should be removed!\n", ptcl->PID);
 						deleteParticle(EnzoPIDs[i+offset],index); // delete this particle in Abyss
 						NumberOfEscapeParticle++;
-						// */ // (SEVN Query) this particle should be deleted in Enzo too
+						continue;
 					} 
 				}
 			}
@@ -931,6 +1009,8 @@ int SendToEnzo(Worker *workers) {
 				fprintf(stderr, "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
 						ptcl->PID, InitialMass[i], WindEjectedMass[i], SNEjectedMass[i], Temperature[i]);
 			}
+
+			newMass[i] 				= ptcl->Mass/EnzoMass;
 #endif
 		}
 		
@@ -1015,13 +1095,19 @@ int SendToEnzo(Worker *workers) {
 #endif
 	}
 
+#ifdef UPDATE_InitialNeighborRadius2
+	std::sort(rarray.begin(), rarray.end(), cmpmy);
+	int NNBMAX = static_cast<int>(std::sqrt(NumberOfSingleParticle));
+    double RS0 = rarray[NNBMAX];
+	fprintf(stderr, "Original InitialNeighborRadius2: %e\n", InitialNeighborRadius2);
+	fprintf(stderr, "Newly calculated InitialNeighborRadius2: %e\n", RS0*RS0);
+#endif
+
 	//std::cerr << "NBODY+: Waiting for Enzo to send data..." << std::endl;
 	fprintf(nbpout, "NBODY+: Waiting for Enzo to send data...\n");
 	CommunicationInterBarrier();
-	if (NumberOfSingleParticle-newNumberOfSingleParticle != 0)
-	{
-		for (int dim = 0; dim < Dim; dim++)
-		{
+	if (NumberOfSingleParticle-newNumberOfSingleParticle != 0) {
+		for (int dim = 0; dim < Dim; dim++) {
 			MPI_Send(Position[dim], NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 300, inter_comm);
 			MPI_Send(Velocity[dim], NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 400, inter_comm);
 		}
@@ -1030,12 +1116,14 @@ int SendToEnzo(Worker *workers) {
 		MPI_Send(WindEjectedMass,	NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 900,		inter_comm);
 		MPI_Send(SNEjectedMass,		NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 1000,	inter_comm);
 		MPI_Send(Temperature,		NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 1100,	inter_comm);
+
+		MPI_Send(Mass,				NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0, 1600,	inter_comm);
 #endif
 	}
 	//std::cerr << "NBODY+: Escape particles=" << EscapeParticleNum << std::endl;
 
 	//fprintf(stderr,"NewNumberOfSingleParticles=%d\n",NumberOfNewNbodyParticles);
-	if (newNumberOfSingleParticle > 0) {
+	if (newNumberOfSingleParticle != 0) {
 		for (int dim=0; dim<Dim; dim++) {
 			MPI_Send(newPosition[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 500, inter_comm);
 			MPI_Send(newVelocity[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 600, inter_comm);
@@ -1045,6 +1133,8 @@ int SendToEnzo(Worker *workers) {
 		MPI_Send(newWindEjectedMass,	newNumberOfSingleParticle, MPI_DOUBLE, 0, 1300, inter_comm);
 		MPI_Send(newSNEjectedMass,		newNumberOfSingleParticle, MPI_DOUBLE, 0, 1400, inter_comm);
 		MPI_Send(newTemperature,		newNumberOfSingleParticle, MPI_DOUBLE, 0, 1500, inter_comm);
+
+		MPI_Send(newMass,				newNumberOfSingleParticle, MPI_DOUBLE, 0, 1700, inter_comm);
 #endif
 	}
 
@@ -1066,89 +1156,46 @@ int SendToEnzo(Worker *workers) {
 
 	CommunicationInterBarrier();
 	fprintf(stdout, "NBODY+: Data sent!\n");
+	
 
 
-
-
-	/*
-	fprintf(stderr, "NBODY:(particle before) PID=");
-	for (Particle* ptcl:particle) {
-		fprintf(stderr, "%d, ", ptcl->PID);
-	}
-	fprintf(stderr, "\n");
-	*/
-
-
-
-	// erase from other particles' neighbor
-	// and correct force, but not too much worry about a_reg for now
-
-	/*
-	int size_tmp = 0;
-	for (Particle* ptcl: particle) {
-		size_tmp = ptcl->NumberOfAC;
-		auto it = ptcl->ACList.erase(
-				std::remove_if(ptcl->ACList.begin(), ptcl->ACList.end(),
-					[ptcl](Particle* p) {
-					bool to_remove = p->isErase;
-					if (to_remove) {
-					//fprintf(stderr, "earsing %d of %d\n", p->PID, ptcl->PID);
-						double a[Dim], adot[Dim];
-						ptcl->ComputeAcceleration(p,a,adot);
-						for (int dim=0; dim<Dim; dim++) {
-							ptcl->a_irr[dim][0] -= a[dim];
-							ptcl->a_irr[dim][1] -= adot[dim];
-						}
-					}
-					return to_remove;
-					}),
-				ptcl->ACList.end());
-
-		if (size_tmp != ptcl->ACList.size())  {
-			//fprintf(stderr, "Acceleration Correction PID=%d\n", ptcl->PID);
-			for (int dim=0;dim<Dim;dim++) {
-				ptcl->a_tot[dim][0] = ptcl->a_reg[dim][0] + ptcl->a_irr[dim][0];
-				ptcl->a_tot[dim][1] = ptcl->a_reg[dim][1] + ptcl->a_irr[dim][1];
-			}
-			ptcl->NumberOfAC = ptcl->ACList.size();
-			//fprintf(stderr, "NN=%d, a_irr=%e\n", ptcl->NumberOfAC, ptcl->a_irr[0][0]);
-		}
-	}
-	*/
-
-
-	/*
-	fprintf(stderr, "NBODY:(particle after) PID=\n");
-	for (Particle* ptcl:particle) {
-		fprintf(stderr, "%d, ", ptcl->PID);
-		}
-	fprintf(stderr, "\n ");
-	*/
-
-
-
+	fprintf(stderr, "STE... 1 start!\n");
+	fflush(stderr);
 	for (int dim = 0; dim < Dim; dim++)
 	{
 		if (NumberOfSingleParticle-newNumberOfSingleParticle != 0) {
 			delete[] Position[dim];
 			delete[] Velocity[dim];
 		}
-		if (newNumberOfSingleParticle > 0)
+		if (newNumberOfSingleParticle != 0)
 		{
 			delete[] newPosition[dim];
 			delete[] newVelocity[dim];
 		}
 	}
+	fprintf(stderr, "STE... 1 done!\n");
+	fflush(stderr);
 #ifdef SEVN
-	delete[] InitialMass;
-	delete[] WindEjectedMass;
-	delete[] SNEjectedMass;
-	delete[] Temperature;
+	fprintf(stderr, "STE... 2 start!\n");
+	fflush(stderr);
+	if (NumberOfSingleParticle-newNumberOfSingleParticle != 0) {
+		delete[] InitialMass;
+		delete[] WindEjectedMass;
+		delete[] SNEjectedMass;
+		delete[] Temperature;
 
-	delete[] newInitialMass;
-	delete[] newWindEjectedMass;
-	delete[] newSNEjectedMass;
-	delete[] newTemperature;
+		delete[] Mass;
+	}
+	if (newNumberOfSingleParticle != 0) {
+		delete[] newInitialMass;
+		delete[] newWindEjectedMass;
+		delete[] newSNEjectedMass;
+		delete[] newTemperature;
+
+		delete[] newMass;
+	}
+	fprintf(stderr, "STE... 2 done!\n");
+	fflush(stderr);
 #endif
 
 	NumberOfSingleParticle -= NumberOfEscapeParticle;

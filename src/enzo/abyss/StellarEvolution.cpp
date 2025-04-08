@@ -25,6 +25,12 @@ void initializeStellarEvolution() {
 
         ptcl->WorldTime = 0.0;
 
+        if (ptcl->CreationTime < 0.0) {
+            ptcl->radius = 2.25461e-8/position_unit*pow(ptcl->Mass*mass_unit, 1/3);
+            ptcl->ParticleType = NoFeedbackStar;
+            continue;
+        }
+
         if (ptcl->Mass*mass_unit < 2.2) {
 			ptcl->radius = 2.25461e-8/position_unit*pow(ptcl->Mass*mass_unit, 1/3);
             ptcl->ParticleType = NoFeedbackStar;
@@ -64,6 +70,7 @@ void initializeStellarEvolution(int ParticleIndex) {
 
     ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
     ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
+    fprintf(stderr, "New star in SEVN! PID: %d, Initial mass: %e Msun, Initial metallicity: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
 }
 
 void setBHspin(Particle* ptcl) {
