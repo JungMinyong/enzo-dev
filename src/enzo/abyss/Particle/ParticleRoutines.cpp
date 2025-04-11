@@ -52,6 +52,8 @@ void Particle::update(double *Mass, double *BackgroundAcceleration[Dim], int &i)
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
 #ifdef SEVN
+	this->dm						 = 0.0;
+	this->SNEjectedMass				 = 0.0;
 	if (this->StellarEvolution != nullptr) {
 		if (this->StellarEvolution->vkick[3] > 0.0) {
 			fprintf(SEVNout, "PID: %d. Kicked velocity: (%e, %e, %e) [km/s]\n", this->PID, this->StellarEvolution->vkick[0], this->StellarEvolution->vkick[1], this->StellarEvolution->vkick[2]);

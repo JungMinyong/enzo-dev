@@ -27,7 +27,7 @@ MACH_FILE  = Make.mach.ubuntu-hardy
 #LOCAL_GRACKLE_INSTALL = /home/sykim/local/grackle
 #LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.8
 LOCAL_HDF5_INSTALL = /home/vinicius/install/hdf5-1.12.1/hdf5_n15
-LOCAL_MPI = /home/wispedia/install/mpich-15
+LOCAL_MPI = /home/vinicius/install/mpich-3.3.2/mpich3_15
 LOCAL_GRACKLE_INSTALL = /home/vinicius/install/grackle15
 LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.5
 
@@ -79,11 +79,11 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 
 
 MACH_CPPFLAGS = -P -traditional -std=c++11
-MACH_CFLAGS   = 
+MACH_CFLAGS   =
 MACH_CXXFLAGS = -std=c++11
 MACH_FFLAGS   = -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi
 MACH_F90FLAGS = 
-MACH_LDFLAGS  = 
+MACH_LDFLAGS  =
 
 
 #-----------------------------------------------------------------------

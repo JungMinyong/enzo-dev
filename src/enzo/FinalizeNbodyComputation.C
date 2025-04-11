@@ -309,8 +309,6 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 
 			//fprintf(stderr,"Root:Done?2-5\n");
 
-			fprintf(stderr, "FNC root... 1 start!\n");
-			fflush(stderr);
 
 			if (start_index_all != NULL)
 				delete [] start_index_all;
@@ -336,11 +334,7 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 				NewNbodyParticleVelocity[dim] = NULL;
 			}
 
-			fprintf(stderr, "FNC root... 1 done!\n");
-			fflush(stderr);
 #ifdef SEVN
-			fprintf(stderr, "FNC root... 2 start!\n");
-			fflush(stderr);
 			if (NewNbodyParticleInitialMass != NULL)
 				delete [] NewNbodyParticleInitialMass;
 			NewNbodyParticleInitialMass = NULL;
@@ -357,8 +351,6 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 			if (NewNbodyParticleMass != NULL)
 				delete [] NewNbodyParticleMass;
 			NewNbodyParticleMass = NULL;
-			fprintf(stderr, "FNC root... 2 done!\n");
-			fflush(stderr);
 #endif
 
 
@@ -501,8 +493,6 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 				MyProcessorNumber, LocalNumberOfNbodyParticles, count);
 				*/
 
-		fprintf(stderr, "FNC root... 3 start!\n");
-		fflush(stderr);
 
 		/* Destruct Arrays*/
 		if (NbodyParticleIDTemp != NULL)
@@ -522,11 +512,7 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 				delete [] NbodyParticleVelocityTemp[dim];
 			NbodyParticleVelocityTemp[dim] = NULL;
 		}
-		fprintf(stderr, "FNC root... 3 done!\n");
-		fflush(stderr);
 #ifdef SEVN
-		fprintf(stderr, "FNC root... 4 start!\n");
-		fflush(stderr);
 		if (NbodyParticleInitialMassTemp != NULL)
 			delete [] NbodyParticleInitialMassTemp;
 		NbodyParticleInitialMassTemp = NULL;
@@ -543,12 +529,8 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 		if (NbodyParticleMassTemp != NULL)
 			delete [] NbodyParticleMassTemp;
 		NbodyParticleMassTemp = NULL;
-		fprintf(stderr, "FNC root... 4 done!\n");
-		fflush(stderr);
 #endif
 
-		fprintf(stderr, "FNC root... 5 start!\n");
-		fflush(stderr);
 
 		for (int dim=0; dim<MAX_DIMENSION; dim++) {
 			if (NewNbodyParticlePositionTemp[dim] != NULL)
@@ -559,11 +541,7 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 				delete [] NewNbodyParticleVelocityTemp[dim];
 			NewNbodyParticleVelocityTemp[dim] = NULL;
 		}
-		fprintf(stderr, "FNC root... 5 done!\n");
-		fflush(stderr);
 #ifdef SEVN
-		fprintf(stderr, "FNC root... 6 start!\n");
-		fflush(stderr);
 		if (NewNbodyParticleInitialMassTemp != NULL)
 			delete [] NewNbodyParticleInitialMassTemp;
 		NewNbodyParticleInitialMassTemp = NULL;
@@ -580,8 +558,6 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 		if (NewNbodyParticleMassTemp != NULL)
 			delete [] NewNbodyParticleMassTemp;
 		NewNbodyParticleMassTemp = NULL;
-		fprintf(stderr, "FNC root... 6 done!\n");
-		fflush(stderr);
 #endif
 		NumberOfNewNbodyParticles = 0;
 

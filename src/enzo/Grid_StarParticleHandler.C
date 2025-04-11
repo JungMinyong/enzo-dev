@@ -348,6 +348,20 @@ extern "C" void FORTRAN_NAME(star_feedback3mom)(int *nx, int *ny, int *nz,
              float *mp, float *tdp, float *tcp, float *metalf, int *type,
 	     float *justburn, float *kinf, float *exptime);
 
+#ifdef SEVN
+extern "C" void FORTRAN_NAME(star_feedback3mom_individual)(int *nx, int *ny, int *nz,
+                  float *d, float *mu, float *dm, float *te, float *ge, float *u, float *v,
+             float *w, float *metal, float *zfield1, float *zfield2,
+        int *idual, int *imetal, int *imulti_metals, hydro_method *imethod, 
+             float *dt, float *r, float *dx, FLOAT *t, float *z,
+             float *d1, float *x1, float *v1, float *t1, float *yield,
+             int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart,
+             int *ibuff,
+             FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
+             float *mp, float *tcp, float *metalf, int *type,
+        float *kinf, float *minitial_arr, float *mwind_arr, float *msn_arr, float *teff_arr);
+#endif
+
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v,
 		       float *w, float *metal, float *zfield1, float *zfield2,
@@ -1210,8 +1224,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       if (ComovingCoordinates)
 	StarMakerOverDensityThreshold *= mh / DensityUnits;   
 
-      FORTRAN_NAME(star_maker7)(
-      // FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
+      // FORTRAN_NAME(star_maker7)(
+      FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], cooling_time,
@@ -1251,6 +1265,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NbodyStar;
 				else
           tg->ParticleType[i] = NormalStarType;
+
+          tg->ParticleAttribute[NumberOfParticleAttributes-8+0][i] = tg->ParticleMass[i];
 #else
           tg->ParticleType[i] = NormalStarType;
 #endif
@@ -1841,8 +1857,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
    
    StarFeedbackKineticFraction = FLOAT_UNDEFINED;
    individual_star_feedback3mom(CellWidthTemp, StarFeedbackKineticFraction, mu_field, StarMetalYield);
-
-   FORTRAN_NAME(star_feedback3mom)(
+/*
+   FORTRAN_NAME(star_feedback3mom_individual)(
       GridDimension, GridDimension+1, GridDimension+2,
       BaryonField[DensNum], mu_field, dmfield,
          BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
@@ -1852,7 +1868,6 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       &dtFixed, BaryonField[NumberOfBaryonFields], &CellWidthTemp,
          &Time, &zred,
       &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
-         &StarEnergyToThermalFeedback, &StarMassEjectionFraction,
          &StarMetalYield, 
       &NumberOfParticles,
          CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
@@ -1860,9 +1875,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
          ParticlePosition[2],
       ParticleVelocity[0], ParticleVelocity[1],
          ParticleVelocity[2],
-      ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
-      ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation,
-      &StarFeedbackKineticFraction,&StarMakerExplosionDelayTime);
+      ParticleMass, ParticleAttribute[0],
+      ParticleAttribute[2], ParticleType, &StarFeedbackKineticFraction,
+      ParticleAttribute[NumberOfParticleAttributes-8+0], ParticleAttribute[NumberOfParticleAttributes-8+1],
+      ParticleAttribute[NumberOfParticleAttributes-8+2], ParticleAttribute[NumberOfParticleAttributes-8+3]);
+*/
 
    delete [] mu_field;
 

@@ -803,7 +803,7 @@ class ProblemType_AgoraRestart : public EnzoProblemType
 #ifdef NBODY
 			// just for tests
 			for (int j = 0; j < nParticles; j++) {
-				Attribute[0][j] = 0.0; // (SEVN Query) modified by EW 2025.4.3 // It should be changed if we consider restart case...
+				// Attribute[0][j] = 0.0; // (SEVN Query) modified by EW 2025.4.3 // It should be changed if we consider restart case...
 				Attribute[1][j] = StarMakerMinimumDynamicalTime*3.15e7/TimeUnits; // Dynamical time
 				Attribute[2][j] = TestProblemData.MetalFractionByMass; // test by EW 2025.4.3
 			}

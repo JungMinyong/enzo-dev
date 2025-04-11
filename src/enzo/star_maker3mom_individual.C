@@ -450,6 +450,7 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
             }
 
             // Supernova feedback
+            // /*
             if (this->ParticleAttribute[NumberOfParticleAttributes-8+2][n] > 0.0) {
 
                 mass_ejected_Msun = this->ParticleAttribute[NumberOfParticleAttributes-8+2][n];
@@ -524,6 +525,7 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                 
                 // Check kinf. If it is too small, set it to 0
                 if (kinf <= 1e-10) kinf = 0.0;
+                // kinf = 0.0;
 
                 // Finished computing kinf; now compute the amount of thermal energy that needs to be added to each cell
                 thermal_energy_per_cell = (1.0 - kinf) * energy_per_cell;
@@ -645,6 +647,8 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                 }
                 this->ParticleAttribute[NumberOfParticleAttributes-8+2][n] = 0.0; // Set SN mass to 0.0 
             } // SN feedback
+            // */
+            // this->ParticleAttribute[NumberOfParticleAttributes-8+2][n] = 0.0; // Set SN mass to 0.0 
         } // for proper particles only
     } // every particle loop
 

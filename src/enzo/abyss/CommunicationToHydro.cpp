@@ -267,7 +267,6 @@ int InitialCommunication() {
 	global_variable->LastParticleIndex = NumberOfSingleParticle-1;
 
 
-	FixNumNeighbor = std::min((int) std::floor(NumberOfSingleParticle/2), FixNumNeighbor0);
 	/*
 	Particle *ptcl;
 	for (int i = 0; i <= global_variable->LastParticleIndex; i++)
@@ -395,8 +394,12 @@ int ReceiveFromEnzo() {
 	//std::cout << "enzo Time :" << TimeStep << std::endl;
 	//std::cout << "nbody Time:" << EnzoTimeStep << std::endl;
 	// FixNumNeighbor = std::min((int) std::floor((NumberOfSingleParticle+newNumberOfSingleParticle-1)/2.0), FixNumNeighbor0); // original by EW 2025.3.27
-	FixNumNeighbor = static_cast<int>(sqrt(NumberOfSingleParticle+newNumberOfSingleParticle)); // test by EW 2025.3.27
 
+
+	if (NumberOfSingleParticle + newNumberOfSingleParticle < 1000)
+		FixNumNeighbor = 30;
+	else
+		FixNumNeighbor = static_cast<int>(sqrt(NumberOfSingleParticle+newNumberOfSingleParticle)); // test by EW 2025.3.27
 
 
 	// COM conversion
@@ -598,34 +601,19 @@ int ReceiveFromEnzo() {
 	}
 	*/
 
-#ifdef SEVN
-	// (SEVN Query) We should receive ParticleFeedbackType!
 	// (SEVN Query) After processing, wind & SN feedback, 
-	// 1. dm should be set to 0
-	// 2. ParticleType should be changed. ex) BH_preFB -> BH
-	// 3. If the particle is kicked, kicked velocity should be accounted
-	// 4. For PISN case, SEVN memory should be free
-#endif
-
-
-	NumberOfSingleParticle += newNumberOfSingleParticle;
-	NumberOfParticle 	   += newNumberOfSingleParticle;
-
+	// 1. dm should be set to 0 - in update function
+	// 2. If the particle is kicked, kicked velocity should be accounted - in update function
+	// 3. For PISN case, SEVN memory should be free - not yet
 
 	if (NumberOfSingleParticle != 0) {
-		fprintf(stderr, "RFE... 1 start!\n");
-		fflush(stderr);
 		delete[] PID;
 		delete[] Mass;
 		for (int dim=0; dim<Dim; dim++) {
 			delete[] BackgroundAcceleration[dim];
 		}
-		fprintf(stderr, "RFE... 1 done!\n");
-		fflush(stderr);
 	}
 	if (newNumberOfSingleParticle != 0) {
-		fprintf(stderr, "RFE... 2 start!\n");
-		fflush(stderr);
 		delete[] newPID;
 		delete[] newMass;
 		delete[] newCreationTime;
@@ -636,10 +624,10 @@ int ReceiveFromEnzo() {
 			delete[] newPosition[dim];
 			delete[] newVelocity[dim];
 		}
-		fprintf(stderr, "RFE... 2 done!\n");
-		fflush(stderr);
 	}
 
+	NumberOfSingleParticle += newNumberOfSingleParticle;
+	NumberOfParticle 	   += newNumberOfSingleParticle;
 
 	//  (Query) Do I need this?
 	// fprintf(nbpout, "NBODY+    : Acceleration for particles on GPU.\n");
@@ -838,8 +826,8 @@ int SendToEnzo(Worker *workers) {
 						Mass[i] 			= ptcl->Mass/EnzoMass;
 #endif
 						fprintf(stdout, "In CommunicationToHydro... PID: %d should be removed!\n", ptcl->PID);
-						deleteParticle(EnzoPIDs[i],index); // delete this particle in Abyss
-						NumberOfEscapeParticle++;
+						// deleteParticle(EnzoPIDs[i],index); // delete this particle in Abyss
+						// NumberOfEscapeParticle++;
 						continue;
 					} 
 				}
@@ -958,8 +946,8 @@ int SendToEnzo(Worker *workers) {
 						newMass[i] 				= ptcl->Mass/EnzoMass;
 #endif
 						fprintf(stdout, "In CommunicationToHydro... PID: %d should be removed!\n", ptcl->PID);
-						deleteParticle(EnzoPIDs[i+offset],index); // delete this particle in Abyss
-						NumberOfEscapeParticle++;
+						// deleteParticle(EnzoPIDs[i+offset],index); // delete this particle in Abyss
+						// NumberOfEscapeParticle++;
 						continue;
 					} 
 				}
@@ -1096,11 +1084,13 @@ int SendToEnzo(Worker *workers) {
 	}
 
 #ifdef UPDATE_InitialNeighborRadius2
-	std::sort(rarray.begin(), rarray.end(), cmpmy);
+	std::sort(rarray.begin(), rarray.end());
 	int NNBMAX = static_cast<int>(std::sqrt(NumberOfSingleParticle));
     double RS0 = rarray[NNBMAX];
 	fprintf(stderr, "Original InitialNeighborRadius2: %e\n", InitialNeighborRadius2);
 	fprintf(stderr, "Newly calculated InitialNeighborRadius2: %e\n", RS0*RS0);
+	if (NumberOfSingleParticle + newNumberOfSingleParticle > 1000)
+		InitialNeighborRadius2 = RS0*RS0;
 #endif
 
 	//std::cerr << "NBODY+: Waiting for Enzo to send data..." << std::endl;
@@ -1159,8 +1149,6 @@ int SendToEnzo(Worker *workers) {
 	
 
 
-	fprintf(stderr, "STE... 1 start!\n");
-	fflush(stderr);
 	for (int dim = 0; dim < Dim; dim++)
 	{
 		if (NumberOfSingleParticle-newNumberOfSingleParticle != 0) {
@@ -1173,11 +1161,7 @@ int SendToEnzo(Worker *workers) {
 			delete[] newVelocity[dim];
 		}
 	}
-	fprintf(stderr, "STE... 1 done!\n");
-	fflush(stderr);
 #ifdef SEVN
-	fprintf(stderr, "STE... 2 start!\n");
-	fflush(stderr);
 	if (NumberOfSingleParticle-newNumberOfSingleParticle != 0) {
 		delete[] InitialMass;
 		delete[] WindEjectedMass;
@@ -1194,8 +1178,6 @@ int SendToEnzo(Worker *workers) {
 
 		delete[] newMass;
 	}
-	fprintf(stderr, "STE... 2 done!\n");
-	fflush(stderr);
 #endif
 
 	NumberOfSingleParticle -= NumberOfEscapeParticle;

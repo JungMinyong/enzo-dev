@@ -4,7 +4,7 @@
 
 echo "Making enzo on"
 pwd
-make clean
+#make clean
 make default
 cd ../../
 ./configure

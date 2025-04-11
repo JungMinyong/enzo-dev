@@ -5,7 +5,7 @@
 c=======================================================================
 c/////////////////////  SUBROUTINE STAR_FEEDBACK \\\\\\\\\\\\\\\\\\\\\\\
 c
-      subroutine star_feedback3mom(nx, ny, nz,
+      subroutine star_feedback3mom_individual(nx, ny, nz,
      &               d, mu, dm, te, ge, u, v, w,
      &               metal, zfield1, zfield2,
      &               idual, imetal, imulti_metals, imethod, 
@@ -14,7 +14,8 @@ c
      &               npart, xstart, ystart, zstart, ibuff,
      &               xp, yp, zp, up, vp, wp,
      &               mp, tcp, metalf, type,
-     &               kinf_in, mwind_arr, msn_arr, t_eff)
+     &               kinf_in, minitial_arr, mwind_arr, 
+     &               msn_arr, teff_arr)
 
 c
 c  RELEASES "STAR" PARTICLE ENERGY, MASS AND METALS
@@ -60,9 +61,10 @@ c    yield    - fraction of stellar mass that is converted to metals
 c    type     - particle type
 c    kinf_fixed - fixed kinetic energy fraction for use when var is
 c                 false
-c    mwind_arr  - ejected mass by wind
-c    msn_arr    - ejected mass by supernova
-c    teff_arr   - effective temperature of the star
+c    minitial_arr - initial mass of star particle
+c    mwind_arr    - ejected mass by wind
+c    msn_arr      - ejected mass by supernova
+c    teff_arr     - effective temperature of the star
 c
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
@@ -93,7 +95,8 @@ c
       R_PREC    mp(npart), tdp(npart), tcp(npart), metalf(npart)
       INTG_PREC type(npart)
       R_PREC 	  kinf,kinf_in
-      R_PREC    mwind_arr(npart), msn_arr(npart), teff_arr(npart)
+      R_PREC    minitial_arr(npart), mwind_arr(npart)
+      R_PREC    msn_arr(npart), teff_arr(npart)
 c
 c  Locals
 c
@@ -122,7 +125,7 @@ c
 c
 c-----------------------------------------------------------------------
 c
-c     Set mass and energy unit
+c     Set mass unit and energy unit
       m1 = dunits * dx**3_IKIND
       e1 = m1 * vunits**2_IKIND
 c
@@ -138,6 +141,7 @@ c      write(6,*) 'star_feedback3: start',npart
          if (tcp(n) .ge. 0._RKIND .and. (mwind_arr(n) .gt. 0._RKIND .or. 
      &        msn_arr(n) .gt. 0_IKIND)) then
 c
+            minitial = minitial_arr(n) ! in solar mass
             mwind = mwind_arr(n) ! in solar mass
             msn = msn_arr(n) ! in solar mass
             teff = teff_arr(n) ! in K
@@ -242,12 +246,14 @@ c           Stellar wind feedback
                m_eject = m_eject / (m_eject + mp(n))
                kinf = 0.0_RKIND
 c
-               if (minitial(n) .lt. 8.0_RKIND) then !AGB stellar wind
+               if (minitial .lt. 8.0_RKIND) then !AGB stellar wind
 c
                   mass_per_cell = mwind * SolarMass / m1 / dx**3_IKIND / 
      &               dist_mass_cells;
-                  energy = 1.5_RKIND * (mwind * SolarMass / mass_h) *
-     &               kboltz * teff
+                  energy = 1.5_RKIND * 
+     &               (mwind * SolarMass / mass_h) *
+     &               kboltz * 
+     &               teff
                   energy = energy + 0.5_RKIND * (mwind * SolarMass) * 
      &               v_wind_low**2_IKIND
                   energy = energy / e1 / dx**3_IKIND
@@ -289,39 +295,43 @@ c
                      enddo
                   endif
 c
-                  call momentum(u, v, w, d, metal, up(n), vp(n), wp(n),
+                  call momentum2(u, v, w, d, metal, up(n), vp(n), wp(n),
      &                          nx, ny, nz, ic, jc, kc,
      &                          iface, jface, kface, imethod, imetal,
      &                          +1_IKIND)
 c
-                  call sum_mass_kinetic_energy(u, v, w, d, ge, te, nx, ny, nz,
+                  call sum_mass_kinetic_energy2(u, v, w, d, ge, 
+     &                 te, nx, ny, nz,
      &                 iface, jface, kface, ic, jc, kc,
      &                 mass_before, kin_energy_before, idual, imethod)
 c
-                  call add_feedback(u1, v1, w1, d1, ge1, te1, metal1, 4_IKIND,
-     &                              4_IKIND, 4_IKIND,
+                  call add_feedback2(u1, v1, w1, d1, ge1, te1, metal1, 
+     &                              4_IKIND, 4_IKIND, 4_IKIND,
      &                              2_IKIND, 2_IKIND, 2_IKIND, 2_IKIND,
      &                                 2_IKIND, 2_IKIND,
      &                              dxf, dyf, dzf, dxc, dyc, dzc,
-     &                              imethod, imetal, imulti_metals, idual,
-     &                              m_eject, yield, metalf(n),
+     &                              imethod, imetal, imulti_metals, 
+     &                              idual, m_eject, yield, metalf(n),
      &                              mass_per_cell, 1._RKIND, 0._RKIND)
 c
                   mom_per_cell = 0._RKIND
 c
-                  call add_feedback(u, v, w, d, ge, te, metal, nx, ny, nz,
+                  call add_feedback2(u, v, w, d, ge, te, 
+     &                              metal, nx, ny, nz,
      &                              ic, jc, kc, iface, jface, kface,
      &                              dxf, dyf, dzf, dxc, dyc, dzc,
-     &                              imethod, imetal, imulti_metals, idual,
+     &                              imethod, imetal, 
+     &                              imulti_metals, idual,
      &                              m_eject, yield, metalf(n),
      &                              mass_per_cell, mom_per_cell,
      &                              thermal_energy_per_cell)
 c
-                  call sum_mass_kinetic_energy(u, v, w, d, ge, te, nx, ny, nz,
+                  call sum_mass_kinetic_energy2(u, v, w, d, ge, te, 
+     &                 nx, ny, nz,
      &                 iface, jface, kface, ic, jc, kc,
      &                 mass_after, kin_energy_after, idual, imethod)
 c
-                  call momentum(u, v, w, d, metal, up(n), vp(n), wp(n),
+                  call momentum2(u, v, w, d, metal, up(n), vp(n), wp(n),
      &                          nx, ny, nz, ic, jc, kc,
      &                          iface, jface, kface, imethod, imetal,
      &                          -1_IKIND)
@@ -336,7 +346,121 @@ c
      &                                  (u(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                                   v(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                                   w(ic+i ,jc+j ,kc+k)**2_IKIND)
-                              delta_ke = ke_after - ke_before(i+2,j+2,k+2)
+                              delta_ke = ke_after-ke_before(i+2,j+2,k+2)
+                              te(ic+i,jc+j,kc+k) =
+     &                                  te(ic+i,jc+j,kc+k) +
+     &                                  delta_ke/d(ic+i,jc+j,kc+k)
+                              ke_injected = ke_injected + delta_ke
+                           enddo
+                        enddo
+                     enddo
+                  endif !end AGB case
+c
+               else !Massive stellar wind
+c
+                  mass_per_cell = mwind * SolarMass / m1 / 
+     &               dx**3_IKIND / 
+     &               dist_mass_cells;
+                  energy = 1.5_RKIND * 
+     &               (mwind * SolarMass / mass_h) *
+     &               kboltz * 
+     &               teff
+                  energy = energy + 0.5_RKIND * 
+     &               (mwind * SolarMass) * 
+     &               v_wind_high**2_IKIND
+                  energy = energy / e1 / dx**3_IKIND
+                  energy_per_cell = energy / 
+     &               dist_mass_cells
+c
+                  thermal_energy_per_cell = 
+     &                (1._RKIND - kinf) *
+     &                energy_per_cell
+c
+                  do k = 1_IKIND, 4_IKIND
+                     do j = 1_IKIND, 4_IKIND
+                        do i = 1_IKIND, 4_IKIND
+                           u1(i,j,k) = 0._RKIND
+                           v1(i,j,k) = 0._RKIND
+                           w1(i,j,k) = 0._RKIND
+                           d1(i,j,k) = 0._RKIND
+                           ge1(i,j,k) = 0._RKIND
+                           te1(i,j,k) = 0._RKIND
+                           metal1(i,j,k) = 0._RKIND
+                        enddo
+                     enddo
+                  enddo
+c
+c                 Compute the kinetic energy in the affected region
+c                 before momentum is added (except for ZEUS).  This
+c                 is needed at the end of the calculation to update the
+c                 total energy (te) field.
+c
+                  if (imethod .ne. 2_IKIND) then
+                     do k = -1_IKIND, +2_IKIND
+                        do j = -1_IKIND, +2_IKIND
+                           do i = -1_IKIND, +2_IKIND
+                              ke_before(i+2, j+2, k+2) =
+     &                             0.5_RKIND*d(ic+i, jc+j, kc+k)*
+     &                                  (u(ic+i ,jc+j ,kc+k)**2_IKIND +
+     &                                   v(ic+i ,jc+j ,kc+k)**2_IKIND +
+     &                                 w(ic+i ,jc+j ,kc+k)**2_IKIND)
+                           enddo
+                        enddo
+                     enddo
+                  endif
+c
+                  call momentum2(u, v, w, d, metal, up(n), vp(n), wp(n),
+     &                          nx, ny, nz, ic, jc, kc,
+     &                          iface, jface, kface, imethod, imetal,
+     &                          +1_IKIND)
+c
+                  call sum_mass_kinetic_energy2(u, v, w, d, ge, te, 
+     &                 nx, ny, nz,
+     &                 iface, jface, kface, ic, jc, kc,
+     &                 mass_before, kin_energy_before, idual, imethod)
+c
+                  call add_feedback2(u1, v1, w1, d1, ge1, te1, metal1, 
+     &                              4_IKIND, 4_IKIND, 4_IKIND,
+     &                              2_IKIND, 2_IKIND, 2_IKIND, 2_IKIND,
+     &                              2_IKIND, 2_IKIND,
+     &                              dxf, dyf, dzf, dxc, dyc, dzc,
+     &                              imethod, imetal, imulti_metals, 
+     &                              idual, m_eject, yield, metalf(n),
+     &                              mass_per_cell, 1._RKIND, 0._RKIND)
+c
+                  mom_per_cell = 0._RKIND
+c
+                  call add_feedback2(u, v, w, d, ge, te, metal, 
+     &                              nx, ny, nz,
+     &                              ic, jc, kc, iface, jface, kface,
+     &                              dxf, dyf, dzf, dxc, dyc, dzc,
+     &                              imethod, imetal, imulti_metals, 
+     &                              idual, m_eject, yield, metalf(n),
+     &                              mass_per_cell, mom_per_cell,
+     &                              thermal_energy_per_cell)
+c
+                  call sum_mass_kinetic_energy2(u, v, w, d, ge, te, 
+     &                 nx, ny, nz,
+     &                 iface, jface, kface, ic, jc, kc,
+     &                 mass_after, kin_energy_after, idual, imethod)
+c
+                  call momentum2(u, v, w, d, metal, up(n), vp(n), wp(n),
+     &                          nx, ny, nz, ic, jc, kc,
+     &                          iface, jface, kface, imethod, imetal,
+     &                          -1_IKIND)
+c
+                  if (imethod .ne. 2_IKIND) then
+                     ke_injected = 0._RKIND
+                     do k = -1_IKIND, +2_IKIND
+                        do j = -1_IKIND, +2_IKIND
+                           do i = -1_IKIND, +2_IKIND
+                              ke_after = 0.5_RKIND*
+     &                                   d(ic+i, jc+j, kc+k)*
+     &                                  (u(ic+i ,jc+j ,kc+k)**2_IKIND +
+     &                                   v(ic+i ,jc+j ,kc+k)**2_IKIND +
+     &                                   w(ic+i ,jc+j ,kc+k)**2_IKIND)
+                              delta_ke = ke_after - 
+     &                                  ke_before(i+2,j+2,k+2)
                               te(ic+i,jc+j,kc+k) =
      &                                  te(ic+i,jc+j,kc+k) +
      &                                  delta_ke/d(ic+i,jc+j,kc+k)
@@ -345,18 +469,44 @@ c
                         enddo
                      enddo
                   endif
+               endif !end massive case
 c
-               else !Massive stellar wind
+               if (abs(kin_energy_after - 
+     &                 kin_energy_before - kinf*energy)
+     &              /(kinf*energy) > 0.01_RKIND .and. 
+     &              kinf .ne. 0._RKIND) then
 c
-                  mass_per_cell = mwind * SolarMass / m1 / dx**3_IKIND / 
-     &               dist_mass_cells;
-                  energy = 1.5_RKIND * (mwind * SolarMass / mass_h) *
-     &               kboltz * teff
-                  energy = energy + 0.5_RKIND * (mwind * SolarMass) * 
-     &               v_wind_high**2_IKIND
-                  energy = energy / e1 / dx**3_IKIND
-                  energy_per_cell = energy / dist_mass_cells
+                  write(6,*) 'Kinetic energy added to mesh',
+     &                 ' does not match',
+     &                 ' kinetic energy feedback parameters'
+                  write(6,*) 'kinf:',kinf
+                  write(6,*) 'kin_energy_after - kin_energy_before',
+     &                 kin_energy_after - kin_energy_before
+                  write(6,*) 'energy*fkin',kinf*energy
+                  write(6,*) '%diff',abs(kin_energy_after - 
+     &                 kin_energy_before)
+     &                 /(kin_energy_before)
+                  ERROR_MESSAGE
                endif
+
+               if (abs(mass_after - mass_before 
+     &                 - mass_per_cell*dist_mass_cells)
+     &              /(mass_per_cell*dist_mass_cells) > 0.01_RKIND) then
+c
+                  write(6,*) 'Mass added to mesh does not match', 
+     &                 ' kinetic energy feedback parameters'
+                  write(6,*) 'kinf:',kinf
+                  write(6,*) 'mass_after, mass_before:',
+     &                        mass_after, mass_before
+                  write(6,*) 'kin_energy_after - kin_energy_before',
+     &                        kin_energy_after - kin_energy_before
+                  write(6,*) 'energy*fkin',kinf*energy
+                  write(6,*) '%diff',abs(mass_after - 
+     &                 mass_before)
+     &                 /(mass_before)
+                  ERROR_MESSAGE
+               endif
+c
             endif !end wind feedback
 c
 c           Supernova feedback
@@ -511,14 +661,15 @@ c
 c              First convert velocities to momenta and transform
 c              into frame comoving with particle
 c
-               call momentum(u, v, w, d, metal, up(n), vp(n), wp(n),
+               call momentum2(u, v, w, d, metal, up(n), vp(n), wp(n),
      &                       nx, ny, nz, ic, jc, kc, 
      &                       iface, jface, kface, imethod, imetal, 
      &                       +1_IKIND)
 c
 c              Sum mass and energy before
 c
-               call sum_mass_kinetic_energy(u, v, w, d, ge, te, nx, ny, nz,
+               call sum_mass_kinetic_energy2(u, v, w, d, ge,
+     &              te, nx, ny, nz,
      &              iface, jface, kface, ic, jc, kc,
      &              mass_before, kin_energy_before, idual, imethod)
 c               write(6,*) "m,e before:", mass_before, kinetic_energy_before
@@ -526,8 +677,8 @@ c
 c              Now add mass and momentum terms (normalization 1.0) to
 c                 local dummy fields
 c
-               call add_feedback(u1, v1, w1, d1, ge1, te1, metal1, 4_IKIND, 
-     &                           4_IKIND, 4_IKIND, 
+               call add_feedback2(u1, v1, w1, d1, ge1, te1, metal1, 
+     &                           4_IKIND, 4_IKIND, 4_IKIND, 
      &                           2_IKIND, 2_IKIND, 2_IKIND, 2_IKIND, 
      &                           2_IKIND, 2_IKIND,
      &                           dxf, dyf, dzf, dxc, dyc, dzc,
@@ -543,7 +694,7 @@ c
 c              Sum a, b and c terms to get momentum normalization
 c
                if (kinf .gt. 0._RKIND) then
-                  call sum_abc(u, v, w, d, ge, u1, v1, w1, d1, 
+                  call sum_abc2(u, v, w, d, ge, u1, v1, w1, d1, 
      &                 nx, ny, nz, iface, jface, kface, ic, jc, kc,
      &                 asum, bsum, csum)
 #ifdef FORTRAN_DEBUG
@@ -581,7 +732,7 @@ c              Now add mass and momentum, using three-point CIC
 c              Note that if the te field is being used, it is 
 c              only updated with the thermal energy
 c
-               call add_feedback(u, v, w, d, ge, te, metal, nx, ny, nz, 
+               call add_feedback2(u, v, w, d, ge, te, metal, nx, ny, nz, 
      &                           ic, jc, kc, iface, jface, kface, 
      &                           dxf, dyf, dzf, dxc, dyc, dzc,
      &                           imethod, imetal, imulti_metals, idual,
@@ -591,7 +742,8 @@ c
 c
 c              Sum mass and energy before
 c
-               call sum_mass_kinetic_energy(u, v, w, d, ge, te, nx, ny, nz,
+               call sum_mass_kinetic_energy2(u, v, w, d, ge, te, 
+     &              nx, ny, nz,
      &              iface, jface, kface, ic, jc, kc,
      &              mass_after, kin_energy_after, idual, imethod)
 c
@@ -607,11 +759,13 @@ c
 c              Error checks to see if the kinetic energy added in the particle frame
 c              matches the values set by the input parameters
 c
-               if (abs(kin_energy_after - kin_energy_before - kinf*energy)
+               if (abs(kin_energy_after - 
+     &                 kin_energy_before - kinf*energy)
      &              /(kinf*energy) > 0.01_RKIND .and. 
      &              kinf .ne. 0._RKIND) then
 c
-                  write(6,*) 'Kinetic energy added to mesh does not match', 
+                  write(6,*) 'Kinetic energy added to mesh',
+     &                 ' does not match',
      &                 ' kinetic energy feedback parameters'
                   write(6,*) 'kinf:',kinf
                   write(6,*) 'kin_energy_after - kin_energy_before',
@@ -643,7 +797,7 @@ c
 c
 c              Convert momenta back to velocities and transform back to lab frame
 c
-               call momentum(u, v, w, d, metal, up(n), vp(n), wp(n),
+               call momentum2(u, v, w, d, metal, up(n), vp(n), wp(n),
      &                       nx, ny, nz, ic, jc, kc, 
      &                       iface, jface, kface, imethod, imetal,
      &                       -1_IKIND)
@@ -688,7 +842,7 @@ c ==========================================================
 c
 c     Convert velocities to momentum and back
 c
-      subroutine momentum(u, v, w, d, metal, up, vp, wp, 
+      subroutine momentum2(u, v, w, d, metal, up, vp, wp, 
      &                    nx, ny, nz, ic, jc, kc, 
      &                    iface, jface, kface, imethod, imetal, idir)
 c
@@ -789,7 +943,7 @@ c
 c     Sum mass, momentum, and energy, and add mass and momentum, if requested
 c       Note that pu, pv, pw are momenta
 c
-      subroutine sum_mass_kinetic_energy(pu, pv, pw, d, ge, te, 
+      subroutine sum_mass_kinetic_energy2(pu, pv, pw, d, ge, te, 
      &                           nx, ny, nz,
      &                           iface, jface, kface, ic, jc, kc,
      &                           mass_sum, kin_energy_sum,
@@ -841,7 +995,7 @@ c
 c     Sum mass, momentum, and energy, and add mass and momentum, if requested
 c       Note that pu, pv, pw are momenta
 c
-      subroutine sum_abc(pu, pv, pw, d, ge, pu1, pv1, pw1, d1, 
+      subroutine sum_abc2(pu, pv, pw, d, ge, pu1, pv1, pw1, d1, 
      &                   nx, ny, nz, iface, jface, kface, ic, jc, kc,
      &                   asum, bsum, csum)
 c
@@ -909,7 +1063,7 @@ c
 c     Sum mass, momentum, and energy, and add mass and momentum, if requested
 c       Note that pu, pv, pw are momenta
 c
-      subroutine add_feedback(pu, pv, pw, d, ge, te, metal, nx, ny, nz, 
+      subroutine add_feedback2(pu, pv, pw, d, ge, te, metal, nx, ny, nz, 
      &                        ic, jc, kc, iface, jface, kface,
      &                        dxf, dyf, dzf, dxc, dyc, dzc,
      &                        imethod, imetal, imulti_metals, idual,

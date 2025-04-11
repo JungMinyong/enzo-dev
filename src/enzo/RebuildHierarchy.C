@@ -124,8 +124,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 	TIMER_START("RebuildHierarchy");
 
 	if (debug) printf("RebuildHierarchy: level = %"ISYM"\n", level);
-	fprintf(stderr, "Error here? RebuildHierarchy 1, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 	ReportMemoryUsage("Rebuild pos 1");
 
 	bool ParticlesAreLocal, SyncNumberOfParticles = true;
@@ -175,8 +173,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 				Temp->GridData->SetNumberOfActiveParticles(0);
 			}
 
-	fprintf(stderr, "Error here? RebuildHierarchy 2, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 
 	/* The dynamic grids should be distributed enough to store the
 		 particles on each grid, so we'll collect the particles at the
@@ -204,8 +200,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 		CommunicationAllSumValues(NumberOfCells, MAX_DEPTH_OF_HIERARCHY);
 	}
 
-	fprintf(stderr, "Error here? RebuildHierarchy 3, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 
 	tt0 = ReturnWallTime();
 	for (i = MAX_DEPTH_OF_HIERARCHY-1; i > level; i--) {
@@ -251,8 +245,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 	tt1 = ReturnWallTime();
 	RHperf[0] += tt1-tt0;
 
-	fprintf(stderr, "Error here? RebuildHierarchy 4, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 
 
 	/* If the initial level is finer than the finest level with static
@@ -273,8 +265,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 	tt1 = ReturnWallTime();
 	RHperf[2] += tt1-tt0;
 
-	fprintf(stderr, "Error here? RebuildHierarchy 5, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 
 	/* --------------------------------------------------------------------- */
 	/* if this is level 0 then transfer particles between grids. */
@@ -313,8 +303,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 	tt1 = ReturnWallTime();
 	RHperf[1] += tt1-tt0;
 
-	fprintf(stderr, "Error here? RebuildHierarchy 6, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 
 
 	/* --------------------------------------------------------------------- */
@@ -330,8 +318,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 			level > max(MaximumStaticSubgridLevel,0))
 		CommunicationTransferSubgridParticles(LevelArray, MetaData, level);
 
-	fprintf(stderr, "Error here? RebuildHierarchy 7, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 
 
 
@@ -368,8 +354,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 
 		} // end: loop over levels
 
-		fprintf(stderr, "Error here? RebuildHierarchy 8, ID: %d\n", MyProcessorNumber);
-		fflush(stderr);
 
 		//    if (debug) ReportMemoryUsage("Memory usage report: Rebuild 3");
 
@@ -649,8 +633,6 @@ refinement on large numbers of particles
 
 	} // end: if (StaticHierarchy == FALSE)
 
-	fprintf(stderr, "Error here? RebuildHierarchy done!, ID: %d\n", MyProcessorNumber);
-	fflush(stderr);
 
 
 

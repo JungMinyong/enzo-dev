@@ -931,7 +931,6 @@ OBJS_CONFIG_LIB = \
         star_maker4.o \
 	star_maker5.o \
         star_maker7.o \
-        star_maker7_individual.o \
 	star_maker8.o \
 	star_maker9.o \
 	star_maker10.o \
@@ -1286,6 +1285,8 @@ OBJS_NBODY= \
                                                 abyss/FewBody/GroupAccelerationRoutine.o\
                                                 abyss/StellarEvolution.o\
                                                 star_maker3mom_individual.o\
+                                                star_maker7_individual.o \
+                                                star_maker3mom_individual2.o\
                                                 #StarSplitter.o\
  						#abyss/cuda/cuda_routines.o\
 						#abyss/cuda/CalculateAccelerationForAll.o\
