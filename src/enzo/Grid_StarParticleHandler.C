@@ -1224,8 +1224,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       if (ComovingCoordinates)
 	StarMakerOverDensityThreshold *= mh / DensityUnits;   
 
-      // FORTRAN_NAME(star_maker7)(
-      FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
+      FORTRAN_NAME(star_maker7)(
+      // FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], cooling_time,
@@ -1265,8 +1265,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NbodyStar;
 				else
           tg->ParticleType[i] = NormalStarType;
-
+#ifdef SEVN
           tg->ParticleAttribute[NumberOfParticleAttributes-8+0][i] = tg->ParticleMass[i];
+#endif
+
 #else
           tg->ParticleType[i] = NormalStarType;
 #endif
@@ -1326,8 +1328,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NbodyStar;
 				else
           tg->ParticleType[i] = NormalStarType;
-
+#ifdef SEVN
          tg->ParticleAttribute[NumberOfParticleAttributes-8+0][i] = tg->ParticleMass[i];
+#endif
+
 #else
           tg->ParticleType[i] = NormalStarType;
 #endif

@@ -1836,6 +1836,11 @@ class grid
 					NbodyParticleDynamicalTimeTemp[*count] = ParticleAttribute[1][i];
 					NbodyParticleMetallicityTemp[*count]   = ParticleAttribute[2][i];
 
+					if (ParticleNumber[i] == 2274890) {
+						fprintf(stderr, "CopyNbodyParticlesFirst: PID=%d, ParticleMass=%e, ParticleMass*dv=%e, dv=%e\n",
+								ParticleNumber[i], ParticleMass[i], ParticleMass[i]*dv, dv);
+					}
+
 					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
 						NbodyParticlePositionTemp[dim][*count] = ParticlePosition[dim][i];
@@ -1979,7 +1984,7 @@ class grid
 						ParticleAttribute[NumberOfParticleAttributes-8+2][i]	= NbodyParticleSNEjectedMassTemp[j];
 						ParticleAttribute[NumberOfParticleAttributes-8+3][i]	= NbodyParticleTemperatureTemp[j];
 
-						ParticleMass[i] = NbodyParticleMassTemp[j]*dv;
+						ParticleMass[i] = NbodyParticleMassTemp[j]/dv;
 						if (ParticleMass[i] < 0) {
 							ParticleMass[i] = tiny_number;
 							// ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
@@ -2008,7 +2013,7 @@ class grid
 						ParticleAttribute[NumberOfParticleAttributes-8+2][i]	= NewNbodyParticleSNEjectedMassTemp[j];
 						ParticleAttribute[NumberOfParticleAttributes-8+3][i]	= NewNbodyParticleTemperatureTemp[j];
 
-						ParticleMass[i] = NewNbodyParticleMassTemp[j]*dv;
+						ParticleMass[i] = NewNbodyParticleMassTemp[j]/dv;
 						if (ParticleMass[i] < 0) {
 							ParticleMass[i] = tiny_number;
 							// ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
