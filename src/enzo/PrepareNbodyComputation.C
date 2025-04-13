@@ -150,8 +150,7 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 			ENZO_FAIL("Error in grid::CopyNbodyParticlesFirst.");
 		}
 	}
-
-	fprintf(stdout, "ENZO: 1-1\n");
+	// fprintf(stdout, "ENZO: 1-1\n");
 
 #ifdef USE_MPI
 	if (MyProcessorNumber == ROOT_PROCESSOR) {
@@ -177,12 +176,10 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 		MPI_Gather(&LocalNumberOfNbodyParticles, 1, IntDataType, LocalNumberAll, 1, IntDataType, ROOT_PROCESSOR, enzo_comm);
 		MPI_Gather(&start_index, 1, IntDataType, start_index_all, 1, IntDataType, ROOT_PROCESSOR, enzo_comm);
 
-		fprintf(stdout, "ENZO: 1-2\n");
+		// fprintf(stdout, "ENZO: 1-2\n");
 		/* Initialize the nbody array used for direct Nbody calculation*/
 		InitializeNbodyArrays(NbodyFirst);
-
-		fprintf(stdout, "ENZO: 1-3\n");
-
+		// fprintf(stdout, "ENZO: 1-3\n");
 
 		/*-----------------------------------------------*/
 		/******  Gather Arrays from other processes  *****/
@@ -658,7 +655,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 		DeleteNbodyArrays();
 
 
-		fprintf(stdout, "ENZO: 1\n");
+		// fprintf(stdout, "ENZO: 1\n");
 
 //#Merge  part
 
@@ -704,7 +701,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 		NewNbodyParticleMetallicity = NULL;
 
 
-		fprintf(stdout, "ENZO: 2\n");
+		// fprintf(stdout, "ENZO: 2\n");
 
 	} // endif : root processor
 	else {
@@ -784,7 +781,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 		 NbodyParticleIDTemp = NULL;
 		 */
 
-	fprintf(stdout, "ENZO: 3\n");
+	// fprintf(stdout, "ENZO: 3\n");
 
 
 	for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -822,7 +819,7 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	NewNbodyParticleMetallicityTemp = NULL;
 
 
-	fprintf(stdout, "ENZO: 4\n");
+	// fprintf(stdout, "ENZO: 4\n");
 	return SUCCESS;
 }
 

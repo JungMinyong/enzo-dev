@@ -624,9 +624,9 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     start_point = std::chrono::high_resolution_clock::now();
 #endif
 #ifdef DEBUG_ABYSS
-    delete skiplist;
     std::cout << "delete skiplist" << std::endl;
 #endif
+    delete skiplist;
     skiplist = nullptr;
     // exit(SUCCESS);
 

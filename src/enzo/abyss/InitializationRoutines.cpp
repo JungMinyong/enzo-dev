@@ -507,7 +507,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
             ptcl->NewCurrentBlockIrr = 0;
             ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
 #ifdef FEWBODY
-            if (ptcl->isCMptcl) { // We have to reset the SDAR clock;
+            if (ptcl->isCMptcl && ptcl->isActive) { // We have to reset the SDAR clock;
                 Queue queue;
                 int rank = CMPtclWorker[ptcl->ParticleIndex];
                 queue.task = ResetSDARTime;
