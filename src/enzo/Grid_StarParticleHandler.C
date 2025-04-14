@@ -1863,7 +1863,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
    
    StarFeedbackKineticFraction = FLOAT_UNDEFINED;
    individual_star_feedback3mom(CellWidthTemp, StarFeedbackKineticFraction, mu_field, StarMetalYield);
-/*
+// /*
    FORTRAN_NAME(star_feedback3mom_individual)(
       GridDimension, GridDimension+1, GridDimension+2,
       BaryonField[DensNum], mu_field, dmfield,
@@ -1885,7 +1885,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       ParticleAttribute[2], ParticleType, &StarFeedbackKineticFraction,
       ParticleAttribute[NumberOfParticleAttributes-8+0], ParticleAttribute[NumberOfParticleAttributes-8+1],
       ParticleAttribute[NumberOfParticleAttributes-8+2], ParticleAttribute[NumberOfParticleAttributes-8+3]);
-*/
+// */
 
    delete [] mu_field;
 

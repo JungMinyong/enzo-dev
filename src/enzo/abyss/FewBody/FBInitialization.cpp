@@ -147,7 +147,7 @@ void NewFBInitialization(Particle* ptclCM) {
 			NumberOfMembers += members->NewNumberOfNeighbor;
     }
 
-	fprintf(workerout, "NewFBInitialization. CurrentTimeIrr (Myr): %e\n", ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
+	fprintf(workerout, "NewFBInitialization. CurrentTimeIrr (Myr): %e\n", ptcl->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
 
 	for (int i = 0; i < ptclCM->NewNumberOfNeighbor; ++i) {
 		Particle* members = &particles[ptclCM->NewNeighbors[i]];
@@ -390,7 +390,7 @@ void NewFBInitialization3(Group* group) {
 
 	Group* ptclGroup = new Group();
 
-	fprintf(workerout, "NewFBInitialization3. CurrentTimeIrr (Myr): %e\n", group->CurrentTime*global_variable->EnzoTimeStep*1e4);
+	fprintf(workerout, "NewFBInitialization3. CurrentTimeIrr (Myr): %e\n", group->CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
 
 	Particle* ptclCM = group->groupCM;
 

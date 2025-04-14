@@ -38,8 +38,8 @@ void FBTermination(Particle* ptclCM) {
 
 	fprintf(binout,"--------------------------------------\n");
 	fprintf(binout,"In FBTermination.cpp... (CM PID: %d)\n", ptclCM->PID);
-	fprintf(binout, "CurrentTimeIrr of ptclCM (Myr): %e\n", ptclCM->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
-	fprintf(binout, "CurrentTimeIrr of the first member (Myr): %e\n", particles[ptclCM->Members[0]].CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
+	fprintf(binout, "CurrentTimeIrr of ptclCM (Myr): %e\n", ptclCM->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
+	fprintf(binout, "CurrentTimeIrr of the first member (Myr): %e\n", particles[ptclCM->Members[0]].CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
 	fprintf(binout, "N_member: %d\n", ptclCM->NumberOfMember);
 
 	NumberOfParticle--; // CM particle should be inactive by EW 2025.1.20

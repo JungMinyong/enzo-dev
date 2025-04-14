@@ -9,6 +9,7 @@ struct GlobalVariable {
 	ULL block_max;
 	double EnzoTimeStep;
 	double OldEnzoTimeStep;
+	double EnzoCurrentTime; // Current Enzo Time in Myr
 	// int NumberOfParticle;
 };
 

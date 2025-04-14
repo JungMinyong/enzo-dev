@@ -126,7 +126,7 @@ c
 c-----------------------------------------------------------------------
 c
 c     Set mass unit and energy unit
-      m1 = dunits * dx**3_IKIND
+      m1 = dunits * x1**3_IKIND
       e1 = m1 * vunits**2_IKIND
 c
 c     Assuming 3x3x3 cube, calculate cell distribution
@@ -196,7 +196,7 @@ c
 c
 	       xfcshift = xfcshift - xfc
 	       yfcshift = yfcshift - yfc 
-	       zfcshift	= zfcshift - zfc
+	       zfcshift = zfcshift - zfc
 c
 #ifdef FORTRAN_DEBUG
 	       write(6,*) 'warning2: star feedback zone shifted',

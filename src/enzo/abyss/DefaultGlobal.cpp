@@ -58,7 +58,6 @@ FILE* mergerout;
 FILE* SEVNout;
 IO* sevnio = nullptr;
 std::multimap<double, int> SEVNList; // This constains the time of next SEVN evolution time and the particle index by EW 2025.3.27
-double EnzoElapsedTime; // (SEVN Query) [in Myr unit] I introduced this value for SEVN stellar evolution by EW 2025.3.27
 #endif
 FILE* workerout;
 

@@ -309,7 +309,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "r_ISCO: %e pc\n", radius*position_unit);
 
         fprintf(mergerout, "GW driven merger happens!!! (PID: %d, PID: %d)\n", p1->PID, p2->PID);
-        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
+        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
         // fprintf(mergerout, "In center-of-mass frame...\n");
         fprintf(mergerout, "PID: %d. Position (pc) - x:%e, y:%e, z:%e, \n", p1->PID, p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "PID: %d. Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->PID, p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -352,7 +352,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "r_TDE: %e pc\n", radius*position_unit);
 
         fprintf(mergerout, "TDE happens!!! (PID: %d, PID: %d)\n", p1->PID, p2->PID);
-        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
+        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
         // fprintf(mergerout, "In center-of-mass frame...\n");
         fprintf(mergerout, "PID: %d. Position (pc) - x:%e, y:%e, z:%e, \n", p1->PID, p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "PID: %d. Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->PID, p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -386,7 +386,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         fprintf(mergerout, "r1 + r2: %e pc\n", radius*position_unit);
 
         fprintf(mergerout, "Stellar merger happens!!! (PID: %d, PID: %d)\n", p1->PID, p2->PID);
-        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4);
+        fprintf(mergerout, "Time: %e Myr\n", p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
         // fprintf(mergerout, "In center-of-mass frame...\n");
         fprintf(mergerout, "PID: %d. Position (pc) - x:%e, y:%e, z:%e, \n", p1->PID, p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "PID: %d. Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->PID, p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -420,8 +420,8 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 size_t id = p1->PID;
                 p1->StellarEvolution = new Star(sevnio, init_params, id, false);
 
-                p1->CreationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime;
-                p1->WorldTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + EnzoElapsedTime;
+                p1->CreationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime;
+                p1->WorldTime = p1->CreationTime;
 
                 SEVNList.insert({p1->WorldTime + p1->StellarEvolution->getp(Timestep::ID), p1->ParticleIndex});
 

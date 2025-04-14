@@ -233,8 +233,9 @@ int InitialCommunication() {
 			particles[i].ParticleIndex = i;
 		}
 
+		global_variable->EnzoCurrentTime = EnzoCurrentTime*1e4; // This should be 0.0 // Unlike original value, this is Myr unit
+		std::cerr << "EnzoCurrentTime:" << global_variable->EnzoCurrentTime << std::endl;
 #ifdef SEVN
-		EnzoElapsedTime = EnzoCurrentTime; // This is 0.0 Myr
 		initializeStellarEvolution();
 #endif
 		
@@ -377,15 +378,11 @@ int ReceiveFromEnzo() {
 	std::cout << "NBODY+: Data transferred!" << std::endl;
 	fprintf(stdout, "NBODY+: Data transferred!\n");
 	EnzoCurrentTime = EnzoCurrentTime*EnzoTime;
-#ifdef SEVN
-	EnzoElapsedTime = EnzoCurrentTime*1e4; // in Myr unit
-#endif
-	std::cout << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
-	std::cerr << "Enzo Time    :" << EnzoCurrentTime*1e4 << " Myr" << std::endl;
-#ifdef SEVN
-	std::cout << "EnzoElapsedTime    :" << EnzoElapsedTime << " Myr" << std::endl;
-	std::cerr << "EnzoElapsedTime    :" << EnzoElapsedTime << " Myr" << std::endl;
-#endif
+	global_variable->EnzoCurrentTime = EnzoCurrentTime*1e4; // in Myr unit
+
+	std::cout << "Enzo Time    :" << global_variable->EnzoCurrentTime << " Myr" << std::endl;
+	std::cerr << "Enzo Time    :" << global_variable->EnzoCurrentTime << " Myr" << std::endl;
+
 	std::cout << "EnzoTimeStep :" << global_variable->EnzoTimeStep*1e4 << " Myr" << std::endl;
 	std::cerr << "EnzoTimeStep :" << global_variable->EnzoTimeStep*1e4 << " Myr" << std::endl;
 	std::cerr << "Next EnzoTimeStep :" << global_variable->EnzoTimeStep*1e4 << " Myr" << std::endl;

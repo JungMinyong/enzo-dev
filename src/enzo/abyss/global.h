@@ -107,7 +107,6 @@ extern FILE* mergerout;
 extern FILE* SEVNout;
 extern IO* sevnio;
 extern std::multimap<double, int> SEVNList;
-extern double EnzoElapsedTime;
 #endif
 extern FILE* workerout;
 

@@ -284,21 +284,21 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                     // Sum mass and energy after
                     this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_after, kin_energy_after);
 
-                    if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kin_energy_after) > 0.01) {
+                    if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kinf*energy) > 0.01) {
                         fprintf(stderr, "Kinetic energy added to mesh does not match!!!\n");
                         fprintf(stderr, "kinf: %e\n", kinf);
                         fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
                         fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
-                        fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before - kinf*energy)/kin_energy_before);
+                        fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before)/kin_energy_before);
                     }
-                    if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_after) > 0.01) {
+                    if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_per_cell*dist_mass_cells) > 0.01) {
                         fprintf(stderr, "Mass added to mesh does not match!!!\n");
                         fprintf(stderr, "kinf: %e\n", kinf);
                         fprintf(stderr, "mass_after: %e, mass_before: %e\n", mass_after, mass_before);
                         fprintf(stderr, "mass_per_cell*dist_mass_cells: %e\n", mass_per_cell*dist_mass_cells);
                         fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
                         fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
-                        fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/mass_before);
+                        fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before)/mass_before);
                     }
 
                     // Convert momenta back to velocities and transform back to lab frame
@@ -404,21 +404,21 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                     // Sum mass and energy after
                     this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_after, kin_energy_after);
 
-                    if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kin_energy_after) > 0.01) {
+                    if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kinf*energy) > 0.01) {
                         fprintf(stderr, "Kinetic energy added to mesh does not match!!!\n");
                         fprintf(stderr, "kinf: %e\n", kinf);
                         fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
                         fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
-                        fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before - kinf*energy)/kin_energy_before);
+                        fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before)/kin_energy_before);
                     }
-                    if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_after) > 0.01) {
+                    if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_per_cell*dist_mass_cells) > 0.01) {
                         fprintf(stderr, "Mass added to mesh does not match!!!\n");
                         fprintf(stderr, "kinf: %e\n", kinf);
                         fprintf(stderr, "mass_after: %e, mass_before: %e\n", mass_after, mass_before);
                         fprintf(stderr, "mass_per_cell*dist_mass_cells: %e\n", mass_per_cell*dist_mass_cells);
                         fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
                         fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
-                        fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/mass_before);
+                        fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before)/mass_before);
                     }
 
                     // Convert momenta back to velocities and transform back to lab frame
@@ -604,21 +604,21 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                 // Sum mass and energy after
                 this->sum_mass_kinetic_energy(n, iface, jface, kface, ic, jc, kc, mass_after, kin_energy_after);
 
-                if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kin_energy_after) > 0.01) {
+                if (kinf != 0.0 && abs(kin_energy_after - kin_energy_before - kinf*energy)/(kinf*energy) > 0.01) {
                     fprintf(stderr, "Kinetic energy added to mesh does not match!!!\n");
                     fprintf(stderr, "kinf: %e\n", kinf);
                     fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
                     fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
-                    fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before - kinf*energy)/kin_energy_before);
+                    fprintf(stderr, "diff: %e %\n", abs(kin_energy_after - kin_energy_before)/kin_energy_before);
                 }
-                if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_after) > 0.01) {
+                if (abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/(mass_per_cell*dist_mass_cells) > 0.01) {
                     fprintf(stderr, "Mass added to mesh does not match!!!\n");
                     fprintf(stderr, "kinf: %e\n", kinf);
                     fprintf(stderr, "mass_after: %e, mass_before: %e\n", mass_after, mass_before);
                     fprintf(stderr, "mass_per_cell*dist_mass_cells: %e\n", mass_per_cell*dist_mass_cells);
                     fprintf(stderr, "kin_energy_after: %e, kin_energy_before: %e\n", kin_energy_after, kin_energy_before);
                     fprintf(stderr, "energy*kinf: %e\n", kinf*energy);
-                    fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before - mass_per_cell*dist_mass_cells)/mass_before);
+                    fprintf(stderr, "diff: %e %\n", abs(mass_after - mass_before)/mass_before);
                 }
 
                 // Convert momenta back to velocities and transform back to lab frame

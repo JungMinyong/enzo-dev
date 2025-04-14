@@ -60,7 +60,7 @@ void initializeStellarEvolution(int ParticleIndex) {
 
     Particle* ptcl = &particles[ParticleIndex];
 
-    ptcl->WorldTime = EnzoElapsedTime;
+    ptcl->WorldTime = ptcl->CreationTime;
     ptcl->ParticleType = NormalStar;
     std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(double(ptcl->InitialMetallicity)), "0.0", "delayed", "zams", "end", "events"};
 
@@ -98,7 +98,7 @@ void StellarEvolution() {
         if (!ptcl->StellarEvolution->amiremnant())
             ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
 
-        while (ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID) <= global_time * global_variable->EnzoTimeStep * 1e4 + EnzoElapsedTime) {
+        while (ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID) <= global_time * global_variable->EnzoTimeStep * 1e4 + global_variable->EnzoCurrentTime) {
             ptcl->WorldTime += ptcl->StellarEvolution->getp(Timestep::ID);
             ptcl->StellarEvolution->evolve();
             if (!ptcl->StellarEvolution->amiremnant())
@@ -108,7 +108,7 @@ void StellarEvolution() {
         it = SEVNList.erase(it);
         UpdateEvolution(ptcl);
 
-        if (SEVNList.empty() || SEVNList.begin()->first > global_time * global_variable->EnzoTimeStep * 1e4 + EnzoElapsedTime)
+        if (SEVNList.empty() || SEVNList.begin()->first > global_time * global_variable->EnzoTimeStep * 1e4 + global_variable->EnzoCurrentTime)
             break;
     }
     fflush(SEVNout);

@@ -374,7 +374,7 @@ bool Group::CheckBreak() {
     if (bin_root.semi*(1-bin_root.ecc) > RSEARCH/position_unit && bin_root.r > 2 * RSEARCH/position_unit) { // test8 // fiducial
     // if (bin_root.semi*(1-bin_root.ecc) > 1.2e-3/position_unit){ // test12
         fprintf(workerout, "Break group: too far periapsis! (CM PID: %d)\n\t", groupCM->PID);
-        fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+        fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
         fprintf(workerout, "N_member: %d\n\t", n_member);
         fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
         fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -433,7 +433,7 @@ bool Group::CheckBreak() {
         if (bin_root.r > sym_int.info.r_break_crit && bin_root.r > 2 * RSEARCH/position_unit) { // test8 // fiducial
         // if (bin_root.r > sym_int.info.r_break_crit && bin_root.r > 1.2e-3/position_unit) { // test12
             fprintf(workerout, "Break group: binary escape! (CM PID: %d)\n\t", groupCM->PID);
-            fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+            fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
             fprintf(workerout, "N_member: %d\n\t", n_member);
             fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
             fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -487,7 +487,7 @@ bool Group::CheckBreak() {
         if (n_member == 2) {
             if (bin_root.r > sym_int.info.r_break_crit && bin_root.r > 2e-3/position_unit) {
                 fprintf(workerout, "Break group: binary escape!\n\t");
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
                 fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -503,7 +503,7 @@ bool Group::CheckBreak() {
         else {
             if (bin_root.r > 2e-3/position_unit) {
                 fprintf(workerout, "Break group: binary escape!\n\t");
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
                 fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
@@ -530,7 +530,7 @@ bool Group::CheckBreak() {
             if (bin_root.r > 2 * RSEARCH/position_unit) { // test8 // seems good! // fiducial
             // if (bin_root.r > 1.2e-3/position_unit) { // test12
                 fprintf(workerout, "Break group: hyperbolic escape! (CM PID: %d)\n\t", groupCM->PID);
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit); 
                 fprintf(workerout, "ecc: %e\n\t", bin_root.ecc);
@@ -582,7 +582,7 @@ bool Group::CheckBreak() {
                 if (bin_root.r > 1e-3/position_unit) { // original
                     // if (bin_root.r > 2e-3/position_unit) { // test
                     fprintf(workerout, "Break group: hyperbolic escape!\n\t");
-                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
                     fprintf(workerout, "N_member: %d\n\t", n_member);
                     fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit); 
                     fprintf(workerout, "ecc: %e\n\t", bin_root.ecc);
@@ -597,7 +597,7 @@ bool Group::CheckBreak() {
                 if (bin_root.r > 2e-3/position_unit) { // original
                     // if (bin_root.r > 2e-3/position_unit) { // test
                     fprintf(workerout, "Break group: hyperbolic escape!\n\t");
-                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+                    fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
                     fprintf(workerout, "N_member: %d\n\t", n_member);
                     fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit); 
                     fprintf(workerout, "ecc: %e\n\t", bin_root.ecc);
@@ -645,7 +645,7 @@ bool Group::CheckBreak() {
                 auto& sd_root = sym_int.info.getBinaryTreeRoot().slowdown;
 
                 fprintf(workerout, "Break group: strong perturbed! (CM PID: %d)\n\t", groupCM->PID);
-                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4);
+                fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
                 fprintf(workerout, "N_member: %d\n\t", n_member);
                 fprintf(workerout, "pert_in: %e \n\t", sd_root.pert_in);
                 fprintf(workerout, "pert_out: %e \n\t", sd_root.pert_out);
