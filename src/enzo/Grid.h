@@ -1835,7 +1835,6 @@ class grid
 					NbodyParticleCreationTimeTemp[*count]  = ParticleAttribute[0][i];
 					NbodyParticleDynamicalTimeTemp[*count] = ParticleAttribute[1][i];
 					NbodyParticleMetallicityTemp[*count]   = ParticleAttribute[2][i];
-					}
 
 					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
