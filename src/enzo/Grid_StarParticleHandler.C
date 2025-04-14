@@ -193,6 +193,23 @@ extern "C" void FORTRAN_NAME(star_maker7_individual)(int *nx, int *ny, int *nz,
                int *type, int *ctype, int *option,
                int *imetalSNIa, float *metalSNIa, float *metalfSNIa);
 
+extern "C" void FORTRAN_NAME(star_maker7_individual2)(int *nx, int *ny, int *nz,
+               float *d, float *dm, float *temp, float *u, float *v, float *w,
+               float *cooltime,
+               float *dt, float *r, float *metal, float *dx, FLOAT *t, float *z,
+               int *procnum,
+               float *d1, float *x1, float *v1, float *t1,
+               int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart,
+               int *ibuff,
+               int *imetal, hydro_method *imethod, float *mintdyn,
+               float *odthresh, float *massff, float *smthresh, int *level,
+               int *np, int *npart,
+               FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
+               float *mp, float *tdp, float *tcp, float *metalf, 
+               FLOAT *xpold, FLOAT *ypold, FLOAT *zpold, 
+               int *type, int *ctype, int *option,
+               int *imetalSNIa, float *metalSNIa, float *metalfSNIa);
+
 extern "C" void FORTRAN_NAME(star_maker5)
   (int *nx, int *ny, int *nz,
    float *d, float *dm, float *temp, float *coolrate, float *u, 
@@ -1287,7 +1304,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       if (ComovingCoordinates)
 	StarMakerOverDensityThreshold *= mh / DensityUnits;   
 
-      FORTRAN_NAME(star_maker7_individual)(                             // by EW 2025/03/26
+      FORTRAN_NAME(star_maker7_individual2)(                             // by EW 2025/03/26
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], cooling_time,
@@ -1862,7 +1879,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
    }
    
    StarFeedbackKineticFraction = FLOAT_UNDEFINED;
+/*
    individual_star_feedback3mom(CellWidthTemp, StarFeedbackKineticFraction, mu_field, StarMetalYield);
+*/
 // /*
    FORTRAN_NAME(star_feedback3mom_individual)(
       GridDimension, GridDimension+1, GridDimension+2,

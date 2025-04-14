@@ -162,7 +162,7 @@ int InitialCommunication() {
 	// Unit conversion
 	global_variable->EnzoTimeStep       = TimeStep*EnzoTime;
 
-	// EnzoCurrentTime   *= EnzoTime;
+	EnzoCurrentTime   *= EnzoTime;
 
 	if (EPS2 < 0)
 		EPS2 = -1;

@@ -1835,10 +1835,6 @@ class grid
 					NbodyParticleCreationTimeTemp[*count]  = ParticleAttribute[0][i];
 					NbodyParticleDynamicalTimeTemp[*count] = ParticleAttribute[1][i];
 					NbodyParticleMetallicityTemp[*count]   = ParticleAttribute[2][i];
-
-					if (ParticleNumber[i] == 2274890) {
-						fprintf(stderr, "CopyNbodyParticlesFirst: PID=%d, ParticleMass=%e, ParticleMass*dv=%e, dv=%e\n",
-								ParticleNumber[i], ParticleMass[i], ParticleMass[i]*dv, dv);
 					}
 
 					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);

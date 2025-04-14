@@ -1286,6 +1286,7 @@ OBJS_NBODY= \
                                                 abyss/StellarEvolution.o\
                                                 star_maker3mom_individual.o\
                                                 star_maker7_individual.o \
+                                                star_maker7_individual2.o \
                                                 star_maker3mom_individual2.o\
                                                 #StarSplitter.o\
  						#abyss/cuda/cuda_routines.o\
