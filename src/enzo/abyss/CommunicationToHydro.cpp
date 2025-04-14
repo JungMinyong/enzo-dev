@@ -392,11 +392,12 @@ int ReceiveFromEnzo() {
 	//std::cout << "nbody Time:" << EnzoTimeStep << std::endl;
 	// FixNumNeighbor = std::min((int) std::floor((NumberOfSingleParticle+newNumberOfSingleParticle-1)/2.0), FixNumNeighbor0); // original by EW 2025.3.27
 
-
+/*
 	if (NumberOfSingleParticle + newNumberOfSingleParticle < 1000)
 		FixNumNeighbor = 30;
 	else
 		FixNumNeighbor = static_cast<int>(sqrt(NumberOfSingleParticle+newNumberOfSingleParticle)); // test by EW 2025.3.27
+*/
 
 
 	// COM conversion
@@ -1089,10 +1090,11 @@ int SendToEnzo(Worker *workers) {
 	std::sort(rarray.begin(), rarray.end());
 	int NNBMAX = static_cast<int>(std::sqrt(NumberOfSingleParticle));
     double RS0 = rarray[NNBMAX];
-	fprintf(stderr, "Original InitialNeighborRadius2: %e\n", InitialNeighborRadius2);
+	double originalInitialNeighborRadius2 = InitialNeighborRadius2;
+	fprintf(stderr, "Original InitialNeighborRadius2: %e\n", originalInitialNeighborRadius2);
 	fprintf(stderr, "Newly calculated InitialNeighborRadius2: %e\n", RS0*RS0);
 	if (NumberOfSingleParticle + newNumberOfSingleParticle > 1000)
-		InitialNeighborRadius2 = RS0*RS0;
+		InitialNeighborRadius2 = std::min(RS0*RS0, originalInitialNeighborRadius2);
 #endif
 
 	//std::cerr << "NBODY+: Waiting for Enzo to send data..." << std::endl;

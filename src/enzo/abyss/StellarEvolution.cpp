@@ -60,7 +60,7 @@ void initializeStellarEvolution(int ParticleIndex) {
 
     Particle* ptcl = &particles[ParticleIndex];
 
-    ptcl->WorldTime = ptcl->CreationTime;
+    ptcl->WorldTime = global_variable->EnzoCurrentTime;
     ptcl->ParticleType = NormalStar;
     std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(double(ptcl->InitialMetallicity)), "0.0", "delayed", "zams", "end", "events"};
 
