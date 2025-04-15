@@ -95,7 +95,12 @@
         "Star_HitEndpoint.C": "cpp",
         "ProblemType.C": "cpp",
         "New_Grid_ReadGrid.C": "cpp",
-        "Group_ReadAllData.C": "cpp"
+        "Group_ReadAllData.C": "cpp",
+        "Grid_SolveRateEquations.C": "cpp",
+        "Grid_InterpolateStarParticlesToGrid.C": "cpp",
+        "Grid_ReturnNumberOfStarParticles.C": "cpp",
+        "Grid_SetNewParticleIndex.C": "cpp",
+        "RebuildHierarchy.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

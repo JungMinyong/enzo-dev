@@ -44,7 +44,8 @@ Worker *workers;
 
 void RootRoutines()
 {
-
+	outNum = 0;
+	
 	std::cout << "Root processor is ready." << std::endl;
 	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
 
@@ -111,13 +112,7 @@ void RootRoutines()
 	/* Main Loop */
 	while (1)
 	{
-		// create output at appropriate time intervals
-		/*
-		if (global_time >= outputTime) {
-			writeParticle(global_time, outNum++);
-			outputTime += outputTimeStep;
-		}
-		*/
+
 
 		if (NumberOfParticle >= 2) {
 
@@ -165,7 +160,11 @@ void RootRoutines()
 
 		// Time to communicate with enzo
 		if (global_time >= 1)
-		{
+		{	
+			fprintf(stderr, "before writeParticle\n");
+			writeParticle(global_time, outNum++);
+			fprintf(stderr, "after writeParticle\n");
+		
 			fprintf(stderr, "NbodyRoutine: %e (s)\n", nbody_durationtime*1e-9);
 			nbody_durationtime = 0;
 

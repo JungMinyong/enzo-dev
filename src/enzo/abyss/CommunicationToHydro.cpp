@@ -569,7 +569,15 @@ int ReceiveFromEnzo() {
 			fprintf(stderr, "PID: %d. x: %e pc, y: %e pc, z: %e pc\n", newPID[i], particles[index].Position[0]*position_unit, particles[index].Position[1]*position_unit, particles[index].Position[2]*position_unit);
 			fprintf(stderr, "PID: %d. vx: %e km/s, vy: %e km/s, vz: %e km/s\n", newPID[i], particles[index].Velocity[0]*velocity_unit/yr*pc/1e5, particles[index].Velocity[1]*velocity_unit/yr*pc/1e5, particles[index].Velocity[2]*velocity_unit/yr*pc/1e5);
 
-
+			// added for debugging in back acceleration
+			fprintf(nbpout, "PID: %d is newly added from Enzo!\n", newPID[i]);
+			fprintf(nbpout, "PID: %d. Mass: %e Msun\n", newPID[i], particles[index].Mass*mass_unit);
+			fprintf(nbpout, "PID: %d. x: %e pc, y: %e pc, z: %e pc\n", newPID[i], particles[index].Position[0]*position_unit, particles[index].Position[1]*position_unit, particles[index].Position[2]*position_unit);
+			fprintf(nbpout, "PID: %d. vx: %e km/s, vy: %e km/s, vz: %e km/s\n", newPID[i], particles[index].Velocity[0]*velocity_unit/yr*pc/1e5, particles[index].Velocity[1]*velocity_unit/yr*pc/1e5, particles[index].Velocity[2]*velocity_unit/yr*pc/1e5);
+			fprintf(nbpout, "Reg ax: %e, ay: %e, az: %e\n", particles[index].a_reg[0][0], particles[index].a_reg[1][0], particles[index].a_reg[2][0]);
+			fprintf(nbpout, "Irr ax: %e, ay: %e, az: %e\n", particles[index].a_irr[0][0], particles[index].a_irr[1][0], particles[index].a_irr[2][0]);
+			fprintf(nbpout, "Bgd ax: %e, ay: %e, az: %e\n", particles[index].BackgroundAcceleration[0], particles[index].BackgroundAcceleration[1], particles[index].BackgroundAcceleration[2]);
+		
 #ifdef star_formation_location_test
 			new_particle.push_back(particles[NumberOfSingleParticle+i]);
 #endif
@@ -675,8 +683,6 @@ int ReceiveFromEnzo() {
 	//}
 
 	//RegularList.clear();
-	fprintf(stderr, "Debug: before delete[] \n");
-
 
 	if (NumberOfSingleParticle != 0) {
 		delete[] PID;
@@ -690,7 +696,6 @@ int ReceiveFromEnzo() {
 	NumberOfParticle 	   += newNumberOfSingleParticle;
 
 
-	fprintf(stderr, "Debug: after delete[] 1\n");
 	if (newNumberOfSingleParticle != 0) {
 		delete[] newPID;
 		delete[] newMass;
@@ -702,7 +707,6 @@ int ReceiveFromEnzo() {
 			delete[] newVelocity[dim];
 		}
 	}
-	fprintf(stderr, "Debug: after delete[] 2\n");
 
 	//  (Query) Do I need this?
 	// fprintf(nbpout, "NBODY+    : Acceleration for particles on GPU.\n");
