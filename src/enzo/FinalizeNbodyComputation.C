@@ -460,22 +460,31 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 
 		/* Update Particle Velocity and Position Back to Grids */
 		int count = 0;
+		int UpdateResult;
 		for (int level1=0; level1<MAX_DEPTH_OF_HIERARCHY-1;level1++)
 			for (Temp = LevelArray[level1]; Temp; Temp = Temp->NextGridThisLevel)
 #ifdef SEVN
-				if (Temp->GridData->UpdateNbodyParticles(&count, 
-							LocalNumberOfNbodyParticles, NbodyParticleIDTemp, 
-							NbodyParticlePositionTemp, NbodyParticleVelocityTemp,
-							NbodyParticleInitialMassTemp, NbodyParticleWindEjectedMassTemp,
-							NbodyParticleSNEjectedMassTemp, NbodyParticleTemperatureTemp,
-							NbodyParticleMassTemp,
-							NewLocalNumberOfNbodyParticles, NewNbodyParticleIDTemp, 
-							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp,
-							NewNbodyParticleInitialMassTemp, NewNbodyParticleWindEjectedMassTemp,
-							NewNbodyParticleSNEjectedMassTemp, NewNbodyParticleTemperatureTemp,
-							NewNbodyParticleMassTemp
-							) == FAIL) {
-					ENZO_FAIL("Error in grid::CopyNbodyParticles.");
+                {
+					UpdateResult = Temp->GridData->UpdateNbodyParticles(&count, 
+											LocalNumberOfNbodyParticles, NbodyParticleIDTemp, 
+											NbodyParticlePositionTemp, NbodyParticleVelocityTemp,
+											NbodyParticleInitialMassTemp, NbodyParticleWindEjectedMassTemp,
+											NbodyParticleSNEjectedMassTemp, NbodyParticleTemperatureTemp,
+											NbodyParticleMassTemp,
+											NewLocalNumberOfNbodyParticles, NewNbodyParticleIDTemp, 
+											NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp,
+											NewNbodyParticleInitialMassTemp, NewNbodyParticleWindEjectedMassTemp,
+											NewNbodyParticleSNEjectedMassTemp, NewNbodyParticleTemperatureTemp,
+											NewNbodyParticleMassTemp
+											);
+					if (UpdateResult == FAIL) {
+						ENZO_FAIL("Error in grid::CopyNbodyParticles.");
+					}
+					else if (UpdateResult == 2) {
+						fprintf(stdout, "CleanUpMovedParticles by zero-mass particle!\n");
+						fprintf(stderr, "CleanUpMovedParticles by zero-mass particle!\n");
+						Temp->GridData->CleanUpMovedParticles();
+					}
 				}
 #else
 				if (Temp->GridData->UpdateNbodyParticles(&count, 

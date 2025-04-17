@@ -1959,6 +1959,8 @@ class grid
 
 			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
 
+			bool ZeroMassParticle = false;
+
 			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
 
 			for (int i=0; i < NumberOfParticles; i++) {
@@ -1981,10 +1983,8 @@ class grid
 
 						ParticleMass[i] = NbodyParticleMassTemp[j]/dv;
 						if (ParticleMass[i] < 0) {
-							ParticleMass[i] = tiny_number;
-							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
-							NumberOfStars--;
-							NumberOfStarParticles--;
+							ParticleMass[i] = FLOAT_UNDEFINED;
+							ZeroMassParticle = true;
 							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
 						} // merger induced zero mass particle & (P)PISN
 						(*count)++;
@@ -2010,10 +2010,8 @@ class grid
 
 						ParticleMass[i] = NewNbodyParticleMassTemp[j]/dv;
 						if (ParticleMass[i] < 0) {
-							ParticleMass[i] = tiny_number;
-							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
-							NumberOfStars--;
-							NumberOfStarParticles--;
+							ParticleMass[i] = FLOAT_UNDEFINED;
+							ZeroMassParticle = true;
 							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
 						} // merger induced zero mass particle & (P)PISN
 						(*count)++;
@@ -2021,7 +2019,10 @@ class grid
 					} // ENDIF partID matched
 				} // ENDFOR new nbody particles
 			} // ENDFOR number of particles
-			return SUCCESS;
+			if (ZeroMassParticle)
+				return 2;
+			else
+				return SUCCESS;
 		}
 #endif
 

@@ -49,6 +49,16 @@ void initializeStellarEvolution() {
 
         size_t id = ptcl->PID;
         ptcl->StellarEvolution = new Star(sevnio, init_params, id, false);
+
+        ptcl->WorldTime = global_variable->EnzoCurrentTime;
+
+        while (ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID) <= global_variable->EnzoCurrentTime - ptcl->CreationTime) {
+            ptcl->WorldTime += ptcl->StellarEvolution->getp(Timestep::ID);
+            ptcl->StellarEvolution->evolve();
+            if (!ptcl->StellarEvolution->amiremnant())
+                ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
+        }
+
         SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
 
 		ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
