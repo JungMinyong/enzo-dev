@@ -7,6 +7,8 @@
 #include "../QueueScheduler.h"
 #include "cuda_functions.h"
 
+#include <random>
+
 #ifdef NSIGHT
 #include <nvToolsExt.h>
 #endif
@@ -310,6 +312,16 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 	
 
 #ifdef CUDA_FLOAT
+
+	// Create a vector of indices from 0 to LastParticleIndex
+	std::vector<int> indices(global_variable->LastParticleIndex + 1);
+	std::iota(indices.begin(), indices.end(), 0);
+
+	// Shuffle the indices randomly
+	std::random_device rd;
+	std::mt19937 g(rd());
+	std::shuffle(indices.begin(), indices.end(), g);
+
 	// variables for saving variables to send to GPU
 	CUDA_REAL * Mass;
 	CUDA_REAL * Mdot;
@@ -329,15 +341,15 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 	Particle *ptcl;
 
 	// copy the data of particles to the arrays to be sent
-	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
-		ptcl       = &particles[i];
+	for (int idx: indices) {
+		ptcl       = &particles[idx];
 
 		if (!ptcl->isActive) {
 			// fprintf(stdout, "Skipping inactive particle (%d)\n", ptcl->PID);
 			continue;
 		}
 
-		if (RegularList.find(i) != RegularList.end()) {
+		if (RegularList.find(idx) != RegularList.end()) {
 			IndexList[j] = size;
 			j++;
 		}
@@ -355,7 +367,7 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 		assert(Position[size][0] == Position[size][0]);
 		assert(Velocity[size][0] == Velocity[size][0]);
 
-		ActiveIndexToOriginalIndex[size] = i;
+		ActiveIndexToOriginalIndex[size] = idx;
 		// std::cout << "(size , i) = "  << size << " " << i << std::endl;
 		size++;
 	}
@@ -715,6 +727,15 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 
 void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& RegularList_init, int *IndexList) {
 
+	// Create a vector of indices from 0 to LastParticleIndex
+	std::vector<int> indices(global_variable->LastParticleIndex + 1);
+	std::iota(indices.begin(), indices.end(), 0);
+
+	// Shuffle the indices randomly
+	std::random_device rd;
+	std::mt19937 g(rd());
+	std::shuffle(indices.begin(), indices.end(), g);
+
 	assert(RegularList_init.empty());
 
 #ifdef CUDA_FLOAT
@@ -737,8 +758,8 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 	Particle *ptcl;
 
 	// copy the data of particles to the arrays to be sent
-	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
-		ptcl       = &particles[i];
+	for (int idx: indices) {
+		ptcl       = &particles[idx];
 
 		if (ptcl->TimeStepIrr != 0)
 			ptcl->setNewTimeStepWithNewEnzoTimeStep(global_variable->OldEnzoTimeStep, global_variable->EnzoTimeStep);
@@ -754,7 +775,7 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 			continue;
 		}
 
-		RegularList_init.insert(i);
+		RegularList_init.insert(idx);
 		IndexList[j] = size;
 		j++;
 
@@ -783,7 +804,7 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 		assert(Position[size][0] == Position[size][0]);
 		assert(Velocity[size][0] == Velocity[size][0]);
 
-		ActiveIndexToOriginalIndex[size] = i;
+		ActiveIndexToOriginalIndex[size] = idx;
 		// std::cout << "(size , i) = "  << size << " " << i << std::endl;
 		size++;
 	}

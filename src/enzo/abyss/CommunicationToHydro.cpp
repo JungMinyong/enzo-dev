@@ -824,10 +824,10 @@ int SendToEnzo(Worker *workers) {
 
 					fprintf(stdout, "In CommunicationToHydro... PID: %d should be removed!\n", ptcl->PID);
 
-					/* // This is temporarilly commented out by EW 2025.4.13
+					// /* // This is temporarilly commented out by EW 2025.4.13
 					deleteParticle(EnzoPIDs[i],index); // delete this particle in Abyss
 					NumberOfEscapeParticle++;
-					*/
+					// */
 				}
 				else {
 					fprintf(stderr, "What's wrong? PID: %d\n", ptcl->PID);
@@ -937,10 +937,10 @@ int SendToEnzo(Worker *workers) {
 				else if (ptcl->Mass < 0.0) { // merger induced zero-mass particles, PISN case
 
 					fprintf(stdout, "In CommunicationToHydro... PID: %d should be removed!\n", ptcl->PID);
-					/* // This is temporarilly commented out by EW 2025.4.13
+					// /* // This is temporarilly commented out by EW 2025.4.13
 					deleteParticle(EnzoPIDs[i+offset],index); // delete this particle in Abyss
 					NumberOfEscapeParticle++;
-					*/
+					// */
 				}
 				else {
 					fprintf(stderr, "What's wrong? PID: %d\n", ptcl->PID);

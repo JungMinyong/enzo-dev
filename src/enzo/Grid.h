@@ -1982,10 +1982,10 @@ class grid
 						ParticleMass[i] = NbodyParticleMassTemp[j]/dv;
 						if (ParticleMass[i] < 0) {
 							ParticleMass[i] = tiny_number;
-							// ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
-							// NumberOfStars--;
-							// NumberOfStarParticles--;
-							// fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
+							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
+							NumberOfStars--;
+							NumberOfStarParticles--;
+							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
 						} // merger induced zero mass particle & (P)PISN
 						(*count)++;
 						break;
@@ -2011,10 +2011,10 @@ class grid
 						ParticleMass[i] = NewNbodyParticleMassTemp[j]/dv;
 						if (ParticleMass[i] < 0) {
 							ParticleMass[i] = tiny_number;
-							// ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
-							// NumberOfStars--;
-							// NumberOfStarParticles--;
-							// fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
+							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
+							NumberOfStars--;
+							NumberOfStarParticles--;
+							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
 						} // merger induced zero mass particle & (P)PISN
 						(*count)++;
 						break;

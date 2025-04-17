@@ -89,7 +89,7 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
     }
 // */
 
-/* PN corrections
+// /* PN corrections
     if (bin_interrupt.status == AR::InterruptStatus::none) { // Every bound orbit
         
         auto& bin_root = sym_int.info.getBinaryTreeRoot();
@@ -99,7 +99,7 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
         if (bin_interrupt.status == AR::InterruptStatus::none)
             sym_int.initialIntegration(next_time*global_variable->EnzoTimeStep); // Eunwoo: this should be fixed later // Eunwoo: I don't think so!
     }    
-*/
+// */
 
     if (bin_interrupt.status != AR::InterruptStatus::none) {
 
@@ -421,6 +421,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 p1->StellarEvolution = new Star(sevnio, init_params, id, false);
 
                 p1->CreationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime;
+                p1->InitialMass = p1->Mass*mass_unit;
                 p1->WorldTime = p1->CreationTime;
 
                 SEVNList.insert({p1->WorldTime + p1->StellarEvolution->getp(Timestep::ID), p1->ParticleIndex});
@@ -447,6 +448,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 p1->Mass = -1.0;
 
                 p2->Mass = p2->StellarEvolution->getp(Mass::ID)/mass_unit;
+                p2->InitialMass = p2->StellarEvolution->get_zams();
 
                 fprintf(nbpout, "After Mix... p1 (PID: %d). Mass: %e Msun,  StellarEvolution->get_zams: %e Msun\n", p1->PID, p1->Mass*mass_unit, p1->StellarEvolution->get_zams());
                 fprintf(nbpout, "After Mix... p2 (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", p2->PID, p2->Mass*mass_unit, p2->StellarEvolution->get_zams());
@@ -470,6 +472,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 p2->Mass = -1.0;
 
                 p1->Mass = p1->StellarEvolution->getp(Mass::ID)/mass_unit;
+                p1->InitialMass = p1->StellarEvolution->get_zams();
 
                 fprintf(stdout, "After Mix... p1 (PID: %d). Mass: %e Msun,  StellarEvolution->get_zams: %e Msun\n", p1->PID, p1->Mass*mass_unit, p1->StellarEvolution->get_zams());
                 fprintf(stdout, "After Mix... p2 (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", p2->PID, p2->Mass*mass_unit, p2->StellarEvolution->get_zams());
@@ -514,7 +517,8 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 p2->Mass = p2->StellarEvolution->getp(Mass::ID)/mass_unit;
                 SetRadius(p2);
                 p1->Mass = -1.0;
-            }            
+            }
+            p2->InitialMass = p2->StellarEvolution->get_zams();
 
             fprintf(stdout, "Mix with no done!\n");
             fprintf(mergerout, "---------------Merger remnant properties---------------\n");
@@ -541,6 +545,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 SetRadius(p1);
                 p2->Mass = -1.0;
             }
+            p1->InitialMass = p1->StellarEvolution->get_zams();
 
             fprintf(stdout, "Mix with no done!\n");
             fprintf(mergerout, "---------------Merger remnant properties---------------\n");

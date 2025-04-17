@@ -52,16 +52,18 @@ void Particle::update(double *Mass, double *BackgroundAcceleration[Dim], int &i)
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
 #ifdef SEVN
-	this->dm						 = 0.0;
-	this->SNEjectedMass				 = 0.0;
 	if (this->StellarEvolution != nullptr) {
-		if (this->StellarEvolution->vkick[3] > 0.0) {
-			fprintf(SEVNout, "PID: %d. Kicked velocity: (%e, %e, %e) [km/s]\n", this->PID, this->StellarEvolution->vkick[0], this->StellarEvolution->vkick[1], this->StellarEvolution->vkick[2]);
-			for(int i=0; i<Dim; i++)
-				this->Velocity[i] += this->StellarEvolution->vkick[i]/(velocity_unit/yr*pc/1e5);
-			if (this->CMPtclIndex != -1)
-				this->setBinaryInterruptState(BinaryInterruptState::kicked);
+		if (this->dm > 0.0 || this->SNEjectedMass > 0.0) { // This should be considered only once
+			if (this->StellarEvolution->vkick[3] > 0.0) {
+				fprintf(SEVNout, "PID: %d. Kicked velocity: (%e, %e, %e) [km/s]\n", this->PID, this->StellarEvolution->vkick[0], this->StellarEvolution->vkick[1], this->StellarEvolution->vkick[2]);
+				for(int i=0; i<Dim; i++)
+					this->Velocity[i] += this->StellarEvolution->vkick[i]/(velocity_unit/yr*pc/1e5);
+				if (this->CMPtclIndex != -1)
+					this->setBinaryInterruptState(BinaryInterruptState::kicked);
+			}
 		}
 	}
+	this->dm						 = 0.0;
+	this->SNEjectedMass				 = 0.0;
 #endif
 }
