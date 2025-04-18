@@ -455,7 +455,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 fprintf(mergerout, "After Mix... p2 (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", p2->PID, p2->Mass*mass_unit, p2->StellarEvolution->get_zams());
                 fprintf(mergerout, "p1: amiempty(): %d\n", p1->StellarEvolution->amiempty());
                 fprintf(mergerout, "p2: amiempty(): %d\n", p2->StellarEvolution->amiempty());
-                p2->dm += p1->dm // not yet by EW 2025.1.20
+                p2->dm += p1->dm; // not yet by EW 2025.1.20
                 p1->dm = 0.0; // not yet by EW 2025.1.20
                 SetRadius(p2);
 
@@ -479,7 +479,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 fprintf(mergerout, "After Mix... p2 (PID: %d). Mass: %e Msun, StellarEvolution->get_zams: %e Msun\n", p2->PID, p2->Mass*mass_unit, p2->StellarEvolution->get_zams());
                 fprintf(mergerout, "p1: amiempty(): %d\n", p1->StellarEvolution->amiempty());
                 fprintf(mergerout, "p2: amiempty(): %d\n", p2->StellarEvolution->amiempty());
-                p1->dm += p2->dm // not yet by EW 2025.1.20
+                p1->dm += p2->dm; // not yet by EW 2025.1.20
                 p2->dm = 0.0; // not yet by EW 2025.1.20
                 SetRadius(p1);
 
