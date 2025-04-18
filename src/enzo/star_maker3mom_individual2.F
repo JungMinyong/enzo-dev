@@ -145,6 +145,8 @@ c
             mwind = mwind_arr(n) ! in solar mass
             msn = msn_arr(n) ! in solar mass
             teff = teff_arr(n) ! in K
+            write(0,*) 'minitial:', minitial, 'mwind:', mwind,
+     &                  'msn:', msn, 'teff:', teff
 c
 c     Do instantaneous injeciton
 c

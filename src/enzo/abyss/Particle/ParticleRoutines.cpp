@@ -23,7 +23,6 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
 	this->BackgroundAcceleration[1]  = BackgroundAcceleration[1][i]*EnzoAcceleration;
 	this->BackgroundAcceleration[2]  = BackgroundAcceleration[2][i]*EnzoAcceleration;
 	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
-	fprintf(stdout, "PID: %d. T_ini: %e Myr, M_ini: %e Msol, Z_ini: %e\n", this->PID, this->CreationTime, this->InitialMass, this->InitialMetallicity);
 #ifndef SEVN
 	this->ParticleType = NoFeedbackStar;
 	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit

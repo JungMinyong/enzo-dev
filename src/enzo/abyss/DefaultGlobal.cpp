@@ -118,7 +118,7 @@ void DefaultGlobal() {
 		// "-tables_HE", "/data/vinicius/NbodyPlus/SEVN/tables/SEVNtracks_parsec_pureHe36",
 		// "-turn_WR_to_pureHe", "false",
 		"-snmode", "delayed",
-		"-Z", "0.0002",
+		// "-Z", "0.0002",
 		"-spin", "0.0",
 		"-tini", "zams",
 		"-tf", "end",

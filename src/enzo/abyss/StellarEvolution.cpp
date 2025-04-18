@@ -45,10 +45,13 @@ void initializeStellarEvolution() {
         ptcl->ParticleType = NormalStar;
 
         // Mass, metallicity, spin, sn model, tini, tf, dtout, random seed(optional)
-		std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(double(ptcl->InitialMetallicity)), "0.0", "delayed", "zams", "end", "events"};
+        double Metallicity = ptcl->InitialMetallicity > 0.04 ? 0.04 : ptcl->InitialMetallicity;
+        std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(Metallicity), "0.0", "delayed", "zams", "end", "events"};
 
         size_t id = ptcl->PID;
         ptcl->StellarEvolution = new Star(sevnio, init_params, id, false);
+        fprintf(stderr, "New star in SEVN! PID: %d, Initial mass: %.2e Msun, Z: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
+        fprintf(stdout, "New star in SEVN! PID: %d, Initial mass: %.2e Msun, Z: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
 
         ptcl->WorldTime = global_variable->EnzoCurrentTime;
 
@@ -58,11 +61,14 @@ void initializeStellarEvolution() {
             if (!ptcl->StellarEvolution->amiremnant())
                 ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
         }
-
-        SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
-
-		ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
+        ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
+        ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
         ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
+
+        if (ptcl->StellarEvolution->amiremnant())
+            UpdateEvolution(ptcl);
+        else
+            SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
     }
 }
 
@@ -72,15 +78,19 @@ void initializeStellarEvolution(int ParticleIndex) {
 
     ptcl->WorldTime = global_variable->EnzoCurrentTime;
     ptcl->ParticleType = NormalStar;
-    std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(double(ptcl->InitialMetallicity)), "0.0", "delayed", "zams", "end", "events"};
+
+    double Metallicity = ptcl->InitialMetallicity > 0.04 ? 0.04 : ptcl->InitialMetallicity;
+    std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(Metallicity), "0.0", "delayed", "zams", "end", "events"};
 
     size_t id = ptcl->PID;
     ptcl->StellarEvolution = new Star(sevnio, init_params, id, false);
+    fprintf(stderr, "New star in SEVN! PID: %d, Initial mass: %.2e Msun, Z: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
+    fprintf(stdout, "New star in SEVN! PID: %d, Initial mass: %.2e Msun, Z: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
+
     SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
 
     ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
     ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
-    fprintf(stderr, "New star in SEVN! PID: %d, Initial mass: %e Msun, Initial metallicity: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
 }
 
 void setBHspin(Particle* ptcl) {
@@ -133,8 +143,8 @@ void UpdateEvolution(Particle* ptcl) {
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit;
         if (ptcl->Mass*mass_unit > ptcl->StellarEvolution->get_max_zams()) // VMS correction; constant stellar density is assumed
             ptcl->radius *= pow(ptcl->Mass*mass_unit/ptcl->StellarEvolution->get_max_zams(), 1./3);
-        fprintf(SEVNout, "PID: %d, Phase: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, T_eff: %e K, Time: %e Myr, Worldtime: %e Myr\n", 
-            ptcl->PID, int(ptcl->StellarEvolution->getp(Phase::ID)), ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), 
+        fprintf(SEVNout, "PID: %d, Phase: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, T_eff: %e K, Time: %e Myr, Worldtime: %e Myr\n", 
+            ptcl->PID, int(ptcl->StellarEvolution->getp(Phase::ID)), ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->StellarEvolution->get_Z(),
             ptcl->radius*position_unit, ptcl->T_eff, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
     }
     else if (ptcl->StellarEvolution->amiWD()) {
@@ -145,8 +155,8 @@ void UpdateEvolution(Particle* ptcl) {
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit;
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
-        fprintf(SEVNout, "WD. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", 
-            ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), 
+        fprintf(SEVNout, "WD. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", 
+            ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->StellarEvolution->get_Z(),
             ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         /* // WD is not kicked in SEVN by EW 2025.4.1
         if (ptcl->StellarEvolution->vkick[3] > 0.0) {
@@ -167,8 +177,8 @@ void UpdateEvolution(Particle* ptcl) {
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // this might be wrong!
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
-        fprintf(SEVNout, "NS. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", 
-            ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), 
+        fprintf(SEVNout, "NS. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", 
+            ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->StellarEvolution->get_Z(),
             ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         /* // (SEVN Query) This particle will be kicked after SN feedback in Enzo by EW 2025.4.1
         if (ptcl->StellarEvolution->vkick[3] > 0.0) {
@@ -191,8 +201,8 @@ void UpdateEvolution(Particle* ptcl) {
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // this might be wrong!
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
-        fprintf(SEVNout, "BH. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", 
-            ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), 
+        fprintf(SEVNout, "BH. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", 
+            ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->StellarEvolution->get_Z(),
             ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         fprintf(SEVNout, "\tDimless spin. mag: %e, (%e, %e, %e)\n", ptcl->StellarEvolution->getp(Xspin::ID), ptcl->a_spin[0], ptcl->a_spin[1], ptcl->a_spin[2]);
         /* // (SEVN Query) This particle will be kicked after SN feedback in Enzo by EW 2025.4.1
@@ -214,8 +224,8 @@ void UpdateEvolution(Particle* ptcl) {
         */
         ptcl->SNEjectedMass = ptcl->Mass;
         ptcl->Mass = -1.0;
-        fprintf(SEVNout, "Empty. PID: %d, ZAMS Mass: %e Msol, Time: %e Myr, Worldtime: %e Myr\n", 
-            ptcl->PID, ptcl->StellarEvolution->get_zams(), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+        fprintf(SEVNout, "Empty. PID: %d, ZAMS Mass: %e Msol, Z: %e, Time: %e Myr, Worldtime: %e Myr\n", 
+            ptcl->PID, ptcl->StellarEvolution->get_zams(), ptcl->StellarEvolution->get_Z(), ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         if (ptcl->CMPtclIndex != -1) {
             ptcl->setBinaryInterruptState(BinaryInterruptState::kicked);
         }
