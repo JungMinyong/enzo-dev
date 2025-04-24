@@ -637,6 +637,12 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 		ierr = MPI_Send(&TimeStep, 1, MPI_DOUBLE, 1, 600, inter_comm);
 		ierr = MPI_Send(&Time    , 1, MPI_DOUBLE, 1, 700, inter_comm);
 		//ierr = MPI_Send(&TimeUnits, 1, MPI_DOUBLE, 1, 700, inter_comm);
+		// for cosmological runs
+		ierr = MPI_Send(&TimeUnits,                1, MPI_DOUBLE, 1,  701, inter_comm);
+		ierr = MPI_Send(&LengthUnits,              1, MPI_DOUBLE, 1,  800, inter_comm);
+		ierr = MPI_Send(&DensityUnits,             1, MPI_DOUBLE, 1,  900, inter_comm);
+		ierr = MPI_Send(&VelocityUnits,            1, MPI_DOUBLE, 1, 1000, inter_comm);
+
 		ierr = CommunicationInterBarrier();
 		fprintf(stdout, "ENZO: Data sent.\n");
 

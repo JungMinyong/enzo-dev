@@ -1283,12 +1283,14 @@ OBJS_NBODY= \
                                                 abyss/FewBody/FBIntegration.o\
                                                 abyss/FewBody/FBTermination.o\
                                                 abyss/FewBody/GroupAccelerationRoutine.o\
+                                                abyss/ReadWrite.o\
                                                 abyss/StellarEvolution.o\
                                                 star_maker3mom_individual.o\
                                                 star_maker7_individual.o \
                                                 star_maker7_individual2.o \
                                                 star_maker3mom_individual2.o\
                                                 #StarSplitter.o\
+
  						#abyss/cuda/cuda_routines.o\
 						#abyss/cuda/CalculateAccelerationForAll.o\
 

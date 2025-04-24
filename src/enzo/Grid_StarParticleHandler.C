@@ -902,7 +902,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     if (STARMAKE_METHOD(MOM_STAR)) {
 
       //---- UNIGRID ALGORITHM (NO JEANS MASS)
-      
+      float odthresh = StarMakerOverDensityThreshold * mh /  DensityUnits;
+
       NumberOfNewParticlesSoFar = NumberOfNewParticles;
 
       FORTRAN_NAME(star_maker3mom)(
@@ -916,7 +917,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &MaximumNumberOfNewParticles, CellLeftEdge[0], CellLeftEdge[1],
           CellLeftEdge[2], &GhostZones,
        &MetallicityField, &HydroMethod, &StarMakerMinimumDynamicalTime,
-       &StarMakerOverDensityThreshold, &StarMakerMassEfficiency,
+       &odthresh, &StarMakerMassEfficiency,
        &StarMakerMinimumMass, &level, &NumberOfNewParticles, 
        tg->ParticlePosition[0], tg->ParticlePosition[1],
           tg->ParticlePosition[2],
