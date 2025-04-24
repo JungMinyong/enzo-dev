@@ -130,6 +130,7 @@ class grid
 		int NumberOfNbodyParticlesInGrid;
 		int NumberOfNewNbodyParticlesInGrid;
 		int *IndicesOfNbodyParticlesInGrid;					// added by EW 2025.4.24
+		int *IndicesOfNewNbodyParticlesInGrid;				// added by EW 2025.4.24
 #endif
 		float *ParticleMass;                     // pointer to mass array
 		PINT  *ParticleNumber;                   // unique identifier
@@ -1767,17 +1768,26 @@ class grid
 		void SetIndicesOfNbodyParticles(void) {
 			if (MyProcessorNumber != ProcessorNumber) return;
 			
-			if (IndicesOfNbodyParticles != NULL)
-				delete [] IndicesOfNbodyParticles;
-			IndicesOfNbodyParticles = NULL;
+			if (IndicesOfNbodyParticlesInGrid != NULL)
+				delete [] IndicesOfNbodyParticlesInGrid;
+			IndicesOfNbodyParticlesInGrid = NULL;
 
-			IndicesOfNbodyParticles = new int[NumberOfNbodyParticlesInGrid + NumberOfNewNbodyParticlesInGrid];
+			if (IndicesOfNewNbodyParticlesInGrid != NULL)
+				delete [] IndicesOfNewNbodyParticlesInGrid;
+			IndicesOfNewNbodyParticlesInGrid = NULL;
+
+			IndicesOfNbodyParticlesInGrid = new int[NumberOfNbodyParticlesInGrid];
+			IndicesOfNewNbodyParticlesInGrid = new int[NumberOfNewNbodyParticlesInGrid];
 			int count = 0;
+			int count_new = 0;
 			for (int i=0; i<NumberOfParticles; i++) {
-				if (ParticleType[i] == PARTICLE_TYPE_NBODY || ParticleType[i] == PARTICLE_TYPE_NBODY_NEW)
-					IndicesOfNbodyParticles[count++] = i;
+				if (ParticleType[i] == PARTICLE_TYPE_NBODY)
+					IndicesOfNbodyParticlesInGrid[count++] = i;
+				else if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW)
+					IndicesOfNewNbodyParticlesInGrid[count_new++] = i;
 			}
-			assert(count == NumberOfNbodyParticlesInGrid + NumberOfNewNbodyParticlesInGrid);
+			assert(count == NumberOfNbodyParticlesInGrid);
+			assert(count_new == NumberOfNewNbodyParticlesInGrid);
 		}
 
 		void SetNumberOfNbodyParticles(void) {
@@ -1844,29 +1854,29 @@ class grid
 
 			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
 
-			for (int i=0; i < NumberOfParticles; i++) {
+			if (NumberOfNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNbodyParticlesInGrid[i];
+					assert(ParticleType[index] == PARTICLE_TYPE_NBODY);
 
-				if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
-					NbodyParticleMassTemp[*count]         = ParticleMass[i]*dv;
-					NbodyParticleIDTemp[*count]           = ParticleNumber[i];
-					NbodyParticleCreationTimeTemp[*count]  = ParticleAttribute[0][i];
-					NbodyParticleDynamicalTimeTemp[*count] = ParticleAttribute[1][i];
-					NbodyParticleMetallicityTemp[*count]   = ParticleAttribute[2][i];
+					NbodyParticleIDTemp[*count]           = ParticleNumber[index];
+					NbodyParticleMassTemp[*count]         = ParticleMass[index]*dv;
+					NbodyParticleCreationTimeTemp[*count]  = ParticleAttribute[0][index];
+					NbodyParticleDynamicalTimeTemp[*count] = ParticleAttribute[1][index];
+					NbodyParticleMetallicityTemp[*count]   = ParticleAttribute[2][index];
 
 					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
-						NbodyParticlePositionTemp[dim][*count] = ParticlePosition[dim][i];
-						NbodyParticleVelocityTemp[dim][*count] = ParticleVelocity[dim][i];
+						NbodyParticlePositionTemp[dim][*count] = ParticlePosition[dim][index];
+						NbodyParticleVelocityTemp[dim][*count] = ParticleVelocity[dim][index];
 
-					}
-					// if you want potential then go with MAX_DIMENSION+1 by YS
-					for (int dim=0; dim<MAX_DIMENSION; dim++) {
-						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i];
-						//NbodyParticleAccelerationNoStarTemp[dim][*count] = 246.22271888;
+						// if you want potential then go with MAX_DIMENSION+1 by YS
+						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][index];
 					} // ENDFOR dim
 					(*count)++;
-				} // ENDIF nbody particles
-			} // ENDFOR number of particles
+				} // ENDFOR nbody particles
+			}
 			return SUCCESS;
 		}
 
@@ -1882,35 +1892,47 @@ class grid
 
 			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
 
-			for (int i=0; i < NumberOfParticles; i++) {
+			if (NumberOfNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNbodyParticlesInGrid[i];
+					assert(ParticleType[index] == PARTICLE_TYPE_NBODY);
 
-				if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
-					//fprintf(stderr, "Mass Of NewNbodyParticles=%lf in Copy\n", ParticleMass[i]*dv);
-					NewNbodyParticleMassTemp[*count_new]         = ParticleMass[i]*dv;
-					NewNbodyParticleIDTemp[*count_new]           = ParticleNumber[i];
-					NewNbodyParticleCreationTimeTemp[*count_new]  = ParticleAttribute[0][i];
-					NewNbodyParticleDynamicalTimeTemp[*count_new] = ParticleAttribute[1][i];
-					NewNbodyParticleMetallicityTemp[*count_new]    = ParticleAttribute[2][i];
-					for (int dim=0; dim<MAX_DIMENSION; dim++) {
-						//if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
-						NewNbodyParticlePositionTemp[dim][*count_new] = ParticlePosition[dim][i];
-						NewNbodyParticleVelocityTemp[dim][*count_new] = ParticleVelocity[dim][i];
-						//}
-						NewNbodyParticleAccelerationNoStarTemp[dim][*count_new] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i];
-					} // ENDFOR dim
-					(*count_new)++;
-				} // endif particle_type_nbody_new
+					NbodyParticleIDTemp[*count]           = ParticleNumber[index];
+					NbodyParticleMassTemp[*count]         = ParticleMass[index]*dv;
 
-				if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
-					//fprintf(stderr, "Mass Of NbodyParticles=%lf in Copy\n", ParticleMass[i]*dv);
-					NbodyParticleIDTemp[*count]   = ParticleNumber[i];
-					NbodyParticleMassTemp[*count] = ParticleMass[i]*dv;
+					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
-						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][i];
+						// if you want potential then go with MAX_DIMENSION+1 by YS
+						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][index];
 					} // ENDFOR dim
 					(*count)++;
-				} // ENDIF nbody particles
-			} // ENDFOR number of particles
+				} // ENDFOR nbody particles
+			}
+			if (NumberOfNewNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNewNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNewNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNewNbodyParticlesInGrid[i];
+					assert(ParticleType[index] == PARTICLE_TYPE_NBODY_NEW);
+
+					NewNbodyParticleIDTemp[*count_new]           = ParticleNumber[index];
+					NewNbodyParticleMassTemp[*count_new]         = ParticleMass[index]*dv;
+					NewNbodyParticleCreationTimeTemp[*count_new]  = ParticleAttribute[0][index];
+					NewNbodyParticleDynamicalTimeTemp[*count_new] = ParticleAttribute[1][index];
+					NewNbodyParticleMetallicityTemp[*count_new]   = ParticleAttribute[2][index];
+
+					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						NewNbodyParticlePositionTemp[dim][*count_new] = ParticlePosition[dim][index];
+						NewNbodyParticleVelocityTemp[dim][*count_new] = ParticleVelocity[dim][index];
+
+						// if you want potential then go with MAX_DIMENSION+1 by YS
+						NewNbodyParticleAccelerationNoStarTemp[dim][*count_new] = ParticleAttribute[NumberOfParticleAttributes-4+dim][index];
+						//NewNbodyParticleAccelerationNoStarTemp[dim][*count_new] = 246.22271888;
+					} // ENDFOR dim
+					(*count_new)++;
+				} // ENDFOR nbody particles
+			}
 			return SUCCESS;
 		}
 
@@ -2136,6 +2158,11 @@ class grid
 			for (int i=0; i < NumberOfParticles; i++) {
 				if (ParticleType[i] == PARTICLE_TYPE_NBODY_REMOVE) {
 					ParticleType[i] = PARTICLE_TYPE_STAR;
+					continue;
+				}
+
+				if (!NbodyFirst && ParticleType[i] == Particle_TYPE_NBODY) {
+					NumberOfNbodyParticlesInGrid++;
 					continue;
 				}
 
