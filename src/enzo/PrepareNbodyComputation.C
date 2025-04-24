@@ -79,7 +79,6 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 	LevelHierarchyEntry *Temp;
 	int start_index;
 
-	NumberOfNewNbodyParticles = 0;
 	fprintf(stdout, "ENZO: Entering SendToNbodyFirst ...\n");
 	//FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles);
 	FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, &NewLocalNumberOfNbodyParticles);

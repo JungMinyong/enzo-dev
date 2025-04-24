@@ -298,7 +298,7 @@ void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[],
 
 	for (level = 0; level < MAX_DEPTH_OF_HIERARCHY-1; level++) {
 		for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel) {
-			Temp->GridData->SetNumberOfNbodyParticles();
+			Temp->GridData->SetIndicesOfNbodyParticles();
 			*LocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNbodyParticles();
 			*NewLocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNewNbodyParticles();
 		}
