@@ -80,8 +80,9 @@ int SendToNbodyFirst(LevelHierarchyEntry *LevelArray[], int level) {
 	int start_index;
 
 	fprintf(stdout, "ENZO: Entering SendToNbodyFirst ...\n");
-	//FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles);
-	FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, &NewLocalNumberOfNbodyParticles);
+	bool prepareNbodyComputation = true;
+	FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, prepareNbodyComputation);
+	// FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, &NewLocalNumberOfNbodyParticles, prepareNbodyComputation);
 	fprintf(stderr, "ENZO: Entering SendToNbodyFirst ...\n");
 	//fprintf(stderr,"NewNumberOfParticles=%d\n",NumberOfNewNbodyParticles);
 	//fprintf(stderr,"NumberOfParticles=%d\n",NumberOfNbodyParticles);
@@ -407,7 +408,8 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 	LevelHierarchyEntry *Temp;
 	int start_index, start_index_new;
 
-	FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, &NewLocalNumberOfNbodyParticles);
+	bool prepareNbodyComputation = true;
+	FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, &NewLocalNumberOfNbodyParticles, prepareNbodyComputation);
 
 	/* Find the index of the array */
 	start_index     = FindStartIndex(&LocalNumberOfNbodyParticles);

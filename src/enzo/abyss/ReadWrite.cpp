@@ -164,7 +164,7 @@ int writeParticle(double current_time, int outputNum) {
         // Handle the error if necessary
         return 1;
     }
-	fprintf(stderr, "writeParticle 1\n");
+	// fprintf(stderr, "writeParticle 1\n");
 
     // Now let's save the outputs in a new directory
 
@@ -177,7 +177,7 @@ int writeParticle(double current_time, int outputNum) {
     std::ofstream outputFile(filename);
     //std::ofstream output_nn(nn_fname);
 
-	fprintf(stderr, "writeParticle 1-2\n");
+	// fprintf(stderr, "writeParticle 1-2\n");
 
     // Check if the file is opened successfully
     if (!outputFile.is_open()) {
@@ -185,7 +185,7 @@ int writeParticle(double current_time, int outputNum) {
         return 1;
     }
 
-	fprintf(stderr, "writeParticle 2\n");
+	// fprintf(stderr, "writeParticle 2\n");
 
 	outputFile << current_time*EnzoTimeStep*1e10/1e6 << " Myr, "; //
 	//outputFile << global_time*EnzoTimeStep*1e10/1e6 << " Myr"; //
@@ -210,7 +210,7 @@ int writeParticle(double current_time, int outputNum) {
 #endif 
 
 
-	fprintf(stderr, "writeParticle 3\n");
+	// fprintf(stderr, "writeParticle 3\n");
 
     // Write particle data to the file
 	Particle *ptcl;
@@ -247,7 +247,7 @@ int writeParticle(double current_time, int outputNum) {
 		else
 			write_out(outputFile, ptcl, pos, vel);
 
-	fprintf(stderr, "writeParticle 4\n");
+	// fprintf(stderr, "writeParticle 4\n");
 
 // write_neighbor(output_nn, ptcl);
 	}

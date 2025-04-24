@@ -258,7 +258,7 @@ void MatchAccelerationWithIndex(void) {
 
 
 
-void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *LocalNumberOfNbodyParticles) {
+void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *LocalNumberOfNbodyParticles, bool prepareNbodyComputation) {
 
 	*LocalNumberOfNbodyParticles=0;
 	int level;
@@ -269,7 +269,8 @@ void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *Loc
 
 	for (level = 0; level < MAX_DEPTH_OF_HIERARCHY-1; level++) {
 		for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel) {
-			Temp->GridData->SetNumberOfNbodyParticles();
+			if (prepareNbodyComputation)
+				Temp->GridData->SetIndicesOfNbodyParticles();
 			*LocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNbodyParticles();
 		}
 	}
@@ -285,7 +286,7 @@ void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *Loc
 
 
 void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[],
-		int *LocalNumberOfNbodyParticles, int *NewLocalNumberOfNbodyParticles) {
+		int *LocalNumberOfNbodyParticles, int *NewLocalNumberOfNbodyParticles, bool prepareNbodyComputation) {
 
 	*LocalNumberOfNbodyParticles    = 0;
 	*NewLocalNumberOfNbodyParticles = 0;
@@ -298,7 +299,8 @@ void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[],
 
 	for (level = 0; level < MAX_DEPTH_OF_HIERARCHY-1; level++) {
 		for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel) {
-			Temp->GridData->SetIndicesOfNbodyParticles();
+			if (prepareNbodyComputation)
+				Temp->GridData->SetIndicesOfNbodyParticles();
 			*LocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNbodyParticles();
 			*NewLocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNewNbodyParticles();
 		}
