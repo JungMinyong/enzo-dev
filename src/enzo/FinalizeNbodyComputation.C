@@ -464,6 +464,7 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 		for (int level1=0; level1<MAX_DEPTH_OF_HIERARCHY-1;level1++)
 			for (Temp = LevelArray[level1]; Temp; Temp = Temp->NextGridThisLevel)
 #ifdef SEVN
+				/*
                 {
 					UpdateResult = Temp->GridData->UpdateNbodyParticles(&count, 
 											LocalNumberOfNbodyParticles, NbodyParticleIDTemp, 
@@ -485,6 +486,21 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 						fprintf(stderr, "CleanUpMovedParticles by zero-mass particle!\n");
 						Temp->GridData->CleanUpMovedParticles();
 					}
+				}
+				*/
+				if (Temp->GridData->UpdateNbodyParticles(&count, 
+							LocalNumberOfNbodyParticles, NbodyParticleIDTemp, 
+							NbodyParticlePositionTemp, NbodyParticleVelocityTemp,
+							NbodyParticleInitialMassTemp, NbodyParticleWindEjectedMassTemp,
+							NbodyParticleSNEjectedMassTemp, NbodyParticleTemperatureTemp,
+							NbodyParticleMassTemp,
+							NewLocalNumberOfNbodyParticles, NewNbodyParticleIDTemp, 
+							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp,
+							NewNbodyParticleInitialMassTemp, NewNbodyParticleWindEjectedMassTemp,
+							NewNbodyParticleSNEjectedMassTemp, NewNbodyParticleTemperatureTemp,
+							NewNbodyParticleMassTemp
+							) == FAIL) {
+					ENZO_FAIL("Error in grid::CopyNbodyParticles.");
 				}
 #else
 				if (Temp->GridData->UpdateNbodyParticles(&count, 

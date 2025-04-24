@@ -15,6 +15,7 @@ module add mpi/latest
 export PATH=/appl/intel/oneapi/compiler/2021.4.0/linux/bin/intel64:$PATH
 export PATH=/appl/intel/oneapi/mpi/2021.4.0/bin:$PATH
 export LD_LIBRARY_PATH=/appl/intel/oneapi/mpi/2021.4.0/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/vinicius/sevn_n14/build/lib64/sevn
 #export PATH=/home/wispedia/install/mpich-15/bin:$PATH
 #export LD_LIBRARY_PATH=/home/wispedia/install/mpich-15/lib:$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=/home/vinicius/install/grackle15/lib:$LD_LIBRARY_PATH

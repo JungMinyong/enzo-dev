@@ -867,6 +867,23 @@ int SendToEnzo(Worker *workers) {
 				fprintf(stderr, "In SendToEnzo... PID: %d is escaping!\n", ptcl->PID);
 #ifdef FEWBODY
 				NumberOfParticle--;
+#ifdef SEVN
+				if (ptcl->StellarEvolution != nullptr) {
+					delete ptcl->StellarEvolution;
+					ptcl->StellarEvolution = nullptr;
+					fprintf(stderr, "In SendToEnzo... PID: %d. SEVN memory is freed!\n", ptcl->PID);
+					auto it = SEVNList.begin();
+					while (it != SEVNList.end()) {
+						if (it->second == ptcl->ParticleIndex) {
+							it = SEVNList.erase(it);
+							fprintf(stderr, "In SendToEnzo... PID: %d. SEVNList is erased!\n", ptcl->PID);
+							break;
+						}
+						else
+							it++;
+					}
+				}
+#endif
 #endif
 				NumberOfEscapeParticle++;
 			}
@@ -977,6 +994,23 @@ int SendToEnzo(Worker *workers) {
 				deleteParticle(EnzoPIDs[i+offset],index);
 #ifdef FEWBODY
 				NumberOfParticle--;
+#ifdef SEVN
+				if (ptcl->StellarEvolution != nullptr) {
+					delete ptcl->StellarEvolution;
+					ptcl->StellarEvolution = nullptr;
+					fprintf(stderr, "In SendToEnzo... PID: %d. SEVN memory is freed!\n", ptcl->PID);
+					auto it = SEVNList.begin();
+					while (it != SEVNList.end()) {
+						if (it->second == ptcl->ParticleIndex) {
+							it = SEVNList.erase(it);
+							fprintf(stderr, "In SendToEnzo... PID: %d. SEVNList is erased!\n", ptcl->PID);
+							break;
+						}
+						else
+							it++;
+					}
+				}
+#endif
 #endif
 				NumberOfEscapeParticle++;
 				// (Query) binary termination?
@@ -1063,6 +1097,23 @@ int SendToEnzo(Worker *workers) {
 				}
 				deleteParticle(members->PID, ptcl->Members[j]);
 				NumberOfEscapeParticle++;
+#ifdef SEVN
+				if (members->StellarEvolution != nullptr) {
+					delete members->StellarEvolution;
+					members->StellarEvolution = nullptr;
+					fprintf(stderr, "In SendToEnzo... PID: %d. SEVN memory is freed!\n", members->PID);
+					auto it = SEVNList.begin();
+					while (it != SEVNList.end()) {
+						if (it->second == members->ParticleIndex) {
+							it = SEVNList.erase(it);
+							fprintf(stderr, "In SendToEnzo... PID: %d. SEVNList is erased!\n", members->PID);
+							break;
+						}
+						else
+							it++;
+					}
+				}
+#endif
 			}
 
 			int rank_delete = CMPtclWorker[ptcl->ParticleIndex];

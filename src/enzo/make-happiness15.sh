@@ -12,6 +12,7 @@ cd src/enzo/
 
 #module add icc/latest
 #module add mpi/latest
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/vinicius/sevn/build/lib64/sevn
 export PATH=/appl/intel/oneapi/compiler/2021.4.0/linux/bin/intel64:$PATH
 export PATH=/appl/intel/oneapi/mpi/2021.4.0/bin:$PATH
 export LD_LIBRARY_PATH=/appl/intel/oneapi/mpi/2021.4.0/lib:$LD_LIBRARY_PATH

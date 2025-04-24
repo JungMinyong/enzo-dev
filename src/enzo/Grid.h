@@ -1945,6 +1945,7 @@ class grid
 			return SUCCESS;
 		}
 #ifdef SEVN
+/* // Unused version by EW 2025.4.23
 		int UpdateNbodyParticles(int* count,
 				int NumberOfNbodyParticles,int NbodyParticleIDTemp[],
 				double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[],
@@ -2023,6 +2024,83 @@ class grid
 				return 2;
 			else
 				return SUCCESS;
+		}
+*/
+		int UpdateNbodyParticles(int* count,
+			int NumberOfNbodyParticles,int NbodyParticleIDTemp[],
+			double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[],
+			double NbodyParticleInitialMassTemp[], double NbodyParticleWindEjectedMassTemp[],
+			double NbodyParticleSNEjectedMassTemp[], double NbodyParticleTemperatureTemp[],
+			double NbodyParticleMassTemp[],
+			int NewNumberOfNbodyParticles,int NewNbodyParticleIDTemp[],
+			double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[],
+			double NewNbodyParticleInitialMassTemp[], double NewNbodyParticleWindEjectedMassTemp[],
+			double NewNbodyParticleSNEjectedMassTemp[], double NewNbodyParticleTemperatureTemp[],
+			double NewNbodyParticleMassTemp[]) {
+
+			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+			for (int i=0; i < NumberOfParticles; i++) {
+				for (int j=0; j<NumberOfNbodyParticles; j++) {
+					if (ParticleNumber[i] == NbodyParticleIDTemp[j]) {
+						//fprintf(stdout,"Escaped PID=%d, x=%lf\n", ParticleNumber[i], NbodyParticlePositionTemp[0][j]);
+						if (NbodyParticlePositionTemp[0][j] < -10) {
+							fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[i]);
+							NbodyParticlePositionTemp[0][j] += 20;
+							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
+						} // particle removal
+						for (int dim=0; dim<MAX_DIMENSION; dim++) {
+							ParticlePosition[dim][i] = NbodyParticlePositionTemp[dim][j];
+							ParticleVelocity[dim][i] = NbodyParticleVelocityTemp[dim][j];
+						} // ENDFOR dim
+						ParticleAttribute[NumberOfParticleAttributes-8+0][i]	= NbodyParticleInitialMassTemp[j];
+						ParticleAttribute[NumberOfParticleAttributes-8+1][i]	= NbodyParticleWindEjectedMassTemp[j];
+						ParticleAttribute[NumberOfParticleAttributes-8+2][i]	= NbodyParticleSNEjectedMassTemp[j];
+						ParticleAttribute[NumberOfParticleAttributes-8+3][i]	= NbodyParticleTemperatureTemp[j];
+
+						ParticleMass[i] = NbodyParticleMassTemp[j]/dv;
+						if (ParticleMass[i] < 0) {
+							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
+							ParticleMass[i] = tiny_number;
+							NumberOfNbodyParticlesInGrid--;
+							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
+						} // merger induced zero mass particle & (P)PISN
+						(*count)++;
+						break;
+					} // ENDIF partID matched
+				} // ENDFOR nbody particles
+				for (int j=0; j<NewNumberOfNbodyParticles; j++) {
+					if (ParticleNumber[i] == NewNbodyParticleIDTemp[j]) {
+						ParticleType[i] = PARTICLE_TYPE_NBODY;
+						if (NewNbodyParticlePositionTemp[0][j] < -10) {
+							fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[i]);
+							NewNbodyParticlePositionTemp[0][j] += 20;
+							ParticleType[i] = PARTICLE_TYPE_NBODY_REMOVE;
+						} // particle removal
+						for (int dim=0; dim<MAX_DIMENSION; dim++) {
+							ParticlePosition[dim][i] = NewNbodyParticlePositionTemp[dim][j];
+							ParticleVelocity[dim][i] = NewNbodyParticleVelocityTemp[dim][j];
+						} // ENDFOR dim
+						ParticleAttribute[NumberOfParticleAttributes-8+0][i]	= NewNbodyParticleInitialMassTemp[j];
+						ParticleAttribute[NumberOfParticleAttributes-8+1][i]	= NewNbodyParticleWindEjectedMassTemp[j];
+						ParticleAttribute[NumberOfParticleAttributes-8+2][i]	= NewNbodyParticleSNEjectedMassTemp[j];
+						ParticleAttribute[NumberOfParticleAttributes-8+3][i]	= NewNbodyParticleTemperatureTemp[j];
+
+						ParticleMass[i] = NewNbodyParticleMassTemp[j]/dv;
+						if (ParticleMass[i] < 0) {
+							ParticleType[i] = PARTICLE_TYPE_DARK_MATTER;
+							ParticleMass[i] = tiny_number;
+							NumberOfNewNbodyParticlesInGrid--;
+							fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[i]);
+						} // merger induced zero mass particle & (P)PISN
+						(*count)++;
+						break;
+					} // ENDIF partID matched
+				} // ENDFOR new nbody particles
+			} // ENDFOR number of particles
+			return SUCCESS;
 		}
 #endif
 
