@@ -94,23 +94,39 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
 	/*
 #ifdef NBODY
-#ifdef WINDS
-	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-		"particle_jet_y", "particle_jet_z", "typeia_fraction", "acc_x", "acc_y", "acc_z"};
+#ifdef WINDS 
+#ifdef SEVN
+  char *ParticleAttributeLabel[] = 
+  {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "particle_jet_y", "particle_jet_z", "typeia_fraction", 
+    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+    "acc_x", "acc_y", "acc_z"};
 #else
-	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction", 
-		"acc_x", "acc_y", "acc_z"};
+  char *ParticleAttributeLabel[] = 
+  {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "particle_jet_y", "particle_jet_z", "typeia_fraction", 
+    "acc_x", "acc_y", "acc_z"};
 #endif
 #else
-#ifdef WINDS
-	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-		"particle_jet_y", "particle_jet_z", "typeia_fraction"};
+#ifdef SEVN
+  char *ParticleAttributeLabel[] = 
+  {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+    "acc_x", "acc_y", "acc_z"};
 #else
-	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+  char *ParticleAttributeLabel[] = 
+  {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "acc_x", "acc_y", "acc_z"};
+#endif
+#endif
+#else
+#ifdef WINDS 
+  char *ParticleAttributeLabel[] = 
+  {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "particle_jet_y", "particle_jet_z", "typeia_fraction"};
+#else
+  char *ParticleAttributeLabel[] = 
+  {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
 #endif
 */

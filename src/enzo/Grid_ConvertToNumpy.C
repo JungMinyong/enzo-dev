@@ -38,14 +38,45 @@ void grid::ConvertToNumpy(int GridID, PyArrayObject *container[], int ParentID, 
        {"particle_position_x", "particle_position_y", "particle_position_z"};
     char *ParticleVelocityLabel[] =
        {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
+
 		/*
 #ifdef WINDS
+#ifdef NBODY
+#ifdef WINDS 
+#ifdef SEVN
+
     char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-       "particle_jet_y", "particle_jet_z", "typeia_fraction"};
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "particle_jet_y", "particle_jet_z", "typeia_fraction", 
+    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+    "acc_x", "acc_y", "acc_z"};
 #else
     char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "particle_jet_y", "particle_jet_z", "typeia_fraction", 
+    "acc_x", "acc_y", "acc_z"};
+#endif
+#else
+#ifdef SEVN
+    char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+    "acc_x", "acc_y", "acc_z"};
+#else
+    char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "acc_x", "acc_y", "acc_z"};
+#endif
+#endif
+#else
+#ifdef WINDS 
+    char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+    "particle_jet_y", "particle_jet_z", "typeia_fraction"};
+#else
+    char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+#endif
 #endif
 */
     std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes);

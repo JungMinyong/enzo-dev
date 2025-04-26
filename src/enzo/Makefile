@@ -116,10 +116,22 @@ all: MACHNOTES MAKETAGS $(EXE).exe
 
 # I believe this has to be done here, as it is target-specific.
 lib: CFLAGS   += $(MACH_SHARED_FLAGS) -fPIC
-lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY
+lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY -DCUDA
 lib: FFLAGS   += $(MACH_SHARED_FLAGS) -fPIC  -lmpi 
 lib: F90FLAGS += $(MACH_SHARED_FLAGS)
 #lib: LDFLAGS  += $(MACH_SHARED_FLAGS) -lstdc++ L/mnt/sw/nix/store/bdhdh478f6slibd9zpgmgw8grnqq78im-cuda-11.4.4/lib64 -lcudart 
+#lib: LDFLAGS += -lcudart -lcublas -lnvToolsExt -lm -lcuda -lmpi 
+
+LDFLAGS += -lcudart -lcublas -lnvToolsExt -lm -lcuda -lmpi 
+# SDAR
+CXXFLAGS += -I./abyss/SDAR/src -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DNBODY #-DFEWBODY #-DDEBUG
+#CXX_SRCS += FewBody/FBCheck.cpp FewBody/FBInitialization.cpp FewBody/FBIntegration.cpp FewBody/FBTermination.cpp FewBody/GroupAccelerationRoutine.cpp
+#ifdef USE_SEVN
+#CXXFLAGS += -DSEVN -I/data/vinicius/sevn/build/include/sevn
+#LDFLAGS += -L/data/vinicius/sevn/build/lib64/sevn -lsevn_lib_shared
+	#CXX_SRCS += StellarEvolution.cpp
+#endif
+
 lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).$(MACH_SHARED_EXT)
 
 #-----------------------------------------------------------------------
@@ -254,17 +266,17 @@ verbose: $(EXE).exe
 	@rm -f $@
 	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(F77)  -x f77 -cpp -lstdc++-c -lmpi  -o $@ $(FFLAGS) -lmpi -I./nbody/include $(INCLUDES) $(DEFINES)  $*.for >& $(OUTPUT) ; \
+	  $(F77)  -x f77 -cpp -lstdc++-c -lmpi  -o $@ $(FFLAGS) -lmpi -I./abyss/include $(INCLUDES) $(DEFINES)  $*.for >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(for) -x f77 -cpp -lstdc++ -c -o $@ $(FFLAGS) -lmpi -I./nbody/include $(INCLUDES) $(DEFINES) $*.for"; \
+             echo "$(for) -x f77 -cpp -lstdc++ -c -o $@ $(FFLAGS) -lmpi -I./abyss/include $(INCLUDES) $(DEFINES) $*.for"; \
              echo; \
-             $(for) -x f77 -cpp -lstdc++ -lmpi  -c -o $@ $(FFLAGS) -lmpi  -I./nbody/include $(INCLUDES) $(DEFINES) $*.for; \
+             $(for) -x f77 -cpp -lstdc++ -lmpi  -c -o $@ $(FFLAGS) -lmpi  -I./abyss/include $(INCLUDES) $(DEFINES) $*.for; \
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(F77) -x f77 -cpp -lstdc++ -c -lmpi  -o $@ $(FFLAGS)  -lmpi -I./nbody/include  $(INCLUDES) $(DEFINES) $*.for >> $(OUTPUT) 2>&1 ; \
+	  $(F77) -x f77 -cpp -lstdc++ -c -lmpi  -o $@ $(FFLAGS)  -lmpi -I./abyss/include  $(INCLUDES) $(DEFINES) $*.for >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
@@ -346,18 +358,18 @@ verbose: $(EXE).exe
 	@rm -f $@
 	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(NCXX) -c -std=c++11 -march=native -o $@ $(DEFINES) $(CXXFLAGS) -I./nbody/Particle  -I./nbody/Binary -I./nbody $(INCLUDES) $*.cpp \
+	  $(NCXX) -c -std=c++11 -march=native -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle  -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(NCXX) -o $@ $(DEFINES) $(CXXFLAGS) -I./nbody/Particle -I./nbody $(INCLUDES) $*.cpp"; \
+             echo "$(NCXX) -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss $(INCLUDES) $*.cpp"; \
              echo; \
-             $(NCXX)-o $@ $(DEFINES) $(CXXFLAGS) -I./nbody/Particle -I./nbody/Binary -I./nbody $(INCLUDES) $*.cpp;\
+             $(NCXX)-o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp;\
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(NCXX) -c -std=c++11 -march=native -o $@ $(DEFINES) $(CXXFLAGS) -I./nbody/Particle -I./nbody/Binary -I./nbody $(INCLUDES) $*.cpp \
+	  $(NCXX) -c -std=c++11 -march=native -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
 	    >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
@@ -373,7 +385,7 @@ verbose: $(EXE).exe
 	    $(INCLUDES) $*.cu >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
 	     echo; \
-             echo "$(CUDACOMPILER) -G -Xcompiler -rdynamic -lineinfo -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) -I./nbody/include -I./nbody  $(INCLUDES) $*.cu"; \
+             echo "$(CUDACOMPILER) -G -Xcompiler -rdynamic -lineinfo -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) -I./abyss/include -I./abyss  $(INCLUDES) $*.cu"; \
              echo; \
              $(CUDACOMPILER) -g -G -Xcompiler -rdynamic -lineinfo -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) $(INCLUDES) $*.cu;\
              echo; \
@@ -481,10 +493,10 @@ help:
 clean:
 	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) enzo.exe \
           auto_show*.C hydro_rk/*.o *.oo hydro_rk/*.oo \
-					nbody/*.o \
-					nbody/Particle/*.o \
-					nbody/Binary/*.o \
-					nbody/cuda/*.o \
+					abyss/*.o \
+					abyss/Particle/*.o \
+					abyss/FewBody/*.o \
+					abyss/cuda/*.o \
           uuid/*.oo DEPEND TAGS \
           libconfig/*.o \
           python_bridge/problemtype_handler.C \

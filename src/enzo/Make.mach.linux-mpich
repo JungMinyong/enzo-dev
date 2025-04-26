@@ -31,16 +31,16 @@ LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.8
 # Compiler settings
 #-----------------------------------------------------------------------
 
-MACH_CPP       = cpp # C preprocessor command
+MACH_CPP       = icpc # C preprocessor command
 
 # With MPI
 
 
-MACH_CC_MPI    =  mpicc     #/home/kerex/intel/bin/icc 
-MACH_CXX_MPI   =  mpicxx    #/home/kerex/intel/bin/icpc
+MACH_CC_MPI    =  mpiicc     #/home/kerex/intel/bin/icc 
+MACH_CXX_MPI   =  mpiicpc    #/home/kerex/intel/bin/icpc
 MACH_FC_MPI    =  mpifc   #/home/kerex/intel/bin/ifort 
 MACH_F90_MPI   =  mpif90   #/home/kerex/intel/bin/ifort
-MACH_LD_MPI    =  mpicxx    #/home/kerex/intel/bin/icpc
+MACH_LD_MPI    =  mpiicpc    #/home/kerex/intel/bin/icpc
 
 MACH_CUDACOMPILER = $(LOCAL_CUDA_INSTALL)/bin/nvcc
 
@@ -66,6 +66,7 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 #-----------------------------------------------------------------------
 # Compiler flag settings
 #-----------------------------------------------------------------------
+
 
 
 MACH_CPPFLAGS = -P -traditional 
@@ -103,9 +104,12 @@ LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
 LOCAL_INCLUDES_HYPRE  = # hypre includes
 LOCAL_INCLUDES_PAPI   = # PAPI includes
 LOCAL_INCLUDES_GRACKLE = -I$(LOCAL_GRACKLE_INSTALL)/include
+#-I/usr/local/cuda-11.8/include
 
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
-MACH_LIBS_NBODY    = -I
+#-I$(LOCAL_CUDA_INSTALL)/include
+#$(LOCAL_INCLUDES_HDF5)
+#MACH_LIBS_NBODY    = -I
 
 MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
 MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)

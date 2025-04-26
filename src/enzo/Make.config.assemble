@@ -839,9 +839,11 @@
 
     ifeq ($(CONFIG_NBODY),yes)
         ERROR_NBODY = 0
-	    ASSEMBLE_NBODY_DEFINES = -DNBODY -D GPU #-D SIMD #-D OMP
-	    ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY)
-	    ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES)
+	    ASSEMBLE_NBODY_DEFINES = -DNBODY -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DFEWBODY -DSEVN #-D GPU #-D SIMD #-D OMP
+        ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY) -L/data/vinicius/sevn/build_node14/lib64/sevn -lsevn_lib_shared
+	    ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES) -I/data/vinicius/enzo-abyss-EW/src/enzo/abyss/SDAR/src -I/data/vinicius/sevn/build_node14/include/sevn
+	    #ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY) -L/data/vinicius/sevn/build/lib64/sevn -lsevn_lib_shared
+	    #ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES) -I/data/vinicius/enzo-abyss-EW/src/enzo/abyss/SDAR/src -I/data/vinicius/sevn/build/include/sevn
 	    OBJS_NBODY_LIB = $(OBJS_NBODY_ALL)
     endif
 
@@ -1182,6 +1184,7 @@
                $(ASSEMBLE_NEW_PROBLEM_TYPES_INCLUDES) \
                $(ASSEMBLE_PAPI_INCLUDES) \
                $(ASSEMBLE_GRACKLE_INCLUDES) \
+               $(ASSEMBLE_NBODY_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.
 
     OBJS_LIB = $(OBJS_NBODY) \

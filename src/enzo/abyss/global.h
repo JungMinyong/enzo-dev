@@ -1,0 +1,118 @@
+#ifndef GLOBAL_H
+#define GLOBAL_H
+#include "def.h"
+#include "particle.h"
+#include "GlobalVariable.h"
+#include "./FewBody/Group.h"
+#include "performance.h"
+#include <mpi.h>
+#include <unordered_map>
+#include <unordered_set>
+
+#ifdef SEVN
+#include "IO.h"
+#include <map>
+#endif
+
+
+
+extern std::unordered_set<int> RegularList;
+extern Particle *particles;
+extern Particle *particles_original;
+extern GlobalVariable *global_variable;
+extern GlobalVariable *global_variable_original;
+extern int *ActiveIndexToOriginalIndex_orginal;
+extern int *ActiveIndexToOriginalIndex;
+
+/* Communications */
+extern MPI_Win win;
+extern MPI_Win win2;
+extern MPI_Win win3;
+extern MPI_Comm abyss_comm;
+extern MPI_Comm inter_comm;
+extern int AbyssProcessorNumber;
+extern int NumberOfAbyssProcessors;
+extern int NumberOfWorker;
+const int ROOT = 0;
+extern int NumberOfCommunication;
+
+/* Particle Array */
+extern int NumberOfParticle;
+extern int NumberOfSingleParticle;
+extern int *AvailableIndices; // stores available indices due to inactive particles (< LastParticleIndex).
+extern int NumberOfAvailableIndices;
+extern int NewPID;
+extern std::unordered_map<int,int> PIDtoIndexMap;
+
+// Neighbor
+extern int MaxNumNeighbor;
+extern int FixNumNeighbor;
+
+extern int LastParticleIndex; // for few-body case by EW 2025.3.10
+
+// Task
+const int TASK_TAG = 1;
+const int PTCL_TAG = 2;
+const int TIME_TAG = 3;
+const int ANY_TAG = 100;
+const int TERMINATE_TAG = 666;
+extern int Task[NumberOfTask];
+
+// Time
+extern double global_time;
+extern double global_time_irr;
+extern ULL NextRegTimeBlock;
+
+extern double binary_time;
+extern double binary_time_prev;
+extern ULL binary_block;
+
+// Enzo to Abyss
+extern double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
+extern double ClusterRadius2;
+extern double ClusterAcceleration[Dim];
+extern double ClusterPosition[Dim];
+extern double ClusterVelocity[Dim];
+extern double EnzoClusterPosition[Dim+1];
+extern int BinaryRegularization;
+extern int IdentifyOnTheFly;
+extern int *EnzoPIDs; // stores the order of pids from enzo.
+extern int newNumberOfSingleParticle;
+extern int StarParticleFeedback;
+extern double StarMassEjectionFraction;
+extern int ComovingCoordinates;
+extern double eta_tmp;
+extern double InitialNeighborRadius2;
+extern double EPS2;
+
+// Few-Body
+extern std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11
+extern std::unordered_map<int, int> PrevCMPtclWorker; // by EW 2025.1.4 // unordered_map by EW 2025.1.11
+
+// i/o
+extern char* fname;
+extern double inputTime;
+extern double endTime;
+extern bool restart;
+extern char* foutput;
+extern bool IsOutput;
+extern double outputTime;
+extern int outNum;
+extern double outputTimeStep;
+
+extern FILE* nbpout;
+extern FILE* binout;
+extern FILE* mergerout;
+#ifdef SEVN
+extern FILE* SEVNout;
+extern IO* sevnio;
+extern std::multimap<double, int> SEVNList;
+#endif
+extern FILE* workerout;
+
+#ifdef PerformanceTrace
+// Performance trace
+extern Performance performance;
+#endif
+
+#endif

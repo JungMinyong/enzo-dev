@@ -1540,6 +1540,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		ret += sscanf(line, "NbodyBinaryRegularization = %"ISYM, &NbodyBinaryRegularization);
 		ret += sscanf(line, "NbodyBinaryDistance       = %"FSYM, &NbodyBinaryDistance);
 		ret += sscanf(line, "NbodyBinaryTimeStep       = %"FSYM, &NbodyBinaryTimeStep);
+		//ret += sscanf(line, "NbodyFilename             = %"FSYM, &NbodyFilename);
+    if (sscanf(line, "NbodyDir           = %s", dummy) == 1)
+      NbodyDir = dummy;
     //ret += sscanf(line, "UseNbodyClusterIdentificationOnTheFly = %d", &isNbodyParticleIdentification);
 		//
     ret += sscanf(line, "ClusterSMBHFeedback = %"ISYM, &ClusterSMBHFeedback);
@@ -2493,10 +2496,17 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		}
 
 		// this is for background acceleration
-		//if (NumberOfParticleAttributes < 7) {
-		NumberOfParticleAttributes += 4;
-		fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
-		//}
+  #ifdef SEVN
+    if (NumberOfParticleAttributes < 11) {
+      NumberOfParticleAttributes = 11;
+      fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
+    }
+  #else
+		if (NumberOfParticleAttributes < 7) {
+			NumberOfParticleAttributes = 7;
+			fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
+		}
+  #endif
 
 		if (isNbodyParticleIdentification) {
 			fprintf(stdout, "LengthUnits=%e\n", LengthUnits);

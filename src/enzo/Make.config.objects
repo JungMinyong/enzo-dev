@@ -1303,33 +1303,37 @@ OBJS_NBODY= \
 						NbodyRoutines.o \
 						PrepareNbodyComputation.o\
 						FinalizeNbodyComputation.o\
-						nbody/nbody.o\
-						nbody/Evolve.o\
-						nbody/cuda/CalculateRegularAcceleration.o\
-						nbody/cuda/CalculateAccelerationForAll.o\
-						nbody/cuda/cuda_my_acceleration.o\
-						nbody/InitializeTimeStep.o\
-						nbody/ComputationChainRoutine.o\
-						nbody/RegularAccelerationRoutine.o\
-						nbody/ReadWrite.o\
-						nbody/IrregularAccelerationRoutine.o\
-						nbody/CommunicationToHydro.o \
-						nbody/InitializeParticles.o\
-						nbody/TimeStepRoutines.o\
-						nbody/Particle/ParticleRoutines.o\
-						nbody/Particle/CalculateIrrForce.o\
-						nbody/Particle/UpdateParticle.o\
-						nbody/Particle/CalculateTimeStep.o\
-						nbody/Particle/InitializeTimeStep.o\
-						nbody/Particle/EvolveStar.o\
-						nbody/Binary/BinaryAccelerationRoutine.o\
-						nbody/Binary/BinaryRoutines.o\
-						nbody/Binary/KSRegularlizationTermination.o\
-						nbody/Binary/KSRegularlizationInitialization.o\
-						nbody/Binary/KSRegularlizationIntegration.o\
- 						nbody/cuda/cuda_kernels.o\
- 						#nbody/cuda/cuda_routines.o\
-
+						abyss/abyss.o\
+						abyss/WorkerRoutines.o\
+						abyss/RootRoutines.o\
+						abyss/MPIRoutines.o\
+						abyss/InitializationRoutines.o\
+						abyss/RegularRoutines.o\
+						abyss/IrregularRoutines.o\
+						abyss/cuda/CalculateRegularAcceleration.o\
+						abyss/cuda/cuda_my_acceleration.o\
+						abyss/DefaultGlobal.o\
+						abyss/CommunicationToHydro.o \
+						abyss/TimeStepRoutines.o\
+						abyss/Particle/ParticleRoutines.o\
+						abyss/Particle/UpdateParticle.o\
+						abyss/Particle/Initialize.o\
+						abyss/Particle/ComputeAcceleration.o\
+ 						abyss/cuda/cuda_kernels.o\
+            abyss/FewBody/FBCheck.o\
+            abyss/FewBody/FBInitialization.o\
+            abyss/FewBody/FBIntegration.o\
+            abyss/FewBody/FBTermination.o\
+            abyss/FewBody/GroupAccelerationRoutine.o\
+            abyss/ReadWrite.o\
+            abyss/StellarEvolution.o\
+            star_maker3mom_individual.o\
+            star_maker7_individual.o \
+            star_maker7_individual2.o \
+            star_maker3mom_individual2.o\
+            #StarSplitter.o\
+ 						#abyss/cuda/cuda_routines.o\
+						#abyss/cuda/CalculateAccelerationForAll.o\
 
 
 

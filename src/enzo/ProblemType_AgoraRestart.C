@@ -1363,10 +1363,9 @@ public:
 		if (debug)
 			fprintf(stderr, "InitializeParticles: Number of Halo Particles %" ISYM "\n", nHalo);
 #ifdef NBODY
-		nNbody = nlines("nbody.dat");
-		if (debug)
-			fprintf(stderr, "InitializeParticles: Number of Nbody Particles %" ISYM "\n", nNbody);
-		nParticles = nBulge + nDisk + nHalo + nNbody;
+			nNbody = nlines(NbodyDir);
+			if(debug) fprintf(stderr, "InitializeParticles: Number of Nbody Particles %"ISYM"\n", nNbody);
+			nParticles = nBulge + nDisk + nHalo + nNbody;
 #else
 		nParticles = nBulge + nDisk + nHalo;
 #endif
@@ -1404,38 +1403,51 @@ public:
 			}
 		}
 #ifdef NBODY
-		// just for tests
-		for (int j = 0; j < nParticles; j++)
-		{
-			Attribute[0][j] = -99999;
-			Attribute[1][j] = StarMakerMinimumDynamicalTime * 3.15e7 / TimeUnits;
-		}
+			// just for tests
+			for (int j = 0; j < nParticles; j++) {
+				// Attribute[0][j] = 0.0; // (SEVN Query) modified by EW 2025.4.3 // It should be changed if we consider restart case...
+				Attribute[1][j] = StarMakerMinimumDynamicalTime*3.15e7/TimeUnits; // Dynamical time
+				Attribute[2][j] = TestProblemData.MetalFractionByMass; // test by EW 2025.4.3
+			}
 #endif
 
-		FLOAT dx = thisgrid->CellWidth[0][0];
+			FLOAT dx = thisgrid->CellWidth[0][0];
 
-		// Read them in and assign them as we go
-		int count = 0;
-		this->ReadParticlesFromFile(
-			Number, Type, Position, Velocity, Mass,
-			"bulge.dat", PARTICLE_TYPE_STAR, count, dx);
-		this->ReadParticlesFromFile(
-			Number, Type, Position, Velocity, Mass,
-			"disk.dat", PARTICLE_TYPE_STAR, count, dx);
-		this->ReadParticlesFromFile(
-			Number, Type, Position, Velocity, Mass,
-			"halo.dat", PARTICLE_TYPE_DARK_MATTER, count, dx);
-		this->ReadParticlesFromFile(
-			Number, Type, Position, Velocity, Mass,
-			"nbody.dat", PARTICLE_TYPE_NBODY, count, dx);
+			// Read them in and assign them as we go
+			int count = 0;
+			if (nBulge > 0)
+				this->ReadParticlesFromFile(
+					Number, Type, Position, Velocity, Mass,
+					"bulge.dat", PARTICLE_TYPE_STAR, count, dx);
+			if (nDisk > 0)
+				this->ReadParticlesFromFile(
+					Number, Type, Position, Velocity, Mass,
+					"disk.dat", PARTICLE_TYPE_STAR, count, dx);
+			if (nHalo > 0)
+				this->ReadParticlesFromFile(
+					Number, Type, Position, Velocity, Mass,
+					"halo.dat", PARTICLE_TYPE_DARK_MATTER, count, dx);
+			if (nNbody > 0)
+				this->ReadParticlesFromFile(
+					Number, Type, Position, Velocity, Mass,
+					NbodyDir, PARTICLE_TYPE_NBODY, count, dx);
+
+#ifdef NBODY
+#ifdef SEVN
+			// just for tests
+			for (int j = 0; j < nParticles; j++)
+				Attribute[NumberOfParticleAttributes-8+0][j] = Mass[j] / (SolarMass / MassUnits / dx / dx / dx); // InitialMass [Msol]
+#endif
+#endif
+
 
 #ifdef NBODY_old
 
-		this->ReadNbodyParticles(
-			Number, Type, Position, Velocity, Mass, nNbody,
-			"nbody.dat", PARTICLE_TYPE_NBODY, count, dx);
-		fprintf(stdout, "NbodyCluster = (%.3e,%.3e,%.3e), r2 = %.3e \n",
-				NbodyClusterPosition[0][0], NbodyClusterPosition[1][0], NbodyClusterPosition[2][0], NbodyClusterPosition[3][0]);
+			this->ReadNbodyParticles(
+					Number, Type, Position, Velocity, Mass, nNbody,
+					NbodyDir, PARTICLE_TYPE_NBODY, count, dx);
+			fprintf(stdout, "NbodyCluster = (%.3e,%.3e,%.3e), r2 = %.3e \n", 
+					NbodyClusterPosition[0][0], NbodyClusterPosition[1][0], NbodyClusterPosition[2][0], NbodyClusterPosition[3][0]);
 #endif
 
 		thisgrid->SetNumberOfParticles(count);
@@ -1690,30 +1702,27 @@ public:
 
 		fptr = fopen(fname, "r");
 
-		while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL)
-		{
-			ret +=
-				sscanf(line,
-					   "%" PSYM " %" PSYM " %" PSYM " %" FSYM " %" FSYM " %" FSYM " %" FSYM,
-					   &x, &y, &z, &vx, &vy, &vz, &mass);
+			while(fgets(line, MAX_LINE_LENGTH, fptr) != NULL)
+			{
+				ret +=
+					sscanf(line,
+							"%"PSYM" %"PSYM" %"PSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
+							&x, &y, &z, &vx, &vy, &vz, &mass);
 
-			Position[0][c] = x * kpc_cm / LengthUnits + this->CenterPosition[0];
-			Position[1][c] = y * kpc_cm / LengthUnits + this->CenterPosition[1];
-			Position[2][c] = z * kpc_cm / LengthUnits + this->CenterPosition[2];
+				Position[0][c] = x * kpc_cm / LengthUnits + this->CenterPosition[0];
+				Position[1][c] = y * kpc_cm / LengthUnits + this->CenterPosition[1];
+				Position[2][c] = z * kpc_cm / LengthUnits + this->CenterPosition[2];
 
-			// Position[0][c] = x * pc_cm / LengthUnits + this->CenterPosition[0];
-			// Position[1][c] = y * pc_cm / LengthUnits + this->CenterPosition[1];
-			// Position[2][c] = z * pc_cm / LengthUnits + this->CenterPosition[2];
+				Velocity[0][c] = vx * km_cm / VelocityUnits;
+				Velocity[1][c] = vy * km_cm / VelocityUnits;
+				Velocity[2][c] = vz * km_cm / VelocityUnits;
 
-			Velocity[0][c] = vx * km_cm / VelocityUnits;
-			Velocity[1][c] = vy * km_cm / VelocityUnits;
-			Velocity[2][c] = vz * km_cm / VelocityUnits;
-
-			// Particle masses are actually densities.
-			Mass[c] = mass * 1e9 * SolarMass / MassUnits / dx / dx / dx;
-			Type[c] = particle_type;
-			Number[c] = c++;
-		}
+				// Particle masses are actually densities.
+				Mass[c] = mass * 1e9 * SolarMass / MassUnits / dx / dx / dx;
+				Type[c] = particle_type;
+				Number[c] = c;
+				c++;
+			}
 
 		fclose(fptr);
 

@@ -76,6 +76,7 @@ void InitializeNbodyArrays(bool NbodyFirst) {
 
 void InitializeNbodyArrays(void) {
 
+
 	if (NbodyParticleMass != NULL)
 		delete [] NbodyParticleMass;
 	NbodyParticleMass = new double[NumberOfNbodyParticles];
@@ -99,9 +100,11 @@ void InitializeNbodyArrays(void) {
 		NbodyParticleAccelerationNoStar[dim] = new double[NumberOfNbodyParticles];
 
 	}
+
 }
 
 void InitializeNbodyArrays(int) {
+
 
 
 	if (NbodyParticleID != NULL)
@@ -119,6 +122,29 @@ void InitializeNbodyArrays(int) {
 		NbodyParticleVelocity[dim] = new double[NumberOfNbodyParticles];
 
 	}
+
+
+#ifdef SEVN
+	if (NbodyParticleInitialMass != NULL)
+		delete [] NbodyParticleInitialMass;
+	NbodyParticleInitialMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleWindEjectedMass != NULL)
+		delete [] NbodyParticleWindEjectedMass;
+	NbodyParticleWindEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleSNEjectedMass != NULL)
+		delete [] NbodyParticleSNEjectedMass;
+	NbodyParticleSNEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleTemperature != NULL)
+		delete [] NbodyParticleTemperature;
+	NbodyParticleTemperature = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleMass != NULL)
+		delete [] NbodyParticleMass;
+	NbodyParticleMass = new double[NumberOfNbodyParticles];
+#endif
 }
 
 
@@ -153,12 +179,31 @@ void DeleteNbodyArrays(void) {
 		}
 	}
 
+
 		/*
 		for (int i=0; i<HERMITE_ORDER; i++) {
 			delete [] NbodyParticleAcceleration[dim][i];
 			NbodyParticleAcceleration[dim][i] = NULL;
 		}
 		*/
+
+#ifdef SEVN
+	if (NbodyParticleInitialMass != NULL)
+		delete [] NbodyParticleInitialMass;
+	NbodyParticleInitialMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleWindEjectedMass != NULL)
+		delete [] NbodyParticleWindEjectedMass;
+	NbodyParticleWindEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleSNEjectedMass != NULL)
+		delete [] NbodyParticleSNEjectedMass;
+	NbodyParticleSNEjectedMass = new double[NumberOfNbodyParticles];
+
+	if (NbodyParticleTemperature != NULL)
+		delete [] NbodyParticleTemperature;
+	NbodyParticleTemperature = new double[NumberOfNbodyParticles];
+#endif
 }
 
 
@@ -214,7 +259,7 @@ void MatchAccelerationWithIndex(void) {
 
 
 
-void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *LocalNumberOfNbodyParticles) {
+void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *LocalNumberOfNbodyParticles, bool prepareNbodyComputation) {
 
 	*LocalNumberOfNbodyParticles=0;
 	int level;
@@ -225,7 +270,8 @@ void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *Loc
 
 	for (level = 0; level < MAX_DEPTH_OF_HIERARCHY-1; level++) {
 		for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel) {
-			Temp->GridData->SetNumberOfNbodyParticles();
+			if (prepareNbodyComputation)
+				Temp->GridData->SetIndicesOfNbodyParticles();
 			*LocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNbodyParticles();
 		}
 	}
@@ -241,7 +287,7 @@ void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[], int *Loc
 
 
 void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[],
-		int *LocalNumberOfNbodyParticles, int *NewLocalNumberOfNbodyParticles) {
+		int *LocalNumberOfNbodyParticles, int *NewLocalNumberOfNbodyParticles, bool prepareNbodyComputation) {
 
 	*LocalNumberOfNbodyParticles    = 0;
 	*NewLocalNumberOfNbodyParticles = 0;
@@ -254,7 +300,8 @@ void FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[],
 
 	for (level = 0; level < MAX_DEPTH_OF_HIERARCHY-1; level++) {
 		for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel) {
-			Temp->GridData->SetNumberOfNbodyParticles();
+			if (prepareNbodyComputation)
+				Temp->GridData->SetIndicesOfNbodyParticles();
 			*LocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNbodyParticles();
 			*NewLocalNumberOfNbodyParticles += Temp->GridData->ReturnNumberOfNewNbodyParticles();
 		}

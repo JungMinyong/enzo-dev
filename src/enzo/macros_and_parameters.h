@@ -82,19 +82,13 @@
 
 #define MAX_REFINE_REGIONS               8000
 
-#ifdef NBODY
-#ifdef WINDS 
-//#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  10
-#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES __max_particle_attr // MergerYS, AJE may need to do something different
+
+#ifdef WIND
+#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES 7 // MergerYS
 #else
-#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  7
-#endif
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES __max_particle_attr // MergerYS, AJE may need to do something different
-//#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES 33 // by YS 2025.03.08 (Query) I have to fix this (make it parameters)
-#else
-//#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  4
-#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES __max_particle_attr // AJE may need to do something different
 #endif
+
 
 #define MAX_NUMBER_OF_PARTICLE_TABLE_POSITIONS   7
 
@@ -585,6 +579,10 @@ typedef long long int   HDF5_hid_t;
 #define DISTR_FEEDBACK 13
 #define MOM_STAR 14
 #define INDIVIDUAL_STAR 15
+
+#ifdef NBODY
+#define INDIVIDUAL 20
+#endif
 
 #define STARMAKE_METHOD(A) (StarParticleCreation >> (A) & 1)
 #define STARFEED_METHOD(A) (StarParticleFeedback >> (A) & 1)

@@ -110,6 +110,8 @@ grid::~grid()
   delete ParticleAcceleration[MAX_DIMENSION];
 #ifdef NBODY
 	delete ParticleAccelerationNoStar[MAX_DIMENSION];
+  if (IndicesOfNbodyParticlesInGrid != NULL) delete [] IndicesOfNbodyParticlesInGrid;
+  if (IndicesOfNewNbodyParticlesInGrid != NULL) delete [] IndicesOfNewNbodyParticlesInGrid;
 #endif
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
     delete [] BaryonField[i];

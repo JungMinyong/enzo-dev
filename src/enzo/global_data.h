@@ -58,6 +58,12 @@ EXTERN int *NewNbodyParticleIDTemp;
 EXTERN double *NbodyParticleMass;
 EXTERN double *NbodyParticlePosition[MAX_DIMENSION];
 EXTERN double *NbodyParticleVelocity[MAX_DIMENSION];
+#ifdef SEVN
+EXTERN double *NbodyParticleInitialMass;
+EXTERN double *NbodyParticleWindEjectedMass;
+EXTERN double *NbodyParticleSNEjectedMass;
+EXTERN double *NbodyParticleTemperature;
+#endif
 EXTERN double *NbodyParticleAcceleration[MAX_DIMENSION][HERMITE_ORDER];
 EXTERN double *NbodyParticleAccelerationOld[MAX_DIMENSION][HERMITE_ORDER];
 EXTERN double *NbodyParticleAccelerationNoStar[MAX_DIMENSION];
@@ -75,11 +81,14 @@ EXTERN double NbodyBinaryDistance;
 EXTERN double NbodyBinaryTimeStep;
 EXTERN int NbodyNewStarToNbody;
 EXTERN int NbodyRestartStarToNbody;
+EXTERN char *NbodyDir;
 
 /* by YS, MPI COMMs*/
 extern MPI_Comm enzo_comm;
-extern MPI_Comm nbody_comm;
+extern MPI_Comm abyss_comm;
 extern MPI_Comm inter_comm;
+extern MPI_Comm local_comm;
+extern int local_rank, local_size;
 #endif
 
 
@@ -632,6 +641,11 @@ EXTERN int MyProcessorNumber;
 EXTERN int NumberOfProcessors;
 EXTERN int TotalNumberOfProcessors;
 EXTERN float CommunicationTime;
+#ifdef NBODY
+EXTERN int WorldProcessorNumber;
+EXTERN int AbyssProcessorNumber;
+EXTERN int NumberOfAbyssProcessors;
+#endif
 
 /* Parameter to indicate if top grid should do parallel IO
    (currently only works for ProblemType == 30). */

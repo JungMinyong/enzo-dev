@@ -82,17 +82,33 @@ int grid::ReadGrid(FILE *fptr, int GridID, char DataFilename[],
 
 	/*
 #ifdef NBODY
-#ifdef WINDS
+#ifdef WINDS 
+#ifdef SEVN
 	char *ParticleAttributeLabel[] = 
 	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-		"particle_jet_y", "particle_jet_z", "typeia_fraction", "acc_x", "acc_y", "acc_z"};
+		"particle_jet_y", "particle_jet_z", "typeia_fraction", 
+		"initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+		"acc_x", "acc_y", "acc_z"};
 #else
 	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction", 
+	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+		"particle_jet_y", "particle_jet_z", "typeia_fraction", 
 		"acc_x", "acc_y", "acc_z"};
 #endif
 #else
-#ifdef WINDS
+#ifdef SEVN
+	char *ParticleAttributeLabel[] = 
+	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+		"initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+		"acc_x", "acc_y", "acc_z"};
+#else
+	char *ParticleAttributeLabel[] = 
+	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+		"acc_x", "acc_y", "acc_z"};
+#endif
+#endif
+#else
+#ifdef WINDS 
 	char *ParticleAttributeLabel[] = 
 	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
 		"particle_jet_y", "particle_jet_z", "typeia_fraction"};

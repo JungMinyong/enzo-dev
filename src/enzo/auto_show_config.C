@@ -1,8 +1,9 @@
 #include <stdio.h>
 void auto_show_config(FILE *fp) {
+   fprintf (fp,"make[1]: Warning: File `DEPEND' has modification time 145 s in the future\n");
    fprintf (fp,"\n");
    fprintf (fp,"   MACHINE: Generic Ubuntu 8.04\n");
-   fprintf (fp,"   MACHINE-NAME: rusty\n");
+   fprintf (fp,"   MACHINE-NAME: linux-mpich14\n");
    fprintf (fp,"\n");
    fprintf (fp,"   PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000\n");
    fprintf (fp,"   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 66\n");
@@ -46,4 +47,5 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : yes\n");
    fprintf (fp,"   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : no\n");
    fprintf (fp,"\n");
+   fprintf (fp,"make[1]: 경고:  시계가 잘못되었음이 발견되었습니다.  빌드가 불완전할 수 있습니다.\n");
 }

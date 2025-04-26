@@ -569,7 +569,7 @@ float grid::ComputeTimeStep()
 
 	/* Debugging info. */
 
-	if (debug1) {
+	// if (debug1) {
 		printf("ComputeTimeStep = %"ESYM" (", dt);
 		if (HydroMethod != MHD_RK && HydroMethod != MHD_Li && NumberOfBaryonFields > 0)
 			printf("Bar = %"ESYM" ", dtBaryons);
@@ -594,7 +594,7 @@ float grid::ComputeTimeStep()
 		if (QuantumPressure)
 			printf("Quantum = %"ESYM" ",(dtQuantum));//FDM
 		printf(")\n");
-	}
+	// }
 
 	return dt;
 }

@@ -62,7 +62,7 @@ int FinalizePythonInterface();
 
 
 #ifdef NBODY
-int nbody(int MyProcessorNumber);
+int ABYSS();
 #endif
 		
 
@@ -195,7 +195,7 @@ int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridLis
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
 
-int CommunicationInitialize(Eint32 *argc, char **argv[]);
+int CommunicationInitialize(int &argc, char *argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
@@ -289,12 +289,11 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   // Initialize Communications
 
-  CommunicationInitialize(&argc, &argv); 
+  CommunicationInitialize(argc, argv); 
 	fprintf(stdout, "MPI Initialization Done!\n");
 
-#ifdef USE_MPI	
 #ifdef NBODY
-	//by YS, start nbody6!
+	//by YS, start ABYSS
 	/*
 	NbodyClusterPosition[0] = new float[1];
 	NbodyClusterPosition[1] = new float[1];
@@ -304,7 +303,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 	isNbodyParticleIdentification = false;
 	*/
 
-	if (nbody_comm != MPI_COMM_NULL) {
+	if (abyss_comm != MPI_COMM_NULL) {
 		if (inter_comm != MPI_COMM_NULL) {
 			fprintf(stderr, "inter_comm is not NULL!\n");
 		}
@@ -315,11 +314,20 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 		//comm       = MPI_COMM_WORLD;
 		//inter_comm = inter_comm;
 		//nbody_comm = nbody_comm;
-		fprintf(stderr, "NBODY+ starts!\n");
-		nbody(MyProcessorNumber);
+
+    fprintf(stderr, "abyss processors: (%d, %d)\n", WorldProcessorNumber, AbyssProcessorNumber);
+    fprintf(stdout, "abyss processors: (%d, %d)\n", WorldProcessorNumber, AbyssProcessorNumber);
+
+    fprintf(stderr, "Abyss starts!\n");
+		fprintf(stdout, "Abyss starts!\n");
+		ABYSS();
 		my_exit(EXIT_SUCCESS);
 	} 
-#endif
+  else
+  {
+    fprintf(stderr, "enzo processors: (%d, %d)\n", WorldProcessorNumber, MyProcessorNumber);
+    fprintf(stdout, "enzo processors: (%d, %d)\n", WorldProcessorNumber, MyProcessorNumber);
+  }
 #endif
 
   //#define DEBUG_MPI

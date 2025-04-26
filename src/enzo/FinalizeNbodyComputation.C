@@ -50,26 +50,60 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 		LevelHierarchyEntry *Temp;
 		int start_index, start_index_new;
 
-		FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, &NewLocalNumberOfNbodyParticles);
+		bool prepareNbodyComputation = false;
+		FindTotalNumberOfNbodyParticles(LevelArray, &LocalNumberOfNbodyParticles, &NewLocalNumberOfNbodyParticles, prepareNbodyComputation);
 
 		if (NumberOfNbodyParticles == 0 && NumberOfNewNbodyParticles == 0)
 			return SUCCESS;
 
 		double *NbodyParticlePositionTemp[MAX_DIMENSION];
 		double *NbodyParticleVelocityTemp[MAX_DIMENSION];
+#ifdef SEVN
+		double *NbodyParticleInitialMassTemp;
+		double *NbodyParticleWindEjectedMassTemp;
+		double *NbodyParticleSNEjectedMassTemp;
+		double *NbodyParticleTemperatureTemp;
+
+		double *NbodyParticleMassTemp;
+#endif
 
 		double *NewNbodyParticlePositionTemp[MAX_DIMENSION];
 		double *NewNbodyParticleVelocityTemp[MAX_DIMENSION];
+
+#ifdef SEVN
+		double *NewNbodyParticleInitialMassTemp;
+		double *NewNbodyParticleWindEjectedMassTemp;
+		double *NewNbodyParticleSNEjectedMassTemp;
+		double *NewNbodyParticleTemperatureTemp;
+
+		double *NewNbodyParticleMassTemp;
+#endif
 
 		for (int dim=0; dim<MAX_DIMENSION; dim++) {
 			NbodyParticlePositionTemp[dim]            = new double[LocalNumberOfNbodyParticles];
 			NbodyParticleVelocityTemp[dim]            = new double[LocalNumberOfNbodyParticles];
 		}
+#ifdef SEVN
+		NbodyParticleInitialMassTemp			= new double[LocalNumberOfNbodyParticles];
+		NbodyParticleWindEjectedMassTemp		= new double[LocalNumberOfNbodyParticles];
+		NbodyParticleSNEjectedMassTemp			= new double[LocalNumberOfNbodyParticles];
+		NbodyParticleTemperatureTemp			= new double[LocalNumberOfNbodyParticles];
+
+		NbodyParticleMassTemp					= new double[LocalNumberOfNbodyParticles];
+#endif
 
 		for (int dim=0; dim<MAX_DIMENSION; dim++) {
 			NewNbodyParticlePositionTemp[dim]            = new double[NewLocalNumberOfNbodyParticles];
 			NewNbodyParticleVelocityTemp[dim]            = new double[NewLocalNumberOfNbodyParticles];
 		}
+#ifdef SEVN
+		NewNbodyParticleInitialMassTemp			= new double[NewLocalNumberOfNbodyParticles];
+		NewNbodyParticleWindEjectedMassTemp		= new double[NewLocalNumberOfNbodyParticles];
+		NewNbodyParticleSNEjectedMassTemp		= new double[NewLocalNumberOfNbodyParticles];
+		NewNbodyParticleTemperatureTemp			= new double[NewLocalNumberOfNbodyParticles];
+
+		NewNbodyParticleMassTemp				= new double[NewLocalNumberOfNbodyParticles];
+#endif
 
 
 		/* Find the index of the array */
@@ -82,15 +116,29 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 #ifdef USE_MPI
 		if (MyProcessorNumber == ROOT_PROCESSOR) {
 
-			//double *NewNbodyParticleMass;
 			double *NewNbodyParticleVelocity[MAX_DIMENSION]; // feedback can affect velocity
 			double *NewNbodyParticlePosition[MAX_DIMENSION]; // feedback can affect velocity
+#ifdef SEVN
+			double *NewNbodyParticleInitialMass;
+			double *NewNbodyParticleWindEjectedMass;
+			double *NewNbodyParticleSNEjectedMass;
+			double *NewNbodyParticleTemperature;
 
-			//NewNbodyParticleMass = new double[NumberOfNewNbodyParticles];
+			double *NewNbodyParticleMass;
+#endif
+
 			for (int dim=0; dim<MAX_DIMENSION; dim++) {
 				NewNbodyParticlePosition[dim]            = new double[NumberOfNewNbodyParticles];
 				NewNbodyParticleVelocity[dim]            = new double[NumberOfNewNbodyParticles];
 			}
+#ifdef SEVN
+			NewNbodyParticleInitialMass				= new double[NumberOfNewNbodyParticles];
+			NewNbodyParticleWindEjectedMass			= new double[NumberOfNewNbodyParticles];
+			NewNbodyParticleSNEjectedMass			= new double[NumberOfNewNbodyParticles];
+			NewNbodyParticleTemperature				= new double[NumberOfNewNbodyParticles];
+
+			NewNbodyParticleMass					= new double[NumberOfNewNbodyParticles];
+#endif
 
 			/* Receiving Index, NumberOfParticles, NbodyArrays from other processs */
 			int* start_index_all;
@@ -140,6 +188,14 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 					ierr = MPI_Recv(NbodyParticlePosition[dim], NumberOfNbodyParticles, MPI_DOUBLE, 1, 300, inter_comm, &status);
 					ierr = MPI_Recv(NbodyParticleVelocity[dim], NumberOfNbodyParticles, MPI_DOUBLE, 1, 400, inter_comm, &status);
 				}
+#ifdef SEVN
+				ierr = MPI_Recv(NbodyParticleInitialMass,		NumberOfNbodyParticles, MPI_DOUBLE, 1, 800,		inter_comm, &status);
+				ierr = MPI_Recv(NbodyParticleWindEjectedMass,	NumberOfNbodyParticles, MPI_DOUBLE, 1, 900,		inter_comm, &status);
+				ierr = MPI_Recv(NbodyParticleSNEjectedMass,		NumberOfNbodyParticles, MPI_DOUBLE, 1, 1000,	inter_comm, &status);
+				ierr = MPI_Recv(NbodyParticleTemperature,		NumberOfNbodyParticles, MPI_DOUBLE, 1, 1100,	inter_comm, &status);
+
+				ierr = MPI_Recv(NbodyParticleMass,				NumberOfNbodyParticles, MPI_DOUBLE, 1, 1600,	inter_comm, &status);
+#endif
 			}
 			//fprintf(stderr,"NewNumberOfParticles=%d\n",NumberOfNewNbodyParticles);
 			if (NumberOfNewNbodyParticles > 0) {
@@ -147,6 +203,14 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 					ierr = MPI_Recv(NewNbodyParticlePosition[dim], NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 500, inter_comm, &status);
 					ierr = MPI_Recv(NewNbodyParticleVelocity[dim], NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 600, inter_comm, &status);
 				}
+#ifdef SEVN
+				ierr = MPI_Recv(NewNbodyParticleInitialMass,		NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 1200,	inter_comm, &status);
+				ierr = MPI_Recv(NewNbodyParticleWindEjectedMass,	NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 1300,	inter_comm, &status);
+				ierr = MPI_Recv(NewNbodyParticleSNEjectedMass,		NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 1400,	inter_comm, &status);
+				ierr = MPI_Recv(NewNbodyParticleTemperature,		NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 1500,	inter_comm, &status);
+
+				ierr = MPI_Recv(NewNbodyParticleMass,				NumberOfNewNbodyParticles, MPI_DOUBLE, 1, 1700,	inter_comm, &status);
+#endif
 			}
 
 			if ((NumberOfNbodyParticles+NumberOfNewNbodyParticles)!=0 && isNbodyParticleIdentification && isIdentificationOnTheFly) {
@@ -182,6 +246,29 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 								  &request);
 					ierr = MPI_Wait(&request, &status);
 				}
+#ifdef SEVN
+				MPI_Iscatterv(NbodyParticleInitialMass, LocalNumberAll, start_index_all, MPI_DOUBLE,
+							  NbodyParticleInitialMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+								&request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NbodyParticleWindEjectedMass, LocalNumberAll, start_index_all, MPI_DOUBLE,
+							  NbodyParticleWindEjectedMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NbodyParticleSNEjectedMass, LocalNumberAll, start_index_all, MPI_DOUBLE,
+							  NbodyParticleSNEjectedMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NbodyParticleTemperature, LocalNumberAll, start_index_all, MPI_DOUBLE,
+							  NbodyParticleTemperatureTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+
+				MPI_Iscatterv(NbodyParticleMass, LocalNumberAll, start_index_all, MPI_DOUBLE,
+							  NbodyParticleMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+#endif
 			}
 			if (NumberOfNewNbodyParticles > 0) {
 				for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -194,11 +281,35 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 							&request);
 					ierr  = MPI_Wait(&request, &status);
 				}
+#ifdef SEVN
+				MPI_Iscatterv(NewNbodyParticleInitialMass, NewLocalNumberAll, start_index_all_new, MPI_DOUBLE,
+							  NewNbodyParticleInitialMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NewNbodyParticleWindEjectedMass, NewLocalNumberAll, start_index_all_new, MPI_DOUBLE,
+							  NewNbodyParticleWindEjectedMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NewNbodyParticleSNEjectedMass, NewLocalNumberAll, start_index_all_new, MPI_DOUBLE,
+							  NewNbodyParticleSNEjectedMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NewNbodyParticleTemperature, NewLocalNumberAll, start_index_all_new, MPI_DOUBLE,
+							  NewNbodyParticleTemperatureTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+
+				MPI_Iscatterv(NewNbodyParticleMass, NewLocalNumberAll, start_index_all_new, MPI_DOUBLE,
+							  NewNbodyParticleMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+#endif
 			}
 
 
 
 			//fprintf(stderr,"Root:Done?2-5\n");
+
 
 			if (start_index_all != NULL)
 				delete [] start_index_all;
@@ -213,12 +324,6 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 				delete [] NewLocalNumberAll;
 			NewLocalNumberAll = NULL;
 
-			/*
-				 if (NewNbodyParticleMass != NULL)
-				 delete [] NewNbodyParticleMass;
-				 NewNbodyParticleMass = NULL;
-				 */
-
 
 			for (int dim=0; dim<MAX_DIMENSION; dim++) {
 				if (NewNbodyParticlePosition[dim] != NULL)
@@ -229,6 +334,25 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 					delete [] NewNbodyParticleVelocity[dim];
 				NewNbodyParticleVelocity[dim] = NULL;
 			}
+
+#ifdef SEVN
+			if (NewNbodyParticleInitialMass != NULL)
+				delete [] NewNbodyParticleInitialMass;
+			NewNbodyParticleInitialMass = NULL;
+			if (NewNbodyParticleWindEjectedMass != NULL)
+				delete [] NewNbodyParticleWindEjectedMass;
+			NewNbodyParticleWindEjectedMass = NULL;
+			if (NewNbodyParticleSNEjectedMass != NULL)
+				delete [] NewNbodyParticleSNEjectedMass;
+			NewNbodyParticleSNEjectedMass = NULL;
+			if (NewNbodyParticleTemperature != NULL)
+				delete [] NewNbodyParticleTemperature;
+			NewNbodyParticleTemperature = NULL;
+
+			if (NewNbodyParticleMass != NULL)
+				delete [] NewNbodyParticleMass;
+			NewNbodyParticleMass = NULL;
+#endif
 
 
 			DeleteNbodyArrays();
@@ -266,6 +390,29 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 								  &request);
 					ierr = MPI_Wait(&request, &status);
 				}
+#ifdef SEVN
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NbodyParticleInitialMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NbodyParticleWindEjectedMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NbodyParticleSNEjectedMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NbodyParticleTemperatureTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NbodyParticleMassTemp, LocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+#endif
 			}
 			if (NumberOfNewNbodyParticles > 0) {
 				for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -278,6 +425,29 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 							&request);
 					ierr = MPI_Wait(&request, &status);
 				}
+#ifdef SEVN
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NewNbodyParticleInitialMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NewNbodyParticleWindEjectedMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+								NewNbodyParticleSNEjectedMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+								&request);
+				ierr = MPI_Wait(&request, &status);
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+								NewNbodyParticleTemperatureTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+								&request);
+				ierr = MPI_Wait(&request, &status);
+
+				MPI_Iscatterv(NULL, NULL, NULL, MPI_DOUBLE,
+							  NewNbodyParticleMassTemp, NewLocalNumberOfNbodyParticles, MPI_DOUBLE, ROOT_PROCESSOR, enzo_comm,
+							  &request);
+				ierr = MPI_Wait(&request, &status);
+#endif
 			}
 
 		} // end else
@@ -291,22 +461,37 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 
 		/* Update Particle Velocity and Position Back to Grids */
 		int count = 0;
+		int count_new = 0;
 		for (int level1=0; level1<MAX_DEPTH_OF_HIERARCHY-1;level1++)
 			for (Temp = LevelArray[level1]; Temp; Temp = Temp->NextGridThisLevel)
-				if (Temp->GridData->UpdateNbodyParticles(&count, 
-							LocalNumberOfNbodyParticles, NbodyParticleIDTemp, 
+#ifdef SEVN
+				if (Temp->GridData->UpdateNbodyParticles(&count, NbodyParticleIDTemp, 
 							NbodyParticlePositionTemp, NbodyParticleVelocityTemp,
-							NewLocalNumberOfNbodyParticles, NewNbodyParticleIDTemp, 
+							NbodyParticleInitialMassTemp, NbodyParticleWindEjectedMassTemp,
+							NbodyParticleSNEjectedMassTemp, NbodyParticleTemperatureTemp,
+							NbodyParticleMassTemp,
+							&count_new, NewNbodyParticleIDTemp, 
+							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp,
+							NewNbodyParticleInitialMassTemp, NewNbodyParticleWindEjectedMassTemp,
+							NewNbodyParticleSNEjectedMassTemp, NewNbodyParticleTemperatureTemp,
+							NewNbodyParticleMassTemp
+							) == FAIL) {
+					ENZO_FAIL("Error in grid::CopyNbodyParticles.");
+				}
+#else
+				if (Temp->GridData->UpdateNbodyParticles(&count, NbodyParticleIDTemp, 
+							NbodyParticlePositionTemp, NbodyParticleVelocityTemp,
+							&count_new, NewNbodyParticleIDTemp, 
 							NewNbodyParticlePositionTemp, NewNbodyParticleVelocityTemp
 							) == FAIL) {
 					ENZO_FAIL("Error in grid::CopyNbodyParticles.");
 				}
+#endif
 
 		/*
 		fprintf(stderr,"Proc %d, # of Nbody = %d, count = %d\n", 
 				MyProcessorNumber, LocalNumberOfNbodyParticles, count);
 				*/
-
 
 
 		/* Destruct Arrays*/
@@ -327,6 +512,25 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 				delete [] NbodyParticleVelocityTemp[dim];
 			NbodyParticleVelocityTemp[dim] = NULL;
 		}
+#ifdef SEVN
+		if (NbodyParticleInitialMassTemp != NULL)
+			delete [] NbodyParticleInitialMassTemp;
+		NbodyParticleInitialMassTemp = NULL;
+		if (NbodyParticleWindEjectedMassTemp != NULL)
+			delete [] NbodyParticleWindEjectedMassTemp;
+		NbodyParticleWindEjectedMassTemp = NULL;
+		if (NbodyParticleSNEjectedMassTemp != NULL)
+			delete [] NbodyParticleSNEjectedMassTemp;
+		NbodyParticleSNEjectedMassTemp = NULL;
+		if (NbodyParticleTemperatureTemp != NULL)
+			delete [] NbodyParticleTemperatureTemp;
+		NbodyParticleTemperatureTemp = NULL;
+
+		if (NbodyParticleMassTemp != NULL)
+			delete [] NbodyParticleMassTemp;
+		NbodyParticleMassTemp = NULL;
+#endif
+
 
 		for (int dim=0; dim<MAX_DIMENSION; dim++) {
 			if (NewNbodyParticlePositionTemp[dim] != NULL)
@@ -337,6 +541,24 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[], int level)
 				delete [] NewNbodyParticleVelocityTemp[dim];
 			NewNbodyParticleVelocityTemp[dim] = NULL;
 		}
+#ifdef SEVN
+		if (NewNbodyParticleInitialMassTemp != NULL)
+			delete [] NewNbodyParticleInitialMassTemp;
+		NewNbodyParticleInitialMassTemp = NULL;
+		if (NewNbodyParticleWindEjectedMassTemp != NULL)
+			delete [] NewNbodyParticleWindEjectedMassTemp;
+		NewNbodyParticleWindEjectedMassTemp = NULL;
+		if (NewNbodyParticleSNEjectedMassTemp != NULL)
+			delete [] NewNbodyParticleSNEjectedMassTemp;
+		NewNbodyParticleSNEjectedMassTemp = NULL;
+		if (NewNbodyParticleTemperatureTemp != NULL)
+			delete [] NewNbodyParticleTemperatureTemp;
+		NewNbodyParticleTemperatureTemp = NULL;
+
+		if (NewNbodyParticleMassTemp != NULL)
+			delete [] NewNbodyParticleMassTemp;
+		NewNbodyParticleMassTemp = NULL;
+#endif
 		NumberOfNewNbodyParticles = 0;
 
 		} // ENDIF level

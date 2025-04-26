@@ -490,7 +490,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	} // ENDIF this processor
 
 
-		fprintf(stdout,"\nProc:%d 4-2-4\n", MyProcessorNumber); // by YS
+		if (debug1) fprintf(stdout,"\nProc:%d 4-2-4\n", MyProcessorNumber); // by YS
 
 	/* If any girds are on different processors, copy deposited field back to the
 		 target grid and add to the correct field. */

@@ -16,9 +16,9 @@
 /
 ************************************************************************/
 #ifdef DEFINE_STORAGE
-# define EXTERN
+# define extern
 #else /* DEFINE_STORAGE */
-# define EXTERN extern
+# define extern extern
 #endif
 
 #ifdef USE_MPI
@@ -62,16 +62,16 @@
       (CommunicationReceiveHandler) which does this for all the receieve
       methods. */
 
-EXTERN int CommunicationDirection;
+extern int CommunicationDirection;
 
 /* This variable contains the most recent receive dependence; that is, the
    index of the receive handler which must complete first. */
 
-EXTERN int CommunicationReceiveCurrentDependsOn;
+extern int CommunicationReceiveCurrentDependsOn;
 
 /* This is the index of the current receive buffer. */
 
-EXTERN int CommunicationReceiveIndex;
+extern int CommunicationReceiveIndex;
 
 /* The following variables contain information about each receive buffer
    handler.  They are:
@@ -90,23 +90,23 @@ EXTERN int CommunicationReceiveIndex;
 
 #ifdef USE_MPI
 
-EXTERN int          CommunicationReceiveCallType[MAX_RECEIVE_BUFFERS];
-EXTERN MPI_Request  CommunicationReceiveMPI_Request[MAX_RECEIVE_BUFFERS];
-EXTERN float       *CommunicationReceiveBuffer[MAX_RECEIVE_BUFFERS];
+extern int          CommunicationReceiveCallType[MAX_RECEIVE_BUFFERS];
+extern MPI_Request  CommunicationReceiveMPI_Request[MAX_RECEIVE_BUFFERS];
+extern float       *CommunicationReceiveBuffer[MAX_RECEIVE_BUFFERS];
 #ifdef NBODY
-//EXTERN float       *CommunicationReceiveBufferNoStar[MAX_RECEIVE_BUFFERS];
+//extern float       *CommunicationReceiveBufferNoStar[MAX_RECEIVE_BUFFERS];
 #endif
 /***
-EXTERN MPI_Request  CommunicationReceiveMPI_Request1[MAX_RECEIVE_BUFFERS];
-EXTERN int          CommunicationReceiveDependsOn1[MAX_RECEIVE_BUFFERS];
-EXTERN int CommunicationReceiveCurrentDependsOn1;
-EXTERN int CommunicationReceiveIndex1;
+extern MPI_Request  CommunicationReceiveMPI_Request1[MAX_RECEIVE_BUFFERS];
+extern int          CommunicationReceiveDependsOn1[MAX_RECEIVE_BUFFERS];
+extern int CommunicationReceiveCurrentDependsOn1;
+extern int CommunicationReceiveIndex1;
 ***/
-EXTERN grid        *CommunicationReceiveGridOne[MAX_RECEIVE_BUFFERS];
-EXTERN grid        *CommunicationReceiveGridTwo[MAX_RECEIVE_BUFFERS];
-EXTERN int          CommunicationReceiveDependsOn[MAX_RECEIVE_BUFFERS];
-EXTERN FLOAT CommunicationReceiveArgument[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
-EXTERN int CommunicationReceiveArgumentInt[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
-EXTERN MPI_Errhandler CommunicationErrorHandler;
+extern grid        *CommunicationReceiveGridOne[MAX_RECEIVE_BUFFERS];
+extern grid        *CommunicationReceiveGridTwo[MAX_RECEIVE_BUFFERS];
+extern int          CommunicationReceiveDependsOn[MAX_RECEIVE_BUFFERS];
+extern FLOAT CommunicationReceiveArgument[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
+extern int CommunicationReceiveArgumentInt[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
+extern MPI_Errhandler CommunicationErrorHandler;
 
 #endif /* USE_MPI */

@@ -181,6 +181,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 				Temp->GridData->SetNumberOfActiveParticles(0);
 			}
 
+
 	/* The dynamic grids should be distributed enough to store the
 		 particles on each grid, so we'll collect the particles at the
 		 finest static subgrid level, which we find here. */
@@ -206,6 +207,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 		}
 		CommunicationAllSumValues(NumberOfCells, MAX_DEPTH_OF_HIERARCHY);
 	}
+
 
 	tt0 = ReturnWallTime();
 	for (i = MAX_DEPTH_OF_HIERARCHY-1; i > level; i--) {
@@ -252,6 +254,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 	RHperf[0] += tt1-tt0;
 
 
+
 	/* If the initial level is finer than the finest level with static
 		 subgrids, we must collect all of the particles on the grids' host
 		 processor before rebuilding.  Before MoveAllParticles did
@@ -269,6 +272,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 	}
 	tt1 = ReturnWallTime();
 	RHperf[2] += tt1-tt0;
+
 
 	/* --------------------------------------------------------------------- */
 	/* if this is level 0 then transfer particles between grids. */
@@ -308,6 +312,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 	RHperf[1] += tt1-tt0;
 
 
+
 	/* --------------------------------------------------------------------- */
 	/* Transfer particle between grids on this level to make sure that
 		 each grid contains all of the particles that it should (in case
@@ -320,6 +325,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 	if (MoveParticlesBetweenSiblings && 
 			level > max(MaximumStaticSubgridLevel,0))
 		CommunicationTransferSubgridParticles(LevelArray, MetaData, level);
+
 
 
 
@@ -355,6 +361,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 			} // end: if (i > level)
 
 		} // end: loop over levels
+
 
 		//    if (debug) ReportMemoryUsage("Memory usage report: Rebuild 3");
 
@@ -637,6 +644,7 @@ refinement on large numbers of particles
 		} // end: loop over levels
 
 	} // end: if (StaticHierarchy == FALSE)
+
 
 
 
