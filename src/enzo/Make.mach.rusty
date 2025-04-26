@@ -82,11 +82,11 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 
 
 MACH_CPPFLAGS = -P -traditional
-MACH_CFLAGS   =  
+MACH_CFLAGS   = 
 MACH_CXXFLAGS = -lcudart
 MACH_FFLAGS   = -lmpi -lrt -ldl -Wall # -W -Wconversion -Werror=compare-reals -Wall
 MACH_F90FLAGS = #-Wconversion -Werror -Werror=compare-reals -Wall
-MACH_LDFLAGS  =   
+MACH_LDFLAGS  =  -fsanitize=address -fno-omit-frame-pointer   
 
 
 #-----------------------------------------------------------------------

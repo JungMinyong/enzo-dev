@@ -14,7 +14,9 @@
 
 #include <execinfo.h>
 #include <stdio.h>
-
+#include <cstdlib>
+#include <string>
+#include <iostream>
 #include <exception>
 
 // If we are using the new problem type initializers, we need to include these
@@ -57,7 +59,8 @@ extern char current_error[255];
              fprintf(stderr, "BT symbol: %s\n", symbols[i]);
          }
 
-         delete [] symbols;
+         //delete [] symbols;
+         free(symbols);
      }
     void WriteDebuggingOutput()
     {

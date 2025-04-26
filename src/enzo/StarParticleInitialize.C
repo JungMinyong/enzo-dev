@@ -81,7 +81,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Initialize IMF lookup table if needed and radiation table if needed */
   if(STARMAKE_METHOD(INDIVIDUAL_STAR)){
     StarParticleIndividual_IMFInitialize();
-#define aeos_debug
+#define no_aeos_debug
 #ifdef aeos_debug
 		std::cerr << "star init 1" << std::endl;
     CommunicationBarrier();
@@ -106,7 +106,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		std::cerr << "star init 4" << std::endl;
 		CommunicationBarrier();
 #endif  
-	//InitializeStellarYields(MetaData->Time);
+	InitializeStellarYields(MetaData->Time); // by YS Should be turned on!! just a test for now
 #ifdef aeos_debug
 		std::cerr << "star init 5" << std::endl;
 		CommunicationBarrier();

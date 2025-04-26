@@ -1170,6 +1170,14 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           ENZO_FAIL("Error in individual_star_maker.\n");
         } // end call to function 
 
+#define aeos_test
+#ifdef aeos_test
+      if (NumberOfNewParticles > 0)
+        fprintf(stderr, "#AEOS_TEST: Star Particle Created!!!!\n");
+
+#endif
+
+
       } // check refinement level
 
     } // END INDIVIDUAL_STAR

@@ -37,7 +37,15 @@
         "Grid_CopyPotentialToBaryonField.C": "cpp",
         "StarParticleFindAll.C": "cpp",
         "StarParticleInitialize.C": "cpp",
-        "StarListRoutines.C": "cpp"
+        "StarListRoutines.C": "cpp",
+        "Grid_SetParticleMassFlaggingField.C": "cpp",
+        "Grid_ClearFlaggingField.C": "cpp",
+        "Grid_DepositMustRefineParticles.C": "cpp",
+        "Grid_SetFlaggingField.C": "cpp",
+        "ostream": "cpp",
+        "individual_star_maker.C": "cpp",
+        "DepositParticleMassFlaggingField.C": "cpp",
+        "WriteParameterFile.C": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

@@ -118,14 +118,13 @@ int grid::SetParticleMassFlaggingField(
 
     /* ==== METHOD 8: BY POSITION OF MUST-REFINE PARTICLES  ==== */
  
-    if (MustRefineMethod >= 0){
+    if (MustRefineMethod >= 0 && level <= MustRefineParticlesRefineToLevel){
 
       KeepFlaggingField = (level == MustRefineParticlesRefineToLevel);
-      if (level <= MustRefineParticlesRefineToLevel){
-        NumberOfFlaggedCells = this->DepositMustRefineParticles(ParticleMassMethod,
-                                                                level, KeepFlaggingField);
-      }
-#ifdef INDIVIDUALSTAR
+      //fprintf(stderr, "level=%d, MustRefineParticlesRefineToLevel=%d, KeepFlaggingField %d\n", level, MustRefineParticlesRefineToLevel, KeepFlaggingField);
+      NumberOfFlaggedCells = this->DepositMustRefineParticles(ParticleMassMethod,
+                                                              level, KeepFlaggingField);
+#ifdef NDIVIDUALSTAR
       KeepFlaggingField = KeepFlaggingField || (level == IndividualStarRefineToLevel);
       if (level < IndividualStarRefineToLevel)
       {
