@@ -52,8 +52,9 @@ int grid::CopyPotentialToBaryonField()
 	// Check to make sure PotentialField exists
 
 #ifdef NBODY
-	if (PotentialFieldNoStar == NULL) {
-		ENZO_FAIL("PotentialField missing.\n");
+	if (PotentialFieldNoStar == NULL) { // (Query) when WritePotential is on it does not work.
+		//ENZO_FAIL("PotentialField missing (No Star).\n");
+		std::cerr << "WARNING: PotentialField missing (No Star)!!!!" << std::endl;
 	}
 #endif
 	if (PotentialField == NULL) {

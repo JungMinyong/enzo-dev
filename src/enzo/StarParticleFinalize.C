@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "ErrorExceptions.h"
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -48,6 +49,14 @@ int StarParticleSubtractAccretedMass(TopGridData *MetaData,
 				     Star *&AllStars);
 int StarParticleDeath(LevelHierarchyEntry *LevelArray[], int level,
 		      Star *&AllStars);
+
+int IndividualStarParticleAddFeedback(HierarchyEntry *Grids[], TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
+                                      int level, Star* &AllStars, bool* &AddedFeedback);
+
+int UpdateAveragedAbundances(TopGridData *MetaData,
+                             LevelHierarchyEntry *LevelArray[],
+                             int level, Star* &AllStars);
+
 int CommunicationMergeStarParticle(HierarchyEntry *Grids[], int NumberOfGrids);
 void DeleteStarList(Star * &Node);
 
@@ -77,6 +86,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     BigStarFormationDone = CommunicationMaxValue(BigStarFormationDone);
 
   LCAPERF_START("StarParticleFinalize");
+  TIMER_START("StarParticleFinalize");
 
   /* Update the star particle counters. */
 
@@ -91,10 +101,19 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
     ThisStar->UpdatePositionVelocity();
 
+  // Apply individual star feedback if it exists
+  if(STARMAKE_METHOD(INDIVIDUAL_STAR) && STARFEED_METHOD(INDIVIDUAL_STAR)){
+    for(ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar){
+      if(ThisStar->ReturnType() == -PARTICLE_TYPE_INDIVIDUAL_STAR_WD){
 
+        ThisStar->UpdateWhiteDwarfProperties();
 
-	if (debug1) fprintf(stderr,"SPF3\n");  // by YS
+      }
+    }
 
+    UpdateAveragedAbundances(MetaData, LevelArray, level, AllStars);
+    IndividualStarParticleAddFeedback(Grids, MetaData, LevelArray, level, AllStars, AddedFeedback);
+  } else{
 
   /* Apply any stellar feedback onto the grids and add any gas to the
      accretion rates of the star particles */
@@ -104,6 +123,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Update star particles for any accretion */
 
   StarParticleAccretion(MetaData, LevelArray, level, AllStars);
+  }
 
   /* Collect all sink particles and report the total mass to STDOUT */
   
@@ -139,7 +159,11 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   int count = 0;
   int mbh_particle_io_count = 0;
+  std::map<int, Star*> StarLookupMap;
   OutputNow = FALSE;
+  if (AllStars) {
+    StarLookupMap = AllStars->MakeStarsMap();
+  }
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count++) {
     //TimeNow = LevelArray[ThisStar->ReturnLevel()]->GridData->ReturnTime();
 //    if (debug) {
@@ -150,9 +174,17 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
       ThisStar->ActivateNewStar(TimeNow, Timestep);
       if (ThisStar->ReturnType() == PopIII && PopIIIOutputOnFeedback == TRUE)
 	OutputNow = TRUE;
+      if (ThisStar->ReturnType() == IndividualStarRemnant && PopIIIOutputOnFeedback == 2)
+        OutputNow = TRUE;
+    }
+    if (ThisStar->ReturnType() == -IndividualStar ||
+        ThisStar->ReturnType() == -IndividualStarRemnant ||
+        ThisStar->ReturnType() == -IndividualStarPopIII  ||
+        ThisStar->ReturnType() == -IndividualStarUnresolved ){
+      ThisStar->SetType( ABS(ThisStar->ReturnType()) );
     }
     ThisStar->ResetAccretion();
-    ThisStar->CopyToGrid();
+    ThisStar->CopyToGridMap(&StarLookupMap);
     ThisStar->MirrorToParticle();
 
     // The pointers have been copied to the grid copy above, so we can
@@ -192,10 +224,13 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   /* Delete the global star particle list, AllStars */
 
+#ifndef INDIVIDUALSTAR
   DeleteStarList(AllStars);
+#endif
   delete [] AddedFeedback;
 
   LCAPERF_STOP("StarParticleFinalize");
+  TIMER_STOP("StarParticleFinalize");
   return SUCCESS;
 
 }

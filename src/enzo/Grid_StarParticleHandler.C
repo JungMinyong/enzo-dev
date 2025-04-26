@@ -720,9 +720,12 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
      by total baryonic density).  At the end we will multiply by the new
      density so that species fractions are maintained. */
  
-  for (field = 0; field < NumberOfBaryonFields; field++)
+  for (field = 0; field < NumberOfBaryonFields; field++) {
     if ((FieldType[field] >= ElectronDensity && FieldType[field] <= ExtraType1) ||
-	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity)
+	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity ||
+        FieldType[field] == MetalRProcessDensity || FieldType[field] == MetalPISNeDensity ||
+        FieldType[field] == MetalWindDensity || FieldType[field] == MetalWindDensity2 ||
+        ((FieldType[field] >= ExtraMetalField0) && (FieldType[field]<=ExtraMetalField2)) ){
 #ifdef EMISSIVITY
       /* 
          it used to be set to  FieldType[field] < GravPotential if Geoffrey's Emissivity0
@@ -730,12 +733,50 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
          so the values will scale inside StarParticleHandler 
       */
 #endif
-      for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
+      for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
 	for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	  index = (k*GridDimension[1] + j)*GridDimension[0] +
 	    GridStartIndex[0];
-	  for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++)
+	  for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++){
 	    BaryonField[field][index] /= BaryonField[DensNum][index];
+          } // i loop
+	}
+      } // k loop
+    } // if field
+  } // field loop
+
+  if(MultiMetals == 2){
+    for(int ii = 0; ii < StellarYieldsNumberOfSpecies; ii++){
+      if(StellarYieldsAtomicNumbers[ii] > 2){
+        int field_num;
+
+        this->IdentifyChemicalTracerSpeciesFieldsByNumber(field_num, StellarYieldsAtomicNumbers[ii]);
+        for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++){
+          for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++){
+            index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
+            for( i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++){
+                BaryonField[field_num][index] /= BaryonField[DensNum][index];
+            }
+          }
+        }
+      }
+    }
+    if (IndividualStarPopIIIFormation && IndividualStarPopIIISeparateYields){
+      for(int ii = 0; ii < StellarYieldsNumberOfSpecies; ii++){
+        if(StellarYieldsAtomicNumbers[ii] > 2){
+          int field_num;
+          this->IdentifyChemicalTracerSpeciesFieldsByNumber(field_num, StellarYieldsAtomicNumbers[ii],0,2);
+          for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++){
+            for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++){
+              index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
+              for( i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++){
+                  BaryonField[field_num][index] /= BaryonField[DensNum][index];
+              }
+            }
+          }
+        }
+      }
+    } // end pop III multi elements
 	}
 
   /* If creating primordial stars, make a total H2 density field */
@@ -759,12 +800,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   /* If both metal fields exist, make a total metal field */
 
-  float *MetalPointer;
+  float *MetalPointer = NULL;
   float *TotalMetals = NULL;
   int MetallicityField;
 
   MetallicityField = (MetalNum != -1 || SNColourNum != -1);
 
+#ifndef INDIVIDUALSTAR
   if (MetalNum != -1 && SNColourNum != -1) {
     TotalMetals = new float[size];
     for (i = 0; i < size; i++)
@@ -777,6 +819,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     else if (SNColourNum != -1)
       MetalPointer = BaryonField[SNColourNum];
   } // ENDELSE both metal types
+#endif // INDIVIDUALSTAR
 
   //printf("Star type \n");
   /* Set the units. */
@@ -825,8 +868,16 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
     /* Compute the cooling time. */
  
-    float *cooling_time = new float[size];
+    float *cooling_time = NULL;
+    if (! STARMAKE_METHOD(INDIVIDUAL_STAR)){
+      cooling_time = new float[size];
     this->ComputeCoolingTime(cooling_time);
+    }
+#ifdef INDIVIDUALSTAR
+    if (STARMAKE_METHOD(INDIVIDUAL_STAR) && IndividualStarOutputChemicalTags){
+      tg->AllocateStellarAbundances(MaximumNumberOfNewParticles);
+    }
+#endif
  
     /* Call FORTRAN routine to do the actual work. */
  
@@ -1173,6 +1224,40 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
       #endif
     }
+
+#ifdef INDIVIDUALSTAR
+    if (STARMAKE_METHOD(INDIVIDUAL_STAR)) {
+
+      // Makes individual stars stochastically via IMF sampling and
+      // chemically tags particles based on local environment with MultiMetals on
+      NumberOfNewParticlesSoFar = NumberOfNewParticles; 
+
+      // Only attempt if on max refiment level
+      if (   ((level == MaximumRefinementLevel) || (ProblemType == 30)) ||
+          (ProblemType == 31 && Time <= 0.0 && GalaxySimulationInitialStellarDist)){
+        // lets try and form stars
+        if(individual_star_maker(dmfield, temperature,
+                                 &MaximumNumberOfNewParticles,
+                                 &Mu, &NumberOfNewParticles,
+                                 tg->ParticleMass, tg->ParticleType,
+                                 tg->ParticlePosition, tg->ParticleVelocity,
+                                 tg->ParticleAttribute, tg->StellarAbundances) == FAIL){
+          ENZO_FAIL("Error in individual_star_maker.\n");
+        } // end call to function 
+
+#define aeos_test
+#ifdef aeos_test
+      if (NumberOfNewParticles > 0)
+        fprintf(stderr, "#AEOS_TEST: Star Particle Created!!!!\n");
+
+#endif
+
+
+      } // check refinement level
+
+    } // END INDIVIDUAL_STAR
+	// MergerYS this is where I should add nbody part for particle type
+#endif
 
     if (STARMAKE_METHOD(SINGLE_SUPERNOVA)) {
 
@@ -1682,6 +1767,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	tg->CellWidth[dim] = new FLOAT[1];
 	tg->CellWidth[dim][0] = CellWidth[dim][0];
       }
+
+#ifdef INDIVIDUALSTAR
+      if(IndividualStarOutputChemicalTags)
+        this->MoveParticleAbundances(1, &tg);
+#endif
       this->MoveAllParticles(1, &tg);
  
     } // end: if (NumberOfNewParticles > 0)
@@ -2281,6 +2371,33 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   }
 
+#ifdef INDIVIDUALSTAR
+  if ( STARFEED_METHOD(INDIVIDUAL_STAR) ) {
+    //
+    // Actual feedback for these particles is handled via Star particle
+    // class interface. This only goes through and checks for WD particles,
+    // setting their lifetime on grid if not yet set. Done this way b/c
+    // lifetime involves random number draw 
+    //
+
+    if( IndividualStarSetWDLifetime() == FAIL){
+      ENZO_FAIL("Failure setting indiidual star white dwarf lifetimes");
+    }
+  }
+#endif
+/*
+  if (STARFEED_METHOD(INDIVIDUAL_STAR)) {
+
+    if(individual_star_feedback(&NumberOfParticles,
+                                ParticleMass, ParticleType, ParticlePosition,
+                                ParticleVelocity, ParticleAttribute) == FAIL){
+      ENZO_FAIL("Failure in individual star feedback\n");
+    }
+
+  }
+  moved to IndividualStarParticleAddFeedback as called from
+  StarParticleFinalize
+*/
   if (StarMakerTypeIaSNe == 1 || StarMakerPlanetaryNebulae == 1) {
 
       FORTRAN_NAME(star_feedback_pn_snia)(
@@ -2311,7 +2428,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if ((FieldType[field] >= ElectronDensity && FieldType[field] <= ExtraType1) ||
-	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity) {
+	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity ||
+        FieldType[field] == MetalRProcessDensity || FieldType[field] == MetalPISNeDensity ||
+        FieldType[field] == MetalWindDensity || FieldType[field] == MetalWindDensity2 ||
+        ((FieldType[field] >= ExtraMetalField0) && (FieldType[field]<=ExtraMetalField2)) ){
 #ifdef EMISSIVITY
       /* 
          it used to be set to  FieldType[field] < GravPotential if Geoffrey's Emissivity0
@@ -2330,7 +2450,45 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
   }
- 
+
+  /* Convert metal species tracers back to densities */
+  if(TestProblemData.MultiMetals == 2 || MultiMetals == 2){
+    for(int ii = 0; ii < StellarYieldsNumberOfSpecies; ii++){
+      if(StellarYieldsAtomicNumbers[ii] > 2){
+        int field_num;
+
+        this->IdentifyChemicalTracerSpeciesFieldsByNumber(field_num, StellarYieldsAtomicNumbers[ii]);
+
+        for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++){
+          for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++){
+            index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
+            for( i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++){
+                BaryonField[field_num][index] *= BaryonField[DensNum][index];
+            }
+          }
+        }
+      }
+    } // for loop
+
+    if (IndividualStarPopIIIFormation && IndividualStarPopIIISeparateYields){
+      for(int ii = 0; ii < StellarYieldsNumberOfSpecies; ii++){
+        if(StellarYieldsAtomicNumbers[ii] > 2){
+          int field_num;
+
+          this->IdentifyChemicalTracerSpeciesFieldsByNumber(field_num, StellarYieldsAtomicNumbers[ii],0,2);
+
+          for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++){
+            for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++){
+              index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
+              for( i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++){
+                  BaryonField[field_num][index] *= BaryonField[DensNum][index];
+              }
+            }
+          }
+        }
+      }
+    } // end pop III multi elements
+  } // end multi metals conversion
   /* Clean up. */
  
   delete [] h2field;

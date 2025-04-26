@@ -20,7 +20,8 @@ export LD_LIBRARY_PATH=/appl/intel/oneapi/mpi/2021.4.0/lib:$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=/home/vinicius/install/grackle15/lib:$LD_LIBRARY_PATH
 
 make machine-linux-mpich
-make precision-64 integers-32 particle-id-32 max-baryons-30 opt-aggressive lcaperf-no max-tasks-per-node-36 grackle-yes new-problem-types-yes nbody-yes photon-no cuda-no
+make precision-64 integers-32 particle-id-32 max-baryons-30 opt-aggressive lcaperf-no max-tasks-per-node-36 grackle-yes new-problem-types-no nbody-yes photon-no cuda-no
+make uuid-no
 make show-config
 make show-flags
 make -j8

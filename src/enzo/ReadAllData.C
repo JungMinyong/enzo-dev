@@ -47,6 +47,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt);
 int ReadStarParticleData(FILE *fptr, hid_t Hfile_id, FILE *log_fptr);
 int ReadRadiationData(FILE *fptr);
 int AssignGridToTaskMap(Eint64 *GridIndex, Eint64 *Mem, int Ngrids);
+int DetermineNumberOfParticleAttributes(void);
 int mt_read(char *fname);
  
 extern char RadiationSuffix[];
@@ -144,15 +145,23 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
 
   if (NumberOfParticleAttributes == INT_UNDEFINED ||
       NumberOfParticleAttributes == 0) {
-    if (StarParticleCreation || StarParticleFeedback) {
+    /*
+	if (StarParticleCreation || StarParticleFeedback) {
       NumberOfParticleAttributes = 3;
       if (StarMakerTypeIaSNe) NumberOfParticleAttributes++;
       if (StarMakerTypeIISNeMetalField) NumberOfParticleAttributes++;
       AddParticleAttributes = TRUE;
     } else {
       NumberOfParticleAttributes = 0;
-    }
+    }*/
+    NumberOfParticleAttributes = DetermineNumberOfParticleAttributes();
+    AddParticleAttributes = TRUE;
 
+
+  }
+    if (NumberOfParticleAttributes > MAX_NUMBER_OF_PARTICLE_ATTRIBUTES){
+    ENZO_VFAIL("Number of necessary particle attributes (%"ISYM") greater than"
+              " MAX_NUMBER_OF_PARTICLE_ATTRIBUTES. Change and re-compile.\n",NumberOfParticleAttributes);
   }
 
   /* Read Boundary condition info. */

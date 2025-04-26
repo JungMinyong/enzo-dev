@@ -15,6 +15,7 @@
 
 #include "preincludes.h"
 #include "performance.h"
+#include "EnzoTiming.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -44,6 +45,7 @@ int grid::GrackleWrapper()
     return SUCCESS;
 
   LCAPERF_START("grid_GrackleWrapper");
+  TIMER_START("GrackleWrapper");
 
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum, DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
@@ -118,6 +120,22 @@ int grid::GrackleWrapper()
   }
   float afloat = float(a);
 
+  /* assign heating rates - set to Null pointers if not used */
+  // removing the requirement for indiv star; confirm that is fine
+  if (IndividualStarFUVHeating){
+    float EnergyUnits = DensityUnits * VelocityUnits * VelocityUnits;
+    int PeNum = FindField( PeHeatingRate, this->FieldType, this->NumberOfBaryonFields);
+
+    /* send to Grackle in CGS */
+    volumetric_heating_rate = new float[size];
+    specific_heating_rate   = NULL;
+
+    // convert to cgs
+    for( i = 0; i < size; i ++){
+      volumetric_heating_rate[i] = BaryonField[PeNum][i] * (EnergyUnits/TimeUnits); // convert to CGS
+    }
+  }
+
   /* Update units. */
 
   code_units grackle_units;
@@ -142,7 +160,10 @@ int grid::GrackleWrapper()
 
   // Double check if there's a metal field when we have metal cooling
   if (MetalCooling && MetalFieldPresent == FALSE) {
-    ENZO_FAIL("Metal cooling is on, but no metal field present.");
+    if (debug)
+      fprintf(stderr, "Warning: No metal field found.  Turning OFF MetalCooling.\n");
+    MetalCooling = FALSE;
+    MetalNum = 0;
   }
 
   /* If both metal fields (Pop I/II and III) exist, create a field
@@ -278,7 +299,7 @@ int grid::GrackleWrapper()
 
   if (HydroMethod != Zeus_Hydro) {
     for (i = 0; i < size; i++) {
-      BaryonField[TENum][i] = thermal_energy[i] +
+      BaryonField[TENum][i] = my_fields.internal_energy[i] + // MergerYS thermal_energy
         0.5 * POW(BaryonField[Vel1Num][i], 2.0);
       if(GridRank > 1)
         BaryonField[TENum][i] += 0.5 * POW(BaryonField[Vel2Num][i], 2.0);
@@ -307,6 +328,9 @@ int grid::GrackleWrapper()
   }
 #endif TRANSFER
 
+  if (IndividualStarFUVHeating){
+      delete [] volumetric_heating_rate;
+  }
 
   delete [] TotalMetals;
   delete [] g_grid_dimension;
@@ -314,6 +338,7 @@ int grid::GrackleWrapper()
   delete [] g_grid_end;
 
   LCAPERF_STOP("grid_GrackleWrapper");
+  TIMER_STOP("GrackleWrapper");
 
 #endif
   return SUCCESS;

@@ -22,6 +22,7 @@
 
 #include "macros_and_parameters.h"
 #include "typedefs.h"
+#include "global_data.h"
 #include "AMRH5writer.h"
 #include "StarParticleData.h"
 #include "phys_constants.h"
@@ -34,7 +35,10 @@ AMRHDF5Writer::AMRHDF5Writer() :
   
 };
 
-void AMRHDF5Writer::AMRHDF5Create( const char*      fileName, 
+
+void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabel);
+
+void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
 				   const int*       relativeRefinement,
 				   const hid_t      dataType,
 				   const staggering stag,
@@ -53,13 +57,14 @@ void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
 {
   error=false;
 
-  const char *ParticlePositionLabel[] = 
+  const char *ParticlePositionLabel[] =
     {"particle_position_x", "particle_position_y", "particle_position_z"};
-  const char *ParticleVelocityLabel[] = 
+  const char *ParticleVelocityLabel[] =
     {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
   const char *ParticleOtherLabel[] =
     {"particle_type", "particle_index", "particle_mass"};
 
+	/*
 #ifdef NBODY
 #ifdef WINDS 
 #ifdef SEVN
@@ -96,6 +101,9 @@ void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
   {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
 #endif
+*/
+  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes); // MergerYS
+  GetParticleAttributeLabels(ParticleAttributeLabel);
 
   int i;
     
@@ -146,7 +154,7 @@ void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
     for (i = 0; i < 3; i++)
       strcpy(HDF5_FieldNames[iField++], ParticleOtherLabel[i]);
     for (i = 0; i < nParticleAttr; i++)
-      strcpy(HDF5_FieldNames[iField++], ParticleAttributeLabel[i]);
+      strcpy(HDF5_FieldNames[iField++], ParticleAttributeLabel[i].c_str());
   } // ENDIF ParticlesOn
 
   /* Write global attributes */
@@ -461,6 +469,7 @@ herr_t AMRHDF5Writer::writeParticles ( const int nPart,
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   const char *ParticleVelocityLabel[] = 
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
+	/*
 #ifdef WINDS
   const char *ParticleAttributeLabel[] =
     {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
@@ -469,6 +478,9 @@ herr_t AMRHDF5Writer::writeParticles ( const int nPart,
   const char *ParticleAttributeLabel[] = 
     {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
+*/
+  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes); // MergerYS
+  GetParticleAttributeLabels(ParticleAttributeLabel);
 
   sprintf(gridDataName, "/grid-%d", gridId);
   if (nBaryonFields > 0) 
@@ -551,7 +563,7 @@ herr_t AMRHDF5Writer::writeParticles ( const int nPart,
   // Attributes
   for (i = 0; i < nAttributes; i++) {
     dataspace = H5Screate_simple(1, &hdims, &hdims);
-    dataset = H5Dcreate(gridGrp, ParticleAttributeLabel[i], h5DataType,
+    dataset = H5Dcreate(gridGrp, ParticleAttributeLabel[i].c_str(), h5DataType,
 			dataspace, H5P_DEFAULT);
     H5Dwrite(dataset, h5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, attr[i]);
     H5Dclose(dataset);
@@ -628,6 +640,7 @@ herr_t AMRHDF5Writer::writeParticles2( const int nPart,
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   const char *ParticleVelocityLabel[] = 
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
+	/*
 #ifdef WINDS
   const char *ParticleAttributeLabel[] =
     {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
@@ -636,6 +649,11 @@ herr_t AMRHDF5Writer::writeParticles2( const int nPart,
   const char *ParticleAttributeLabel[] = 
     {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
+*/
+
+
+  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes); // MergerYS
+  GetParticleAttributeLabels(ParticleAttributeLabel);
 
   /* if there's no particle, don't bother,
      but if this is a root-level grid, print them anyway --> for Ralf's visualization purpose! */
@@ -757,7 +775,7 @@ herr_t AMRHDF5Writer::writeParticles2( const int nPart,
     
     // Attributes
     for (i = 0; i < nAttributes; i++) {
-      dataset = H5Dcreate(gridGrp, ParticleAttributeLabel[i], h5DataType,
+      dataset = H5Dcreate(gridGrp, ParticleAttributeLabel[i].c_str(), h5DataType,
 			  dataspace, H5P_DEFAULT);
       H5Dwrite(dataset, h5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, attr[i]);
       H5Dclose(dataset);
@@ -820,7 +838,7 @@ herr_t AMRHDF5Writer::writeParticles2( const int nPart,
     
     // Attributes
     for (i = 0; i < nAttributes; i++) {
-      dataset = H5Dopen(gridGrp, ParticleAttributeLabel[i]);
+      dataset = H5Dopen(gridGrp, ParticleAttributeLabel[i].c_str());
       H5Dwrite(dataset, h5DataType, dataspace2, dataspace, H5P_DEFAULT, attr[i]);
       H5Dclose(dataset);
     } // ENDFOR attributes
@@ -875,6 +893,7 @@ void AMRHDF5Writer::AMRHDF5CreateSeparateParticles( const char*      fileName,
     {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
   const char *ParticleOtherLabel[] =
     {"particle_type", "particle_index", "particle_mass"};
+	/*
 #ifdef WINDS
   const char *ParticleAttributeLabel[] =
     {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
@@ -883,6 +902,9 @@ void AMRHDF5Writer::AMRHDF5CreateSeparateParticles( const char*      fileName,
   const char *ParticleAttributeLabel[] = 
     {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
+*/
+  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes); //MergerYS
+  GetParticleAttributeLabels(ParticleAttributeLabel);
 
   int i;
     
@@ -920,7 +942,7 @@ void AMRHDF5Writer::AMRHDF5CreateSeparateParticles( const char*      fileName,
     for (i = 0; i < 3; i++)
       strcpy(HDF5_FieldNames[iField++], ParticleOtherLabel[i]);
     for (i = 0; i < nParticleAttr; i++)
-      strcpy(HDF5_FieldNames[iField++], ParticleAttributeLabel[i]);
+      strcpy(HDF5_FieldNames[iField++], ParticleAttributeLabel[i].c_str());
   } // ENDIF ParticlesOn
 
   /* Write global attributes */
@@ -973,6 +995,7 @@ herr_t AMRHDF5Writer::writeSeparateParticles ( const int nPart,
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   const char *ParticleVelocityLabel[] = 
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
+	/*
 #ifdef WINDS
   const char *ParticleAttributeLabel[] =
     {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
@@ -981,6 +1004,10 @@ herr_t AMRHDF5Writer::writeSeparateParticles ( const int nPart,
   const char *ParticleAttributeLabel[] = 
     {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
+*/
+
+  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes); //MergerYS
+  GetParticleAttributeLabels(ParticleAttributeLabel);
 
   if (nPart == 0) 
     return 0;
@@ -1085,7 +1112,7 @@ herr_t AMRHDF5Writer::writeSeparateParticles ( const int nPart,
     
     // Attributes
     for (i = 0; i < nAttributes; i++) {
-      dataset = H5Dcreate(partGrp, ParticleAttributeLabel[i], h5DataType,
+      dataset = H5Dcreate(partGrp, ParticleAttributeLabel[i].c_str(), h5DataType,
 			  dataspace, H5P_DEFAULT);
       H5Dwrite(dataset, h5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, attr[i]);
       H5Dclose(dataset);
@@ -1148,7 +1175,7 @@ herr_t AMRHDF5Writer::writeSeparateParticles ( const int nPart,
     
     // Attributes
     for (i = 0; i < nAttributes; i++) {
-      dataset = H5Dopen(partGrp, ParticleAttributeLabel[i]);
+      dataset = H5Dopen(partGrp, ParticleAttributeLabel[i].c_str());
       H5Dwrite(dataset, h5DataType, dataspace2, dataspace, H5P_DEFAULT, attr[i]);
       H5Dclose(dataset);
     } // ENDFOR attributes

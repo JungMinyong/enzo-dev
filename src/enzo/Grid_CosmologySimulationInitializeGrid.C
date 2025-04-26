@@ -74,6 +74,9 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
  
+#ifdef INDIVIDUALSTAR
+int ChemicalSpeciesBaryonFieldNumber(const int &atomic_number, int element_set = 1);
+#endif
 int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
 
 int Enzo_Dims_create(int nnodes, int ndims, int *dims); 
@@ -114,7 +117,11 @@ int grid::CosmologySimulationInitializeGrid(
 			  int CosmologySimulationManuallySetParticleMassRatio,
 			  float CosmologySimulationManualParticleMassRatio,
 			  int   CosmologySimulationCalculatePositions,
-			  float CosmologySimulationInitialUniformBField[])
+			  float CosmologySimulationInitialUniformBField[]
+#ifdef INDIVIDUALSTAR
+        , float CosmologySimulationInitialChemicalSpeciesFractions[]
+#endif
+      )
 {
  
   int idim, dim, i, j, vel, OneComponentPerFile, ndim, level;
@@ -129,7 +136,8 @@ int grid::CosmologySimulationInitializeGrid(
   int MachNum, PSTempNum, PSDenNum;
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum, PhotoGammaNum;
  
-  int ExtraField[2];
+  int ExtraField[11] = {0};
+
   int ForbidNum, iTE, iCRD;
  
   inits_type *tempbuffer = NULL;
@@ -290,10 +298,52 @@ int grid::CosmologySimulationInitializeGrid(
       FieldType[MetalNum = NumberOfBaryonFields++] = Metallicity;
       if (StarMakerTypeIaSNe)
 	FieldType[MetalIaNum = NumberOfBaryonFields++] = MetalSNIaDensity;
+#ifdef INDIVIDUALSTAR
+      if (MultiMetals == 2){
+        for(int yield_i = 0; yield_i < StellarYieldsNumberOfSpecies; yield_i++){
+          if(StellarYieldsAtomicNumbers[yield_i] > 2){
+            FieldType[NumberOfBaryonFields++] =
+                                   ChemicalSpeciesBaryonFieldNumber(StellarYieldsAtomicNumbers[yield_i]);
+          }
+        } // loop over yeilds
+        if (IndividualStarTrackAGBMetalDensity) {
+          FieldType[ExtraField[0] = NumberOfBaryonFields++] = ExtraType0;
+        }
+        if (IndividualStarPopIIIFormation){
+          FieldType[ExtraField[1] = NumberOfBaryonFields++] = ExtraType1;
+          FieldType[ExtraField[2] = NumberOfBaryonFields++] = MetalPISNeDensity;
+          if (IndividualStarPopIIISeparateYields){
+            for(int yield_i = 0; yield_i < StellarYieldsNumberOfSpecies; yield_i++){
+              if(StellarYieldsAtomicNumbers[yield_i] > 2){
+                FieldType[NumberOfBaryonFields++] =
+                                       ChemicalSpeciesBaryonFieldNumber(StellarYieldsAtomicNumbers[yield_i],2);
+              }
+            } // loop over yeilds
+          } // separate yields
+        }
+        if (IndividualStarTrackWindDensity){
+          FieldType[ExtraField[3] = NumberOfBaryonFields++] = MetalWindDensity;
+          FieldType[ExtraField[4] = NumberOfBaryonFields++] = MetalWindDensity2;
+        }
+        if (IndividualStarTrackSNMetalDensity){
+          FieldType[ExtraField[5] = NumberOfBaryonFields++] = MetalSNIaDensity;
+          if (IndividualStarSNIaModel == 2 ){
+            FieldType[ExtraField[6] = NumberOfBaryonFields++] = ExtraMetalField0;
+            FieldType[ExtraField[7] = NumberOfBaryonFields++] = ExtraMetalField1;
+            FieldType[ExtraField[8] = NumberOfBaryonFields++] = ExtraMetalField2;
+          }
+          FieldType[ExtraField[9] = NumberOfBaryonFields++] = MetalSNIIDensity;
+        }
+        if (IndividualStarRProcessModel){
+          FieldType[ExtraField[10] = NumberOfBaryonFields++] = MetalRProcessDensity;
+        }
+      }
+#else
       if(MultiMetals){
 	FieldType[ExtraField[0] = NumberOfBaryonFields++] = ExtraType0;
 	FieldType[ExtraField[1] = NumberOfBaryonFields++] = ExtraType1;
       }
+#endif
     }
     if(STARMAKE_METHOD(COLORED_POP3_STAR)){
       fprintf(stderr, "Initializing Forbidden Refinement color field\n");
@@ -516,6 +566,97 @@ int grid::CosmologySimulationInitializeGrid(
 	BaryonField[MetalIaNum][i] = CosmologySimulationInitialFractionMetalIa
 	  * BaryonField[0][i];
 
+
+#ifdef INDIVIDUALSTAR
+    if (MultiMetals == 2){
+      for (int yield_i = 0; yield_i < StellarYieldsNumberOfSpecies; yield_i++){
+        if(StellarYieldsAtomicNumbers[yield_i] > 2){
+          int field_num = 0;
+
+          this->IdentifyChemicalTracerSpeciesFieldsByNumber(field_num, StellarYieldsAtomicNumbers[yield_i]);
+
+          for (i = 0; i  < size; i ++){
+            BaryonField[field_num][i] =
+                   CosmologySimulationInitialChemicalSpeciesFractions[yield_i]
+                                         * BaryonField[0][i];
+          }
+
+        }
+      } // end for loop
+
+      if (IndividualStarTrackAGBMetalDensity){
+        for (i = 0; i < size; i ++)
+          BaryonField[ExtraField[0]][i] = CosmologySimulationInitialFractionMetal
+              * BaryonField[0][i];
+      }
+
+      if (IndividualStarPopIIIFormation){
+        for (i = 0; i < size; i ++){
+          BaryonField[ExtraField[1]][i] = CosmologySimulationInitialFractionMetal
+             * BaryonField[0][i];
+          BaryonField[ExtraField[2]][i] = CosmologySimulationInitialFractionMetal
+             * BaryonField[0][i];
+        }
+
+        if (IndividualStarPopIIISeparateYields){
+          for (int yield_i = 0; yield_i < StellarYieldsNumberOfSpecies; yield_i++){
+            if(StellarYieldsAtomicNumbers[yield_i] > 2){
+              int field_num = 0;
+
+              this->IdentifyChemicalTracerSpeciesFieldsByNumber(field_num,
+                                                                StellarYieldsAtomicNumbers[yield_i],
+                                                                0, 2);
+
+              for (i = 0; i  < size; i ++){
+                BaryonField[field_num][i] =
+                       CosmologySimulationInitialChemicalSpeciesFractions[yield_i]
+                                             * BaryonField[0][i];
+              }
+
+            }
+          } // end for loop
+        }
+      }
+
+      if (IndividualStarTrackWindDensity){
+        for (i = 0; i < size; i++){
+          BaryonField[ExtraField[3]][i] = CosmologySimulationInitialFractionMetal
+            * BaryonField[0][i];
+          BaryonField[ExtraField[4]][i] = CosmologySimulationInitialFractionMetal
+            * BaryonField[0][i];
+        }
+      }
+
+      if (IndividualStarTrackSNMetalDensity){
+        for (i = 0; i < size; i++){
+          BaryonField[ExtraField[5]][i] = CosmologySimulationInitialFractionMetal
+             * BaryonField[0][i]; // "normal" SNIa
+          BaryonField[ExtraField[9]][i] = CosmologySimulationInitialFractionMetal
+             * BaryonField[0][i]; // CCSNe
+        }
+
+        if (IndividualStarSNIaModel == 2) {
+          for (i = 0; i < size; i++){
+            BaryonField[ExtraField[6]][i] = CosmologySimulationInitialFractionMetal
+              * BaryonField[0][i];
+            BaryonField[ExtraField[7]][i] = CosmologySimulationInitialFractionMetal
+              * BaryonField[0][i];
+            BaryonField[ExtraField[8]][i] = CosmologySimulationInitialFractionMetal
+              * BaryonField[0][i];
+          }
+        }
+
+      }
+
+      if (IndividualStarRProcessModel){
+        for (i = 0; i < size; i++){
+          BaryonField[ExtraField[10]][i] = CosmologySimulationInitialFractionMetal
+             * BaryonField[0][i];
+        }
+      }
+
+    }
+#else
     if (MultiMetals) {
       for (i = 0; i < size; i++) {
 	BaryonField[ExtraField[0]][i] = CosmologySimulationInitialFractionMetal
@@ -524,6 +665,7 @@ int grid::CosmologySimulationInitializeGrid(
 	  * BaryonField[0][i];
       }
     }
+#endif
 
     if (STARMAKE_METHOD(COLORED_POP3_STAR) && ReadData) {
       for (i = 0; i < size; i++)

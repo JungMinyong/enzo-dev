@@ -99,6 +99,8 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
   if (AllStars == NULL && ProblemType != 50 && EnabledActiveParticlesCount == 0)
     return SUCCESS;
 
+  if(ProblemType != 50 && !(STARMAKE_METHOD(INDIVIDUAL_STAR)))
+    return SUCCESS;
   /* If using cosmology, get units. */
 
   float TemperatureUnits, DensityUnits, LengthUnits, VelocityUnits, 
@@ -130,7 +132,8 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 
   /* Loop over radiation sources or star particles in the grid */
 
-  if (ProblemType == 50) {
+  if (ProblemType == 50 ||
+      STARMAKE_METHOD(INDIVIDUAL_STAR) ) {
 
     RadiationSourceEntry *RS;
     for (RS = GlobalRadiationSources->NextSource; RS; RS = RS->NextSource) {
@@ -142,11 +145,16 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	float IRSED = 0.0, LWSED = 0.0, H2IISED = 0.0;
 	double LWLuminosity = 0.0, IRLuminosity = 0.0, H2IILuminosity = 0.0;
 	double HMSigma = 0.0, H2IISigma = 0.0;
-	if(RS->Energy[ebin] < 11.2) {
+          if (RS->Energy[ebin] <= 0.0) continue;
+          if(RS->Energy[ebin] < FUV_threshold_energy) {
 	  H2IISED = RS->SED[ebin];
 	  IRSED = RS->SED[ebin];
 	}
-	else if(RS->Energy[ebin] < 13.6) {
+          else if(RS->Energy[ebin] < LW_threshold_energy) {
+            H2IISED = RS->SED[ebin];
+            IRSED   = RS->SED[ebin];
+          }
+          else if(RS->Energy[ebin] < HI_ionizing_energy) {
 	  H2IISED = RS->SED[ebin];
 	  LWSED = RS->SED[ebin];
 	}
@@ -174,7 +182,7 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	    ddr2[dim][i] = 
 	      fabs(CellLeftEdge[dim][index] + 0.5*CellWidth[dim][0] - 
 		   RS->Position[dim]);
-	    ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
+              if (RadiativeTransferPeriodicBoundary) ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
 	    ddr2[dim][i] = ddr2[dim][i] * ddr2[dim][i];
 	  }
 
@@ -209,7 +217,8 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 		BaryonField[kdissH2INum][index] += kdiss_r2 / radius2;
 	      }
 	      /* Include Shielding */
-
+#if SHIELD
+                if (RadiativeTransferUseH2Shielding){
 #if JEANS_LENGTH
 	      l_char = JeansLength(BaryonField[TemperatureField][index],
 		BaryonField[DensNum][index], DensityUnits)*RadiativeTransferOpticallyThinH2CharLength; //cm
@@ -238,6 +247,8 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 		      shield, BaryonField[kdissH2INum][index], BaryonField[kdissH2INum][index]*shield);
 #endif
 	      }
+                }
+#endif
 	      BaryonField[kdissH2INum][index] *= shield;
 	     
 	    } // END: i-direction
@@ -249,13 +260,22 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
   } // ENDIF ProblemType == 50
 
   else if (AllStars != NULL) {
-    double LWLuminosity = 0.0;
+    float IRSED = 0.0, LWSED = 0.0, H2IISED = 0.0;
+    double IRLuminosity = 0.0, H2IILuminosity = 0.0, LWLuminosity = 0.0;
+    double HMSigma = 0.0, H2IISigma = 0.0;
+    ENZO_FAIL("AJE: Testing - should not be here");
     for (cstar = AllStars; cstar; cstar = cstar->NextStar) {
 
       // Skip if not 'living'
+      if (STARMAKE_METHOD(INDIVIDUAL_STAR)){
+        if ( (cstar->type != PARTICLE_TYPE_INDIVIDUAL_STAR) ||
+             (cstar->BirthMass < IndividualStarOTRadiationMass ))
+          continue;
+        } else {
       if (!(cstar->FeedbackFlag == NO_FEEDBACK ||
 	    cstar->FeedbackFlag == CONT_SUPERNOVA)) 
 	continue;
+        }
       
       /* Determine H2 emission rate */
 
@@ -266,7 +286,7 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 
       /* Pre-calculate distances from cells to source */
 
-      for (dim = 0; dim < GridRank; dim++)
+      for (dim = 0; dim < GridRank; dim++){
 	for (i = 0, index = GridStartIndex[dim]; i < ActiveDims[dim]; 
 	     i++, index++) {
 	  
@@ -274,8 +294,9 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	  ddr2[dim][i] = 
 	    fabs(CellLeftEdge[dim][index] + 0.5*CellWidth[dim][0] -
 		 cstar->pos[dim]);
-	  ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
+//	  ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
 	  ddr2[dim][i] = ddr2[dim][i] * ddr2[dim][i];
+	      }
 	}
 
       /* Loop over cells */
@@ -313,11 +334,11 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	float IRSED = 0.0, LWSED = 0.0, H2IISED = 0.0;
 	double LWLuminosity = 0.0, IRLuminosity = 0.0, H2IILuminosity = 0.0;
 	double HMSigma = 0.0, H2IISigma = 0.0;
-	if(RS->Energy[ebin] < 11.2) {
+	if(RS->Energy[ebin] < LW_threshold_energy) {
 	  H2IISED = RS->SED[ebin];
 	  IRSED = RS->SED[ebin];
 	}
-	else if(RS->Energy[ebin] < 13.6) {
+	else if(RS->Energy[ebin] < HI_ionizing_energy) {
 	  H2IISED = RS->SED[ebin];
 	  LWSED = RS->SED[ebin];
 	}

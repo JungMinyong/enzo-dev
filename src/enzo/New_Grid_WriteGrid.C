@@ -39,6 +39,7 @@
 
 void my_exit(int status);
 
+void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabel);
 // HDF5 function prototypes
 
 
@@ -97,6 +98,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 	{"particle_position_x", "particle_position_y", "particle_position_z"};
 	char *ParticleVelocityLabel[] =
 	{"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
+	/*
 #ifdef NBODY
 #ifdef WINDS 
 #ifdef SEVN
@@ -129,281 +131,313 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 	{"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
 		"particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
-	char *ParticleAttributeLabel[] = 
-	{"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+char *ParticleAttributeLabel[] = 
+{"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
 #endif
-	char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
-		"Particle_x-velocity", "Particle_y-velocity",
-		"Particle_z-velocity"};
-	/* initialize */
+*/
 
-	char id[MAX_GROUP_TAG_SIZE];
-	sprintf(id, "%"GROUP_TAG_FORMAT""ISYM, grid_id);
+std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes);
+GetParticleAttributeLabels(ParticleAttributeLabel);
 
-	/* make sure quantities defined at least for 3d */
+char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
+	"Particle_x-velocity", "Particle_y-velocity",
+	"Particle_z-velocity"};
+/* initialize */
 
-	for (dim = GridRank; dim < 3; dim++) {
-		GridDimension[dim] = 1;
-		GridStartIndex[dim] = 0;
-		GridEndIndex[dim] = 0;
+char id[MAX_GROUP_TAG_SIZE];
+sprintf(id, "%"GROUP_TAG_FORMAT""ISYM, grid_id);
+
+/* make sure quantities defined at least for 3d */
+
+for (dim = GridRank; dim < 3; dim++) {
+	GridDimension[dim] = 1;
+	GridStartIndex[dim] = 0;
+	GridEndIndex[dim] = 0;
+}
+
+if( WriteBoundary == -1 ) {
+	WriteBoundary = 1;
+}
+if( WriteBoundary == TRUE ){
+	for(i=0;i<3; i++){
+		WriteStartIndex[i] = 0;
+		WriteEndIndex[i] = GridDimension[i] - 1;
 	}
-
-	if( WriteBoundary == -1 ) {
-		WriteBoundary = 1;
+}else{
+	for(i=0;i<3; i++){
+		WriteStartIndex[i] = GridStartIndex[i];
+		WriteEndIndex[i] = GridEndIndex[i];
 	}
-	if( WriteBoundary == TRUE ){
-		for(i=0;i<3; i++){
-			WriteStartIndex[i] = 0;
-			WriteEndIndex[i] = GridDimension[i] - 1;
-		}
-	}else{
-		for(i=0;i<3; i++){
-			WriteStartIndex[i] = GridStartIndex[i];
-			WriteEndIndex[i] = GridEndIndex[i];
-		}
-	}    
+}    
 
-	for (dim = 0; dim < 3; dim++)
-		ActiveDim[dim] = WriteEndIndex[dim] - WriteStartIndex[dim] +1;
+for (dim = 0; dim < 3; dim++)
+ActiveDim[dim] = WriteEndIndex[dim] - WriteStartIndex[dim] +1;
 
 
-	/* ------------------------------------------------------------------- */
-	/* 1) Save general grid class data */
+/* ------------------------------------------------------------------- */
+/* 1) Save general grid class data */
 
-	char pid[MAX_TASK_TAG_SIZE];
-	sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
+char pid[MAX_TASK_TAG_SIZE];
+sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
 
-	char gpid[MAX_TASK_TAG_SIZE];
-	sprintf(gpid, "%"TASK_TAG_FORMAT""ISYM, ProcessorNumber);
+char gpid[MAX_TASK_TAG_SIZE];
+sprintf(gpid, "%"TASK_TAG_FORMAT""ISYM, ProcessorNumber);
 
-	char *groupfilename = new char[MAX_LINE_LENGTH];
-	strcpy(groupfilename, base_name);
-	strcat(groupfilename, ".cpu");
-	strcat(groupfilename, pid);
+char *groupfilename = new char[MAX_LINE_LENGTH];
+strcpy(groupfilename, base_name);
+strcat(groupfilename, ".cpu");
+strcat(groupfilename, pid);
 
-	char *procfilename = new char[MAX_LINE_LENGTH];
-	strcpy(procfilename, base_name);
-	strcat(procfilename, ".cpu");
-	strcat(procfilename, gpid);
+char *procfilename = new char[MAX_LINE_LENGTH];
+strcpy(procfilename, base_name);
+strcat(procfilename, ".cpu");
+strcat(procfilename, gpid);
 
-	char *name = new char[MAX_LINE_LENGTH];
-	strcpy(name, "/Grid");
-	strcat(name, id);
+char *name = new char[MAX_LINE_LENGTH];
+strcpy(name, "/Grid");
+strcat(name, id);
 
-	if (MyProcessorNumber == ROOT_PROCESSOR && HierarchyFileOutputFormat > 0) {
+if (MyProcessorNumber == ROOT_PROCESSOR && HierarchyFileOutputFormat > 0) {
 
-		fprintf(fptr, "Task              = %"ISYM"\n", ProcessorNumber);
+	fprintf(fptr, "Task              = %"ISYM"\n", ProcessorNumber);
 
-		fprintf(fptr, "GridRank          = %"ISYM"\n", GridRank);
+	fprintf(fptr, "GridRank          = %"ISYM"\n", GridRank);
 
-		fprintf(fptr, "GridDimension     = ");
-		WriteListOfInts(fptr, GridRank, GridDimension);
+	fprintf(fptr, "GridDimension     = ");
+	WriteListOfInts(fptr, GridRank, GridDimension);
 
-		fprintf(fptr, "GridStartIndex    = ");
-		WriteListOfInts(fptr, GridRank, GridStartIndex);
+	fprintf(fptr, "GridStartIndex    = ");
+	WriteListOfInts(fptr, GridRank, GridStartIndex);
 
-		fprintf(fptr, "GridEndIndex      = ");
-		WriteListOfInts(fptr, GridRank, GridEndIndex);
+	fprintf(fptr, "GridEndIndex      = ");
+	WriteListOfInts(fptr, GridRank, GridEndIndex);
 
-		fprintf(fptr, "GridLeftEdge      = ");
-		WriteListOfFloats(fptr, GridRank, GridLeftEdge);
+	fprintf(fptr, "GridLeftEdge      = ");
+	WriteListOfFloats(fptr, GridRank, GridLeftEdge);
 
-		fprintf(fptr, "GridRightEdge     = ");
-		WriteListOfFloats(fptr, GridRank, GridRightEdge);
+	fprintf(fptr, "GridRightEdge     = ");
+	WriteListOfFloats(fptr, GridRank, GridRightEdge);
 
-		fprintf(fptr, "Time              = %"GOUTSYM"\n", Time);
+	fprintf(fptr, "Time              = %"GOUTSYM"\n", Time);
 
-		if(WriteEverything == TRUE)
-			fprintf(fptr, "OldTime           = %"GOUTSYM"\n", OldTime);
+	if(WriteEverything == TRUE)
+		fprintf(fptr, "OldTime           = %"GOUTSYM"\n", OldTime);
 
-		fprintf(fptr, "SubgridsAreStatic = %"ISYM"\n", SubgridsAreStatic);
+	fprintf(fptr, "SubgridsAreStatic = %"ISYM"\n", SubgridsAreStatic);
 
-		fprintf(fptr, "NumberOfBaryonFields = %"ISYM"\n", NumberOfBaryonFields);
-
-		if (NumberOfBaryonFields > 0) {
-			fprintf(fptr, "FieldType = ");
-
-			WriteListOfInts(fptr, NumberOfBaryonFields, FieldType);
-
-			fprintf(fptr, "BaryonFileName = %s\n", procfilename);
-
-			fprintf(fptr, "CourantSafetyNumber    = %"FSYM"\n", CourantSafetyNumber);
-			fprintf(fptr, "PPMFlatteningParameter = %"ISYM"\n", PPMFlatteningParameter);
-			fprintf(fptr, "PPMDiffusionParameter  = %"ISYM"\n", PPMDiffusionParameter);
-			fprintf(fptr, "PPMSteepeningParameter = %"ISYM"\n", PPMSteepeningParameter);
-
-		}
-
-		fprintf(fptr, "NumberOfParticles   = %"ISYM"\n", NumberOfParticles);
-		fprintf(fptr, "NumberOfActiveParticles = %"ISYM"\n", NumberOfActiveParticles);
-		// Now write out which kind of active particles we have in this grid.
-		fprintf(fptr, "PresentParticleTypes = ");
-		if (NumberOfParticles)
-			fprintf(fptr, "DarkMatter ");
-		for (int i = 0; i<EnabledActiveParticlesCount; i++){
-			if (ActiveParticleTypeCount[i] > 0) {
-				fprintf(fptr, "%s ", EnabledActiveParticles[i]->particle_name.c_str());
-			}
-		}
-		fprintf(fptr, "\n");
-		// And their counts
-		fprintf(fptr, "ParticleTypeCounts = ");
-		if (NumberOfParticles)
-			fprintf(fptr, "%"ISYM" ", NumberOfParticles);
-		for (int i = 0; i<EnabledActiveParticlesCount; i++){
-			if (ActiveParticleTypeCount[i] > 0) {
-				fprintf(fptr, "%"ISYM" ", ActiveParticleTypeCount[i]);
-			}
-		}
-		fprintf(fptr, "\n");
-
-		if ((NumberOfParticles > 0) || (NumberOfActiveParticles > 0))
-			fprintf(fptr, "ParticleFileName = %s\n", procfilename); // must be same as above
-
-		if (SelfGravity)
-			fprintf(fptr, "GravityBoundaryType = %"ISYM"\n", GravityBoundaryType);
-
-	}
-
-	/* Return if this does not concern us */
-	if (MyProcessorNumber != ProcessorNumber) {
-		delete [] name;
-		delete [] procfilename;
-		delete [] groupfilename;
-		return SUCCESS;
-	}
-
-
-	/* Open HDF file for writing. */
-
-	group_id = H5Gcreate(file_id, name, 0);
-	if( group_id == h5_error ){ENZO_FAIL("IO Problem creating Grid Group");}
-
-	if(WriteEverything == TRUE) {
-		FLOAT dtFixedCopy = this->dtFixed;
-		old_fields = H5Gcreate(group_id, "OldFields", 0);
-		writeScalarAttribute(old_fields, HDF5_PREC, "Time", &this->Time);
-		writeScalarAttribute(old_fields, HDF5_PREC, "OldTime", &this->OldTime);
-		writeScalarAttribute(old_fields, HDF5_PREC, "dtFixed", &dtFixedCopy);
-	}
-
-	// If requested, find shocks immediately before output.
-	if (ShockMethod){
-		// Update the shock fields. 
-		// If FindShocksOnlyOnOutput > 1, don't update shock fields.
-		int temp_shocks_var = FindShocksOnlyOnOutput;
-		if (FindShocksOnlyOnOutput <= 1 ){
-			// Set FindShocksOnlyOnOutput temporarily to 0 so that shocks
-			// are found in the ShockHandler routine.
-			FindShocksOnlyOnOutput = 0;
-			this->ShocksHandler();
-			FindShocksOnlyOnOutput = temp_shocks_var;
-		}
-	}
-
-	/* ------------------------------------------------------------------- */
-	/* 2) save baryon field quantities (including fields). */
+	fprintf(fptr, "NumberOfBaryonFields = %"ISYM"\n", NumberOfBaryonFields);
 
 	if (NumberOfBaryonFields > 0) {
+		fprintf(fptr, "FieldType = ");
 
-		/* 2a) Set HDF file dimensions (use FORTRAN ordering). */
+		WriteListOfInts(fptr, NumberOfBaryonFields, FieldType);
 
-		for (dim = 0; dim < GridRank; dim++) {
-			OutDims[GridRank-dim-1] = ActiveDim[dim];
-			FullOutDims[GridRank-dim-1] = GridDimension[dim];
-			GMFOutDims[GridRank-dim-1] = GravitatingMassFieldDimension[dim];
+		fprintf(fptr, "BaryonFileName = %s\n", procfilename);
+
+		fprintf(fptr, "CourantSafetyNumber    = %"FSYM"\n", CourantSafetyNumber);
+		fprintf(fptr, "PPMFlatteningParameter = %"ISYM"\n", PPMFlatteningParameter);
+		fprintf(fptr, "PPMDiffusionParameter  = %"ISYM"\n", PPMDiffusionParameter);
+		fprintf(fptr, "PPMSteepeningParameter = %"ISYM"\n", PPMSteepeningParameter);
+
+	}
+
+	fprintf(fptr, "NumberOfParticles   = %"ISYM"\n", NumberOfParticles);
+	fprintf(fptr, "NumberOfActiveParticles = %"ISYM"\n", NumberOfActiveParticles);
+	// Now write out which kind of active particles we have in this grid.
+	fprintf(fptr, "PresentParticleTypes = ");
+	if (NumberOfParticles)
+		fprintf(fptr, "DarkMatter ");
+	for (int i = 0; i<EnabledActiveParticlesCount; i++){
+		if (ActiveParticleTypeCount[i] > 0) {
+			fprintf(fptr, "%s ", EnabledActiveParticles[i]->particle_name.c_str());
 		}
+	}
+	fprintf(fptr, "\n");
+	// And their counts
+	fprintf(fptr, "ParticleTypeCounts = ");
+	if (NumberOfParticles)
+		fprintf(fptr, "%"ISYM" ", NumberOfParticles);
+	for (int i = 0; i<EnabledActiveParticlesCount; i++){
+		if (ActiveParticleTypeCount[i] > 0) {
+			fprintf(fptr, "%"ISYM" ", ActiveParticleTypeCount[i]);
+		}
+	}
+	fprintf(fptr, "\n");
 
-		/* 2b) Write out co-ordinate values.  Use the centre of each cell. */
+	if ((NumberOfParticles > 0) || (NumberOfActiveParticles > 0))
+		fprintf(fptr, "ParticleFileName = %s\n", procfilename); // must be same as above
 
-		size = 1;
+	if (SelfGravity)
+		fprintf(fptr, "GravityBoundaryType = %"ISYM"\n", GravityBoundaryType);
 
-		for (dim = 0; dim < GridRank; dim++) size *= GridDimension[dim];
+}
 
-		/* create temporary buffer */
+/* Return if this does not concern us */
+if (MyProcessorNumber != ProcessorNumber) {
+	delete [] name;
+	delete [] procfilename;
+	delete [] groupfilename;
+	return SUCCESS;
+}
 
-		temp = new float[size];
 
-		/* 2c) Loop over fields, writing each one. */
+/* Open HDF file for writing. */
 
-		for (field = 0; field < NumberOfBaryonFields; field++) {
+group_id = H5Gcreate(file_id, name, 0);
+if( group_id == h5_error ){ENZO_FAIL("IO Problem creating Grid Group");}
 
-			if(CopyOnlyActive == TRUE) {
-				this->write_dataset(GridRank, OutDims, DataLabel[field],
-						group_id, file_type_id, (VOIDP) BaryonField[field],
-						CopyOnlyActive, temp);
-				//	fprintf(stderr, "%i field\n", field);
-			} else {
+if(WriteEverything == TRUE) {
+	FLOAT dtFixedCopy = this->dtFixed;
+	old_fields = H5Gcreate(group_id, "OldFields", 0);
+	writeScalarAttribute(old_fields, HDF5_PREC, "Time", &this->Time);
+	writeScalarAttribute(old_fields, HDF5_PREC, "OldTime", &this->OldTime);
+	writeScalarAttribute(old_fields, HDF5_PREC, "dtFixed", &dtFixedCopy);
+}
 
+// If requested, find shocks immediately before output.
+if (ShockMethod){
+	// Update the shock fields. 
+	// If FindShocksOnlyOnOutput > 1, don't update shock fields.
+	int temp_shocks_var = FindShocksOnlyOnOutput;
+	if (FindShocksOnlyOnOutput <= 1 ){
+		// Set FindShocksOnlyOnOutput temporarily to 0 so that shocks
+		// are found in the ShockHandler routine.
+		FindShocksOnlyOnOutput = 0;
+		this->ShocksHandler();
+		FindShocksOnlyOnOutput = temp_shocks_var;
+	}
+}
+
+/* ------------------------------------------------------------------- */
+/* 2) save baryon field quantities (including fields). */
+
+if (NumberOfBaryonFields > 0) {
+
+	/* 2a) Set HDF file dimensions (use FORTRAN ordering). */
+
+	for (dim = 0; dim < GridRank; dim++) {
+		OutDims[GridRank-dim-1] = ActiveDim[dim];
+		FullOutDims[GridRank-dim-1] = GridDimension[dim];
+		GMFOutDims[GridRank-dim-1] = GravitatingMassFieldDimension[dim];
+	}
+
+	/* 2b) Write out co-ordinate values.  Use the centre of each cell. */
+
+	size = 1;
+
+	for (dim = 0; dim < GridRank; dim++) size *= GridDimension[dim];
+
+	/* create temporary buffer */
+
+	temp = new float[size];
+
+	/* 2c) Loop over fields, writing each one. */
+
+	for (field = 0; field < NumberOfBaryonFields; field++) {
+
+		if(CopyOnlyActive == TRUE) {
+			this->write_dataset(GridRank, OutDims, DataLabel[field],
+					group_id, file_type_id, (VOIDP) BaryonField[field],
+					CopyOnlyActive, temp);
+			//	fprintf(stderr, "%i field\n", field);
+		} else {
+
+			this->write_dataset(GridRank, FullOutDims, DataLabel[field],
+					group_id, file_type_id, (VOIDP) BaryonField[field],
+					FALSE);
+
+			/* In this case, we write the OldBaryonField, too */
+			if(WriteEverything == TRUE) {
 				this->write_dataset(GridRank, FullOutDims, DataLabel[field],
-						group_id, file_type_id, (VOIDP) BaryonField[field],
-						FALSE);
-
-				/* In this case, we write the OldBaryonField, too */
-				if(WriteEverything == TRUE) {
-					this->write_dataset(GridRank, FullOutDims, DataLabel[field],
-							old_fields, file_type_id, (VOIDP) OldBaryonField[field],
-							FALSE);
-				}
-
-			}
-
-		}   // end of loop over fields
-
-
-		if (WriteEverything == TRUE) {
-			/* Clean up our reference here */
-
-			H5Gclose(old_fields);
-
-			if(AccelerationField[0] != NULL) {
-				acc_node = H5Gcreate(group_id, "Acceleration", 0);
-				if(acc_node == h5_error)ENZO_FAIL("Couldn't create Acceleration node!");
-
-				/* If we're to write everything, we must also write 
-					 the AccelerationField */
-
-				for(dim = 0; dim < GridRank; dim++) {
-					snprintf(node_name, 254, "AccelerationField%"ISYM"", dim);
-					this->write_dataset(GridRank, FullOutDims, node_name,
-							acc_node, file_type_id, (VOIDP) AccelerationField[dim],
-							FALSE);
-				}
-
-				H5Gclose(acc_node);
-			}
-
-			if(GravitatingMassField != NULL) {
-
-				this->write_dataset(GridRank, GMFOutDims, "GravitatingMassField",
-						group_id, file_type_id, (VOIDP) GravitatingMassField,
+						old_fields, file_type_id, (VOIDP) OldBaryonField[field],
 						FALSE);
 			}
 
-			if(PotentialField != NULL) {
-				this->write_dataset(GridRank, GMFOutDims, "PotentialField",
-						group_id, file_type_id, (VOIDP) PotentialField,
-						FALSE);
-			}
 		}
 
-		if (VelAnyl==1){
+	}   // end of loop over fields
 
+
+	if (WriteEverything == TRUE) {
+		/* Clean up our reference here */
+
+		H5Gclose(old_fields);
+
+		if(AccelerationField[0] != NULL) {
+			acc_node = H5Gcreate(group_id, "Acceleration", 0);
+			if(acc_node == h5_error)ENZO_FAIL("Couldn't create Acceleration node!");
+
+			/* If we're to write everything, we must also write 
+				 the AccelerationField */
+
+			for(dim = 0; dim < GridRank; dim++) {
+				snprintf(node_name, 254, "AccelerationField%"ISYM"", dim);
+				this->write_dataset(GridRank, FullOutDims, node_name,
+						acc_node, file_type_id, (VOIDP) AccelerationField[dim],
+						FALSE);
+			}
+
+			H5Gclose(acc_node);
+		}
+
+		if(GravitatingMassField != NULL) {
+
+			this->write_dataset(GridRank, GMFOutDims, "GravitatingMassField",
+					group_id, file_type_id, (VOIDP) GravitatingMassField,
+					FALSE);
+		}
+
+		if(PotentialField != NULL) {
+			this->write_dataset(GridRank, GMFOutDims, "PotentialField",
+					group_id, file_type_id, (VOIDP) PotentialField,
+					FALSE);
+		}
+	}
+
+	if (VelAnyl==1){
+
+		float *curl_x, *curl_y, *curl_z, *div;
+
+		this->ComputeVectorAnalysisFields(Velocity1, Velocity2, Velocity3,
+				curl_x, curl_y, curl_z, div);
+
+		this->write_dataset(GridRank, OutDims, "Velocity_Div",
+				group_id, file_type_id, (VOIDP) div, TRUE, temp);
+		this->write_dataset(GridRank, OutDims, "Velocity_Vorticity3",
+				group_id, file_type_id, (VOIDP) curl_z, TRUE, temp);
+
+		if (GridRank==3){
+			this->write_dataset(GridRank, OutDims, "Velocity_Vorticity1",
+					group_id, file_type_id, (VOIDP) curl_x, TRUE, temp);
+			this->write_dataset(GridRank, OutDims, "Velocity_Vorticity2",
+					group_id, file_type_id, (VOIDP) curl_y, TRUE, temp);
+		}
+
+		delete [] curl_z;
+		delete [] div;
+		if(GridRank==3){
+			delete [] curl_x;
+			delete [] curl_y;
+		}
+	}
+
+	if (BAnyl==1){
+		if (HydroMethod == MHD_RK) {
 			float *curl_x, *curl_y, *curl_z, *div;
 
-			this->ComputeVectorAnalysisFields(Velocity1, Velocity2, Velocity3,
+			this->ComputeVectorAnalysisFields(Bfield1, Bfield2, Bfield3,
 					curl_x, curl_y, curl_z, div);
 
-			this->write_dataset(GridRank, OutDims, "Velocity_Div",
+			this->write_dataset(GridRank, OutDims, "B_Div",
 					group_id, file_type_id, (VOIDP) div, TRUE, temp);
-			this->write_dataset(GridRank, OutDims, "Velocity_Vorticity3",
+			this->write_dataset(GridRank, OutDims, "B_Vorticity3",
 					group_id, file_type_id, (VOIDP) curl_z, TRUE, temp);
 
 			if (GridRank==3){
-				this->write_dataset(GridRank, OutDims, "Velocity_Vorticity1",
+				this->write_dataset(GridRank, OutDims, "B_Vorticity1",
 						group_id, file_type_id, (VOIDP) curl_x, TRUE, temp);
-				this->write_dataset(GridRank, OutDims, "Velocity_Vorticity2",
+				this->write_dataset(GridRank, OutDims, "B_Vorticity2",
 						group_id, file_type_id, (VOIDP) curl_y, TRUE, temp);
 			}
 
@@ -413,507 +447,480 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 				delete [] curl_x;
 				delete [] curl_y;
 			}
-		}
-
-		if (BAnyl==1){
-			if (HydroMethod == MHD_RK) {
-				float *curl_x, *curl_y, *curl_z, *div;
-
-				this->ComputeVectorAnalysisFields(Bfield1, Bfield2, Bfield3,
-						curl_x, curl_y, curl_z, div);
-
-				this->write_dataset(GridRank, OutDims, "B_Div",
-						group_id, file_type_id, (VOIDP) div, TRUE, temp);
-				this->write_dataset(GridRank, OutDims, "B_Vorticity3",
-						group_id, file_type_id, (VOIDP) curl_z, TRUE, temp);
-
-				if (GridRank==3){
-					this->write_dataset(GridRank, OutDims, "B_Vorticity1",
-							group_id, file_type_id, (VOIDP) curl_x, TRUE, temp);
-					this->write_dataset(GridRank, OutDims, "B_Vorticity2",
-							group_id, file_type_id, (VOIDP) curl_y, TRUE, temp);
-				}
-
-				delete [] curl_z;
-				delete [] div;
-				if(GridRank==3){
-					delete [] curl_x;
-					delete [] curl_y;
-				}
-			} else if (UseMHDCT) {
-				fprintf(stdout, "Outputting DivB\n");
-				float *DivB = NULL;
-				this->MHD_Diagnose("WriteGrid", DivB);
-				float max_div_b = 0.0;
-				for ( i=0;i<size;i++ ){
-					if ( DivB[i] > max_div_b ) max_div_b = DivB[i];
-				}
-				fprintf(stdout, "max(DivB) = %10.5e\n", max_div_b);
-				if(CopyOnlyActive == TRUE) {
-					this->write_dataset(GridRank, OutDims, "DivB",
-							group_id, file_type_id, (VOIDP) DivB,
-							TRUE, temp);
-				} else {
-					this->write_dataset(GridRank, FullOutDims, "DivB",
-							group_id, file_type_id, (VOIDP) DivB,
-							FALSE);
-				}
-
-				delete [] DivB;
+		} else if (UseMHDCT) {
+			fprintf(stdout, "Outputting DivB\n");
+			float *DivB = NULL;
+			this->MHD_Diagnose("WriteGrid", DivB);
+			float max_div_b = 0.0;
+			for ( i=0;i<size;i++ ){
+				if ( DivB[i] > max_div_b ) max_div_b = DivB[i];
 			}
-		}
-
-		/* If requested, write the External Acceleration field */
-		if (WriteExternalAccel==1){
-			this->ComputeAccelerationFieldExternal();
-			this->write_dataset(GridRank, OutDims, "External_Acceleration_x",
-					group_id, file_type_id, (VOIDP) AccelerationField[0], TRUE, temp);
-			if (GridRank==3){
-				this->write_dataset(GridRank, OutDims, "External_Acceleration_y",
-						group_id, file_type_id, (VOIDP) AccelerationField[1], TRUE, temp);
-				this->write_dataset(GridRank, OutDims, "External_Acceleration_z",
-						group_id, file_type_id, (VOIDP) AccelerationField[2], TRUE, temp);
-			}
-		} // end if for write external acceleration field
-
-
-
-		/* If requested, compute and output the temperature field 
-			 as well since its such a pain to compute after the fact. */
-
-		if (OutputTemperature) {
-
-			/* Allocate field and compute temperature. */
-
-			temperature = new float[size];
-
-			if (this->ComputeTemperatureField(temperature) == FAIL) {
-				ENZO_FAIL("Error in grid->ComputeTemperatureField.");
-			}
-
+			fprintf(stdout, "max(DivB) = %10.5e\n", max_div_b);
 			if(CopyOnlyActive == TRUE) {
-				this->write_dataset(GridRank, OutDims, "Temperature",
-						group_id, file_type_id, (VOIDP) temperature,
+				this->write_dataset(GridRank, OutDims, "DivB",
+						group_id, file_type_id, (VOIDP) DivB,
 						TRUE, temp);
 			} else {
-
-				this->write_dataset(GridRank, FullOutDims, "Temperature",
-						group_id, file_type_id, (VOIDP) temperature,
+				this->write_dataset(GridRank, FullOutDims, "DivB",
+						group_id, file_type_id, (VOIDP) DivB,
 						FALSE);
 			}
 
-			/* Copy active part of field into grid */
+			delete [] DivB;
+		}
+	}
 
-			// If outputing dust temperature, keep temperature field for the calculation.
-			if (!OutputDustTemperature) {
-				delete [] temperature;
+	/* If requested, write the External Acceleration field */
+	if (WriteExternalAccel==1){
+		this->ComputeAccelerationFieldExternal();
+		this->write_dataset(GridRank, OutDims, "External_Acceleration_x",
+				group_id, file_type_id, (VOIDP) AccelerationField[0], TRUE, temp);
+		if (GridRank==3){
+			this->write_dataset(GridRank, OutDims, "External_Acceleration_y",
+					group_id, file_type_id, (VOIDP) AccelerationField[1], TRUE, temp);
+			this->write_dataset(GridRank, OutDims, "External_Acceleration_z",
+					group_id, file_type_id, (VOIDP) AccelerationField[2], TRUE, temp);
+		}
+	} // end if for write external acceleration field
+
+
+
+	/* If requested, compute and output the temperature field 
+		 as well since its such a pain to compute after the fact. */
+
+	if (OutputTemperature) {
+
+		/* Allocate field and compute temperature. */
+
+		temperature = new float[size];
+
+		if (this->ComputeTemperatureField(temperature) == FAIL) {
+			ENZO_FAIL("Error in grid->ComputeTemperatureField.");
+		}
+
+		if(CopyOnlyActive == TRUE) {
+			this->write_dataset(GridRank, OutDims, "Temperature",
+					group_id, file_type_id, (VOIDP) temperature,
+					TRUE, temp);
+		} else {
+
+			this->write_dataset(GridRank, FullOutDims, "Temperature",
+					group_id, file_type_id, (VOIDP) temperature,
+					FALSE);
+		}
+
+		/* Copy active part of field into grid */
+
+		// If outputing dust temperature, keep temperature field for the calculation.
+		if (!OutputDustTemperature) {
+			delete [] temperature;
+		}
+
+	} // end: if (OutputTemperature)
+
+
+	if( UseMHDCT ){
+
+		hsize_t MHDOutDims[3];
+		int MHDActive[3]; 
+		int MHDWriteStartIndex[3], MHDWriteEndIndex[3];
+		int BiggieSize = (GridDimension[0]+1)*(GridDimension[1]+1)*(GridDimension[2]+1);
+		float *MHDtmp = new float[BiggieSize];
+		int index1, index2;
+
+		for(field=0;field<nBfields;field++){
+			if( WriteBoundary == TRUE){
+				for(i=0;i<3;i++){
+					MHDWriteStartIndex[i] = 0;
+					MHDWriteEndIndex[i] = MagneticDims[field][i]-1;
+				}
+			}else{
+				for(i=0;i<3;i++){
+					MHDWriteStartIndex[i] = MHDStartIndex[field][i];
+					MHDWriteEndIndex[i] = MHDEndIndex[field][i];
+				}
+			}
+			for (dim = 0; dim < 3; dim++){
+				MHDActive[dim] = MHDWriteEndIndex[dim] - MHDWriteStartIndex[dim] +1;
+				MHDOutDims[GridRank-dim-1] = MHDActive[dim];
 			}
 
-		} // end: if (OutputTemperature)
-
-
-		if( UseMHDCT ){
-
-			hsize_t MHDOutDims[3];
-			int MHDActive[3]; 
-			int MHDWriteStartIndex[3], MHDWriteEndIndex[3];
-			int BiggieSize = (GridDimension[0]+1)*(GridDimension[1]+1)*(GridDimension[2]+1);
-			float *MHDtmp = new float[BiggieSize];
-			int index1, index2;
-
+			this->write_dataset(GridRank, MHDOutDims, MHDLabel[field],
+					group_id, file_type_id, (VOIDP) MagneticField[field],
+					TRUE, MHDtmp, MHDWriteStartIndex, MHDWriteEndIndex, 
+					MHDActive, MagneticDims[field]);
+		}
+		if( MHD_WriteElectric && ElectricField[0] != NULL ){
 			for(field=0;field<nBfields;field++){
-				if( WriteBoundary == TRUE){
-					for(i=0;i<3;i++){
+				if( WriteBoundary == TRUE ){
+					for( i=0;i<3;i++){
 						MHDWriteStartIndex[i] = 0;
-						MHDWriteEndIndex[i] = MagneticDims[field][i]-1;
+						MHDWriteEndIndex[i] = ElectricDims[field][i] - 1;
 					}
 				}else{
 					for(i=0;i<3;i++){
-						MHDWriteStartIndex[i] = MHDStartIndex[field][i];
-						MHDWriteEndIndex[i] = MHDEndIndex[field][i];
+						MHDWriteStartIndex[i] = MHDeStartIndex[field][i];
+						MHDWriteEndIndex[i] = MHDeEndIndex[field][i];
 					}
 				}
-				for (dim = 0; dim < 3; dim++){
+				for(dim = 0; dim<3; dim++){
 					MHDActive[dim] = MHDWriteEndIndex[dim] - MHDWriteStartIndex[dim] +1;
 					MHDOutDims[GridRank-dim-1] = MHDActive[dim];
 				}
 
-				this->write_dataset(GridRank, MHDOutDims, MHDLabel[field],
-						group_id, file_type_id, (VOIDP) MagneticField[field],
+				this->write_dataset(GridRank, MHDOutDims, MHDeLabel[field],
+						group_id, file_type_id, (VOIDP) ElectricField[field],
 						TRUE, MHDtmp, MHDWriteStartIndex, MHDWriteEndIndex, 
-						MHDActive, MagneticDims[field]);
-			}
-			if( MHD_WriteElectric && ElectricField[0] != NULL ){
-				for(field=0;field<nBfields;field++){
-					if( WriteBoundary == TRUE ){
-						for( i=0;i<3;i++){
-							MHDWriteStartIndex[i] = 0;
-							MHDWriteEndIndex[i] = ElectricDims[field][i] - 1;
-						}
-					}else{
-						for(i=0;i<3;i++){
-							MHDWriteStartIndex[i] = MHDeStartIndex[field][i];
-							MHDWriteEndIndex[i] = MHDeEndIndex[field][i];
-						}
-					}
-					for(dim = 0; dim<3; dim++){
-						MHDActive[dim] = MHDWriteEndIndex[dim] - MHDWriteStartIndex[dim] +1;
-						MHDOutDims[GridRank-dim-1] = MHDActive[dim];
-					}
-
-					this->write_dataset(GridRank, MHDOutDims, MHDeLabel[field],
+						MHDActive, ElectricDims[field]);
+				if( AvgElectricField[field] != NULL ){
+					char name[30];
+					sprintf(name, "AvgElec%d",field);
+					this->write_dataset(GridRank, MHDOutDims, name,
 							group_id, file_type_id, (VOIDP) ElectricField[field],
 							TRUE, MHDtmp, MHDWriteStartIndex, MHDWriteEndIndex, 
-							MHDActive, ElectricDims[field]);
-					if( AvgElectricField[field] != NULL ){
-						char name[30];
-						sprintf(name, "AvgElec%d",field);
-						this->write_dataset(GridRank, MHDOutDims, name,
-								group_id, file_type_id, (VOIDP) ElectricField[field],
-								TRUE, MHDtmp, MHDWriteStartIndex, MHDWriteEndIndex, 
-								MHDActive, MagneticDims[field]);
-					}
-				}
-			}//WriteElectric
-			delete [] MHDtmp;
-		}//UseMHDCT
-
-		/* If requested, compute and output the dust temperature field 
-			 as well since its such a pain to compute after the fact. */
-
-		if (OutputDustTemperature != FALSE) {
-
-			/* Get temperature field if we do not already have it. */
-
-			if (!OutputTemperature) {
-				temperature = new float[size];
-
-				if (this->ComputeTemperatureField(temperature) == FAIL) {
-					ENZO_FAIL("Error in grid->ComputeTemperatureField.\n");
+							MHDActive, MagneticDims[field]);
 				}
 			}
+		}//WriteElectric
+		delete [] MHDtmp;
+	}//UseMHDCT
 
-			/* Allocate field and compute temperature. */
+	/* If requested, compute and output the dust temperature field 
+		 as well since its such a pain to compute after the fact. */
 
-			dust_temperature = new float[size];
+	if (OutputDustTemperature != FALSE) {
 
-			if (this->ComputeDustTemperatureField(temperature,
-						dust_temperature) == FAIL) {
-				ENZO_FAIL("Error in grid->ComputeDustTemperatureField.");
+		/* Get temperature field if we do not already have it. */
+
+		if (!OutputTemperature) {
+			temperature = new float[size];
+
+			if (this->ComputeTemperatureField(temperature) == FAIL) {
+				ENZO_FAIL("Error in grid->ComputeTemperatureField.\n");
 			}
+		}
 
-			if(CopyOnlyActive == TRUE) {
-				this->write_dataset(GridRank, OutDims, "Dust_Temperature",
-						group_id, file_type_id, (VOIDP) dust_temperature,
-						TRUE, temp);
-			} else {
+		/* Allocate field and compute temperature. */
 
-				this->write_dataset(GridRank, FullOutDims, "Dust_Temperature",
-						group_id, file_type_id, (VOIDP) dust_temperature,
-						FALSE);
-			}
+		dust_temperature = new float[size];
 
+		if (this->ComputeDustTemperatureField(temperature,
+					dust_temperature) == FAIL) {
+			ENZO_FAIL("Error in grid->ComputeDustTemperatureField.");
+		}
+
+		if(CopyOnlyActive == TRUE) {
+			this->write_dataset(GridRank, OutDims, "Dust_Temperature",
+					group_id, file_type_id, (VOIDP) dust_temperature,
+					TRUE, temp);
+		} else {
+
+			this->write_dataset(GridRank, FullOutDims, "Dust_Temperature",
+					group_id, file_type_id, (VOIDP) dust_temperature,
+					FALSE);
+		}
+
+
+		/* Copy active part of field into grid */
+
+		// If outputing dust temperature, keep temperature field for the calculation.
+		if (!OutputTemperature) {
+			delete [] temperature;
+		}
+		delete [] dust_temperature;
+
+	} // end: if (OutputDustTemperature)
+
+	if (OutputCoolingTime != FALSE) {
+
+		/* Allocate field and compute cooling time. */
+
+		cooling_time = new float[size];
+
+		float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
+					VelocityUnits = 1, TimeUnits = 1, aUnits = 1;
+
+		GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+				&TimeUnits, &VelocityUnits, Time);
+
+		if (this->ComputeCoolingTime(cooling_time, FALSE, FALSE) == FAIL) {
+			ENZO_FAIL("Error in grid->ComputeCoolingTime.");
+		}
+
+		// Make all cooling time values positive and convert to seconds.
+		for (i = 0;i < size;i++) {
+			cooling_time[i] *= TimeUnits; // fabs(cooling_time[i]) * TimeUnits;
+		}
+
+		if(CopyOnlyActive == TRUE) {
+			this->write_dataset(GridRank, OutDims, "Cooling_Time",
+					group_id, file_type_id, (VOIDP) cooling_time,
+					TRUE, temp);
+		} else {
+
+			this->write_dataset(GridRank, FullOutDims, "Cooling_Time",
+					group_id, file_type_id, (VOIDP) cooling_time,
+					FALSE);
+		}
+
+
+		delete [] cooling_time;
+
+	} // if (OutputCoolingTime)
+
+	/* Make sure that there is a copy of dark matter field to save
+		 (and at the right resolution). */
+
+	if (OutputSmoothedDarkMatter == FALSE) {
+
+		if (SelfGravity && NumberOfParticles > 0) {
+			this->InitializeGravitatingMassFieldParticles(RefineBy);
+			this->ClearGravitatingMassFieldParticles();
+#ifdef NBODY
+			this->ClearGravitatingMassFieldParticlesNoStar();
+#endif
+#ifdef NBODY
+			this->DepositParticlePositions(this, Time,
+					GRAVITATING_MASS_FIELD_PARTICLES, FALSE);
+#else
+			this->DepositParticlePositions(this, Time,
+					GRAVITATING_MASS_FIELD_PARTICLES);
+#endif
+		}
+
+		/* If present, write out the GravitatingMassFieldParticles. */
+
+		if (GravitatingMassFieldParticles != NULL) {
+			/* Set dimensions. */
+
+			int StartIndex[] = {0,0,0}, EndIndex[] = {0,0,0};
 
 			/* Copy active part of field into grid */
 
-			// If outputing dust temperature, keep temperature field for the calculation.
-			if (!OutputTemperature) {
-				delete [] temperature;
-			}
-			delete [] dust_temperature;
-
-		} // end: if (OutputDustTemperature)
-
-		if (OutputCoolingTime != FALSE) {
-
-			/* Allocate field and compute cooling time. */
-
-			cooling_time = new float[size];
-
-			float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
-						VelocityUnits = 1, TimeUnits = 1, aUnits = 1;
-
-			GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-					&TimeUnits, &VelocityUnits, Time);
-
-			if (this->ComputeCoolingTime(cooling_time) == FAIL) {
-				ENZO_FAIL("Error in grid->ComputeCoolingTime.");
-			}
-
-			// Make all cooling time values positive and convert to seconds.
-			for (i = 0;i < size;i++) {
-				cooling_time[i] = fabs(cooling_time[i]) * TimeUnits;
-			}
-
-			if(CopyOnlyActive == TRUE) {
-				this->write_dataset(GridRank, OutDims, "Cooling_Time",
-						group_id, file_type_id, (VOIDP) cooling_time,
-						TRUE, temp);
-			} else {
-
-				this->write_dataset(GridRank, FullOutDims, "Cooling_Time",
-						group_id, file_type_id, (VOIDP) cooling_time,
-						FALSE);
-			}
-
-
-			delete [] cooling_time;
-
-		} // if (OutputCoolingTime)
-
-		/* Make sure that there is a copy of dark matter field to save
-			 (and at the right resolution). */
-
-		if (OutputSmoothedDarkMatter == FALSE) {
-
-			if (SelfGravity && NumberOfParticles > 0) {
-				this->InitializeGravitatingMassFieldParticles(RefineBy);
-				this->ClearGravitatingMassFieldParticles();
-#ifdef NBODY
-				this->ClearGravitatingMassFieldParticlesNoStar();
-#endif
-#ifdef NBODY
-				this->DepositParticlePositions(this, Time,
-						GRAVITATING_MASS_FIELD_PARTICLES, FALSE);
-#else
-				this->DepositParticlePositions(this, Time,
-						GRAVITATING_MASS_FIELD_PARTICLES);
-#endif
-			}
-
-			/* If present, write out the GravitatingMassFieldParticles. */
-
-			if (GravitatingMassFieldParticles != NULL) {
-				/* Set dimensions. */
-
-				int StartIndex[] = {0,0,0}, EndIndex[] = {0,0,0};
-
-				/* Copy active part of field into grid */
-
-				hsize_t *dm_dims;
-				if (CopyOnlyActive == TRUE) {
-					dm_dims = OutDims;
-					for (dim = 0; dim < GridRank; dim++) {
-						StartIndex[dim] = nint((GridLeftEdge[dim] -
-									GravitatingMassFieldParticlesLeftEdge[dim])/
-								GravitatingMassFieldParticlesCellSize);
-						EndIndex[dim] = nint((GridRightEdge[dim] -
-									GravitatingMassFieldParticlesLeftEdge[dim])/
-								GravitatingMassFieldParticlesCellSize) - 1;
-					}
-				} else if (CopyOnlyActive == FALSE) {
-					dm_dims = FullOutDims;
-					FLOAT CellRightEdge;
-					for (dim = 0; dim < GridRank; dim++) {
-						StartIndex[dim] = nint((CellLeftEdge[dim][0] -
-									GravitatingMassFieldParticlesLeftEdge[dim])/
-								GravitatingMassFieldParticlesCellSize);
-						/* This assumes uniform cell width */
-						CellRightEdge = CellLeftEdge[dim][0]
-							+ CellWidth[0][0] * GridDimension[dim];
-						EndIndex[dim] = nint((CellRightEdge -
-									GravitatingMassFieldParticlesLeftEdge[dim])/
-								GravitatingMassFieldParticlesCellSize) - 1;
-					}
+			hsize_t *dm_dims;
+			if (CopyOnlyActive == TRUE) {
+				dm_dims = OutDims;
+				for (dim = 0; dim < GridRank; dim++) {
+					StartIndex[dim] = nint((GridLeftEdge[dim] -
+								GravitatingMassFieldParticlesLeftEdge[dim])/
+							GravitatingMassFieldParticlesCellSize);
+					EndIndex[dim] = nint((GridRightEdge[dim] -
+								GravitatingMassFieldParticlesLeftEdge[dim])/
+							GravitatingMassFieldParticlesCellSize) - 1;
 				}
+			} else if (CopyOnlyActive == FALSE) {
+				dm_dims = FullOutDims;
+				FLOAT CellRightEdge;
+				for (dim = 0; dim < GridRank; dim++) {
+					StartIndex[dim] = nint((CellLeftEdge[dim][0] -
+								GravitatingMassFieldParticlesLeftEdge[dim])/
+							GravitatingMassFieldParticlesCellSize);
+					/* This assumes uniform cell width */
+					CellRightEdge = CellLeftEdge[dim][0]
+						+ CellWidth[0][0] * GridDimension[dim];
+					EndIndex[dim] = nint((CellRightEdge -
+								GravitatingMassFieldParticlesLeftEdge[dim])/
+							GravitatingMassFieldParticlesCellSize) - 1;
+				}
+			}
 
-				for (k = StartIndex[2]; k <= EndIndex[2]; k++)
-					for (j = StartIndex[1]; j <= EndIndex[1]; j++)
-						for (i = StartIndex[0]; i <= EndIndex[0]; i++)
-							temp[(i-StartIndex[0])                           +
-								(j-StartIndex[1])*ActiveDim[0]              +
-								(k-StartIndex[2])*ActiveDim[0]*ActiveDim[1] ] = 
-								GravitatingMassFieldParticles[ i +
-								j*GravitatingMassFieldParticlesDimension[0] +
-								k*GravitatingMassFieldParticlesDimension[0]*
-								GravitatingMassFieldParticlesDimension[1]];
+			for (k = StartIndex[2]; k <= EndIndex[2]; k++)
+				for (j = StartIndex[1]; j <= EndIndex[1]; j++)
+					for (i = StartIndex[0]; i <= EndIndex[0]; i++)
+						temp[(i-StartIndex[0])                           +
+							(j-StartIndex[1])*ActiveDim[0]              +
+							(k-StartIndex[2])*ActiveDim[0]*ActiveDim[1] ] = 
+							GravitatingMassFieldParticles[ i +
+							j*GravitatingMassFieldParticlesDimension[0] +
+							k*GravitatingMassFieldParticlesDimension[0]*
+							GravitatingMassFieldParticlesDimension[1]];
 
-				/* It took me a while to understand this, but it looks to me like what's
-					 going on is that the flattened temp array just has empty space at the end,
-					 but gets conceptually viewed as a 3D array of the right space.  -mjt */
+			/* It took me a while to understand this, but it looks to me like what's
+				 going on is that the flattened temp array just has empty space at the end,
+				 but gets conceptually viewed as a 3D array of the right space.  -mjt */
 
-				this->write_dataset(GridRank, dm_dims, "Dark_Matter_Density",
-						group_id, file_type_id, (VOIDP) temp, FALSE);
+			this->write_dataset(GridRank, dm_dims, "Dark_Matter_Density",
+					group_id, file_type_id, (VOIDP) temp, FALSE);
 
-			} // end of (if GravitatingMassFieldParticles != NULL)
+		} // end of (if GravitatingMassFieldParticles != NULL)
 
-		} // ENDIF !OutputSmoothedDarkMatter
+	} // ENDIF !OutputSmoothedDarkMatter
 
-		delete [] temp;
+	delete [] temp;
 
-		/* Write BoundaryFluxes info (why? it's just recreated when the grid
-			 is read in) */
+	/* Write BoundaryFluxes info (why? it's just recreated when the grid
+		 is read in) */
 
-	} // end: if (NumberOfBaryonFields > 0)
+} // end: if (NumberOfBaryonFields > 0)
 
-	/* ------------------------------------------------------------------- */
-	/* 2b) Save particle quantities smoothed to the grid. */
+/* ------------------------------------------------------------------- */
+/* 2b) Save particle quantities smoothed to the grid. */
 
-	if (OutputSmoothedDarkMatter > 0) {
+if (OutputSmoothedDarkMatter > 0) {
 
-		size = active_size = 1;
-		for (dim = 0; dim < GridRank; dim++) {
-			OutDims[GridRank-dim-1] = ActiveDim[dim];
-			size *= GridDimension[dim];
-			active_size *= ActiveDim[dim];
-		}
+	size = active_size = 1;
+	for (dim = 0; dim < GridRank; dim++) {
+		OutDims[GridRank-dim-1] = ActiveDim[dim];
+		size *= GridDimension[dim];
+		active_size *= ActiveDim[dim];
+	}
 
-		temp = new float[active_size];
+	temp = new float[active_size];
 
-		int NumberOfDMFields;
-		switch (OutputSmoothedDarkMatter) {
-			case 1: NumberOfDMFields = 1; break;  // density
-			case 2: NumberOfDMFields = 5; break;  // + rms velocity + 3-velocity
-		} // ENDSWITCH
+	int NumberOfDMFields;
+	switch (OutputSmoothedDarkMatter) {
+		case 1: NumberOfDMFields = 1; break;  // density
+		case 2: NumberOfDMFields = 5; break;  // + rms velocity + 3-velocity
+	} // ENDSWITCH
 
-		for (field = 0; field < NumberOfDMFields; field++) {
+	for (field = 0; field < NumberOfDMFields; field++) {
 
-			// Only the active part was calculated, so no copying in the routine
-			if (debug1)
-				fprintf(stdout, "DM field = %i\n", field);
-			this->write_dataset(GridRank, OutDims, SmoothedDMLabel[field],
-					group_id, file_type_id, (VOIDP) InterpolatedField[field], FALSE);
+		// Only the active part was calculated, so no copying in the routine
+		if (debug1)
+			fprintf(stdout, "DM field = %i\n", field);
+		this->write_dataset(GridRank, OutDims, SmoothedDMLabel[field],
+				group_id, file_type_id, (VOIDP) InterpolatedField[field], FALSE);
 
-			delete [] InterpolatedField[field];
-			InterpolatedField[field] = NULL;
+		delete [] InterpolatedField[field];
+		InterpolatedField[field] = NULL;
 
-		} // ENDFOR field
+	} // ENDFOR field
 
-		delete [] temp;
+	delete [] temp;
 
-	} // ENDIF OutputSmoothedDarkMatter
+} // ENDIF OutputSmoothedDarkMatter
 
-	/* ------------------------------------------------------------------- */
-	/* 3) Save particle quantities. */
+/* ------------------------------------------------------------------- */
+/* 3) Save particle quantities. */
 
-	hid_t ParticleGroupID = h5_error;
+hid_t ParticleGroupID = h5_error;
 
-	if (NumberOfParticles > 0) {
+if (NumberOfParticles > 0) {
 
-		/* Sort particles according to their identifier. */
+	/* Sort particles according to their identifier. */
 
-		if (OutputParticleTypeGrouping)
-			this->SortParticlesByType();
-		else
-			this->SortParticlesByNumber();
+	if (OutputParticleTypeGrouping)
+		this->SortParticlesByType();
+	else
+		this->SortParticlesByNumber();
 
-		this->SortActiveParticlesByNumber();
+	this->SortActiveParticlesByNumber();
 
-		/* Create a temporary buffer (64 bit). */
+	/* Create a temporary buffer (64 bit). */
 
-		temp = new float[NumberOfParticles];
+	temp = new float[NumberOfParticles];
 
-		/* "128-bit" particle positions are stored as what HDF5 calls
-			 'native long double.' */
+	/* "128-bit" particle positions are stored as what HDF5 calls
+		 'native long double.' */
 
-		TempIntArray[0] = NumberOfParticles;
+	TempIntArray[0] = NumberOfParticles;
 
-		for (dim = 0; dim < GridRank; dim++) {
-			this->write_dataset(1, TempIntArray, ParticlePositionLabel[dim],
-					group_id, HDF5_FILE_PREC, (VOIDP) ParticlePosition[dim], FALSE);
-		}
+	for (dim = 0; dim < GridRank; dim++) {
+		this->write_dataset(1, TempIntArray, ParticlePositionLabel[dim],
+				group_id, HDF5_FILE_PREC, (VOIDP) ParticlePosition[dim], FALSE);
+	}
 
-		/* Copy particle velocities to temp and write them. */
+	/* Copy particle velocities to temp and write them. */
 
-		for (dim = 0; dim < GridRank; dim++) {
-			this->write_dataset(1, TempIntArray, ParticleVelocityLabel[dim],
-					group_id, HDF5_REAL, (VOIDP) ParticleVelocity[dim], FALSE);
-		}
+	for (dim = 0; dim < GridRank; dim++) {
+		this->write_dataset(1, TempIntArray, ParticleVelocityLabel[dim],
+				group_id, HDF5_REAL, (VOIDP) ParticleVelocity[dim], FALSE);
+	}
 
-		/* Copy mass to temp and write it. */
+	/* Copy mass to temp and write it. */
 
-		this->write_dataset(1, TempIntArray, "particle_mass",
-				group_id, HDF5_REAL, (VOIDP) ParticleMass, FALSE);
+	this->write_dataset(1, TempIntArray, "particle_mass",
+			group_id, HDF5_REAL, (VOIDP) ParticleMass, FALSE);
 
-		this->write_dataset(1, TempIntArray, "particle_index",
-				group_id, HDF5_PINT, (VOIDP) ParticleNumber, FALSE);
+	this->write_dataset(1, TempIntArray, "particle_index",
+			group_id, HDF5_PINT, (VOIDP) ParticleNumber, FALSE);
 
-		/* Copy type to temp and write it. */
+	/* Copy type to temp and write it. */
 
-		if (ParticleTypeInFile == TRUE) {
+	if (ParticleTypeInFile == TRUE) {
 
-			/* We leave this here instead of below so that we can output the
-				 dataspaces.  Ideally this would be handled with a callback function
-				 passed in.  */
+		/* We leave this here instead of below so that we can output the
+			 dataspaces.  Ideally this would be handled with a callback function
+			 passed in.  */
 
-			if( ParticleType == NULL ){ENZO_FAIL("Particle Type is NULL!");}
+		if( ParticleType == NULL ){ENZO_FAIL("Particle Type is NULL!");}
 
-			file_dsp_id = H5Screate_simple((Eint32) 1, TempIntArray, NULL);
-			if( file_dsp_id == h5_error ){ENZO_FAIL("Can't create particle_type dataspace");}
+		file_dsp_id = H5Screate_simple((Eint32) 1, TempIntArray, NULL);
+		if( file_dsp_id == h5_error ){ENZO_FAIL("Can't create particle_type dataspace");}
 
-			dset_id =  H5Dcreate(group_id, "particle_type", HDF5_FILE_INT, file_dsp_id, H5P_DEFAULT);
-			if( dset_id == h5_error ){ENZO_FAIL("Can't create particle_type dataset");}
+		dset_id =  H5Dcreate(group_id, "particle_type", HDF5_FILE_INT, file_dsp_id, H5P_DEFAULT);
+		if( dset_id == h5_error ){ENZO_FAIL("Can't create particle_type dataset");}
 
-			h5_status = H5Dwrite(dset_id, HDF5_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-					(VOIDP) ParticleType);
-			if( h5_status == h5_error ){ENZO_FAIL("Can't write particle_type");}
+		h5_status = H5Dwrite(dset_id, HDF5_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+				(VOIDP) ParticleType);
+		if( h5_status == h5_error ){ENZO_FAIL("Can't write particle_type");}
 
-			if(OutputParticleTypeGrouping)
-				this->CreateParticleTypeGrouping(dset_id, file_dsp_id, group_id, file_id);
+		if(OutputParticleTypeGrouping)
+			this->CreateParticleTypeGrouping(dset_id, file_dsp_id, group_id, file_id);
 
-			h5_status = H5Sclose(file_dsp_id);
-			if( h5_status == h5_error ){ENZO_FAIL("Problem closing particle_type dataspace");}
+		h5_status = H5Sclose(file_dsp_id);
+		if( h5_status == h5_error ){ENZO_FAIL("Problem closing particle_type dataspace");}
 
-			h5_status = H5Dclose(dset_id);
-			if( h5_status == h5_error ){ENZO_FAIL("Problem closing particle_type dataset");}
+		h5_status = H5Dclose(dset_id);
+		if( h5_status == h5_error ){ENZO_FAIL("Problem closing particle_type dataset");}
 
-		}
+	}
 
 
-		/* Copy particle attributes to temp and write them. */
+	/* Copy particle attributes to temp and write them. */
 
-		for (j = 0; j < NumberOfParticleAttributes; j++) {
+	for (j = 0; j < NumberOfParticleAttributes; j++) {
 
-			this->write_dataset(1, TempIntArray, ParticleAttributeLabel[j],
-					group_id, HDF5_REAL, (VOIDP) ParticleAttribute[j], FALSE);
-		}
+		this->write_dataset(1, TempIntArray, ParticleAttributeLabel[j].c_str(),
+				group_id, HDF5_REAL, (VOIDP) ParticleAttribute[j], FALSE);
+	}
 
-		/* clean up */
+	/* clean up */
 
-		delete [] temp;
+	delete [] temp;
 
-	} // end: if (NumberOfParticles > 0)
+} // end: if (NumberOfParticles > 0)
 
-	/* ------------------------------------------------------------------- */
-	/* 4) Save active particle quantities. */
+/* ------------------------------------------------------------------- */
+/* 4) Save active particle quantities. */
 
-	if (NumberOfActiveParticles > 0) {
-		/* Iterate over the enabled active particle types */
+if (NumberOfActiveParticles > 0) {
+	/* Iterate over the enabled active particle types */
 
-		ParticleGroupID = H5Gcreate(group_id, "Active Particles", 0);
-		for (i = 0; i < EnabledActiveParticlesCount; i++)
-		{
+	ParticleGroupID = H5Gcreate(group_id, "Active Particles", 0);
+	for (i = 0; i < EnabledActiveParticlesCount; i++)
+	{
 
-			/* Instantitate an active particle helper of this type
-				 This class contains the function that allows us to write to disk */
+		/* Instantitate an active particle helper of this type
+			 This class contains the function that allows us to write to disk */
 
-			ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
+		ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
 
-			/* Write them to disk */
+		/* Write them to disk */
 
-			ActiveParticleTypeToEvaluate->WriteParticles(
-					this->ActiveParticles, i, NumberOfActiveParticles,
-					ActiveParticleTypeToEvaluate->particle_name,
-					ParticleGroupID);
+		ActiveParticleTypeToEvaluate->WriteParticles(
+				this->ActiveParticles, i, NumberOfActiveParticles,
+				ActiveParticleTypeToEvaluate->particle_name,
+				ParticleGroupID);
 
-		}
+	}
 
-		h5_status = H5Gclose(ParticleGroupID);
-	}  // end: if (NumberOfActiveParticles > 0)
+	h5_status = H5Gclose(ParticleGroupID);
+}  // end: if (NumberOfActiveParticles > 0)
 
-	/* Close HDF group and file. */
+/* Close HDF group and file. */
 
-	if (WriteEverything == TRUE) this->WriteAllFluxes(group_id);
-	h5_status = H5Gclose(group_id);
+if (WriteEverything == TRUE) this->WriteAllFluxes(group_id);
+h5_status = H5Gclose(group_id);
 
-	/* 4) Save Gravity info. */
+/* 4) Save Gravity info. */
 
-	/* Clean up. */
+/* Clean up. */
 
-	delete [] name;
-	delete [] procfilename;
-	delete [] groupfilename;
-	return SUCCESS;
+delete [] name;
+delete [] procfilename;
+delete [] groupfilename;
+return SUCCESS;
 
 }
 #endif

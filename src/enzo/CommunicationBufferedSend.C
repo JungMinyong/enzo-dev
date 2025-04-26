@@ -58,11 +58,13 @@ int CommunicationBufferPurge(void) {
 	int BuffersPurged = 0;
 	int BuffersActive = 0;
 
-	for (i = 0; i < LastActiveIndex+1; i++) {
-		if (RequestBuffer[i] != NULL) {
-			stat = MPI_Test(RequestHandle+i, &RequestDone, &Status);
-			if( stat != MPI_SUCCESS ){ENZO_FAIL("");}
-			if (RequestDone) {
+  if (LastActiveIndex+1 > MAX_NUMBER_OF_MPI_BUFFERS) ENZO_VFAIL("CommunicationBufferPurge %"ISYM"\n",LastActiveIndex+1);
+
+  for (i = 0; i < LastActiveIndex+1; i++) {
+    if (RequestBuffer[i] != NULL) {
+      stat = MPI_Test(RequestHandle+i, &RequestDone, &Status);
+      if( stat != MPI_SUCCESS ){ENZO_FAIL("");}
+      if (RequestDone) {
 
 				/* If the request is done, deallocate associated buffer. */
 
@@ -99,12 +101,13 @@ int CommunicationBufferedSendCancel(int Tag)
 
 	/* Cancels all buffered sends with Tag */
 
-	int i;
-	MPI_Arg RequestDone, stat;
-	MPI_Status Status;
-	int NewLastActiveIndex = -1;
-	int BuffersCancelled = 0;
-	int BuffersActive = 0;
+  int i;
+  MPI_Arg RequestDone, stat;
+  MPI_Status Status;
+  int NewLastActiveIndex = -1;
+  int BuffersCancelled = 0;
+  int BuffersActive = 0;
+  if (LastActiveIndex+1 > MAX_NUMBER_OF_MPI_BUFFERS) ENZO_VFAIL("CommunicationBufferPurge %"ISYM"\n",LastActiveIndex+1);
 
 	for (i = 0; i < LastActiveIndex+1; i++) {
 		if (RequestBuffer[i] != NULL) {
@@ -142,7 +145,8 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 	MPI_Status Status;
 	void *buffer_send;
 
-	/* First, check to see if we should do a scan. */
+  /* First, check to see if we should do a scan. */
+  if (LastActiveIndex+1 > MAX_NUMBER_OF_MPI_BUFFERS) ENZO_VFAIL("CommunicationBufferPurge %"ISYM"\n",LastActiveIndex+1);
 
 	if (++CallCount % NUMBER_OF_CALLS_BETWEEN_SCANS == 0) {
 
@@ -174,7 +178,8 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 	else
 		buffer_send = (void *) buffer;
 
-	/* Find open spot. */
+  /* Find open spot. */
+  if (LastActiveIndex+1 > MAX_NUMBER_OF_MPI_BUFFERS) ENZO_VFAIL("CommunicationBufferPurge %"ISYM"\n",LastActiveIndex+1);
 
 	int index = LastActiveIndex+1;
 	for (i = 0; i < LastActiveIndex+1; i++)

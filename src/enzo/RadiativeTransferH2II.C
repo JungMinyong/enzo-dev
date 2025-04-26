@@ -23,6 +23,11 @@
 #include "GridList.h"
 #include "Grid.h"
 #include "CosmologyParameters.h"
+#include "phys_constants.h"
+
+int FindField(int f, int farray[], int n);
+
+#define DEVCODE 1
 
 int grid::RadiativeTransferH2II(PhotonPackageEntry **PP, int cellindex, 
 				float tau, FLOAT photonrate, float geo_correction,
@@ -44,10 +49,26 @@ int grid::RadiativeTransferH2II(PhotonPackageEntry **PP, int cellindex,
   // BaryonField[kdissH2IINum] needs to be normalised - see 
   // Grid_FinalizeRadiationFields.C
   BaryonField[kdissH2IINum][cellindex] += dPH2II*photonrate;
+#if !DEVCODE
   if(BaryonField[kdissH2IINum][cellindex] < tiny_number)
     {
       BaryonField[kdissH2IINum][cellindex] = tiny_number;
     }
-      
+#endif
+
+  /// AJE Add leftover photons to PE flux bin:
+  ///   simplify these ifs in the future:
+  if ( (!RadiativeTransferOpticallyThinFUV) &&
+       (IndividualStarFUVHeating)
+     ){
+    const int FUVRateNum = FindField(FUVRate, this->FieldType, this->NumberOfBaryonFields);
+    const FLOAT dx2 = this->CellWidth[0][0] * this->CellWidth[0][0];
+		// for individual stars, make sure below is consistent with
+		// Star_ComputePhotonRates energies (should probably just make this a param)
+    const double LW_energy = LW_photon_energy * erg_eV;
+    // AJE: Need to multiply FUVRate field by EnergyUnits in Grid_FinalizeRadiationField
+    BaryonField[FUVRateNum][cellindex] +=
+  		    ((*PP)->Photons*geo_correction - dPH2II)*photonrate*LW_energy/(dx2);
+  }
   return SUCCESS;
 }

@@ -46,6 +46,7 @@ void WriteListOfInts(FILE *fptr, int N, int nums[]);
 int WriteStringAttr(hid_t dset_id, char *Alabel, char *String, FILE *log_fptr);
 int FindField(int field, int farray[], int numfields);
 
+void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabel);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
@@ -143,6 +144,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
+	/*
 #ifdef NBODY
 #ifdef WINDS 
 #ifdef SEVN
@@ -179,6 +181,11 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
   {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
 #endif
+*/
+
+  std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes);
+  GetParticleAttributeLabels(ParticleAttributeLabel);
+
   char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
 			     "Particle_x-velocity", "Particle_y-velocity",
 			     "Particle_z-velocity"};
@@ -885,13 +892,13 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time);
 
-      if (this->ComputeCoolingTime(cooling_time) == FAIL) {
+      if (this->ComputeCoolingTime(cooling_time, FALSE, FALSE) == FAIL) {
 	ENZO_FAIL("Error in grid->ComputeCoolingTime.\n");
       }
 
       // Make all cooling time values positive and convert to seconds.
       for (i = 0;i < size;i++) {
-	cooling_time[i] = fabs(cooling_time[i]) * TimeUnits;
+	cooling_time[i] *= TimeUnits; // fabs(cooling_time[i]) * TimeUnits;
       }
  
       /* Copy active part of field into grid */
@@ -1409,9 +1416,9 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
         if (io_log) fprintf(log_fptr, "H5Screate file_dsp_id: %"ISYM"\n", file_dsp_id);
         if( file_dsp_id == h5_error ){my_exit(EXIT_FAILURE);}
  
-      if (io_log) fprintf(log_fptr,"H5Dcreate with Name = %s\n",ParticleAttributeLabel[j]);
+      if (io_log) fprintf(log_fptr,"H5Dcreate with Name = %s\n",ParticleAttributeLabel[j].c_str());
  
-      dset_id =  H5Dcreate(group_id, ParticleAttributeLabel[j], file_type_id, file_dsp_id, H5P_DEFAULT);
+      dset_id =  H5Dcreate(group_id, ParticleAttributeLabel[j].c_str(), file_type_id, file_dsp_id, H5P_DEFAULT);
         if (io_log) fprintf(log_fptr, "H5Dcreate id: %"ISYM"\n", dset_id);
         if( dset_id == h5_error ){my_exit(EXIT_FAILURE);}
  

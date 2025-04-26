@@ -96,6 +96,7 @@ c
 c           For CR, use implicit on both
             do i = 1, isize
                e(i) = e(i) * (1.0 - coef)/(1.0 + coef)
+               ecr(i) = ecr(i) * (2.0 - coef)/(2.0 + coef)
             enddo
          else
             do i = 1, isize

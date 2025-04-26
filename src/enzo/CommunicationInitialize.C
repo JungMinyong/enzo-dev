@@ -345,7 +345,8 @@ void CommunicationAbort(int status)
 {
 
 #ifdef USE_MPI
-  MPI_Abort(MPI_COMM_WORLD,status);
+  //MPI_Abort(MPI_COMM_WORLD,status);
+  MPI_Abort(enzo_comm,status);
 #else
   //  my_exit(status);
 #endif

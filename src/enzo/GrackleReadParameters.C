@@ -132,10 +132,14 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
     ret += sscanf(line, "UVbackground = %d", &grackle_data->UVbackground);
     ret += sscanf(line, "Compton_xray_heating = %d",
                     &grackle_data->Compton_xray_heating);
+    //ret += sscanf(line, "LWbackground_model = %d",
+                    //&grackle_data->LWbackground_model);
     ret += sscanf(line, "LWbackground_intensity = %lf",
                   &grackle_data->LWbackground_intensity);
     ret += sscanf(line, "LWbackground_sawtooth_suppression = %d",
                   &grackle_data->LWbackground_sawtooth_suppression);
+    //ret += sscanf(line, "LWbackground_model = %d",
+                  //&grackle_data->LWbackground_model);
 
     ret += sscanf(line, "local_dust_to_gas_ratio = %f",
                   &grackle_data->local_dust_to_gas_ratio);
@@ -218,8 +222,7 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   code_units grackle_units;
   grackle_units.a_units = 1.0;
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1.0,
-    TimeUnits = 1.0, VelocityUnits = 1.0;
-  double MassUnits = 1.0;
+    TimeUnits = 1.0, VelocityUnits = 1.0, MassUnits = 1.0;
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
                &TimeUnits, &VelocityUnits, &MassUnits, InitTime) == FAIL) {
     ENZO_FAIL("Error in GetUnits.\n");

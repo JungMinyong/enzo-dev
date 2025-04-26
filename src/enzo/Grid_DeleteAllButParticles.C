@@ -30,7 +30,11 @@ void grid::DeleteAllButParticles()
   int i, j;
  
   //  this->DeleteParticles();
- 
+ #ifdef INDIVIDUALSTAR
+  if (IndividualStarOutputChemicalTags)
+    this->DeleteStellarAbundances();
+#endif
+
   for (i = 0; i < MAX_DIMENSION; i++) {
 #ifdef NBODY
     delete [] AccelerationFieldNoStar[i];

@@ -41,7 +41,10 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
 
-  const float EnergyThresholds[] = {13.6, 24.6, 54.4, 100.0}; //Only used for determining HI,HeI,HeII
+  const float EnergyThresholds[] = {HI_ionizing_energy,
+                                    HeI_ionizing_energy,
+                                    HeII_ionizing_energy,
+                                    100.0}; //Only used for determining HI,HeI,HeII
  
   RadiationSourceEntry *RS = RadiationSource;
   FLOAT min_beam_zvec, dot_prod;
@@ -145,10 +148,44 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
       fprintf(stdout, "Shine: Energy = %f eV", RS->Energy[ebin]);
     float photons_per_package;
 
+    // Type 3 = H2I_LW
+/*    if ( ( (!RadiativeTransferOpticallyThinH2 && MultiSpecies > 1) ||
+           (!RadiativeTransferOpticallyThinFUV))       &&
+	RS->Energy[i] < HI_ionizing_energy){
+
+      if (!RadiativeTransferOpticallyThinH2 && RS->Energy[i] > LW_threshold_energy) ebin = 3;
+      if (!RadiativeTransferOpticallyThinFUV && RS->Energy[i] < LW_threshold_energy) ebin = 4;
+    }*/
+
+    /*
+     The below two lines may present a problem if running with optically
+     thin H2 off and optically thin FUV off.... really I need to be running
+     with both ON at all times, even when using the other method for calculating
+     them..... OR just disable H2 and FUV in hard code permanantly for now.
+
+     This could be the reason why I'm getting SOOOO many photon packages
+
+       Jan 2017 - AJE
+    */
+
+
+    // Don't create LW photon packages if we're doing an optically-thin approx.
+    if (ebin == 3 && RadiativeTransferOpticallyThinH2)
+      continue;
+
     if(RS->Energy[ebin] <= 0)
       continue;
+
+    // Don't create IR photons if we're doing an optically-thin approx.
+    if (ebin == 4 && RadiativeTransferOpticallyThinIR)
+      continue;
+
+    // Don't create FUV photon packages if we're doing an optically-thin approx.
+    if (ebin == 7 && RadiativeTransferOpticallyThinFUV)
+      continue;
     /* If we are doing simple H2I, H2II and HM rates continue here. */
-    if(RS->Energy[ebin] <= 13.6 && RadiativeTransferOpticallyThinH2 == 1)
+    if(RS->Energy[ebin] <= HI_ionizing_energy &&
+       (RadiativeTransferOpticallyThinH2 == 1) && (RadiativeTransferOpticallyThinFUV==1))
       continue;
     
     photons_per_package = RampPercent * RS->Luminosity * 
@@ -160,10 +197,13 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
     /* 
      * Associate Energy Bin with type e.g. IR -> XRAYS 
      */
-    if(RS->Energy[ebin] >= 0.01 && RS->Energy[ebin] < 11.2) {
+    if ((RS->Energy[ebin] > FUV_threshold_energy) && (RS->Energy[ebin]<LW_threshold_energy) && ebin > 4){
+      this_type = FUVPEHEATING;
+    }
+    else if(RS->Energy[ebin] >= 0.01 && RS->Energy[ebin] < LW_threshold_energy) {
       this_type = IR; /* IR Case */
     }
-    else if(RS->Energy[ebin] < 13.6) {
+    else if(RS->Energy[ebin] < HI_ionizing_energy) {
       this_type = LW;  /* LW Case */
     }
     else if (RS->Energy[ebin] < 100.0) { //Set iHI or iHeI or iHeII

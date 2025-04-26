@@ -374,13 +374,13 @@ int grid::ComputeAccelerationFieldExternal()
 	 *     Dark Matter: NFW
 	 *------------------------------------------------------------------------*/
 
-	if (DiskGravity > 0) {
+  if (DiskGravity > 0 && !(DiskGravityDoublePower)) {
 
 		double accel, radius, rsquared, xpos, ypos = 0, zpos = 0, rcore,rcyl;
 		FLOAT dadt, a = 1;
 		double AngularMomentumx, AngularMomentumy, AngularMomentumz;
 		double MSDisk, SDiskScaleHeightR, SDiskScaleHeightz, MBulge, rBulge,
-					 DMMass, DMCon;
+					 DMMass, DMCon,rDMConst, densDMConst;
 
 		AngularMomentumx = DiskGravityAngularMomentum[0];
 		AngularMomentumy = DiskGravityAngularMomentum[1];
@@ -392,6 +392,8 @@ int grid::ComputeAccelerationFieldExternal()
 		rBulge = DiskGravityStellarBulgeR * Mpc_cm;
 		DMMass = DiskGravityDarkMatterMass * SolarMass;
 		DMCon = DiskGravityDarkMatterConcentration;
+		    rDMConst = DiskGravityDarkMatterR;
+    densDMConst = DiskGravityDarkMatterDensity;
 
 		/* Compute adot/a at time = t+1/2dt (time-centered). */
 		float DensityUnits=1, LengthUnits=1, TemperatureUnits=1, TimeUnits=1,

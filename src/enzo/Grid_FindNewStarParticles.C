@@ -24,7 +24,7 @@
 
 void InsertStarAfter(Star * &Node, Star * &NewNode);
 
-int grid::FindNewStarParticles(int level)
+int grid::FindNewStarParticles(int level, std::map<int, Star*>* const &StarParticleLookupMap)
 {
 
 	if (MyProcessorNumber != ProcessorNumber)
@@ -43,19 +43,33 @@ int grid::FindNewStarParticles(int level)
 				ParticleType[i] == -PARTICLE_TYPE_CLUSTER ||
 				ParticleType[i] == -PARTICLE_TYPE_COLOR_STAR ||
 				ParticleType[i] == -PARTICLE_TYPE_SIMPLE_SOURCE ||
+        ParticleType[i] == -PARTICLE_TYPE_INDIVIDUAL_STAR ||
+        ParticleType[i] == -PARTICLE_TYPE_INDIVIDUAL_STAR_REMNANT ||
+        ParticleType[i] == -PARTICLE_TYPE_INDIVIDUAL_STAR_WD ||
+        ParticleType[i] == -PARTICLE_TYPE_INDIVIDUAL_STAR_POPIII ||
+        ParticleType[i] == -PARTICLE_TYPE_INDIVIDUAL_STAR_UNRESOLVED ||
 				ABS(ParticleType[i]) == PARTICLE_TYPE_MBH ||
 				(StarParticleRadiativeFeedback == TRUE &&
 				 ParticleType[i] == PARTICLE_TYPE_STAR)) {
 
-			// Check if it already exists (wasn't activated on the last
-			// timestep, usually because of insufficient mass)
+      // Check if it already exists (wasn't activated on the last
+      // timestep, usually because of insufficient mass)
+      // this bit of code uses a lookup map to find the stars, saving computation when there are many stars
+  //MergerYS
+	      exists = (*StarParticleLookupMap).count(ParticleNumber[i]);
+      if (exists) {
+        cstar = (*StarParticleLookupMap)[ParticleNumber[i]];
+        cstar->SetLevel(level);
+      }
+	  
+/*
 			exists = false;
 			for (cstar = Stars; cstar; cstar = cstar->NextStar)
 				if (cstar->Identifier == ParticleNumber[i]) {
 					cstar->SetLevel(level);
 					exists = true;
 					break;
-				}
+				}*/
 
 			if (!exists) {
 				NewStar = new Star(this, i, level);

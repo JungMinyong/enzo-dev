@@ -31,7 +31,9 @@
 #define THRESHOLD_DENSITY_DB36 1e14
 #define THRESHOLD_DENSITY_DB37 5e14
 
-int grid::RadiativeTransferLWShielding(PhotonPackageEntry **PP, FLOAT &dP, 
+#define DEVCODE 1
+
+int grid::RadiativeTransferLWShielding(PhotonPackageEntry **PP, FLOAT &dP,
 				       FLOAT thisDensity, FLOAT ddr,
 				       int cellindex, float LengthUnits, int kdissH2INum, 
 				       int TemperatureField, float geo_correction)
@@ -147,6 +149,8 @@ int grid::RadiativeTransferLWShielding(PhotonPackageEntry **PP, FLOAT &dP,
   
   BaryonField[kdissH2INum][cellindex] += geo_correction * (*PP)->Photons * 
     dissrate;
+
+#if !DEVCODE
    if(BaryonField[kdissH2INum][cellindex] < tiny_number)
     {
 #if DEBUG
@@ -155,6 +159,21 @@ int grid::RadiativeTransferLWShielding(PhotonPackageEntry **PP, FLOAT &dP,
 #endif
       BaryonField[kdissH2INum][cellindex] = tiny_number;
     }
-      
+#endif
+
+
+  /// AJE Add leftover photons to PE flux bin:
+  ///   simplify these ifs in the future:
+  if ( (!RadiativeTransferOpticallyThinFUV) &&
+       (IndividualStarFUVHeating)
+     ){
+       const int FUVRateNum = FindField(FUVRate, this->FieldType, this->NumberOfBaryonFields);
+                         // for individual stars, make sure below is consistent with
+                         // Star_ComputePhotonRates energies (should probably just make this a param)
+       const double LW_energy = LW_photon_energy * erg_eV;
+       // AJE: Need to multiply FUVRate field by EnergyUnits in Grid_FinalizeRadiationField
+       BaryonField[FUVRateNum][cellindex] +=
+          ((*PP)->Photons*geo_correction - dP)*emission_dt_inv*LW_energy/(dx2);
+  }
   return SUCCESS;
 }

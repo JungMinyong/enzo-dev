@@ -1,3 +1,4 @@
+
 /***********************************************************************
 /
 /  STOCHASTIC FORCING CLASS METHOD: CommunicationBroadcastSpectrum

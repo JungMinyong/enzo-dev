@@ -27,7 +27,7 @@ LOCAL_HDF5_INSTALL = $(HDF5_BASE)
 #LOCAL_MPI = $(INTEL_PARALLEL_STUDIO_BASE)
 #LOCAL_MPI = $(OPENMPI_BASE)
 LOCAL_MPI = $(INTEL_ONEAPI_MPI_BASE)
-LOCAL_GRACKLE_INSTALL = $(HOME)/packages/grackle/build
+LOCAL_GRACKLE_INSTALL = $(HOME)/packages/grackle-aeos/build
 
 #LOCAL_CUDA_INSTALL = /mnt/sw/nix/store/bdhdh478f6slibd9zpgmgw8grnqq78im-cuda-11.4.4/
 LOCAL_CUDA_INSTALL = $(CUDA_BASE)
@@ -86,7 +86,7 @@ MACH_CFLAGS   =
 MACH_CXXFLAGS = -lcudart
 MACH_FFLAGS   = -lmpi -lrt -ldl -Wall # -W -Wconversion -Werror=compare-reals -Wall
 MACH_F90FLAGS = #-Wconversion -Werror -Werror=compare-reals -Wall
-MACH_LDFLAGS  =   
+MACH_LDFLAGS  =  -fsanitize=address -fno-omit-frame-pointer   
 
 
 #-----------------------------------------------------------------------

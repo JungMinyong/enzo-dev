@@ -137,6 +137,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   FileDirectedOutput = 1;
 
+  FreezeParticles = 0; // do not update particle velocity
+
   // Default Hierarchy File IO settings (1 = ASCII; 2 = HDF5+ASCII)
   HierarchyFileInputFormat = 1;
   HierarchyFileOutputFormat = 1;
@@ -200,6 +202,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MaximumRefinementLevel    = 2;                 // three levels (w/ topgrid)
   MaximumGravityRefinementLevel = INT_UNDEFINED;
   MaximumParticleRefinementLevel = -1;            // unused if negative
+  MaximumRefinementLevelPhysicalScale = -1.0;     // unused if negative - move max refinement level to match this physical scale (in pc)
   MustRefineRegionMinRefinementLevel = -1;        // unused if negative
   MetallicityRefinementMinLevel = -1;
   MetallicityRefinementMinMetallicity = 1.0e-5;
@@ -252,6 +255,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     CoolingRefineRegionRightEdge[dim]  = 1.0;
     DiskGravityPosition[dim]        = 0.0;
     DiskGravityAngularMomentum[dim] = 0.0;
+    DiskGravityDarkMatterCOM[dim]   = 0.0;
     GalaxySimulationRPSWindVelocity[dim] = 0.0;
     GalaxySimulationPreWindVelocity[dim] = 0.0;
     StellarWindCenterPosition[dim] = 0.5;
@@ -379,6 +383,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ExternalGravityDensity      = 0.0;
   ExternalGravityRadius       = 0.0;
 
+  // for externalgravity type 2 - 4
+  ExternalGravityTimeOn       = 0.0;               // time in code units to turn on time varying external potential
+  ExternalGravityTimeOff      = huge_number;       // time in code units to turn off time varying external potential
+  ExternalGravityTime         = NULL;
+  for (dim = 0 ; dim < MAX_DIMENSION; dim ++){
+    ExternalGravityTimePositions[dim] = NULL;
+  }
+  ExternalGravityMass         = 0.0; // mass in solar masses of time varying point source potential (EG = 4)
   UniformGravity              = FALSE;             // off
   UniformGravityDirection     = 0;                 // x-direction
   UniformGravityConstant      = 1.0;
@@ -395,6 +407,23 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   DiskGravityStellarBulgeR           = 4.0E-4;      // Mpc
   DiskGravityDarkMatterMass          = 1.0e12;        // Solar Masses
   DiskGravityDarkMatterConcentration = 10.0;
+  DiskGravityDarkMatterR             = 2.3E-2;      // Mpc
+  DiskGravityDarkMatterDensity       = 3.81323E-25; // CGS
+  DiskGravityDarkMatterMassInterior  = 0.0;         // solar masses - Only used when above is -1
+  DiskGravityDarkMatterMassInteriorR = 0.0;         // Mpc - Only used in conjuction with above
+  DiskGravityDarkMatterUpdateCOM     = 0;           // when live DM is used, compute COM every root time step
+  DiskGravityDarkMatterRefineCore    = 0;           // if > 0, update must refine region to be around halo center with this being 1/2 side length in code units
+
+  DiskGravityDoublePower             = FALSE;       // use general doubnle power law DM dis - use with particles
+  DiskGravityDoublePowerR            = NULL;
+  DiskGravityDoublePowerMass         = NULL;
+  DiskGravityDoublePowerPot          = NULL;
+  DiskGravityDarkMatterCutoffR       = huge_number;
+  DiskGravityDarkMatterAlpha         = 1.0;
+  DiskGravityDarkMatterBeta          = 3.0;
+  DiskGravityDarkMatterGamma         = 1.0;
+  DiskGravityDarkMatterDelta         = -1.0;
+  DiskGravityDarkMatterRDecay        = huge_number;
 
   SelfGravity                 = FALSE;             // off
   SelfGravityGasOff           = FALSE;             // off
@@ -416,6 +445,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   GalaxySimulationPreWindDensity = 1.0;
   GalaxySimulationPreWindTotalEnergy = 1.0;
+
+  GalaxySimulationInitialStellarDist = 0;          // only works in individual star maker - initialize a stellar distribution if ON
 
   DualEnergyFormalism         = FALSE;             // off
   DualEnergyFormalismEta1     = 0.001;             // typical 0.001
@@ -572,6 +603,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MustRefineParticlesCreateParticles = 0;
   MustRefineParticlesRefineToLevelAutoAdjust = FALSE;
   MustRefineParticlesMinimumMass   = 0.0;
+  MustRefineParticlesBufferSize    = 8;
   ComovingCoordinates              = FALSE;        // No comoving coordinates
   StarParticleCreation             = FALSE;
   StarParticleFeedback             = FALSE;
@@ -609,9 +641,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarFeedbackDistRadius           = 0;
   StarFeedbackDistCellStep         = 0;
   StarFeedbackDistTotalCells       = 1;
+  StarFeedbackPreSN                = TRUE;
   StarMakerUseJeansMass            = TRUE;
   MultiMetals                      = FALSE;
   NumberOfParticleAttributes       = INT_UNDEFINED;
+  NumberOfParticleTableIDs         = MAX_NUMBER_OF_PARTICLE_TABLE_POSITIONS;
+  ParticleAttributeTableStartIndex = INT_UNDEFINED;
   ParticleTypeInFile               = TRUE;
   ReadGhostZones                   = FALSE;
   WriteGhostZones                  = FALSE;
@@ -714,7 +749,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PopIIIUseHypernova               = TRUE;         // TRUE for HN yields, FALSE for CCSN
   PopIIISupernovaExplosions        = TRUE;         // TRUE for supernova energy injection
   PopIIIOutputOnFeedback           = FALSE;        // TRUE to output at creation and supernova
+  PopIIIRadiationModel             = 0;            // 0: Schaerer+2012 1: Heger+Woosley 2010
   IMFData                          = NULL;
+  SecondaryIMFData                 = NULL;
+  EventDTD                         = NULL;
 
   MBHAccretion                     = FALSE;        // 1: Bondi rate, 2: fix temperature, 3: fix rate, 4: Bondi with v_rel=0, 5: Bondi with v_rel=0 and vorticity
   MBHAccretionRadius               = 50;           // pc
@@ -751,6 +789,164 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   H2StarMakerH2DissociationFlux_MW = 1.0;
   H2StarMakerH2FloorInColdGas = 0.0;
   H2StarMakerColdGasTemperature = 1e4;
+
+  // Paramters for Individual Star Star formation and Feedback
+
+  /* PopIII Stars */
+  TypeIILowerMass = 11.0;
+  TypeIIUpperMass = 40.0;
+  PISNLowerMass   = 140.0;
+  PISNUpperMass   = 260.0;
+  PopIIIPISNEnergy = -1.0;
+
+  UseFUVBackground                     =    1;     // apply FUV background from UVB for Pe heating - only HM2012
+  MetalMixingExperiment                =    0;     // turn on to add by-hand injection events to examine enrichment (see )
+  IndividualStarRefineToLevel          =   -1;     // Level to force-refine to aroudn star particles (region buffer size in radius)
+  IndividualStarRefineToPhysicalRadius =   -1;     // Physical radius (in pc) to force refinement around star particles. Refine buffer will be 1.0001 * IndividualStarRefineToPhysicalRadius * 2 (only used if > 0)
+  IndividualStarRefineForRadiation     =    0;     // By default, above refine to level ONLY for mass / energy feedback. Also do when stars are ionizing if ON
+  IndividualStarRefineBufferSize       =    4;
+  /* IndividualStar: Star Formation */
+  IndividualStarTemperatureLimit       =   -1;
+  IndividualStarTemperatureLimitFactor =    2;
+  IndividualStarICSupernovaRate        =   0.0;     // rate (# / yr) of supernova for initial driving - off if zero
+  IndividualStarICSupernovaTime        =  10.0;     // (Myr) length of time to do SN driving if true - rate dec linearly starting at 1/2 this time
+  IndividualStarICSupernovaR           =   -1.0;     // radius limit for SN - set to galaxy scale radius
+  IndividualStarICSupernovaZ           =   -1.0;     // vertical height limit for supernova - set to Galaxy scale height
+  IndividualStarICSupernovaMethod      =     1;     // 1: uniform disk with R and Z - 2: uniform sphere using R only
+  IndividualStarICSupernovaFromFile    =     0;     // if ON, loads SNR as a function of time from a file.
+  IndividualStarICSupernovaInjectionMethod = 1;   // 1 = thermal only, spherical ball - 2: thermal and kinetic mix - Simpson et. al. 2015
+  for (i = 0; i < 3; i ++)
+      IndividualStarICSupernovaPos[i] = 0.5;
+
+  IndividualStarWDFixedLifetime      =  -1.0;         // debugging parameter - fixed lifetime in Myr before SNIa if > 0
+  IndividualStarCreationStencilSize  =     3;         // n x n cell region (on each side) to sample for star formation
+  IndividualStarCheckVelocityDiv     =     1;         // use velocity divergence in SF check
+  IndividualStarICLifetimeMode       =     0;         // 0 - use interpolated lifetime, 1 - set to now, 2 - from file
+  IndividualStarRefineTime           =    0.1;        // for particles with any SN, treat as must refine for this long after death (in Myr)
+  // StarParticleOverdensityThreshold is used as primary density threshold parameter
+  IndividualStarSecondaryOverDensityThreshold = -1;  // in cc - if < 0, set to over density thresh in ReadParamFile
+  IndividualStarTemperatureThreshold = 1.0E4;       // threshold for star formation (T < T_thresh)
+  IndividualStarMassFraction         =   0.5;         // Maximum fraction of region that can be converted into stars in one timestep
+  IndividualStarSFGasMassThreshold   = 200.0;         // for SF algorithm 1, size of mass chunk that will be 100% converted to stars
+  IndividualStarPopIIIFormation      =     0;         // flag to allow for Pop III star formation in gas below a Z threshold
+                                                      // also tracks PopIII metal enrichment w/ additional field (but ONLY when tags are written to file)
+  IndividualStarPopIIISeparateYields =     0;         // in addition to above, track whole separate set of stellar yields for each element
+
+  IndividualStarRProcessModel        =     0;         // Include an R-process model (TBD) and independent tracer field
+  IndividualStarRProcessMinMass      = 24.37;         // Minimum mass of stars for r-prcess tracing. Default is 1% for Kroupa IMF
+  IndividualStarRProcessMaxMass      = 25.00;         // assuming SNe explode from 8 to 25 Msun
+  IndividualStarTrackAGBMetalDensity =     0;         // Track separate AGB metal mass field
+  IndividualStarTrackWindDensity     =     0;         // Track separate wind metal mass field (non-AGB)
+  IndividualStarTrackSNMetalDensity  =     0;         // Track spearate SNII AND SNIa mass fields
+
+      // for popIII SF for individual stars, use the same PopIII IMF flags that already exist
+      // 
+  IndividualStarIMF                  =     0;         // 0: salpeter, 1: kroupa, 2: chabrier
+  IndividualStarIgnoreNegativeMass   = 0; // Experimental!!!
+  IndividualStarIMFCalls             =     0;         // Do not touch - number of calls to IMF so far in simulation
+  IndividualStarSalpeterSlope        = -1.35;         // slope
+  IndividualStarKroupaAlpha1         =  -0.3;         // kroupa slope over mass range
+  IndividualStarKroupaAlpha2         =  -1.3;         // '' over 
+  IndividualStarKroupaAlpha3         =  -2.3;         // '' over
+  IndividualStarIMFLowerMassCutoff   =   1.0;         // Solar masses
+  IndividualStarIMFUpperMassCutoff   = 100.0;         // Solar masses
+  IndividualStarIMFMassFloor         = IndividualStarIMFLowerMassCutoff;         // If this is above the lower mass cutoff, stars below this mass will get grouped together into a single particle
+  IndividualStarVelocityDispersion   =   1.0;         // initial velocity disperion of stars in SF region (km/s)
+  IndividualStarIMFSeed              = INT_UNDEFINED; // random number seed for IMF sampling
+
+  /* IndividualStar: Stellar Feedback (non-radiation) */
+  IndividualStarFeedbackOverlapSample = 16;         // number of points per cell to compute fractional overlap in feedback routine
+  IndividualStarFeedbackStencilSize   = 3;          // Size of feedback injection region (radius in number of cells)
+  IndividualStarFeedbackRadius        = -1.0;       // Used (over above) if > 0. Feedback radius in pc (not # of grid zones)
+
+  IndividualStarStellarWinds          = 1;          // on or off
+  IndividualStarWindTemperature       = 1.0E6;      // temperature cap on stellar wind source region (K)
+  IndividualStarUseWindMixingModel    = 0;          // account for unresolved mixing at wind/ISM shell interface and allow mass loading
+  IndividualStarStellarWindVelocity   = -1;         // when < 0, use Leithener et. al. model for stellar wind velocities
+                                                    // when > 0, uniform wind velocity for all stars in km / s
+                                                    // when = 0, use this to do mass deposition without energy injection
+  IndividualStarMaximumStellarWindVelocity = 3000.0; // km/s - maximum wind velocity in all cases
+  IndividualStarAGBWindVelocity       = 20.0;       // km/s - wind velocity for all AGB stars
+
+  IndividualStarAGBThreshold            = 8.0;      // solar masses - stars below this mass have winds at end of life only
+  IndividualStarSNIIMassCutoff          = 8.0;      // Solar masses - stars above this go core collapse supernova
+  IndividualStarDirectCollapseThreshold = 25.0;     // solar masses - no SNII and no ejecta above this mass
+  IndividualStarSupernovaEnergy         = 1;        // when < 0, use factor x mc^2 for supernova energy injection
+                                                    // when > 0, constant supernova energy in units of 10^51 erg
+  IndividualStarPrintSNStats            = 0;        // print out grid and density info for each SN explosion
+
+  IndividualStarSNIaModel               = 2;        // 0: off, 1: power-law DTD, 2: Ruiter+2011
+  IndividualStarDTDSlope                = 1.20;     // beta (positive) - Default from Maoz et. al. 2012
+  IndividualStarWDMinimumMass           = 1.7;      // Solar masses - min MS projenitor mass that forms WD
+  IndividualStarWDMaximumMass           = 8.0;      // solar masses - max MS projenitor mass that forms WD
+  IndividualStarSNIaMinimumMass         = 3.0;      // Solar masses - min MS projenitor mass that goes SNIa after WD formation
+  IndividualStarSNIaMaximumMass         = 8.0;      // solar masses - max MS projenitor mass that goes SNIa after WD formation
+  IndividualStarSNIaFraction            = 0.043;    // Fraction of MS stars that can be SNIa progenitors that will go SNIa in hubble time
+                                                    // If using Kroupa IMF 0.08 - 120 with SNIa model 2 0.1508
+
+  /* IndividualStar: Yields Tracking */
+  IndividualStarFollowStellarYields  = 0;           // on or off
+  IndividualStarSurfaceAbundances    = 0;           // return surface abundances in addition to yields
+  LimongiAbundances                  = 0;           // set to 1 if using Limongi+ yields and surface abundance return
+  IndividualStarExtrapolateYields    = 0;           // on or off - extrapolate yields from NuGrid set by scaling. If off, use PARSEC wind yields
+  IndividualStarOutputChemicalTags   = 0;           // on or off - if ON does not tag particles, but instead outputs them to a file
+  IndividualStarChemicalTagFilename  = NULL;        // filename for above
+  IndividualStarSaveTablePositions   = 1;           // save table positions as particle attributes to save time
+
+  /* IndividualStar: Stellar Feedback - Radiation */
+  IndividualStarRadiationMinimumMass = 8.0;         // Solar masses - Stars above this are posible rad sources
+  IndividualStarOTRadiationMass      = 8.0;         // Solar masses - Stars above this are allowed to have optically thin radiation
+  IndividualStarIonizingRadiationMinimumMass = 8.0; // Solar masses - stars above this are allowed ionizing radiation
+  IndividualStarFUVHeating           = 0;           // on or off - include Bakes & Tielens PE heating (and HM dissociation)
+  IndividualStarLWRadiation          = 0;           // on or off - include LW photons from stars (H2I and H2II dissociation)
+  IndividualStarIRRadiation          = 0;           // on or off - include IR-band radiation for H2II and HM dissociation
+  IndividualStarFUVTemperatureCutoff = 2.0E4;       // K - if FUV heating is on, heat up to this temperature
+  IndividualStarBlackBodyOnly        = 0;           // on or off - On = BB spectrum only - Off = OSTAR2002 when applicable
+
+
+  IndividualStarBlackBodyq0Factors[0]  = 0.13422;      // if OSTAR is ON, adjust black body to be continious. In truth this
+  IndividualStarBlackBodyq0Factors[1]  = 2.91754;      // varies with metallicity, but these factors are averaged over Z's.
+  IndividualStarBlackBodyq1Factors[0]  = 6.63647E-3;   // First factor applies to lower mass stars, typically below the
+  IndividualStarBlackBodyq1Factors[1]  = 5.10396;      // default 8 Msun limit for tracking these stars, and latter is for
+  IndividualStarBlackBodyq2Factors[0]  = 2.87337E-5;   // higher mass (at higher metallicities, all stars are on-grid). The
+  IndividualStarBlackBodyq2Factors[1]  = 3.68749E-2;   // correction works well over the metallicity range  for all but
+  IndividualStarBlackBodyIRFactors[0]  = 2.32886;      // the HeII band, which varies more with Z than the others
+  IndividualStarBlackBodyIRFactors[1]  = 2.38800;
+  IndividualStarBlackBodyFUVFactors[0] = 3.94039;
+  IndividualStarBlackBodyFUVFactors[1] = 2.68280;
+  IndividualStarBlackBodyLWFactors[0]  = 6.10441;
+  IndividualStarBlackBodyLWFactors[1]  = 2.78500;
+
+  PhotoelectricHeatingDustModel = 1; // 0 - no shielding, linear in metallicity ; 1 - approx local shield, dust to gas ratio model
+  PhotoelectricHeatingDustModelEfficiency = 0.0;    // Pe heating efficiency - <= 0 uses fit to Wolfire et. al. 2003 at solar radius
+
+  /* Stellar Yields Parameters */
+#ifdef NEWYIELDTABLES
+  StellarYieldsFilename              = "IndividualStarYields.h5";
+#endif
+  StellarYieldsNumberOfSpecies       = INT_UNDEFINED; // number of species to follow - optional, calculated automatically if left undefined
+  StellarYieldsScaledSolarInitialAbundances = 0;    // use solar abundances to set initial mass fractions, linearly scaled by metalliticy
+
+  StellarAbundancesFilename = NULL;
+
+  for (i = 0; i < MAX_STELLAR_YIELDS; i++){
+    StellarYieldsAtomicNumbers[i] = -1;
+  }
+  for (i = 0; i < MAX_STELLAR_YIELDS; i++){
+    StellarYieldsResetAtomicNumbers[i] = -1;
+  }
+  ResetStellarAbundances = 0;
+
+  // chemical evolution test star
+  ChemicalEvolutionTestNumberOfStars   = 1;
+  ChemicalEvolutionTestStarMass        = 20.0   ; // solar masses
+  ChemicalEvolutionTestStarMetallicity = 0.0001 ;
+  ChemicalEvolutionTestStarFormed      = FALSE  ;
+  ChemicalEvolutionTestStarLifetime    = 0      ; // 0 is off > 0 lifetime in Myr
+  for (dim = 0; dim < MAX_DIMENSION; dim++) {
+    ChemicalEvolutionTestStarPosition[dim] = 0.5; // code units - center of box
+    ChemicalEvolutionTestStarVelocity[dim] = 0.0;
+  }
 
   StarMakerMinimumMassRamp = 0;
   StarMakerMinimumMassRampStartTime = FLOAT_UNDEFINED;
@@ -918,6 +1114,31 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TestProblemData.MultiMetals = 0;
   TestProblemData.MultiMetalsField1_Fraction = tiny_number;
   TestProblemData.MultiMetalsField2_Fraction = tiny_number;
+
+  // AJE alpha process, iron, s and r process elements
+  TestProblemData.NI_Fraction  = tiny_number;
+  TestProblemData.MgI_Fraction = tiny_number;
+  TestProblemData.FeI_Fraction = tiny_number;
+  TestProblemData.YI_Fraction  = tiny_number;
+  TestProblemData.BaI_Fraction = tiny_number;
+  TestProblemData.LaI_Fraction = tiny_number;
+  TestProblemData.EuI_Fraction = tiny_number;
+  // same for second set of chemical tracers:
+  TestProblemData.CI_Fraction_2 = tiny_number;
+  TestProblemData.NI_Fraction_2 = tiny_number;
+  TestProblemData.OI_Fraction_2 = tiny_number;
+  TestProblemData.MgI_Fraction_2 = tiny_number;
+  TestProblemData.SiI_Fraction_2 = tiny_number;
+  TestProblemData.FeI_Fraction_2 = tiny_number;
+  TestProblemData.YI_Fraction_2  = tiny_number;
+  TestProblemData.LaI_Fraction_2 = tiny_number;
+  TestProblemData.BaI_Fraction_2 = tiny_number;
+  TestProblemData.EuI_Fraction_2 = tiny_number;
+
+  for (int i = 0; i < MAX_STELLAR_YIELDS; i++){
+    TestProblemData.ChemicalTracerSpecies_Fractions[i]   = tiny_number;
+    TestProblemData.ChemicalTracerSpecies_Fractions_2[i] = tiny_number;
+  }
 
   TestProblemData.GloverChemistryModel = 0;
   // This is for the gas in the surrounding medium, for the blast wave problem.

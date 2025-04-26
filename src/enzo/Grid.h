@@ -12,6 +12,7 @@
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
 #include <vector>
+#include <map>
 #include "ProtoSubgrid.h"
 #include "ListOfParticles.h"
 #include "region.h"
@@ -61,6 +62,7 @@ struct HierarchyEntry;
 //};
 
 
+int DetermineNumberOfAbundanceAttributes(void);
 
 
 extern int CommunicationDirection;
@@ -108,7 +110,10 @@ class grid
 		float  grid_BoundaryMassFluxContainer[MAX_NUMBER_OF_BARYON_FIELDS]; // locally stores mass flux across domain boundary
 		fluxes *BoundaryFluxes;
 
-		// For restart dumps
+  // AJE: grid averaged abundances
+  float AveragedAbundances[MAX_STELLAR_YIELDS];
+
+  // For restart dumps
 
 		int NumberOfSubgrids;
 		fluxes **SubgridFluxStorage;
@@ -137,13 +142,18 @@ class grid
 		int   *ParticleType;                     // type of particle
 		double *ParticleAttribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
 
-		//
-		//  Star particle data
-		//
-		int NumberOfStars;
+#ifdef INDIVIDUALSTAR
+  float *StellarAbundances[MAX_STAR_ABUNDANCES]; // to temporarily tag new stars before output to file
+#endif
+
+//
+//  Star particle data
+//
+  int NumberOfStars;
 		int NumberOfNbodyStars;
 		Star *Stars;
 
+  int Grid_ChemicalEvolutionTestStarFormed;
 		//
 		//  Active particle data
 		//
@@ -179,6 +189,7 @@ class grid
 		FLOAT  GravitatingMassFieldLeftEdge[MAX_DIMENSION];
 		int    GravitatingMassFieldDimension[MAX_DIMENSION];
 		FLOAT  GravitatingMassFieldCellSize;     // all dimensions must be the same
+		//float *GravitatingMassFieldParticles;	 // for particles only
 		FLOAT  GravitatingMassFieldParticlesLeftEdge[MAX_DIMENSION];
 		FLOAT  GravitatingMassFieldParticlesCellSize;
 		int    GravitatingMassFieldParticlesDimension[MAX_DIMENSION];
@@ -416,13 +427,22 @@ class grid
 
 		int CheckTimeStep(float dt) {return ((dtFixed > dt) ? FAIL : SUCCESS);};
 
+/* Debugging function for looping over a field over all cells in a grid to
+   check for negative values */
+
+   int CheckField(int FieldNum);
+   int CheckDensity(void);
+   int CheckOTRadiation(void);
 		/* Return time, timestep */
 
 		FLOAT ReturnTime() {return Time;};
 		FLOAT ReturnOldTime() {return OldTime;};
 		float ReturnTimeStep() {return dtFixed;};
 
-		/* Return, set grid ID */
+/* Return cell width */
+  float ReturnCellWidth(){ return CellWidth[0][0];};
+
+  /* Return, set grid ID */
 
 		void SetGridID(int id) { ID = id; };
 		int GetGridID(void) { return ID; };
@@ -641,7 +661,7 @@ class grid
 
 		/* Baryons: compute the cooling time. */
 
-		int ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly=FALSE);
+   int ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly=FALSE, int ReturnAbsValue=TRUE);
 
 		/* Baryons: compute cooling rate for user supplied data */
 
@@ -888,6 +908,14 @@ class grid
 
 		/* Sum particle mass flagging fields into ProcessorNumber if particles
 			 aren't local. */
+#ifdef INDIVIDUALSTAR // NEED TO DO THINS LIKE REBUILD HIERARCHY FUNCTIONS
+   int SetParticleMassFlaggingField(
+                                    TopGridData *MetaData, Star *&AllStars,
+                                    int StartProc=0, int EndProc=0, int level=-1,
+				    int ParticleMassMethod=-1, int MustRefineMethod=-1,
+				    int *SendProcs=NULL,
+				    int NumberOfSends=0);
+#endif
 
 		int SetParticleMassFlaggingField(int StartProc=0, int EndProc=0, int level=-1, 
 				int ParticleMassMethod=-1, int MustRefineMethod=-1,
@@ -928,10 +956,22 @@ class grid
 
 		/* Particles: deposit particles to particle mass flagging field. */
 
+//  Need both of these - first one for my individual star refine, but
+//    this can be optimized and combined to a single routine
+#ifdef INDIVIDUALSTAR
 		int DepositMustRefineParticles(int pmethod, int level,
-				bool KeepFlaggingField);
+				  bool KeepFlaggingField
+                                  , TopGridData *MetaData, Star *&AllStars
+                                  );
+#endif
 
-		/* Particles: deposit regions in the feedback zone to ensure flagging */
+   int DepositMustRefineParticles(int pmethod, int level,
+                                  bool KeepFlaggingField
+                                  );
+
+
+
+/* Particles: deposit regions in the feedback zone to ensure flagging */
 
 		int DepositRefinementZone(int level, FLOAT* ParticlePosition, FLOAT RefinementRadius);
 
@@ -1287,8 +1327,11 @@ class grid
 
 		int AddExternalPotentialField(float *field);
 
+/* DiskGravity: When using particles, compute local COM to compute global COM. */
 
-		/* Particles + Gravity: Clear ParticleAccleration. */
+  int DiskGravityComputeParticleCOM(FLOAT *localCOM, float & localMass);
+
+/* Particles + Gravity: Clear ParticleAccleration. */
 
 		int ClearParticleAccelerations();
 		int ClearParticleAccelerationsNoStar();
@@ -1351,6 +1394,7 @@ class grid
 			}
 		};
 
+   int AddTimeVaryingExternalAcceleration(void);
 		/* Gravity: Add fixed, external acceleration to baryons & particles. */
 
 		int AddExternalAcceleration();
@@ -1394,6 +1438,9 @@ class grid
 		int ComputeDomainBoundaryMassFlux(float *allgrid_BoundaryMassFluxContainer,
 				TopGridData *MetaData);
 
+#ifdef INDIVIDUALSTAR
+  int ApplyTemperatureLimit(void);
+#endif
 #ifdef TRANSFER
 		// -------------------------------------------------------------------------
 		// Functions for use with coupled radiation-hydrodynamics solver.
@@ -1555,8 +1602,14 @@ class grid
 
 		int MoveAllParticlesOld(int NumberOfGrids, grid* TargetGrids[]);
 
-		/* Particles: Move particles that lie within this grid from the TargetGrid
-			 to this grid. */
+#ifdef INDIVIDUALSTAR
+/* */
+   int MoveParticleAbundances(int NumberOfGrids, grid* TargetGrids[]);
+/* */
+#endif
+
+/* Particles: Move particles that lie within this grid from the TargetGrid
+              to this grid. */
 
 		//   int MoveSubgridParticles(grid *TargetGrid);
 
@@ -1650,10 +1703,80 @@ class grid
 			}   
 		};
 
-		void DeleteActiveParticles() {
-			NumberOfActiveParticles = 0;
-			this->ActiveParticles.clear();
-		}
+#ifdef INDIVIDUALSTAR
+   void DeleteStellarAbundances(){
+     if(StellarAbundances == NULL) return;
+     int i;
+     int num_extra = 0;
+     if (IndividualStarTrackAGBMetalDensity) num_extra++;
+     if (IndividualStarPopIIIFormation) num_extra = num_extra + 2;
+     if (IndividualStarPopIIISeparateYields) num_extra += StellarYieldsNumberOfSpecies-2; // minus H He
+     if (IndividualStarTrackWindDensity) num_extra += 2;
+     if (IndividualStarTrackSNMetalDensity){
+       num_extra = num_extra + 2;
+       if (IndividualStarSNIaModel == 2){ num_extra += 3;}
+     }
+     if (IndividualStarRProcessModel) num_extra++;
+     for (i = 0; i < StellarYieldsNumberOfSpecies + num_extra; i++){
+       if (StellarAbundances[i] != NULL) delete [] StellarAbundances[i];
+       StellarAbundances[i] = NULL;
+     }
+     return;
+   };
+   void OutputStellarAbundances(int * indeces){
+     for (int n = 0; n < NumberOfParticles; n++){
+       // indeces array contains list of indexes
+       // for the new particles - negative value
+       // in indeces array marks end of new particles
+
+       int index = indeces[n];
+       if (index < 0) break;
+
+       FILE *fptr;
+
+       // print star particle properties, grid info, and abundances
+       // this is meant to be enough info that interesting analysis can be done off of this data
+       // file alone, without reference to data dump (e.g. MDFs)
+
+       fprintf(fptr, "StellarAbundances P(%" ISYM "): %" ISYM " %" ISYM " %" ISYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM "\n",
+              MyProcessorNumber,
+              this->ID, ParticleNumber[index], ParticleType[index],
+              ParticlePosition[0][index], ParticlePosition[1][index], ParticlePosition[2][index],
+              ParticleMass[index],
+              ParticleAttribute[3][index],  // BirthMass
+              ParticleAttribute[2][index],  // metallicity
+              ParticleAttribute[0][index],  // formation time
+              ParticleAttribute[1][index]); // life time
+
+       int i = 0;
+       int num_extra = 0;
+
+       if (IndividualStarTrackAGBMetalDensity) num_extra++;
+       if (IndividualStarPopIIIFormation) num_extra = num_extra + 2;
+       if (IndividualStarPopIIISeparateYields) num_extra += StellarYieldsNumberOfSpecies-2; // minus H He
+       if (IndividualStarTrackWindDensity) num_extra += 2;
+       if (IndividualStarTrackSNMetalDensity){
+         num_extra = num_extra + 2;
+         if (IndividualStarSNIaModel == 2){ num_extra += 3;}
+       }
+       if (IndividualStarRProcessModel) num_extra++;
+
+       for (i = 0; i < StellarYieldsNumberOfSpecies + num_extra; i++){
+         fprintf(fptr,"     %" ESYM ,StellarAbundances[i][index]);
+       }
+
+       fprintf(fptr,"\n");
+     }
+     // end output stellar abundances
+     return;
+   };
+#endif
+
+
+  void DeleteActiveParticles() {
+    NumberOfActiveParticles = 0;
+    this->ActiveParticles.clear();
+  }
 
 		void CorrectActiveParticleCounts() {
 			NumberOfActiveParticles = ActiveParticles.size();
@@ -1677,7 +1800,11 @@ class grid
 
 		void SetParticlePointers(float *Mass, PINT *Number, int *Type,
 				FLOAT *Position[], 
-				float *Velocity[], float *Attribute[]) {
+			    float *Velocity[], float *Attribute[]
+#ifdef INDIVIDUALSTAR
+                          , float *Abundances[]
+#endif
+    ) {
 			ParticleMass   = Mass;
 			ParticleNumber = Number;
 			ParticleType   = Type;
@@ -1689,7 +1816,30 @@ class grid
 				ParticleAttribute[i] = Attribute[i];
 		};
 
-		/* Particles: Set new star particle index. */
+#ifdef INDIVIDUALSTAR
+   void SetParticlePointers(float *Mass, PINT *Number, int *Type,
+                            FLOAT *Position[], float *Velocity[],
+                            float *Attribute[]){
+
+     SetParticlePointers(Mass, Number, Type, Position,
+                         Velocity, Attribute, NULL);
+   };
+
+   void AllocateStellarAbundances(int NumberOfNewParticles){
+     int i = 0;
+
+     int num_abundances = DetermineNumberOfAbundanceAttributes();
+
+     for (i = 0; i < num_abundances; i++){
+       StellarAbundances[i] = new float[NumberOfNewParticles];
+     }
+
+     return;
+   };
+#endif
+
+
+/* Particles: Set new star particle index. */
 
 		void SetNewParticleIndex(int &NumberCount1, PINT &NumberCount2);
 		void SetNewActiveParticleIndex(PINT &NumberCount);
@@ -2234,12 +2384,12 @@ class grid
 		int CollectParticles(int GridNum, int* &NumberToMove, 
 				int &StartIndex, int &EndIndex, 
 				particle_data* &List, int CopyDirection);
-		int CollectActiveParticles(int GridNum, int* &NumberToMove,
-				int &StartIndex, int &EndIndex,
-				ActiveParticleList<ActiveParticleType> &List, int CopyDirection);
 		int CollectStars(int GridNum, int* &NumberToMove, 
 				int &StartIndex, int &EndIndex, 
 				star_data* &List, int CopyDirection);
+		int CollectActiveParticles(int GridNum, int *&NumberToMove,
+								   int &StartIndex, int &EndIndex,
+								   ActiveParticleList<ActiveParticleType> &List, int CopyDirection);
 
 		// Only used for static hierarchies
 		int MoveSubgridStars(int NumberOfSubgrids, grid* ToGrids[],
@@ -2363,16 +2513,27 @@ class grid
 		/* Identify shock fields. */
 		int IdentifyShockSpeciesFields(int &MachNum,int &PSTempNum, int &PSDenNum);
 
-		// Identify Simon Glover Species Fields
-		int IdentifyGloverSpeciesFields(int &HIINum,int &HINum,int &H2INum,
-				int &DINum,int &DIINum,int &HDINum,
-				int &HeINum,int &HeIINum,int &HeIIINum,
-				int &CINum,int &CIINum,int &OINum,
-				int &OIINum,int &SiINum,int &SiIINum,
-				int &SiIIINum,int &CHINum,int &CH2INum,
-				int &CH3IINum,int &C2INum,int &COINum,
-				int &HCOIINum,int &OHINum,int &H2OINum,
-				int &O2INum);
+  /* Identify chemical tracer fields */
+  int IdentifyChemicalTracerSpeciesFieldsByNumber( int &field_num,
+                                                   const int &atomic_number,
+                                                   int ion_level = 0,
+                                                   int element_set = 1);
+  /*
+  int IdentifyChemicalTracerSpeciesFields(int  &CINum, int  &NINum, int  &OINum,
+                                          int &MgINum, int &SiINum, int &FeINum,
+                                          int  &YINum, int &BaINum, int &LaINum,
+                                          int &EuINum);
+  */
+  // Identify Simon Glover Species Fields
+  int IdentifyGloverSpeciesFields(int &HIINum,int &HINum,int &H2INum,
+				  int &DINum,int &DIINum,int &HDINum,
+				  int &HeINum,int &HeIINum,int &HeIIINum,
+				  int &CINum,int &CIINum,int &OINum,
+				  int &OIINum,int &SiINum,int &SiIINum,
+				  int &SiIIINum,int &CHINum,int &CH2INum,
+				  int &CH3IINum,int &C2INum,int &COINum,
+				  int &HCOIINum,int &OHINum,int &H2OINum,
+				  int &O2INum);
 
 		/* Zeus Solver. */
 
@@ -2780,7 +2941,11 @@ class grid
 						int CosmologySimulationManuallySetParticleMassRatio,
 						float CosmologySimulationManualParticleMassRatio,
 						int CosmologySimulationCalculatePositions,
-						float CosmologySimulationInitialUniformBField[]);
+			  float CosmologySimulationInitialUniformBField[]
+#ifdef INDIVIDUALSTAR
+      , float CosmologySimulationInitialChemicalSpeciesFractions[]
+#endif
+      );
 
 				int CosmologyReadParticles3D(
 						char *CosmologySimulationParticleVelocityName,
@@ -2835,49 +3000,99 @@ class grid
 						int CosmologySimulationCalculatePositions,
 						FLOAT SubDomainLeftEdge[],
 						FLOAT SubDomainRightEdge[],
-						float CosmologySimulationInitialUniformBField[]);
+			  float CosmologySimulationInitialUniformBField[]
+#ifdef INDIVIDUALSTAR
+        , float CosmologySimulationInitialChemicalSpeciesFractions[]
+#endif
+      );
 
 
-						/* Initialization for isolated galaxy sims */
-						int _GalaxySimulationInitialization = 0;
-						int GalaxySimulationInitializeGrid(
-								double DiskRadius,
-								double GalaxyMass,
-								double GasMass,
-								FLOAT DiskPosition[MAX_DIMENSION], 
-								double ScaleHeightz,
-								double ScaleHeightR, 
-								double GalaxyTruncationRadius,
-								double DiskDensityCap,
-								double DMConcentration,
-								double DiskTemperature,
-								double InitialTemperature,
-								double UniformDensity,
-								int   EquilibrateChem,
-								int   GasHalo,
-								double GasHaloScaleRadius,
-								double GasHaloDensity,
-								double GasHaloDensity2,
-								double GasTemperature,
-								double GasAlpha,
-								double GasZeta,
-								double GasZeta2,
-								double GasCoreEntropy,
-								double GasHaloRatio,
-								double GasMetallicity,
-								int   UseHaloRotation,
-								double RotationScaleVelocity,
-								double RotationScaleRadius,
-								double RotationPowerLawIndex,
-								double DiskMetallicityEnhancementFactor,
-								double AngularMomentum[MAX_DIMENSION],
-								double UniformVelocity[MAX_DIMENSION], 
-								int UseMetallicityField, 
-								FLOAT GalaxySimulationInflowTime,
-								double GalaxySimulationInflowDensity,
-								int level,
-								double GalaxySimulationCR = 0.0
-									);
+  /* Initialization for chemical evolution test */
+  int ChemicalEvolutionTestInitializeGrid(float GasDensity, float GasTemperature,
+                                          float GasMetallicity, bool deposit_stars);
+
+  /* AJE Individual star formation and feedback */
+  int chemical_evolution_test_star_deposit(int *nmax, int *np,
+                                           float *ParticleMass,
+                                           int *ParticleType, FLOAT *ParticlePosition[],
+                                           float *ParticleVelocity[], float *ParticleAttribute[]);
+
+  int GalaxySimulationInitialStars(int *nmax, int *np, float *ParticleMass, int *ParticleType,
+                                   FLOAT *ParticlePosition[], float *ParticleVelocity[],
+                                   float *ParticleAttribute[]);
+  int GalaxySimulationInitialStars(int *nmax, int *np);
+
+
+  int individual_star_maker( float *dm, float *temp, int *nmax, float *mu, int *np,
+                             float *ParticleMass,
+                             int *ParticleType, FLOAT *ParticlePosition[],
+                             float *ParticleVelocity[], float *ParticleAttribute[],
+                             float *StellarAbundances[]);
+
+  int individual_star_feedback(int *np, float *ParticleMass, int *ParticleType,
+                               FLOAT *ParticlePosition[], float *ParticleVelocity[],
+                               float *ParticleAttribute[]);
+
+  int IndividualStarAddFeedbackGeneral(const FLOAT &xp, const FLOAT &yp, const FLOAT &zp,
+                                       const float &up, const float &vp, const float &wp,
+                                       const float &mproj, const float &lifetime,
+                                       const float &particle_age,
+                                       const float &metallicity, float *mp, int mode);
+
+
+  int IndividualStarAddFeedbackSphere(HierarchyEntry* SubgridPointer,
+                                      Star *cstar, float *mp, const int mode);
+
+  int IndividualStarInjectSphericalFeedback(Star *cstar,
+                                            const FLOAT xp, const FLOAT yp, const FLOAT zp,
+                                            const float m_eject, const float E_thermal,
+                                            const float *metal_mass, const int stellar_wind_mode);
+
+
+
+  int IndividualStarSetWDLifetime(void);
+
+  void ZeroPhotoelectricHeatingField(void);
+  void ComputeBackgroundFUV(float &G_background);
+
+  void AddOpticallyThinRadiationFromStar(const float *L_fuv, const float *L_lw,
+                                         const float *xs, const float *ys, const float *zs,
+                                         const float *ts, const int &number_of_fuv_stars);
+  int CalculateAverageAbundances(int mode);
+
+  /* Initialization for isolated galaxy sims */
+	int _GalaxySimulationInitialization = 0;
+  int GalaxySimulationInitializeGrid(
+				     FLOAT DiskRadius,
+				     float GalaxyMass,
+				     float GasMass,
+				     FLOAT DiskPosition[MAX_DIMENSION],
+				     FLOAT ScaleHeightz,
+				     FLOAT ScaleHeightR,
+				     FLOAT GalaxyTruncationRadius,
+				     float DMConcentration,
+				     float DiskTemperature,
+				     float InitialTemperature,
+                                     float DiskMetallicity,
+                                     float HaloMetallicity,
+				     float UniformDensity,
+				     int   GasHalo,
+				     float GasHaloScaleRadius,
+				     float GasHaloDensity,
+				     float AngularMomentum[MAX_DIMENSION],
+				     float UniformVelocity[MAX_DIMENSION],
+				     int UseMetallicityField,
+				     float GalaxySimulationInflowTime,
+				     float GalaxySimulationInflowDensity,
+				     int level,
+				     float GalaxySimulationCR = 0.0,
+                                     int GalaxySimulationUseDensityPerturbation = 0,
+                                     float GalaxySimulationPerturbationFraction = 0.5,
+                                     int GalaxySimulationSMAUGIC = 0); // changed by Minyong Jung
+
+  int GalaxySimulationInitializeParticles(int NumberOfDMParticles,
+                                          float *DMParticleMass, FLOAT *DMParticlePosition[],
+                                          float *DMParticleVelocity[]);
 
 								/* Free expansion test */
 								int FreeExpansionInitializeGrid(int FreeExpansionFullBox,
@@ -3226,7 +3441,11 @@ class grid
 
 								int MagneticFieldResetter(int level);
 
-								/* Apply a time-action to a grid. */
+/* Reset stellar abundance tracer fields */
+
+  int StellarYieldsResetter(int level);
+
+/* Apply a time-action to a grid. */
 
 								int ApplyTimeAction(int Type, float Parameter);
 
@@ -3417,18 +3636,26 @@ class grid
 								int CommunicationSendActiveParticles(grid *ToGrid, int ToProcessor, bool DeleteParticles = true);
 								int TransferSubgridStars(int NumberOfSubgrids, grid* ToGrids[], int AllLocal);
 
-								int FindNewStarParticles(int level);
+  int FindNewStarParticles(int level, std::map<int, Star*>* const &StarParticleLookupMap);
 
 								int FindAllStarParticles(int level);
 
 								int MirrorStarParticles(void);
 
+  int UpdateStarParticles(int level, std::map<int, Star*>* const &StarParticleLookupMap);
+
 								int UpdateStarParticles(int level);
+								  std::map<int, Star*> MakeStarParticleMap();
 
 								int AddH2Dissociation(Star *AllStars, int NumberOfSources);
 
-								int AddH2DissociationFromTree(void);
-								int AddH2DissociationFromSources(Star *AllStars);
+  int AddH2DissociationFromTree(void);
+  int AddH2DissociationFromSources(Star *AllStars);
+
+  int AddPeHeating(Star *AllStars, int NumberOfSources);
+
+  int AddPeHeatingFromTree(void);
+  int AddPeHeatingFromSources(Star *AllStars);
 
 								int ReturnStarStatistics(int &Number, float &minLife);
 

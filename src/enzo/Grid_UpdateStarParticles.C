@@ -22,7 +22,7 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 
-int grid::UpdateStarParticles(int level)
+int grid::UpdateStarParticles(int level, std::map<int, Star*>* const &StarParticleLookupMap)
 {
 
 	if (MyProcessorNumber != ProcessorNumber)
@@ -34,12 +34,17 @@ int grid::UpdateStarParticles(int level)
 	int i;
 	Star *cstar;
 
-	for (cstar = Stars; cstar; cstar = cstar->NextStar)
+	//for (cstar = Stars; cstar; cstar = cstar->NextStar) MergerYS
+  for (i = 0; i < NumberOfParticles; i++) {
+    auto search = (*StarParticleLookupMap).find(ParticleNumber[i]);
+    if (search != (*StarParticleLookupMap).end()) {
+      cstar = search->second;
 		if (cstar->type > 0)  // living stars only (<0 == waiting to be created)
-			for (i = 0; i < NumberOfParticles; i++)
-				if (cstar->Identifier == ParticleNumber[i]) {
+			//for (i = 0; i < NumberOfParticles; i++)
+				//if (cstar->Identifier == ParticleNumber[i]) {
 					cstar->CopyFromParticle(this, i, level);
-					break;
+					//break;
+					}
 				} // ENDIF matched ID
 
 	return SUCCESS;

@@ -30,6 +30,11 @@ void grid::DeleteAllFields()
   int i, j;
  
   this->DeleteParticles();
+#ifdef INDIVIDUALSTAR
+  if (IndividualStarOutputChemicalTags)
+    this->DeleteStellarAbundances();
+#endif
+  this->DeleteActiveParticles();
  
   for (i = 0; i < MAX_DIMENSION; i++) {
     delete [] ParticleAcceleration[i];
@@ -96,7 +101,13 @@ void grid::DeleteAllFieldsNoStar()
 {
 
   int i, j;
-
+/*   MergerYS
+#ifdef INDIVIDUALSTAR
+  if (IndividualStarOutputChemicalTags)
+    this->DeleteStellarAbundances();
+#endif
+  this->DeleteActiveParticles();
+*/
   for (i = 0; i < MAX_DIMENSION; i++) {
 
     delete [] AccelerationFieldNoStar[i];

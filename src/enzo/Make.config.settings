@@ -9,6 +9,7 @@
 #
 #    PARAMETER_MAX_SUBGRIDS
 #    PARAMETER_MAX_BARYONS
+#    PARAMETER_MAX_PARTICLE_ATTR
 #    PARAMETER_MAX_TASKS_PER_NODE
 #
 # Configuration settings
@@ -44,11 +45,15 @@
 #    CONFIG_GRACKLE
 #    CONFIG_LOG2ALLOC
 #    CONFIG_UUID
+#    CONFIG_INDIVIDUALSTAR
+#    CONFIG_NEWYIELDTABLES
+#    CONFIG_MEMORYPOOL
 #
 #=======================================================================
 
     PARAMETER_MAX_SUBGRIDS       = 100000
     PARAMETER_MAX_BARYONS        = 30
+    PARAMETER_MAX_PARTICLE_ATTR  = 4
     PARAMETER_MAX_TASKS_PER_NODE = 8
     PARAMETER_MEMORY_POOL_SIZE   = 100000
 
@@ -338,6 +343,13 @@
      CONFIG_LOG2ALLOC = no
 
 #=======================================================================
+# CONFIG_NEWYIELDTABLES
+#=======================================================================
+#     yes          Compile with new yield tables (single HDF5)
+#     no           Use old tables (individual ASCII)
+#-----------------------------------------------------------------------
+
+     CONFIG_NEWYIELDTABLES = no
 # CONFIG_UUID
 #=======================================================================
 #    yes           Compile with uuid
@@ -345,3 +357,20 @@
 #-----------------------------------------------------------------------
 
      CONFIG_UUID = yes
+#=======================================================================
+# CONFIG_INDIVIDUALSTAR
+#=======================================================================
+#    yes           Compile with individual star particles methods
+#    no            Compile without individual star particles methods
+#-----------------------------------------------------------------------
+
+     CONFIG_INDIVIDUALSTAR = no
+
+#=======================================================================
+# CONFIG_MEMORYPOOL
+#=======================================================================
+#    yes           Compile with memory pooling in photon packages
+#    no            Compile without memory pooling in photon packages
+#-----------------------------------------------------------------------
+
+     CONFIG_MEMORYPOOL = no

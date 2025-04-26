@@ -63,6 +63,8 @@ int CRShockTubesInitialize(FILE *fptr, FILE *Outfptr,
 			   HierarchyEntry &TopGrid, TopGridData &MetaData);
 int CRTransportTestInitialize(FILE *fptr, FILE *Outfptr,
 			      HierarchyEntry &TopGrid, TopGridData &MetaData);
+int ChemicalEvolutionTestInitialize(FILE *fptr, FILE *Outfptr,
+                           HierarchyEntry &TopGrid, TopGridData &MetaData);
 int WavePoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		       TopGridData &MetaData);
 int ShockPoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
@@ -247,6 +249,7 @@ int MHDLoopInit(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
 void PrintMemoryUsage(char *str);
 
+int DetermineNumberOfParticleAttributes(void);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
@@ -316,13 +319,20 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
 	if (NumberOfParticleAttributes == INT_UNDEFINED ||
 			NumberOfParticleAttributes == 0) {
+			/*
 		if (StarParticleCreation || StarParticleFeedback) {
 			NumberOfParticleAttributes = 3;
 			if (StarMakerTypeIaSNe) NumberOfParticleAttributes++;
 			if (StarMakerTypeIISNeMetalField) NumberOfParticleAttributes++;
 		} else {
-			NumberOfParticleAttributes = 0;
+			NumberOfParticleAttributes = 0; MergerYS */
+			
+			NumberOfParticleAttributes = DetermineNumberOfParticleAttributes();
 		}
+		  if (NumberOfParticleAttributes > MAX_NUMBER_OF_PARTICLE_ATTRIBUTES){
+    ENZO_VFAIL("Number of necessary particle attributes (%"ISYM") greater than"
+              " MAX_NUMBER_OF_PARTICLE_ATTRIBUTES. Change and re-compile.\n",NumberOfParticleAttributes);
+			  
 #ifdef NBODY
 		fprintf(stderr,"NumOfAtt=%d\n",NumberOfParticleAttributes);
 		NumberOfParticleAttributes = NumberOfParticleAttributes + 4; // for Acceleration
@@ -710,7 +720,11 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     ret = CRTransportTestInitialize(fptr, Outfptr, TopGrid, MetaData);
   }
 
-
+  // 260 ) Chemical evolution test problem
+  if (ProblemType == 260){
+    ret = ChemicalEvolutionTestInitialize(fptr, Outfptr, TopGrid, MetaData);
+  }
+  
   /* ???? */
   if (ProblemType ==300) {
     ret = PoissonSolverTestInitialize(fptr, Outfptr, TopGrid, MetaData);

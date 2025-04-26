@@ -108,10 +108,13 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
   char *ParticleAttributeLabel[] = 
   {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
-#endif
-
+	char *ParticleAttributeLabel[] = 
+	{"creation_time", "dynamical_time",
+				    "metallicity_fraction", "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
+#endif // by YS, this should be fixed.
   /*  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
       "metallicity_fraction", "alpha_fraction"};*/
+
 #ifdef IO_LOG
   int         io_log = 1;
 #else
@@ -440,14 +443,14 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
 #ifdef NBODY
       this->ClearGravitatingMassFieldParticlesNoStar();
 #endif
-			this->DepositParticlePositions(this, Time,
+      this->DepositParticlePositions(this, Time,
 				     GRAVITATING_MASS_FIELD_PARTICLES,FALSE);
     }
  
     /* If present, write out the GravitatingMassFieldParticles. */
-
-		if (GravitatingMassFieldParticles != NULL) {
-
+ 
+    if (GravitatingMassFieldParticles != NULL) {
+ 
       /* Set dimensions. */
  
       int StartIndex[] = {0,0,0}, EndIndex[] = {0,0,0};
@@ -469,7 +472,6 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
 	         (j-StartIndex[1])*ActiveDim[0]              +
 	         (k-StartIndex[2])*ActiveDim[0]*ActiveDim[1] ] =
 		     float32(
-
 			     GravitatingMassFieldParticles[ i +
 			       j*GravitatingMassFieldParticlesDimension[0] +
 			       k*GravitatingMassFieldParticlesDimension[0]*

@@ -270,6 +270,11 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     }
     if (NumberOfSources == 0) {
       PhotonTime += dtPhoton;
+      for (lvl = MAX_DEPTH_OF_HIERARCHY-1; lvl >= 0; lvl--)
+        for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
+          if (Temp->GridData->InitializeRadiativeTransferFields() == FAIL) {
+            ENZO_FAIL("Error in InitializeRadiativeTransferFields.\n");
+          }
       continue;
     }
 
@@ -337,11 +342,13 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
        creating tree (type SuperSource), compute position of the super
        source in each leaf. */
 
+    TIMER_START("CreateSourceClusteringTree");
     START_PERF();
     if (RadiativeTransferSourceClustering == TRUE) {
       CreateSourceClusteringTree(0, NULL, LevelArray);
     }
     END_PERF(1);
+    TIMER_STOP("CreateSourceClusteringTree");
 
     // first identify sources and let them radiate 
     RS = GlobalRadiationSources->NextSource;
@@ -601,12 +608,18 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     /* Set the optically-thin H2 dissociation rates */
 
+    TIMER_START("StarParticlePhotoelectricHeating");
     START_PERF();
     if (RadiativeTransferOpticallyThinH2)
       for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++)
 	for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
 	  Temp->GridData->AddH2Dissociation(AllStars, NumberOfSources);
+    if (RadiativeTransferOpticallyThinFUV)
+      for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++)
+        for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
+          Temp->GridData->AddPeHeating(AllStars, NumberOfSources);
     END_PERF(10);
+    TIMER_STOP("StarParticlePhotoelectricHeating");
 
     START_PERF();
     if (RadiativeTransferCoupledRateSolver)

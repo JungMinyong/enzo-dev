@@ -194,7 +194,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 	/* Static declarations (for Green's function). */
 
 	static int FirstCall = TRUE, NumberOfGreensRegions;
-	static region *GreensRegion;
+  static region *GreensRegion = NULL;
 
 	/* Declarations. */
 
@@ -276,8 +276,10 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 
 			/* Clean up. */
 
-			if (GreensRegion != TempRegion)
+      if (GreensRegion != TempRegion){
 				delete [] TempRegion;
+        TempRegion == NULL;
+      }
 
 		} // end: if (Periodic)
 
