@@ -1,1 +1,1 @@
-CONFIG_MACHINE = linux-mpich14
+CONFIG_MACHINE = rusty

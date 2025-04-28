@@ -628,8 +628,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				if (debug1) fprintf(stdout,"6.5\n");  // by YS
 				if (debug1) fprintf(stdout,"Proc:%d\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
-				if (PrepareNbodyComputation(LevelArray, level) == FAIL) {
-					ENZO_FAIL("Error in NbodyParticleFindAll.");
+				if (UseNBODY) {
+					if (PrepareNbodyComputation(LevelArray, level) == FAIL) {
+						ENZO_FAIL("Error in NbodyParticleFindAll.");
+					}
 				}
 				if (debug1) fprintf(stderr,"PNC done.\n", level);  // by YS
 				if (debug1) fprintf(stdout,"Proc:%d PNC done\n",MyProcessorNumber);  // by YS
@@ -779,8 +781,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				//if (level == MaximumRefinementLevel) {
 				if (debug1) fprintf(stdout,"Proc: %d, 10\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
-				if (FinalizeNbodyComputation(LevelArray, level) == FAIL) {
-					ENZO_FAIL("Error in NbodyParticleFindAll.");
+				if (UseNBODY) {
+					if(FinalizeNbodyComputation(LevelArray, level) == FAIL) {
+						ENZO_FAIL("Error in NbodyParticleFindAll.");
+					}
 				}
 				if (debug1) fprintf(stdout,"Proc:%d 10-1\n",MyProcessorNumber);  // by YS
 				if (debug1) fprintf(stderr,"FNC done.\n");  // by YS

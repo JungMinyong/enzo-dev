@@ -120,17 +120,7 @@ lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY -DCUDA
 lib: FFLAGS   += $(MACH_SHARED_FLAGS) -fPIC  -lmpi 
 lib: F90FLAGS += $(MACH_SHARED_FLAGS)
 #lib: LDFLAGS  += $(MACH_SHARED_FLAGS) -lstdc++ L/mnt/sw/nix/store/bdhdh478f6slibd9zpgmgw8grnqq78im-cuda-11.4.4/lib64 -lcudart 
-#lib: LDFLAGS += -lcudart -lcublas -lnvToolsExt -lm -lcuda -lmpi 
-
-LDFLAGS += -lcudart -lcublas -lnvToolsExt -lm -lcuda -lmpi 
-# SDAR
-CXXFLAGS += -I./abyss/SDAR/src -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DNBODY #-DFEWBODY #-DDEBUG
-#CXX_SRCS += FewBody/FBCheck.cpp FewBody/FBInitialization.cpp FewBody/FBIntegration.cpp FewBody/FBTermination.cpp FewBody/GroupAccelerationRoutine.cpp
-#ifdef USE_SEVN
-#CXXFLAGS += -DSEVN -I/data/vinicius/sevn/build/include/sevn
-#LDFLAGS += -L/data/vinicius/sevn/build/lib64/sevn -lsevn_lib_shared
-	#CXX_SRCS += StellarEvolution.cpp
-#endif
+#LDFLAGS += -lcudart -lcublas -lnvToolsExt -lm -lcuda -lmpi 
 
 lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).$(MACH_SHARED_EXT)
 

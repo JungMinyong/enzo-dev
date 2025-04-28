@@ -839,12 +839,10 @@
 
     ifeq ($(CONFIG_NBODY),yes)
         ERROR_NBODY = 0
-	    ASSEMBLE_NBODY_DEFINES = -DNBODY -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DFEWBODY -DSEVN #-D GPU #-D SIMD #-D OMP
-        ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY) -L/data/vinicius/sevn/build_node14/lib64/sevn -lsevn_lib_shared
-	    ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES) -I/data/vinicius/enzo-abyss-EW/src/enzo/abyss/SDAR/src -I/data/vinicius/sevn/build_node14/include/sevn
-	    #ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY) -L/data/vinicius/sevn/build/lib64/sevn -lsevn_lib_shared
-	    #ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES) -I/data/vinicius/enzo-abyss-EW/src/enzo/abyss/SDAR/src -I/data/vinicius/sevn/build/include/sevn
-	    OBJS_NBODY_LIB = $(OBJS_NBODY_ALL)
+				ASSEMBLE_NBODY_DEFINES  = -DNBODY 
+        ASSEMBLE_NBODY_LIBS     = $(MACH_LIBS_NBODY) 
+				ASSEMBLE_NBODY_INCLUDES = $(MACH_INCLUDES_NBODY) 
+		    OBJS_NBODY_LIB = $(OBJS_NBODY_ALL)
     endif
 
     # Settings to tell the make system not to compile CUDA routines
@@ -852,17 +850,82 @@
     ifeq ($(CONFIG_NBODY),no)
         ERROR_NBODY = 0
         ASSEMBLE_NBODY_DEFINES = 
-	OBJS_NBODY_LIB = 
+				OBJS_NBODY_LIB = 
     endif
 
     # error if 
 
     ifeq ($(ERROR_NBODY),1)
-       .PHONY: error_ecuda
-       error_ecuda:
+       .PHONY: error_nbody
+       error_nbody:
 	$(error Illegal value '$(CONFIG_NBODY)' for $$(CONFIG_NBODY))
     endif
 
+#-----------------------------------------------------------------------
+# DETERMINE SEVN packages Settings
+# but only uses it if you set UseFewBody = 1 in your parameter files.
+#-----------------------------------------------------------------------
+
+    ERROR_FEWBODY = 1
+
+    # Settings to compile CUDA kernels 
+
+    ifeq ($(CONFIG_FEWBODY),yes)
+        ERROR_FEWBODY = 0
+		    ASSEMBLE_FEWBODY_DEFINES = -DFEWBODY -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE
+        ASSEMBLE_FEWBODY_LIBS = $(MACH_LIBS_FEWBODY) 
+		    ASSEMBLE_FEWBODY_INCLUDES = $(MACH_INCLUDES_FEWBODY) 
+		    OBJS_FEWBODY_LIB = $(OBJS_FEWBODY_ALL)
+    endif
+
+    # Settings to tell the make system not to compile CUDA routines
+
+    ifeq ($(CONFIG_FEWBODY),no)
+        ERROR_FEWBODY = 0
+        ASSEMBLE_FEWBODY_DEFINES = 
+				OBJS_FEWBODY_LIB = 
+    endif
+
+    # error if 
+
+    ifeq ($(ERROR_FEWBODY),1)
+       .PHONY: error_fewbody
+       error_fewbody:
+	$(error Illegal value '$(CONFIG_FEWBODY)' for $$(CONFIG_FEWBODY))
+    endif
+
+#-----------------------------------------------------------------------
+# DETERMINE SEVN packages Settings
+# but only uses it if you set UseSEVN = 1 in your parameter files.
+#-----------------------------------------------------------------------
+
+    ERROR_SEVN = 1
+
+    # Settings to compile CUDA kernels 
+
+    ifeq ($(CONFIG_SEVN),yes)
+        ERROR_SEVN = 0
+		    ASSEMBLE_SEVN_DEFINES = -DSEVN 
+        ASSEMBLE_SEVN_LIBS = $(MACH_LIBS_SEVN) 
+		    ASSEMBLE_SEVN_INCLUDES =   $(MACH_INCLUDES_SEVN)
+		    OBJS_SEVN_LIB = $(OBJS_SEVN_ALL)
+    endif
+
+    # Settings to tell the make system not to compile CUDA routines
+
+    ifeq ($(CONFIG_SEVN),no)
+        ERROR_SEVN = 0
+        ASSEMBLE_SEVN_DEFINES = 
+				OBJS_SEVN_LIB = 
+    endif
+
+    # error if 
+
+    ifeq ($(ERROR_SEVN),1)
+       .PHONY: error_sevn
+       error_sevn:
+	$(error Illegal value '$(CONFIG_SEVN)' for $$(CONFIG_SEVN))
+    endif
 
 
 
@@ -1163,6 +1226,8 @@
               $(ASSEMBLE_BITWISE_IDENTICALITY_DEFINES) \
               $(ASSEMBLE_ECUDA_DEFINES) \
               $(ASSEMBLE_NBODY_DEFINES) \
+              $(ASSEMBLE_SEVN_DEFINES) \
+              $(ASSEMBLE_FEWBODY_DEFINES) \
               $(ASSEMBLE_CUDADEBUG_DEFINES) \
               $(ASSEMBLE_HDF4_DEFINES) \
               $(ASSEMBLE_GRAVITY_4S_DEFINES) \
@@ -1185,15 +1250,21 @@
                $(ASSEMBLE_PAPI_INCLUDES) \
                $(ASSEMBLE_GRACKLE_INCLUDES) \
                $(ASSEMBLE_NBODY_INCLUDES) \
+               $(ASSEMBLE_SEVN_INCLUDES) \
+               $(ASSEMBLE_FEWBODY_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.
 
     OBJS_LIB = $(OBJS_NBODY) \
+							 $(OBJS_SEVN) \
+							 $(OBJS_FEWBODY) \
 							 $(OBJS_CONFIG_LIB) \
 							 $(OBJS_PHOTON_LIB) \
 							 $(OBJS_LCAPERF_LIB) \
 							 $(OBJS_HYDRO_RK) \
 							 $(OBJS_ECUDA_LIB) \
 							 $(OBJS_NBODY_LIB) \
+							 $(OBJS_SEVN_LIB) \
+							 $(OBJS_FEWBODY_LIB) \
 							 $(OBJS_PYTHON) \
 							 $(OBJS_UUID)
 
@@ -1206,6 +1277,8 @@
            $(ASSEMBLE_NEW_PROBLEM_TYPES_LIBS) \
            $(ASSEMBLE_CUDA_LIBS) \
            $(ASSEMBLE_NBODY_LIBS) \
+           $(ASSEMBLE_SEVN_LIBS) \
+           $(ASSEMBLE_FEWBODY_LIBS) \
            $(ASSEMBLE_GRACKLE_LIBS)
 
 

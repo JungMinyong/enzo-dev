@@ -1974,6 +1974,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
    individual_star_feedback3mom(CellWidthTemp, StarFeedbackKineticFraction, mu_field, StarMetalYield);
 */
 // /*
+#ifdef SEVN
    FORTRAN_NAME(star_feedback3mom_individual)(
       GridDimension, GridDimension+1, GridDimension+2,
       BaryonField[DensNum], mu_field, dmfield,
@@ -1996,6 +1997,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       ParticleAttribute[NumberOfParticleAttributes-8+0], ParticleAttribute[NumberOfParticleAttributes-8+1],
       ParticleAttribute[NumberOfParticleAttributes-8+2], ParticleAttribute[NumberOfParticleAttributes-8+3]);
 // */
+#endif
 
    delete [] mu_field;
 

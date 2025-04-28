@@ -40,6 +40,8 @@
 #    CONFIG_BITWISE_IDENTICALITY
 #    CONFIG_USE_ECUDA
 #    CONFIG_USE_NBODY
+#    CONFIG_USE_SEVN
+#    CONFIG_USE_FEWBODY
 #    CONFIG_SET_ACCELERATION_BOUNDARY
 #    CONFIG_ENZO_PERFORMANCE
 #    CONFIG_GRACKLE
@@ -313,6 +315,26 @@
 #----------------------------------------------------------------------- 
  
      CONFIG_NBODY = no
+
+
+#======================================================================= 
+# CONFIG_SEVN
+#======================================================================= 
+#    yes           For SEVN packages for direct Nbody
+#    no            For most of problems
+#----------------------------------------------------------------------- 
+ 
+     CONFIG_SEVN = no
+
+#======================================================================= 
+# CONFIG_FEWBODY
+#======================================================================= 
+#    yes           For Fewbody regularizations for direct Nbody
+#    no            For most of problems
+#----------------------------------------------------------------------- 
+ 
+     CONFIG_FEWBODY = no
+
 
 
 #======================================================================= 
