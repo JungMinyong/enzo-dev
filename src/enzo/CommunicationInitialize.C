@@ -46,6 +46,9 @@ extern int CommunicationDirection;
 extern int WorldProcessorNumber;
 extern int AbyssProcessorNumber;
 extern int NumberOfAbyssProcessors;
+EXTERN MPI_Datatype MPI_ENZO_PTCL;
+EXTERN MPI_Datatype MPI_ENZO_PTCL_SEND;
+EXTERN MPI_Datatype MPI_ENZO_PTCL_RECV;
 //extern MPI_Comm enzo_comm;
 //extern MPI_Comm abyss_comm;
 //extern MPI_Comm inter_comm;
@@ -239,6 +242,86 @@ int CommunicationInitialize(int &argc, char *argv[])
 		}
 
 
+		/***********************************
+		 *     Struct MPI Data Type        *
+		 ***********************************/
+		MPI_Datatype MPI_ENZO_PTCL;
+		{
+			AbyssParticleDataType dummy;
+
+			int block_lengths[6] = {
+				1,                      // ID
+				MAX_DIMENSION,          // Position
+				MAX_DIMENSION,          // Velocity
+				MAX_DIMENSION,          // BackgroundAcceleration
+				4                       // Mass, CreationTime, DynamicalTime, Metallicity
+			};
+
+			MPI_Aint displacements[6];
+			MPI_Datatype types[6] = {
+				MPI_INT,
+				MPI_DOUBLE,
+				MPI_DOUBLE,
+				MPI_DOUBLE,
+				MPI_DOUBLE
+			};
+
+			MPI_Aint base;
+			MPI_Get_address(&dummy, &base);
+			MPI_Get_address(&dummy.ID, &displacements[0]);
+			MPI_Get_address(&dummy.Position, &displacements[1]);
+			MPI_Get_address(&dummy.Velocity, &displacements[2]);
+			MPI_Get_address(&dummy.BackgrounAcceleration, &displacements[3]);
+			MPI_Get_address(&dummy.Mass, &displacements[4]);
+
+			for (int i = 0; i < 5; ++i)
+				displacements[i] -= base;
+
+			MPI_Type_create_struct(5, block_lengths, displacements, types, &MPI_ENZO_PTCL);
+			MPI_Type_commit(&MPI_ENZO_PTCL);
+		}
+
+		MPI_Datatype MPI_ENZO_PTCL_SEND;
+		{
+			ParticleSendDataType dummy;
+
+			int block_lengths[2] = {1, MAX_DIMENSION};
+			MPI_Aint displacements[2];
+			MPI_Datatype types[2] = {MPI_INT, MPI_DOUBLE};
+
+			MPI_Aint base;
+			MPI_Get_address(&dummy, &base);
+			MPI_Get_address(&dummy.ID, &displacements[0]);
+			MPI_Get_address(&dummy.BackgrounAcceleration, &displacements[1]);
+
+			displacements[0] -= base;
+			displacements[1] -= base;
+
+			MPI_Type_create_struct(2, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND);
+			MPI_Type_commit(&MPI_ENZO_PTCL_SEND);
+		}
+
+		MPI_Datatype MPI_ENZO_PTCL_RECV;
+		{
+			ParticleReceiveDataType dummy;
+
+			int block_lengths[3] = {1, MAX_DIMENSION, MAX_DIMENSION};
+			MPI_Aint displacements[3];
+			MPI_Datatype types[3] = {MPI_INT, MPI_DOUBLE, MPI_DOUBLE};
+
+			MPI_Aint base;
+			MPI_Get_address(&dummy, &base);
+			MPI_Get_address(&dummy.ID, &displacements[0]);
+			MPI_Get_address(&dummy.Position, &displacements[1]);
+			MPI_Get_address(&dummy.Velocity, &displacements[2]);
+
+			displacements[0] -= base;
+			displacements[1] -= base;
+			displacements[2] -= base;
+
+			MPI_Type_create_struct(3, block_lengths, displacements, types, &MPI_ENZO_PTCL_RECV);
+			MPI_Type_commit(&MPI_ENZO_PTCL_RECV);
+		}
 
 		/***********************************
 		 *     Shared Memeory Setting      *

@@ -3,11 +3,15 @@
         {
             "name": "Intel C++ Compiler",
             "includePath": [
-                "/mnt/home/yjo10/packages/enzon_aeos_merged/enzon/src/enzo/**",
+                "${workspaceFolder}/**",
+                "/mnt/home/yjo10/packages/enzo-abyss/src/enzo/**",
+                "/mnt/home/yjo10/packages/enzo-abyss/src/enzo/",
                 "/mnt/sw/nix/store/494gvfa9gj2ibqg8210v89h2iljfgqj8-gcc-7.5.0/include",
                 "/mnt/sw/nix/store/bjxnws41q81ccp0lybgzacy5wdv2n82g-hdf5-1.8.22/include"
             ],
-            "defines": [],
+            "defines": [
+                "_GNU_SOURCE"
+            ],
             "compilerPath": "/mnt/sw/nix/store/494gvfa9gj2ibqg8210v89h2iljfgqj8-gcc-7.5.0/bin/g++",
             "cStandard": "c11",
             "cppStandard": "c++11"

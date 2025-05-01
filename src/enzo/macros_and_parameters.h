@@ -542,9 +542,21 @@ typedef long long int   HDF5_hid_t;
 
 #ifdef NBODY
 #define NUM_PARTICLE_TYPES 19
-#define PARTICLE_TYPE_NBODY         101  //by YS 
-#define PARTICLE_TYPE_NBODY_NEW     102  //by YS 
-#define PARTICLE_TYPE_NBODY_REMOVE  103  //by YS 
+//#define PARTICLE_TYPE_NBODY         101  //by YS 
+//#define PARTICLE_TYPE_NBODY_NEW     102  //by YS 
+//#define PARTICLE_TYPE_NBODY_REMOVE  103  //by YS 
+
+// After integration with AEOS, this will work in a way that 
+// regular particle type + Abyss particle type
+#define MAX_ENZO_PARTICLE_TYPE      127
+#define MAX_ENZO_PARTICLE_TYPE_BIT  7
+#define PARTICLE_TYPE_NBODY         128  //by YS  2^7 
+#define PARTICLE_TYPE_NBODY_NEW     129  //by YS  2^7+1
+#define PARTICLE_TYPE_NBODY_REMOVE  130  //by YS  2^7+2
+
+#define ENZO_PARTICLE_TYPE(A)  (A & MAX_ENZO_PARTICLE_TYPE)
+#define ABYSS_PARTICLE_TYPE(A) (A >> MAX_ENZO_PARTICLE_TYPE_BIT)
+
 #else
 #define NUM_PARTICLE_TYPES 16
 #endif

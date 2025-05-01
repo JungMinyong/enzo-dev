@@ -52,6 +52,12 @@ class Star
   int            SNIaType;     // for individual stars
   int            PopIIIStar;   // if popIII at any point
 
+#ifdef NBODY
+  double bg_acc[MAX_DIMENSION]; // background acceeleration for ABYSS
+  bool isABYSS;        // in case we would like to exclude this particle from the ABYSS pool
+  bool isNewlyFormed;   // in case we would like to exclude this particle from the ABYSS pool
+#endif
+
   /* AJE: for individual stars - yield table numbers */
   int se_table_position[2];
   int rad_table_position[3];
@@ -158,6 +164,9 @@ public:
   void  AddEmissivityFlag(void) { this->AddedEmissivity = true; };
   FLOAT *ReturnPosition(void) { return pos; }
   float *ReturnVelocity(void) { return vel; }
+  #ifdef NBODY
+  float *ReturnBackgroundAcceleration(void) { return bg_acc; }
+  #endif
   float *ReturnAccretedAngularMomentum(void) { return accreted_angmom; }
   float ReturnLastAccretionRate(void) { return last_accretion_rate; }
   void  MultiplyAccretionRate(float &RecalibrateAccretingMassRatio);

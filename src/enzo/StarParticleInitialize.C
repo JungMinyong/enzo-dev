@@ -84,32 +84,32 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 #define no_aeos_debug
 #ifdef aeos_debug
 		std::cerr << "star init 1" << std::endl;
-    CommunicationBarrier();
+    //CommunicationBarrier();
 #endif
     /* Initialize individual star properties (L, T, R) */
     IndividualStarProperties_Initialize(*MetaData);
 #ifdef aeos_debug
 		std::cerr << "star init 2" << std::endl;
-    CommunicationBarrier();
+    //CommunicationBarrier();
 #endif
     /* Initialize radiation data table */
     if((RadiativeTransfer && IndividualStarBlackBodyOnly == FALSE) || IndividualStarFUVHeating){
       IndividualStarRadiationProperties_Initialize();
 #ifdef aeos_debug
 		std::cerr << "star init 3" << std::endl;
-    CommunicationBarrier();
+    ///CommunicationBarrier();
 #endif   
 	}
 
     /* StellarYields */
 #ifdef aeos_debug
 		std::cerr << "star init 4" << std::endl;
-		CommunicationBarrier();
+		//CommunicationBarrier();
 #endif  
 	InitializeStellarYields(MetaData->Time); // by YS Should be turned on!! just a test for now
 #ifdef aeos_debug
 		std::cerr << "star init 5" << std::endl;
-		CommunicationBarrier();
+		//CommunicationBarrier();
 #endif  
   }
 
@@ -122,7 +122,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
 #ifdef aeos_debug
 		std::cerr << "star init 6" << std::endl;
-		CommunicationBarrier();
+		//CommunicationBarrier();
 #endif  
 	/* Initialize all star particles if this is a restart */
 
@@ -137,7 +137,6 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
 #ifdef aeos_debug
 		std::cerr << "star init 7" << std::endl;
-		CommunicationBarrier();
 #endif  
 	/* Create a master list of all star particles */
 
@@ -148,7 +147,6 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   TIMER_STOP("StarParticleInitialize:MasterList");
 #ifdef aeos_debug
 		std::cerr << "star init 8" << std::endl;
-		CommunicationBarrier();
 #endif  
 	if (MetaData->FirstTimestepAfterRestart == FALSE) {
 
@@ -185,7 +183,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
 #ifdef aeos_debug
 		std::cerr << "star init 9" << std::endl;
-    CommunicationBarrier();
+    //CommunicationBarrier();
 #endif  
 #ifdef INDIVIDUALSTAR
   if (SkipFeedbackFlag){
@@ -215,7 +213,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   }
 #ifdef aeos_debug
 		std::cerr << "star init 10" << std::endl;
-    CommunicationBarrier();
+    //CommunicationBarrier();
 #endif  
 #ifdef INDIVIDUALSTAR
   }

@@ -939,13 +939,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3]);
 
       for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
+				tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-          tg->ParticleType[i] = NbodyStar;
-				else
-          tg->ParticleType[i] = NormalStarType;
-#else
-          tg->ParticleType[i] = NormalStarType;
+          tg->ParticleType[i] += NbodyStar;
 #endif
 			}
     }
@@ -980,13 +977,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &StarMakerExplosionDelayTime);
 
 			for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
+					tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] = NbodyStar;
-				else
-					tg->ParticleType[i] = NormalStarType;
-#else
-				tg->ParticleType[i] = NormalStarType;
+					tg->ParticleType[i] += NbodyStar;
 #endif
 			}
     }
@@ -1019,13 +1013,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3]);
 
 			for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
+					tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] = NbodyStar;
-				else
-					tg->ParticleType[i] = NormalStarType;
-#else
-				tg->ParticleType[i] = NormalStarType;
+					tg->ParticleType[i] += NbodyStar;
 #endif
 			}
     }
@@ -1062,13 +1053,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       #endif
 
 			for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
+					tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] = NbodyStar;
-				else
-					tg->ParticleType[i] = NormalStarType;
-#else
-				tg->ParticleType[i] = NormalStarType;
+					tg->ParticleType[i] += NbodyStar;
 #endif
 			}
     }
@@ -1099,9 +1087,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	 &RadiationData.IntegratedStarFormation, &RadiativeTransfer);
 
 			for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
+					tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] = NbodyStar;
+					tg->ParticleType[i] += NbodyStar;
 #endif
 			}
 
@@ -1129,6 +1118,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
          tg->ParticleMass, tg->ParticleAttribute[2], tg->ParticleType, &ColorStar);
 
 			for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
+					tg->ParticleType[i] = NormalStarType; // should be changed, by YS
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
 					tg->ParticleType[i] = NbodyStar;
@@ -1178,7 +1168,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     if (STARMAKE_METHOD(MBH_PARTICLE)) {
       
       #ifdef NBODY
-      int NbodyStarType = NbodyStar;
+      int NbodyStarType = NbodyStar; // ?? by YS (Query)
       NumberOfNewParticlesSoFar = NumberOfNewParticles;
 
       if (mbh_maker(GridDimension, GridDimension+1, GridDimension+2, &size, 
@@ -2115,8 +2105,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       };
 
       for (i = 0; i < NumberOfParticles; ++i) {
+#ifdef NBODY
           if(ParticleType[i] == PARTICLE_TYPE_STAR ||
              ParticleType[i] == PARTICLE_TYPE_MUST_REFINE)
+#else
+          if(ENZO_PARTICLE_TYPE(ParticleType[i]) == PARTICLE_TYPE_STAR ||
+             ENZO_PARTICLE_TYPE(ParticleType[i]) == PARTICLE_TYPE_MUST_REFINE)
+#endif
 	    if ((Time - ParticleAttribute[0][i]) < 3.7e7 * year / TimeUnits)
             {
 
@@ -2225,10 +2220,18 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
                   }
                   if( relativeTime < delayTime + 0.1 * Myr_s/TimeUnits) {
                       // refine!
-                      ParticleType[i] = PARTICLE_TYPE_MUST_REFINE; 
-                  } 
+#ifdef NBODY
+										ParticleType[i] = PARTICLE_TYPE_MUST_REFINE;
+#else
+										ENZO_PARTICLE_TYPE(ParticleType[i]) = PARTICLE_TYPE_MUST_REFINE;
+#endif
+                  }
                   else {
+#ifdef NBODY
                       ParticleType[i] = PARTICLE_TYPE_STAR;
+#else
+                      ENZO_PARTICLE_TYPE(ParticleType[i]) = PARTICLE_TYPE_STAR;
+#endif
                   }
 
               }
