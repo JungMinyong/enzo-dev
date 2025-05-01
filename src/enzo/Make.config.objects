@@ -1303,6 +1303,7 @@ OBJS_NBODY= \
 						NbodyRoutines.o \
 						PrepareNbodyComputation.o\
 						FinalizeNbodyComputation.o\
+						AbyssCommunications.o\
 						abyss/abyss.o\
 						abyss/WorkerRoutines.o\
 						abyss/RootRoutines.o\

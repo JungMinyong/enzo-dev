@@ -120,6 +120,8 @@ int PrepareNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int level);
 #else
+int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars);
+int ReceiveParticleFromAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar);
 #endif
 #endif
 
@@ -630,21 +632,19 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 						Exterior, LevelArray[level], LevelCycleCount[level]);
 
 #ifdef NBODY
-#ifndef INDIVIDUALSTAR
 				//if (level == MaximumRefinementLevel) {
 				if (debug1) fprintf(stdout,"6.5\n");  // by YS
 				if (debug1) fprintf(stdout,"Proc:%d\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
 				if (UseNBODY) {
+#ifndef INDIVIDUALSTAR
 					if (PrepareNbodyComputation(LevelArray, level) == FAIL) {
+#else
+					if (SendParticleToAbyss(LevelArray, level, AllStars) == FAIL) {
+#endif
 						ENZO_FAIL("Error in NbodyParticleFindAll.");
 					}
 				}
-				if (debug1) fprintf(stderr,"PNC done.\n", level);  // by YS
-				if (debug1) fprintf(stdout,"Proc:%d PNC done\n",MyProcessorNumber);  // by YS
-				//}
-#else
-#endif
 #endif
 
 #define GravTest
@@ -787,20 +787,21 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				}//RK hydro
 
 #ifdef NBODY
-#ifndef INDIVIDUALSTAR
 				//if (level == MaximumRefinementLevel) {
 				if (debug1) fprintf(stdout,"Proc: %d, 10\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
 				if (UseNBODY) {
+#ifndef INDIVIDUALSTAR
 					if(FinalizeNbodyComputation(LevelArray, level) == FAIL) {
+#else
+					if(ReceiveParticleFromAbyss(LevelArray, level, AllStars) == FAIL) {
+#endif
 						ENZO_FAIL("Error in NbodyParticleFindAll.");
 					}
 				}
 				if (debug1) fprintf(stdout,"Proc:%d 10-1\n",MyProcessorNumber);  // by YS
 				if (debug1) fprintf(stderr,"FNC done.\n");  // by YS
 				//}
-#else
-#endif
 #endif
 
 

@@ -27,6 +27,7 @@
 #ifdef MEMORY_POOL
 #include "MemoryPool.h"
 #endif
+#include "macros_and_parameters.h" // by YS
 #include "typedefs.h"
 #ifdef DEFINE_STORAGE
 # define EXTERN

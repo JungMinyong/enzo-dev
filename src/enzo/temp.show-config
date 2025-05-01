@@ -3,9 +3,9 @@
    MACHINE-NAME: rusty
 
    PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000
-   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 66
-   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 46
-   PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 72
+   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 70
+   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 60
+   PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 64
    PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : 100000
 
    CONFIG_PRECISION  [precision-{32,64}]                     : 64
@@ -28,7 +28,7 @@
    CONFIG_SEVN  [sevn-{yes,no}]                              : no
    CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no
    CONFIG_ACCELERATION_BOUNDARY  [acceleration-boundary-{yes,no}] : yes
-   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : high
+   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : aggressive
    CONFIG_TESTING  [testing-{yes,no}]                        : no
    CONFIG_PHOTON  [photon-{yes,no}]                          : yes
    CONFIG_HYPRE  [hypre-{yes,no}]                            : no
@@ -44,5 +44,5 @@
    CONFIG_UUID  [uuid-{yes,no}]                              : no
    CONFIG_INDIVIDUALSTAR [individualstar-{yes,no}]           : yes
    CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : yes
-   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : no
+   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : yes
 

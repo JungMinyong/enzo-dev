@@ -42,7 +42,9 @@ void InitializeNbodyArrays(void);
 void CopyNbodyArrayToOld(void);
 void MatchAccelerationWithIndex(void);
 void DeleteNbodyArrays(void);
+#ifdef USE_MPI
 void Scan(int *in, int *inout, int *len, MPI_Datatype *dptr);
+#endif
 void DeleteNbodyArrays(void);
 
 #else
@@ -102,19 +104,18 @@ struct ParticleReceiveDataType{
 	double Temperature;
 #endif
 
-/*
 	void copyTo(Star *ptcl) {
 		// I might generate a map to boost this process (ID matching needed), if so the maps should go into Star.
 		for (int dim=0; dim<MAX_DIMENSION; dim++) {
-			ptcl->Position[dim]              = this->pos[dim];
-			ptcl->Velocity[dim]              = this->vel[dim];
+			//ptcl->pos[dim]              = this->Position[dim];
+			//ptcl->vel[dim]              = this->Velocity[dim];
 		}
-		ptcl->ID = this->identifier;
+		//ptcl->ID = this->identifier;
 		//this->Mass          = ptcl->Mass;
 		//this->CreationTime  = ptcl->BirthTime;
 		//this->DynamicalTime = ptcl->LifeTime;
 		//this->Metallicity   = ptcl->Metallicity;
-	};*/
+	};
 };
 #endif
 #endif

@@ -380,8 +380,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 #endif // ABYSS
 #else /* USE_MPI */
  
-  MyProcessorNumber  = 0;
-  NumberOfProcessors = 1;
+  //MyProcessorNumber  = 0;
+  //NumberOfProcessors = 1;
  
 #endif /* USE_MPI */
  

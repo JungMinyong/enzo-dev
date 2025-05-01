@@ -23,7 +23,7 @@
 class Star
 {
 
- private:
+  private:
   grid		*CurrentGrid;
   FLOAT	 pos[MAX_DIMENSION];
   float		 vel[MAX_DIMENSION];
@@ -90,6 +90,11 @@ public:
   Star* copy(void);
 
   // Routines
+#ifdef NBODY
+  float *ReturnBackgroundAcceleration(void) { return bg_acc; }
+  bool ReturnAbyssFlag(){return isABYSS;};        // in case we would like to exclude this particle from the ABYSS pool
+  bool ReturnNewStarFlag(){return isNewlyFormed;};   // in case we would like to exclude this particle from the ABYSS pool
+#endif
   star_type ReturnType(void) { return type; };
   int   ReturnID(void) { return Identifier; };
   double ReturnMass(void) { return Mass; };
@@ -164,9 +169,6 @@ public:
   void  AddEmissivityFlag(void) { this->AddedEmissivity = true; };
   FLOAT *ReturnPosition(void) { return pos; }
   float *ReturnVelocity(void) { return vel; }
-  #ifdef NBODY
-  float *ReturnBackgroundAcceleration(void) { return bg_acc; }
-  #endif
   float *ReturnAccretedAngularMomentum(void) { return accreted_angmom; }
   float ReturnLastAccretionRate(void) { return last_accretion_rate; }
   void  MultiplyAccretionRate(float &RecalibrateAccretingMassRatio);

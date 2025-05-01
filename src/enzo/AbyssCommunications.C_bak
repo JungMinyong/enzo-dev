@@ -31,15 +31,11 @@
 #include "NbodyRoutines.h"  //added  
 #include "phys_constants.h"
 #include "CosmologyParameters.h"
-#include "Star.h"
 
-int GetUnits(double *DensityUnits, double *LengthUnits,
-		double *TemperatureUnits, double *TimeUnits,
-		double *VelocityUnits, double *MassUnits, double Time);
+
 int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar);
 int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars);
 
-#ifdef NBODY
 int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars)
 {
 	if (LevelArray[level+1] == NULL) {
@@ -80,7 +76,7 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 
 	/* Number of Star Particles */
 	int NumberOfParticles=0;
-	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
+	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count)
 		NumberOfParticles++;
 
 
@@ -91,7 +87,7 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 	if (ComovingCoordinates) {
 		double_size += 14;
 		double_size += 2*CosmologyTableNumberOfBins;
-		int_size    += 1;
+		int_size    += 1
 	}
 	double *params_double = new double[double_size];
 	int *params_int       = new int[int_size];
@@ -100,7 +96,7 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 	params_double[2] = LengthUnits;
 	params_double[3] = DensityUnits;
 	params_double[4] = VelocityUnits;
-	params_double[5] = StarMassEjectionFraction;
+	params_double[5] = StarMassEjectionsFraction;
 	params_double[6] = Time;
 	params_double[7] = NbodySmoothingLength;
 	params_double[8] = NbodyTimeStepConstant;
@@ -110,7 +106,7 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 	params_double[12] = NbodyClusterPosition[2];
 	params_double[13] = NbodyClusterPosition[3];
 	
-	params_int[0] = StarParticleFeedback;
+	params_int[0] = StarParticleFeedbac;
 	params_int[1] = isNbodyParticleIdentification;
 	params_int[2] = isIdentificationOnTheFly;
 	params_int[3] = NbodyFixNumNeighbor;
@@ -119,8 +115,8 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 
 	if (ComovingCoordinates) {
 		params_double[14] = HubbleConstantNow;
-		params_double[15] = OmegaMatterNow;
-		params_double[16] = OmegaDarkMatterNow;
+		params_double[15] = OmegaMatterNow
+		params_double[16] = OmegaDarkmatterNow;
 		params_double[17] = OmegaLambdaNow;
 		params_double[18] = OmegaRadiationNow;
 		params_double[19] = ComovingBoxSize;
@@ -128,8 +124,8 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 		params_double[21] = InitialTimeInCodeUnits;
 		params_double[22] = InitialRedshift;
 		params_double[23] = FinalRedshift;
-		params_double[24] = CosmologyTableLogaInitial;
-		params_double[25] = CosmologyTableLogaFinal;
+		params_double[24] = CosmologyTableLogaInitial
+		params_double[25] = CosmologyTableLogaFinal
 		for (int i=0; i< CosmologyTableNumberOfBins; i++) {
 			params_double[26+i] = CosmologyTableLoga[i];
 		}
@@ -137,20 +133,19 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 			params_double[26+CosmologyTableNumberOfBins+i] = CosmologyTableLogt[i];
 		}
 
-		params_int[7] = CosmologyTableLogtIndex;
+		params_int[7] = CosmologyTableLogaIndex;
 	}
 
-	MPI_Request requests[2];
 	/* Send Parameters First*/
 	if (MyProcessorNumber == ROOT_PROCESSOR) {
 		fprintf(stderr, "ENZO: ComovingCoordinates=%d\n",ComovingCoordinates);
 		MPI_Send(&ComovingCoordinates, 1 , MPI_INT   , 1, 100, inter_comm);
 		if (ComovingCoordinates) 
 			MPI_Send(&CosmologyTableNumberOfBins, 1, MPI_INT   , 1, 150, inter_comm);
-		MPI_Isend(params_double       , double_size, MPI_DOUBLE, 1, 200, inter_comm, &requests[0]);
-		MPI_Isend(params_int          , int_size,    MPI_INT   , 1, 300, inter_comm, &requests[1]);
+		MPI_Isend(params_double       , double_size, MPI_DOUBLE, 1, 200, inter_comm);
+		MPI_Isend(params_int          , int_size,    MPI_INT   , 1, 300, inter_comm);
 	}
-	//CommunicationInterBarrier();
+	CommunicationInterBarrier();
 
 
 	/*-------------------------------------------*/
@@ -161,11 +156,10 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 	ParticleDataType *ptcl = new ParticleDataType[NumberOfParticles];
 
 	/* Copy  Data to Send Buffer */
-	fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessorNumber, NumberOfParticles);
-	int count = 0;
-	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar) {
+	fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessors, NumberOfParticles);
+	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count) {
 		// if (ThisStar->isABYSS) this is not implemented yet. 
-		ptcl[count++].copyFrom(ThisStar);
+		ptcl[count].copyFrom(ThisStar);
 	}
 	fprintf(stdout, "ENZO: Buffer Ready!\n");
 
@@ -176,14 +170,13 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 
 	MPI_Send(&NumberOfParticles, 1, MPI_INT, TargetRank, 100, inter_comm);
 	if (NumberOfParticles != 0)
-		MPI_Send(ptcl, NumberOfParticles, MPI_ENZO_PTCL, TargetRank, 100, MPI_COMM_WORLD);
+		MPI_Isend(ptcl, NumberOfParticles, MPI_ENZO_PTCL, TargetRank, 100, MPI_COMM_WORLD);
+
 	fprintf(stderr, "ENZO: data sent! \n");
 
-	delete [] params_double;
-	delete [] params_int;
-	delete [] ptcl;
-
-	MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+	delete params_double;
+	delete params_int;
+	delete ptcl;
 #endif
 
 	return SUCCESS;
@@ -192,9 +185,8 @@ int CommunicationToAbyssInitialize(LevelHierarchyEntry *LevelArray[], int level,
 
 
 
-int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars) {
+int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar) {
 
-	Star *ThisStar;
 	/* Do direct calculation!*/
 	double dt = 1e-3, scale_factor=1.0;
 	double DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1,
@@ -217,14 +209,14 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 	int OldNumberOfParticles=0, NewNumberOfParticles=0;
 
 	/* Number of Star Particles */
-	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar) { 
-		if (ThisStar->ReturnNewStarFlag())
+	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count) { 
+		if (ThisStar->isNewlyFormed)
 			OldNumberOfParticles++;
 		else
 			NewNumberOfParticles++;
 	}
-	fprintf(stderr, "ENZO: (%d) OldNumberOfParticles=%d\n", MyProcessorNumber, OldNumberOfParticles);
-	fprintf(stderr, "ENZO: (%d) NewNumberOfParticles=%d\n", MyProcessorNumber, NewNumberOfParticles);
+	fprintf(stderr, "ENZO: (%d) OldNumberOfParticles=%d\n", MyProcessors, OldNumberOfParticles);
+	fprintf(stderr, "ENZO: (%d) NewNumberOfParticles=%d\n", MyProcessors, NewNumberOfParticles);
 
 
 	/* Prepare Send Buffer */
@@ -232,14 +224,13 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 	ParticleDataType *ptcl_new     = new ParticleDataType[NewNumberOfParticles];
 
 	/* Copy  Data to Send Buffer */
-	int count_new = 0, count_old = 0;
-	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
+	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count)
 	{
 		// if (ThisStar->isABYSS) this is not implemented yet.
-		if (ThisStar->ReturnNewStarFlag())
-			ptcl_new[count_new++].copyFrom(ThisStar);
+		if (ThisStar->isNewlyFormed)
+			ptcl_new[count].copyFrom(ThisStar);
 		else
-			ptcl_old[count_old++].copyFrom(ThisStar);
+			ptcl_old[count].copyFrom(ThisStar);
 	}
 	fprintf(stdout, "ENZO: Buffer Ready!\n");
 
@@ -248,20 +239,18 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 	fprintf(stderr, "ENZO: Waiting for ABYSS to send data \n");
 	int TargetRank = NumberOfProcessors + MyProcessorNumber % (NumberOfAbyssProcessors);
 
-	MPI_Request request;
 	MPI_Send(&OldNumberOfParticles, 1, MPI_INT, TargetRank, 100, inter_comm);
 	if (OldNumberOfParticles != 0)
-		MPI_Isend(ptcl_old, OldNumberOfParticles, MPI_ENZO_PTCL_SEND, TargetRank, 200, MPI_COMM_WORLD, &request);
-	MPI_Wait(&request, MPI_STATUSES_IGNORE);
+		MPI_Isend(ptcl_old, OldNumberOfParticles, MPI_ENZO_PTCL_SEND, TargetRank, 200, MPI_COMM_WORLD);
+
 	MPI_Send(&NewNumberOfParticles, 1, MPI_INT, TargetRank, 300, inter_comm);
 	if (NewNumberOfParticles != 0)
-		MPI_Isend(ptcl_new, NewNumberOfParticles, MPI_ENZO_PTCL, TargetRank, 400, MPI_COMM_WORLD,&request);
-	MPI_Wait(&request, MPI_STATUSES_IGNORE);
+		MPI_Isend(ptcl_new, NewNumberOfParticles, MPI_ENZO_PTCL, TargetRank, 400, MPI_COMM_WORLD);
+		
 	fprintf(stderr, "ENZO: data sent! \n");
 
-	delete [] ptcl_new;
-	delete [] ptcl_old;
-
+	delete ptcl_new;
+	delete ptcl_old;
 #endif
 
 	return SUCCESS;
@@ -269,9 +258,8 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 
 
 
-int ReceiveParticleFromAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars)
+int ReceiveParticleFromAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar)
 {
-	Star *ThisStar;
 	if (LevelArray[level+1] != NULL) {
 		return SUCCESS;
 	}
@@ -279,17 +267,15 @@ int ReceiveParticleFromAbyss(LevelHierarchyEntry *LevelArray[], int level, Star 
 	int NumberOfParticles=0;
 
 	/* Number of Star Particles */
-	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar) { 
+	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count) { 
 		NumberOfParticles++;
 	}
-	fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessorNumber, NumberOfParticles);
+	fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessors, NumberOfParticles);
 
 #ifdef USE_MPI
-	MPI_Status statuses[2];
-	MPI_Request requests[2];
 	//let's use broadcast
 	if (isNbodyParticleIdentification && isIdentificationOnTheFly) {
-		MPI_Irecv(NbodyClusterPosition, 3, MPI_DOUBLE, 1, 200, MPI_COMM_WORLD, &requests[0]);
+		ierr = MPI_Irecv(NbodyClusterPosition, 3, MPI_DOUBLE, 1, 200, MPI_COMM_WORLD, &status);
 	}
 	fprintf(stdout, "In Final, NbodyClusterPosition = (%e, %e, %e)\n", NbodyClusterPosition[0], NbodyClusterPosition[1], NbodyClusterPosition[2]);
 	/*
@@ -308,6 +294,7 @@ int ReceiveParticleFromAbyss(LevelHierarchyEntry *LevelArray[], int level, Star 
 	/******** Receive PARTICLES to ABYSS    *****/
 	/*------------------------------------------*/
 
+	MPI_Status status;
 
 	/* Prepare Send Buffer */
 	ParticleReceiveDataType *ptcl = new ParticleReceiveDataType[NumberOfParticles];
@@ -315,25 +302,23 @@ int ReceiveParticleFromAbyss(LevelHierarchyEntry *LevelArray[], int level, Star 
 	fprintf(stdout, "ENZO: Waiting for ABYSS to receive data \n");
 	fprintf(stderr, "ENZO: Waiting for ABYSS to receive data \n");
 	int TargetRank = NumberOfProcessors + MyProcessorNumber % (NumberOfAbyssProcessors);
-	MPI_Irecv(ptcl, NumberOfParticles, MPI_ENZO_PTCL_RECV, TargetRank, 100, MPI_COMM_WORLD, &requests[1]);
 
-	MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+	MPI_Irecv(ptcl, NumberOfParticles, MPI_ENZO_PTCL_RECV, TargetRank, 100, MPI_COMM_WORLD, &status);
+
 
 	// think of broadcast
 
 	fprintf(stderr, "ENZO: data sent! \n");
 
 	/* Copy Data to Star */
-	int count=0;
-	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
+	for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count)
 	{
-		ptcl[count++].copyTo(ThisStar);
+		ptcl[count].CopyTo(ThisStar);
 	}
 	fprintf(stdout, "ENZO: Copy to Star!\n");
 
-	delete [] ptcl;
+	delete ptcl;
 #endif
 	return SUCCESS;
 }
 
-#endif
