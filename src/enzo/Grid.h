@@ -132,10 +132,12 @@ class grid
 																									 //
 #ifdef NBODY
 		float *ParticleAccelerationNoStar[MAX_DIMENSION+1];  //  by YS
+#ifndef INDIVIDUALSTAR
 		int NumberOfNbodyParticlesInGrid;
 		int NumberOfNewNbodyParticlesInGrid;
 		int *IndicesOfNbodyParticlesInGrid;					// added by EW 2025.4.24
 		int *IndicesOfNewNbodyParticlesInGrid;				// added by EW 2025.4.24
+#endif
 #endif
 		float *ParticleMass;                     // pointer to mass array
 		PINT  *ParticleNumber;                   // unique identifier
@@ -1915,6 +1917,7 @@ class grid
 
 		void GetNbodyCenterOfMass(double &TotalMass);
 
+#ifndef INDIVIDUALSTAR
 		void SetIndicesOfNbodyParticles(void) {
 			if (MyProcessorNumber != ProcessorNumber) return;
 			
@@ -2286,6 +2289,7 @@ class grid
 			} // endfor particles
 			return SUCCESS;
 		}
+#endif
 
 		/* EW Individual star formation and feedback */
 		void individual_star_feedback3mom(const float &dx, const float &kinf_in, float *mu, const float &yield);

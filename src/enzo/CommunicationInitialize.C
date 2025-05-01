@@ -4,7 +4,7 @@
 /
 /  written by: Greg Bryan
 /  date:       December, 1997
-/  modified1:
+/  modified1: Yongseok Jo, 2025
 /
 /  PURPOSE:
 /
@@ -23,32 +23,39 @@
 
 
 typedef int MPI_Arg;
-extern int local_rank, local_size;
-extern int MyProcessorNumber;
-extern int NumberOfProcessors;
-extern int TotalNumberOfProcessors;
+//extern int local_rank, local_size;
+//extern int MyProcessorNumber;
+//extern int NumberOfProcessors;
+//extern int TotalNumberOfProcessors;
 
 
-extern MPI_Errhandler CommunicationErrorHandler;
-extern float CommunicationTime;
-extern int CommunicationDirection;
+//extern MPI_Errhandler CommunicationErrorHandler;
+//extern float CommunicationTime;
+//extern int CommunicationDirection;
 #include "ErrorExceptions.h"
 //#include "macros_and_parameters.h"
 //#include "typedefs.h"
 //#include "global_data.h"
 
 #ifdef NBODY
-#include "communicators.h"
+#undef NormalStar
+#undef BlackHole
 #include "abyss/particle.h"
 #include "abyss/global.h"
 #include "abyss/def.h"
+#undef max
+#undef NormalStar
+#undef BlackHole
 
-extern int WorldProcessorNumber;
-extern int AbyssProcessorNumber;
-extern int NumberOfAbyssProcessors;
-EXTERN MPI_Datatype MPI_ENZO_PTCL;
-EXTERN MPI_Datatype MPI_ENZO_PTCL_SEND;
-EXTERN MPI_Datatype MPI_ENZO_PTCL_RECV;
+#include "NbodyRoutines.h"
+#include "communication.h"
+
+//extern int WorldProcessorNumber;
+//extern int AbyssProcessorNumber;
+//extern int NumberOfAbyssProcessors;
+//extern MPI_Datatype MPI_ENZO_PTCL;
+//extern MPI_Datatype MPI_ENZO_PTCL_SEND;
+//extern MPI_Datatype MPI_ENZO_PTCL_RECV;
 //extern MPI_Comm enzo_comm;
 //extern MPI_Comm abyss_comm;
 //extern MPI_Comm inter_comm;
@@ -247,7 +254,7 @@ int CommunicationInitialize(int &argc, char *argv[])
 		 ***********************************/
 		MPI_Datatype MPI_ENZO_PTCL;
 		{
-			AbyssParticleDataType dummy;
+			ParticleDataType dummy;
 
 			int block_lengths[6] = {
 				1,                      // ID

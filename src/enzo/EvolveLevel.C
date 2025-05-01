@@ -115,9 +115,12 @@ int OutputParitcles(LevelHierarchyEntry *LevelArray[],int level);
 #endif
 
 #ifdef NBODY
+#ifndef INDIVIDUALSTAR
 int PrepareNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int level);
+#else
+#endif
 #endif
 
 #define EXTRA_OUTPUT_MACRO(A,B) ExtraOutput(A,LevelArray,MetaData,level,Exterior IMPLICIT_MACRO,B);
@@ -539,8 +542,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 
 #ifdef NBODY
+#ifndef INDIVIDUALSTAR
 				if (LevelArray[level+1] == NULL)
 					IdentifyNbodyParticlesEvolveLevel(LevelArray, level);
+#endif
 #endif
 
 
@@ -549,8 +554,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				PrepareDensityField(LevelArray,  level, MetaData, When, SiblingGridListStorage);
 				fprintf(stdout,"Prepare Density Field Done.\n");  // by YS
 #ifdef NBODY
-				//fprintf(stdout,"Prepare Density Field No Star Starts.\n");  // by YS
-				//PrepareDensityFieldNoStar(LevelArray,  level, MetaData, When, SiblingGridListStorage);
+// outdated
+// fprintf(stdout,"Prepare Density Field No Star Starts.\n");  // by YS
+// PrepareDensityFieldNoStar(LevelArray,  level, MetaData, When, SiblingGridListStorage);
 #endif
 #else   // !FAST_SIB
 				PrepareDensityField(LevelArray, level, MetaData, When);
@@ -624,6 +630,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 						Exterior, LevelArray[level], LevelCycleCount[level]);
 
 #ifdef NBODY
+#ifndef INDIVIDUALSTAR
 				//if (level == MaximumRefinementLevel) {
 				if (debug1) fprintf(stdout,"6.5\n");  // by YS
 				if (debug1) fprintf(stdout,"Proc:%d\n",MyProcessorNumber);  // by YS
@@ -636,6 +643,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				if (debug1) fprintf(stderr,"PNC done.\n", level);  // by YS
 				if (debug1) fprintf(stdout,"Proc:%d PNC done\n",MyProcessorNumber);  // by YS
 				//}
+#else
+#endif
 #endif
 
 #define GravTest
@@ -778,6 +787,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				}//RK hydro
 
 #ifdef NBODY
+#ifndef INDIVIDUALSTAR
 				//if (level == MaximumRefinementLevel) {
 				if (debug1) fprintf(stdout,"Proc: %d, 10\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
@@ -789,6 +799,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				if (debug1) fprintf(stdout,"Proc:%d 10-1\n",MyProcessorNumber);  // by YS
 				if (debug1) fprintf(stderr,"FNC done.\n");  // by YS
 				//}
+#else
+#endif
 #endif
 
 

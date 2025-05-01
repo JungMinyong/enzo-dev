@@ -65,8 +65,10 @@ grid::grid()
 #ifdef NBODY
 		ParticleAccelerationNoStar[i]       = NULL;
     AccelerationFieldNoStar[i]          = NULL;
-    IndicesOfNbodyParticlesInGrid       = NULL;
-    IndicesOfNewNbodyParticlesInGrid    = NULL;
+#ifndef INDIVIDUALSTAR
+    IndicesOfNbodyParticlesInGrid = NULL;
+    IndicesOfNewNbodyParticlesInGrid = NULL;
+#endif
 #endif
     AccelerationField[i]             = NULL;
     GravitatingMassFieldDimension[i] = 0;

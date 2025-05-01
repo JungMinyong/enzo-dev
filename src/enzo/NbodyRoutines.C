@@ -6,7 +6,7 @@
 	/  date:       November, 2022
 	/
  ************************************************************************/
-
+#ifndef INDIVIDUALSTAR
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -26,7 +26,33 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
+#else
+#include "macros_and_parameters.h"
+#endif
 
+void GetCenterOfMass(double *mass, double *x[MAX_DIMENSION], double *v[MAX_DIMENSION], double x_com[], double v_com[], int N) {
+	double total_mass=0.;
+	for (int dim=0; dim<MAX_DIMENSION; dim++) {
+		x_com[dim] = 0.;
+		v_com[dim] = 0.;
+	}
+
+	for (int i=0; i<N; i++) {
+		for (int dim=0; dim<MAX_DIMENSION; dim++) {
+			x_com[dim] += mass[i]*x[dim][i];
+			v_com[dim] += mass[i]*v[dim][i];
+		}
+		total_mass += mass[i];
+	}
+
+	for (int dim=0; dim<MAX_DIMENSION; dim++) {
+		x_com[dim] /= total_mass;
+		v_com[dim] /= total_mass;
+	}
+}
+
+
+#ifndef INDIVIDUALSTAR
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		HierarchyEntry **Grids[]);
 
@@ -382,26 +408,7 @@ void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int le
 	}
 }
 
-void GetCenterOfMass(double *mass, double *x[MAX_DIMENSION], double *v[MAX_DIMENSION], double x_com[], double v_com[], int N) {
-	double total_mass=0.;
-	for (int dim=0; dim<MAX_DIMENSION; dim++) {
-		x_com[dim] = 0.;
-		v_com[dim] = 0.;
-	}
 
-	for (int i=0; i<N; i++) {
-		for (int dim=0; dim<MAX_DIMENSION; dim++) {
-			x_com[dim] += mass[i]*x[dim][i];
-			v_com[dim] += mass[i]*v[dim][i];
-		}
-		total_mass += mass[i];
-	}
-
-	for (int dim=0; dim<MAX_DIMENSION; dim++) {
-		x_com[dim] /= total_mass;
-		v_com[dim] /= total_mass;
-	}
-}
 
 
 
@@ -438,9 +445,6 @@ void scan(int *in, int *inout, int *len, MPI_Datatype *dptr)
 	}
 }
 #endif
-
-
-
 #endif
 
-
+#endif

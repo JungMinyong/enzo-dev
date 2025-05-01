@@ -7,16 +7,32 @@
 	/
  ************************************************************************/
 
+#ifndef __NBODYROUTINES_H
+#define __NBODYROUTINES_H
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
+
 #include "macros_and_parameters.h"
+#include "typedefs.h"
+#include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
+#include "Hierarchy.h"
+#include "TopGridData.h"
+#include "LevelHierarchy.h"
+#include "phys_constants.h"
+#include "Star.h"
+
+#ifndef INDIVIDUALSTAR
+#include "macros_and_parameters.h"
+#include "global_data.h"
 #include "typedefs.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-
-
 
 
 int FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[],int *LocalNumberOfNbodyParticles, bool prepareNbodyComputation);
@@ -29,10 +45,11 @@ void DeleteNbodyArrays(void);
 void Scan(int *in, int *inout, int *len, MPI_Datatype *dptr);
 void DeleteNbodyArrays(void);
 
+#else
 
 
 struct ParticleDataType{
-	PINT ID;
+	int ID;
 	double Position[MAX_DIMENSION];
 	double Velocity[MAX_DIMENSION];
 	double BackgrounAcceleration[MAX_DIMENSION];
@@ -50,13 +67,13 @@ struct ParticleDataType{
 		this->ID = ptcl->ReturnID();
 		this->Mass          = ptcl->ReturnMass();
 		this->CreationTime  = ptcl->ReturnBirthTime();
-		this->DynamicalTime = ptcl->ReturnLifeTime();
+		this->DynamicalTime = ptcl->ReturnLifetime();
 		this->Metallicity   = ptcl->ReturnMetallicity();
 	};
 };
 
 struct ParticleSendDataType{
-	PINT ID;
+	int ID;
 	double BackgrounAcceleration[MAX_DIMENSION];
 	//double Mass;
 
@@ -99,3 +116,5 @@ struct ParticleReceiveDataType{
 		//this->Metallicity   = ptcl->Metallicity;
 	};*/
 };
+#endif
+#endif

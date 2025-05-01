@@ -11,6 +11,7 @@
 	/
  ************************************************************************/
 
+#ifndef INDIVIDUALSTAR
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -831,5 +832,4 @@ int SendToNbody(LevelHierarchyEntry *LevelArray[], int level) {
 }
 
 #endif
-
-
+#endif
