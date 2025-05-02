@@ -152,13 +152,13 @@ void grid::individual_star_feedback3mom(const float &dx, const float &kinf_in, f
                 yfcshift = yfc;
                 zfcshift = zfc;
 
-                xfc = max(xfc, xstart+fbuff*dx);
-                yfc = max(yfc, ystart+fbuff*dx);
-                zfc = max(zfc, zstart+fbuff*dx);
+                xfc = enzo_max(xfc, xstart+fbuff*dx);
+                yfc = enzo_max(yfc, ystart+fbuff*dx);
+                zfc = enzo_max(zfc, zstart+fbuff*dx);
 
-                xfc = min(xfc, xstart + dx * (nx - fbuff - 1));
-                yfc = min(yfc, ystart + dx * (ny - fbuff - 1));
-                zfc = min(zfc, zstart + dx * (nz - fbuff - 1));
+                xfc = enzo_min(xfc, xstart + dx * (nx - fbuff - 1));
+                yfc = enzo_min(yfc, ystart + dx * (ny - fbuff - 1));
+                zfc = enzo_min(zfc, zstart + dx * (nz - fbuff - 1));
 
                 xfcshift = xfcshift - xfc;
                 yfcshift = yfcshift - yfc;

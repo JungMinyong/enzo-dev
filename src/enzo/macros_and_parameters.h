@@ -370,8 +370,10 @@ typedef long long int   HDF5_hid_t;
 
 /* Macro definitions (things C should have) */
 
-#define max(A,B) ((A) > (B) ? (A) : (B))
-#define min(A,B) ((A) < (B) ? (A) : (B))
+#define enzo_max(A,B) ((A) > (B) ? (A) : (B))
+#define enzo_min(A,B) ((A) < (B) ? (A) : (B))
+//#define max(A,B) ((A) > (B) ? (A) : (B))
+//#define min(A,B) ((A) < (B) ? (A) : (B))
 #define sign(A)  ((A) >  0  ?  1  : -1 )
 #define POW(X,Y) pow((double) (X), (double) (Y))
 #define COS(X) cos((double) (X))

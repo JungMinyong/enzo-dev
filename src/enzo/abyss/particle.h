@@ -9,6 +9,9 @@
 #ifdef SEVN
 #include "star.h" // Eunwoo added for SEVN
 #endif
+#ifdef TEST // INDIVIDUALSTAR
+#include "../NbodyRoutines.h"
+#endif
 
 enum class BinaryInterruptState:int {
 	none = 0, 
@@ -351,11 +354,16 @@ struct Particle {
 		for (int i = 0; i < ptcl->NewNumberOfNeighbor; i++)
 			this->NewNeighbors[i] = ptcl->NewNeighbors[i];
 	}
-
-	void set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime, double *Metallicity,
-			 double *Position[Dim], double *Velocity[Dim],
-			 double *BackgroundAcceleration[Dim], int &i);
-	void update(double *Mass, double *BackgroundAcceleration[Dim], int &i);
+#ifndef TEST //INDIVIDUALSTAR
+        void set(int *PID, double *Mass, double *CreationTime,
+                 double *DynamicalTime, double *Metallicity,
+                 double *Position[Dim], double *Velocity[Dim],
+                 double *BackgroundAcceleration[Dim], int &i);
+        void update(double *Mass, double *BackgroundAcceleration[Dim], int &i);
+#else
+        void set(ParticleDataType *ptcl);
+        void update(ParticleSendDataType *ptcl);
+#endif
 
 	void setNewTimeStepWithNewEnzoTimeStep(double &OldEnzoTimeStep, double &NewEnzoTimeStep) ;
 };

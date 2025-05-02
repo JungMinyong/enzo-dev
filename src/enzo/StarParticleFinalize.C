@@ -29,6 +29,8 @@
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
 
+#include <unordered_map>
+
 #define NO_DEATH 0
 #define KILL_STAR 1
 #define KILL_ALL 2
@@ -61,11 +63,13 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[], int NumberOfGrids);
 void DeleteStarList(Star * &Node);
 
 int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
-			 int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
-			 int level, Star *&AllStars,
-			 int TotalStarParticleCountPrevious[],
-			 int &OutputNow)
-{
+                         int NumberOfGrids, LevelHierarchyEntry *LevelArray[],
+                         int level, Star *&AllStars,
+                         int TotalStarParticleCountPrevious[], int &OutputNow
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                         , std::unordered_map<int, Star *> LocalStarLookupMap
+#endif
+) {
 
   if (!StarParticleCreation && !StarParticleFeedback)
     return SUCCESS;
@@ -227,10 +231,13 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 #ifndef INDIVIDUALSTAR
   DeleteStarList(AllStars);
 #endif
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+  LocalStarLookupMap.clear();
+#endif
+
   delete [] AddedFeedback;
 
   LCAPERF_STOP("StarParticleFinalize");
   TIMER_STOP("StarParticleFinalize");
   return SUCCESS;
-
 }

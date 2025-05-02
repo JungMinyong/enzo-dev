@@ -1315,6 +1315,7 @@ OBJS_NBODY= \
 						abyss/cuda/cuda_my_acceleration.o\
 						abyss/DefaultGlobal.o\
 						abyss/CommunicationToHydro.o \
+						abyss/EnzoCommunications.o \
 						abyss/TimeStepRoutines.o\
 						abyss/Particle/ParticleRoutines.o\
 						abyss/Particle/UpdateParticle.o\

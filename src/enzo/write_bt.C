@@ -56,7 +56,7 @@ int WRITE_BT(boundary_type *bt_buffer,
     }
     int MaxFaceSize = 1;
     for ( i = 0; i < BoundaryRank; i++ ) {
-      MaxFaceSize = max(MaxFaceSize, cubesize/BoundaryDimension[i]);
+      MaxFaceSize = enzo_max(MaxFaceSize, cubesize/BoundaryDimension[i]);
     }
 
     facesize = cubesize/BoundaryDimension[dim];

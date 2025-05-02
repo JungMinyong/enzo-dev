@@ -101,6 +101,8 @@
 void RunEventHooks(char *, HierarchyEntry *Grid[], TopGridData &MetaData) {}
 #endif
 
+#include <unordered_map>
+
 /* function prototypes */
 
 #ifdef TRANSFER
@@ -120,8 +122,14 @@ int PrepareNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int level);
 #else
-int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars);
-int ReceiveParticleFromAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar);
+int SendParticleToAbyss(//LevelHierarchyEntry *LevelArray[], int level,
+                        Star *&AllStars,
+                        std::unordered_map<int, Star *> LocalStarLookupMap);
+#ifdef TEST
+int ReceiveParticleFromAbyss(
+    LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar,
+    std::unordered_map<int, Star *> LocalStarLookupMap);
+#endif
 #endif
 #endif
 
@@ -250,17 +258,24 @@ int ActiveParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		int NumberOfGrids, LevelHierarchyEntry *LevelArray[],
 		int level, int NumberOfNewActiveParticles[]);
 int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
-		int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
-		int ThisLevel, Star *&AllStars,
-			   int TotalStarParticleCountPrevious[]
+                           int NumberOfGrids, LevelHierarchyEntry *LevelArray[],
+                           int ThisLevel, Star *&AllStars,
+                           int TotalStarParticleCountPrevious[]
 #ifdef INDIVIDUALSTAR
+#ifdef NBODY
+                           , std::unordered_map<int, Star *> LocalStarLookupMap
+#endif
                            , int SkipFeedbackFlag = 0
 #endif
-                           );
+);
 int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
 		int level, Star *&AllStars,
-		int TotalStarParticleCountPrevious[], int &OutputNow);
+		int TotalStarParticleCountPrevious[], int &OutputNow
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                         , std::unordered_map<int, Star *> LocalStarLookupMap
+#endif
+		);
 int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[], 
 		TopGridData *MetaData, int EL_level);
 int AdjustMustRefineParticlesRefineToLevel(TopGridData *MetaData, int EL_level);
@@ -424,14 +439,17 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 #ifdef INDIVIDUALSTAR
   Star *AllStars = NULL;
+#ifdef NBODY
+  std::unordered_map<int, Star *> LocalStarLookupMap;
 #endif
-		while ((CheckpointRestart == TRUE)
-				|| (dtThisLevelSoFar[level] < dtLevelAbove)) {
-			if(CheckpointRestart == FALSE) {
+#endif
+  while ((CheckpointRestart == TRUE) ||
+         (dtThisLevelSoFar[level] < dtLevelAbove)) {
+    if (CheckpointRestart == FALSE) {
 
-				TIMER_START(level_name);
-				SetLevelTimeStep(Grids, NumberOfGrids, level, 
-						&dtThisLevelSoFar[level], &dtThisLevel[level], dtLevelAbove);
+      TIMER_START(level_name);
+      SetLevelTimeStep(Grids, NumberOfGrids, level, &dtThisLevelSoFar[level],
+                       &dtThisLevel[level], dtLevelAbove);
 
 #define aeos_debug
 #ifdef aeos_debug
@@ -500,7 +518,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #endif
 				if (debug1) fprintf(stdout,"2\n");  // by YS
 				StarParticleInitialize(Grids, MetaData, NumberOfGrids, LevelArray,
-						level, AllStars, TotalStarParticleCountPrevious);
+						level, AllStars, TotalStarParticleCountPrevious
+						#if defined(NBODY) && defined(INDIVIDUALSTAR) 
+						, LocalStarLookupMap
+						#endif
+						);
 
 				if (debug1) fprintf(stdout,"3\n");  // by YS
 				/* Calculate ClusterSMBHColdGasMass */
@@ -636,15 +658,30 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				if (debug1) fprintf(stdout,"6.5\n");  // by YS
 				if (debug1) fprintf(stdout,"Proc:%d\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
-				if (UseNBODY) {
+
+				//if (UseNBODY) {
+				// by YS (Query) test
+				if (true) {
 #ifndef INDIVIDUALSTAR
 					if (PrepareNbodyComputation(LevelArray, level) == FAIL) {
 #else
-					if (SendParticleToAbyss(LevelArray, level, AllStars) == FAIL) {
+				if (LevelArray[level+1] == NULL)
+					if (SendParticleToAbyss(AllStars, LocalStarLookupMap) == FAIL) {
 #endif
 						ENZO_FAIL("Error in NbodyParticleFindAll.");
 					}
 				}
+				// by YS test for AllStars
+				bool debug2 = false; 
+				Star *ThisStar;
+				if (debug2) {
+					fprintf(stderr, "Star (ID, x, on this processor) of %d =", MyProcessorNumber);
+					for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar) {
+						fprintf(stderr, "(%d, %.5e, %d), ",
+						ThisStar->ReturnID(), ThisStar->ReturnPosition()[0], ThisStar->ReturnCurrentGrid()==NULL);
+					}
+					fprintf(stderr, "\n");
+                }
 #endif
 
 #define GravTest
@@ -794,7 +831,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #ifndef INDIVIDUALSTAR
 					if(FinalizeNbodyComputation(LevelArray, level) == FAIL) {
 #else
-					if(ReceiveParticleFromAbyss(LevelArray, level, AllStars) == FAIL) {
+					//if(ReceiveParticleFromAbyss(LevelArray, level, AllStars, LocalStarLookupMap) == FAIL) {
+					{
 #endif
 						ENZO_FAIL("Error in NbodyParticleFindAll.");
 					}
@@ -920,7 +958,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 				/* Finalize (accretion, feedback, etc.) star particles */
 				StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
-						level, AllStars, TotalStarParticleCountPrevious, OutputNow);
+						level, AllStars, TotalStarParticleCountPrevious, OutputNow
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                         , LocalStarLookupMap
+#endif
+						);
 
 
 				if (debug1) fprintf(stdout,"16\n");  // by YS
@@ -973,11 +1015,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 				MetaData->FirstTimestepAfterRestart = FALSE;
 
-			} else { // CheckpointRestart
-							 // dtThisLevelSoFar set during restart
-							 // dtThisLevel set during restart
-							 // Set dtFixed on each grid to dtThisLevel
-        for (grid1 = 0; grid1 < NumberOfGrids; grid1++){
+    } else { // CheckpointRestart
+             // dtThisLevelSoFar set during restart
+             // dtThisLevel set during restart
+             // Set dtFixed on each grid to dtThisLevel
+      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 #ifdef INDIVIDUALSTAR
           Grids[grid1]->GridData->ApplyTemperatureLimit();
 #endif
@@ -985,7 +1027,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 			}
     }
 
-				if (debug1) fprintf(stdout,"18\n");  // by YS
+                                if (debug1) fprintf(stdout,"18\n");  // by YS
 			if (LevelArray[level+1] != NULL) {
 				if (EvolveLevel(MetaData, LevelArray, level+1, dtThisLevel[level], Exterior
 #ifdef TRANSFER
@@ -1153,9 +1195,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				LevelSubCycleCount[level+1] = 0;
 			}
 
-		} // end of loop over subcycles
+  } // end of loop over subcycles
 
-	EXTRA_OUTPUT_MACRO(6, "After Subcycle Loop")
+        EXTRA_OUTPUT_MACRO(6, "After Subcycle Loop")
 		if (debug)
 			fprintf(stdout, "EvolveLevel[%"ISYM"]: NumberOfSubCycles = %"ISYM" (%"ISYM" total, %"ISYM" sub)\n", 
 					level, cycle, LevelCycleCount[level], LevelSubCycleCount[level]);

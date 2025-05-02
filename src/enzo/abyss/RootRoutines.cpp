@@ -33,8 +33,16 @@ bool createSkipList(SkipList *skiplist);
 bool updateSkipList(SkipList *skiplist, int ptcl_id);
 int writeParticle(double current_time, int outputNum);
 
+
+
+#ifdef INDIVIDUALSTAR
+#else
 int SendToEnzo(Worker *workers);
 int ReceiveFromEnzo();
+#endif
+
+
+
 void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers);
 #ifdef SEVN
 void StellarEvolution();
@@ -168,15 +176,26 @@ void RootRoutines()
 			fprintf(stderr, "NbodyRoutine: %e (s)\n", nbody_durationtime*1e-9);
 			nbody_durationtime = 0;
 
+
+			#ifdef INDIVIDUALSTAR
+			//start_point_routine = std::chrono::high_resolution_clock::now();
+			//SendParticleToEnzo(workers);
+			//end_point_routine = std::chrono::high_resolution_clock::now();
+			//fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+			//start_point_routine = std::chrono::high_resolution_clock::now();
+			//ReceiveParticleFromEnzo();
+			//end_point_routine = std::chrono::high_resolution_clock::now();
+			//fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+			#else
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			SendToEnzo(workers);
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
-
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			ReceiveFromEnzo();
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+			#endif
 
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			InitializationAfterCommunication(queue_scheduler, workers);

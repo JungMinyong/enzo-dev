@@ -47,6 +47,7 @@ typedef int MPI_Arg;
 #undef NormalStar
 #undef BlackHole
 
+#define ENZO_ONLY
 #include "NbodyRoutines.h"
 #include "communication.h"
 
@@ -278,7 +279,7 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Get_address(&dummy.ID, &displacements[0]);
 			MPI_Get_address(&dummy.Position, &displacements[1]);
 			MPI_Get_address(&dummy.Velocity, &displacements[2]);
-			MPI_Get_address(&dummy.BackgrounAcceleration, &displacements[3]);
+			MPI_Get_address(&dummy.BackgroundAcceleration, &displacements[3]);
 			MPI_Get_address(&dummy.Mass, &displacements[4]);
 
 			for (int i = 0; i < 5; ++i)
@@ -299,7 +300,7 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Aint base;
 			MPI_Get_address(&dummy, &base);
 			MPI_Get_address(&dummy.ID, &displacements[0]);
-			MPI_Get_address(&dummy.BackgrounAcceleration, &displacements[1]);
+			MPI_Get_address(&dummy.BackgroundAcceleration, &displacements[1]);
 
 			displacements[0] -= base;
 			displacements[1] -= base;
@@ -443,3 +444,4 @@ void CommunicationAbort(int status)
 
   return;
 }
+

@@ -237,10 +237,10 @@ static int get_node_id(unsigned char *node_id)
  * just sizeof(struct ifreq)
  */
 #ifdef HAVE_SA_LEN
-#ifndef max
-#define max(a,b) ((a) > (b) ? (a) : (b))
+#ifndef enzo_max
+#define enzo_max(a,b) ((a) > (b) ? (a) : (b))
 #endif
-#define ifreq_size(i) max(sizeof(struct ifreq),\
+#define ifreq_size(i) enzo_max(sizeof(struct ifreq),\
      sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 #else
 #define ifreq_size(i) sizeof(struct ifreq)

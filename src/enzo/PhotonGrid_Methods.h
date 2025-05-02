@@ -376,7 +376,7 @@ float Max_kph(int &ncells) {
     size *= GridDimension[dim];
   for (i = 0; i < size; i++) {
     if (BaryonField[kphHINum][i] > 0) ncells++;
-    max_kph = max(max_kph, BaryonField[kphHINum][i]);
+    max_kph = enzo_max(max_kph, BaryonField[kphHINum][i]);
   }
 
   return max_kph;
@@ -405,7 +405,7 @@ float Min_kph(int &ncells) {
   for (i = 0; i < size; i++) {
     if (BaryonField[kphHINum][i] > 0) {
       ncells++;
-      min_kph = min(min_kph, BaryonField[kphHINum][i]);
+      min_kph = enzo_min(min_kph, BaryonField[kphHINum][i]);
     }
   }
 

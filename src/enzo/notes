@@ -1,0 +1,14 @@
+1. Grid has Stars which store local star -> True
+2. AllStars seems like have all the stars (but why did they need this? can't understand) -> True
+
+Then, should I use AllStars for sending the entire array or processor-processor pair communication?
+
+pair communicatino will do
+
+
+- localstarlookupmap will be useful (done)
+
+
+- I gotta work on position update for Stars in StarParticleFinalize
+
+- and also Stars should update Grid stars

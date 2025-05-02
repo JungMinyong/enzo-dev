@@ -1,3 +1,4 @@
+#ifndef INDIVIDUALSTAR
 #include <mpi.h>
 #include <iomanip>
 #include <iostream>
@@ -1346,3 +1347,5 @@ void deleteParticle(int &PID, int &index) {
 	NumberOfAvailableIndices++;
 }
 
+
+#endif
