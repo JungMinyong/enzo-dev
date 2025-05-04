@@ -255,7 +255,7 @@ int grid::SchrodingerSolver( int nhy )
 
 	  /* Compute potential from point source */
 
-	  //potential = -min(PointSourceGravityConstant/radius, PointSourceGravityConstant/rcore);
+	  //potential = -enzo_min(PointSourceGravityConstant/radius, PointSourceGravityConstant/rcore);
 	  potential = worb2/2.*(radius*radius - 3*rproj*rproj);
         
 	  auxre = cos(potential / hmcoef * dtFixed ) * repsi[n] 

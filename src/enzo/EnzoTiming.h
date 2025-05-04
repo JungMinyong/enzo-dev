@@ -33,13 +33,14 @@ extern MPI_Comm nbody_comm;
 #include <cstring>
 #include <map>
 
+
 template <typename T>
-T min(const T& A, const T& B) {
+T enzo_min(const T& A, const T& B) {
   return A < B ? A : B;
 }
 
 template <typename T>
-T max(const T& A, const T& B) {
+T enzo_max(const T& A, const T& B) {
   return A > B ? A : B;
 }
 
@@ -293,8 +294,8 @@ namespace enzo_timing{
       for (int i=1; i<N; i++){
         q += (i*pow((double)(time_array[i] - m), (double)(2.0)))/(i+1);
         m += (time_array[i] - m)/(i+1);
-        mint = min(mint,time_array[i]);
-        maxt = max(maxt,time_array[i]); 
+        mint = enzo_min(mint,time_array[i]);
+        maxt = enzo_max(maxt,time_array[i]); 
       }
       *stddev_time = sqrt(q/N);
       *mean_time = m;

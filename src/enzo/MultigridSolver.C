@@ -75,7 +75,7 @@ int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
 	ENZO_VFAIL("Dims[%"ISYM"]=%"ISYM" not of form 2^j+1\n", dim, Dims[dim][0])
       }
 */
-      MinDim = min(Dims[dim][depth+1], MinDim);
+      MinDim = enzo_min(Dims[dim][depth+1], MinDim);
       Size[depth+1] *= Dims[dim][depth+1];
     }
     for (dim = Rank; dim < MAX_DIMENSION; dim++)

@@ -90,7 +90,7 @@ int StarParticleSetRefinementLevel(Star *AllStars)
 	       "MustRefineTo = %d\n",
 	       Diameter, factor, DesiredResolution, cstar->ReturnLevel(),
 	       RefinementLevel);
-	RefinementLevel = min(max(RefinementLevel, 0), RefinementLevel);
+	RefinementLevel = enzo_min(enzo_max(RefinementLevel, 0), RefinementLevel);
 
       } // ENDIF recent SN
     } // ENDIF PopIII star

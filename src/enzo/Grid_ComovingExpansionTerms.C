@@ -154,7 +154,7 @@ int grid::ComovingExpansionTerms()
       } // end CR model if
       else {
 	for (i = 0; i < size; i++) {
-	  BaryonField[TENum][i] -= min(Coefficient*6.0*Pressure[i]/
+	  BaryonField[TENum][i] -= enzo_min(Coefficient*6.0*Pressure[i]/
 				       (BaryonField[DensNum][i] + OldBaryonField[DensNum][i]),
 				       0.5*BaryonField[TENum][i]);
 	} // end for 
@@ -178,7 +178,7 @@ int grid::ComovingExpansionTerms()
 	if (Vel3Num != 0)
 	  Pressure[i] += 0.25*(BaryonField[Vel3Num][i]*BaryonField[Vel3Num][i] +
 			     OldBaryonField[Vel3Num][i]*OldBaryonField[Vel3Num][i]);
-	BaryonField[TENum][i] -= min(Coefficient*Pressure[i], 0.5*BaryonField[TENum][i]);
+	BaryonField[TENum][i] -= enzo_min(Coefficient*Pressure[i], 0.5*BaryonField[TENum][i]);
 #endif /* ENERGY_METHOD1 */
 
 #ifdef ENERGY_METHOD2
@@ -188,7 +188,7 @@ int grid::ComovingExpansionTerms()
 	  Pressure[i] += BaryonField[Vel2Num][i]*BaryonField[Vel2Num][i];
 	if (Vel3Num != 0)
 	  Pressure[i] += BaryonField[Vel3Num][i]*BaryonField[Vel3Num][i];
-	BaryonField[TENum][i] -= min(Coefficient*3.0*Pressure[i] /
+	BaryonField[TENum][i] -= enzo_min(Coefficient*3.0*Pressure[i] /
 			  BaryonField[DensNum][i], 0.5*BaryonField[GENum][i]);
 #endif /* ENERGY_METHOD2 */
 
@@ -213,13 +213,13 @@ int grid::ComovingExpansionTerms()
       for (i = 0; i < size; i++) {
 
 #ifdef ENERGY_METHOD1
-	BaryonField[GENum][i] -= min(Coefficient*6.0*Pressure[i] /
+	BaryonField[GENum][i] -= enzo_min(Coefficient*6.0*Pressure[i] /
 		       (BaryonField[DensNum][i] + OldBaryonField[DensNum][i]), 
 				     0.5*BaryonField[GENum][i]);
 #endif /* ENERGY_METHOD1 */
 
 #ifdef ENERGY_METHOD2
-	BaryonField[GENum][i] -= min(Coefficient*3.0*Pressure[i] /
+	BaryonField[GENum][i] -= enzo_min(Coefficient*3.0*Pressure[i] /
 			  BaryonField[DensNum][i], 0.5*BaryonField[GENum][i]);
 #endif /* ENERGY_METHOD2 */
 

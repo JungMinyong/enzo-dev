@@ -211,13 +211,13 @@ int grid::CheckForSharedFaceHelper(grid *OtherGrid,
   /* Do a quick check to see if there is any overlap. */
  
   for (dim = 0; dim < GridRank; dim++) {
-    CellEpsilon[dim] = min( 0.5*CellWidth[dim][0],
+    CellEpsilon[dim] = enzo_min( 0.5*CellWidth[dim][0],
 			    0.5*OtherGrid->CellWidth[dim][0] );
-    Left[dim] = max(
+    Left[dim] = enzo_max(
 		    GridLeftEdge[dim] + EdgeOffset[dim],
 		    OtherGrid->GridLeftEdge[dim]);
  
-    Right[dim] = min(
+    Right[dim] = enzo_min(
 		     GridRightEdge[dim] + EdgeOffset[dim],
 		     OtherGrid->GridRightEdge[dim]);
  

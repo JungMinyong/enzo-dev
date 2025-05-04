@@ -143,7 +143,7 @@ int grid::SolveOneZoneFreefall()
     }
   }
 
-  for (t = min(2, t); t > 0; t--) {
+  for (t = enzo_min(2, t); t > 0; t--) {
     for (i = 0; i < size; i++) {
       freefall_density[t][i] = freefall_density[t-1][i];
       freefall_pressure[t][i] = freefall_pressure[t-1][i];

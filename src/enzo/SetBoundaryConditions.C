@@ -90,7 +90,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 
 				if (traceMPI) fprintf(tracePtr, "SBC loop\n");
 
-				EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+				EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 				/* -------------- FIRST PASS ----------------- */
 				/* Here, we just generate the calls to generate the receive buffers,
@@ -153,7 +153,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 		TIME_MSG("Copying zones in SetBoundaryConditions");
 		LCAPERF_START("SetBC_Siblings");
 		for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-			EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+			EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 			/* -------------- FIRST PASS ----------------- */
 			/* b) Copy any overlapping zones for sibling grids.  */

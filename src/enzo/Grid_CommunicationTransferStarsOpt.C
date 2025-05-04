@@ -109,7 +109,7 @@ int grid::CommunicationTransferStars(grid* Grids[], int NumberOfGrids,
 	  GridPosition[dim] = 
 	    search_lower_bound(GStartIndex[dim], CenterIndex, 0, Layout[dim],
 			       Layout[dim]);
-	  GridPosition[dim] = min(GridPosition[dim], Layout[dim]-1);
+	  GridPosition[dim] = enzo_min(GridPosition[dim], Layout[dim]-1);
 
 	} // ENDELSE Layout
 

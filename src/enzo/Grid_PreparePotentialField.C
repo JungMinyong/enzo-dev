@@ -200,8 +200,8 @@ int grid::PreparePotentialField(grid *ParentGrid)
 
 	float maxPot=-1e30, minPot=1e30;    
 	for (int i=0;i<size; i++) {
-		maxPot = max(maxPot,PotentialField[i]);
-		minPot = min(minPot,PotentialField[i]);
+		maxPot = enzo_max(maxPot,PotentialField[i]);
+		minPot = enzo_min(minPot,PotentialField[i]);
 	}
 	if (debug1) printf("PreparePotential: Potential minimum: %g \t maximum: %g\n", minPot, maxPot);
 #endif

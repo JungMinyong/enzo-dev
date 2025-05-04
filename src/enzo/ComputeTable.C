@@ -59,9 +59,9 @@ int ComputeTable(float Min, float Max, float Step, float (*Function)(float),
  
   /* Set Table values to use the most demanding of the parameters. */
  
-  *TableMin  = min(*TableMin, Min);
-  *TableMax  = max(*TableMax, Max);
-  *TableStep = min(*TableStep, Step);
+  *TableMin  = enzo_min(*TableMin, Min);
+  *TableMax  = enzo_max(*TableMax, Max);
+  *TableStep = enzo_min(*TableStep, Step);
  
   /* Allocate room for table. */
  

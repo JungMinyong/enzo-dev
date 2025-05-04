@@ -205,7 +205,7 @@ int CheckForTimeAction(LevelHierarchyEntry *LevelArray[],
               TimeActionTime[i] = -1;
           } else{
               TimeActionTime[i] += TimeActionParameter[i] * yr_s / TimeUnits;
-              TimeActionTime[i] = min(TimeActionTime[i], sntime);
+              TimeActionTime[i] = enzo_min(TimeActionTime[i], sntime);
           }
 
         } // end supernova time check

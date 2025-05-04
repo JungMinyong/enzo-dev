@@ -41,12 +41,12 @@ int TransposeRegionOverlap(region *FromRegion, region *ToRegion, int i, int j,
   /* Determine if there is an overlap. */
 
   for (dim = 0, size = 1; dim < MAX_DIMENSION; dim++) {
-    LeftIndex[dim] = max(FromRegion[j].StartIndex[dim],
+    LeftIndex[dim] = enzo_max(FromRegion[j].StartIndex[dim],
 			 ToRegion[i].StartIndex[dim]);
     RightIndex[dim] = 
-      min(FromRegion[j].StartIndex[dim] + FromRegion[j].RegionDim[dim],
+      enzo_min(FromRegion[j].StartIndex[dim] + FromRegion[j].RegionDim[dim],
 	  ToRegion[i].StartIndex[dim] + ToRegion[i].RegionDim[dim])-1;
-    size *= max(RightIndex[dim] - LeftIndex[dim] + 1, 0);
+    size *= enzo_max(RightIndex[dim] - LeftIndex[dim] + 1, 0);
   } // ENDFOR dim
 
   /* If there is an overlap, add it to the list of sends/receives. */

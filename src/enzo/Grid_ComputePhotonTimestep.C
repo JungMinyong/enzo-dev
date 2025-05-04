@@ -155,8 +155,8 @@ float grid::ComputePhotonTimestep()
     for (dim = 0; dim < GridRank; dim++) {
       float dCell = CellWidth[dim][0]*a;
       for (i = 0; i < NumberOfParticles; i++) {
-        dtTemp = dCell/max(fabs(ParticleVelocity[dim][i]), tiny_number);
-	dtParticles = min(dtParticles, dtTemp);
+        dtTemp = dCell/enzo_max(fabs(ParticleVelocity[dim][i]), tiny_number);
+	dtParticles = enzo_min(dtParticles, dtTemp);
       }
     }
 
@@ -183,7 +183,7 @@ float grid::ComputePhotonTimestep()
 				for (i = 0; i < size; i++) {
 					dtTemp = sqrt(CellWidth[dim][0]/
 							fabs(AccelerationField[dim][i])+tiny_number);
-					dtAcceleration = min(dtAcceleration, dtTemp);
+					dtAcceleration = enzo_min(dtAcceleration, dtTemp);
 				}
 		if (dtAcceleration != huge_number)
 			dtAcceleration *= 0.5;
@@ -191,10 +191,10 @@ float grid::ComputePhotonTimestep()
 
   /* 5) calculate minimum timestep */
 
-  dt = min(dtBaryons, dtParticles);
-  dt = min(dt, dtViscous);
-  dt = min(dt, dtAcceleration);
-  dt = min(dt, dtExpansion);
+  dt = enzo_min(dtBaryons, dtParticles);
+  dt = enzo_min(dt, dtViscous);
+  dt = enzo_min(dt, dtAcceleration);
+  dt = enzo_min(dt, dtExpansion);
 
   /* 6) If star formation (Pop III for now), set a minimum timestep */
 
@@ -216,7 +216,7 @@ float grid::ComputePhotonTimestep()
     }
   }
 
-  dt = min(dt, dtStar);
+  dt = enzo_min(dt, dtStar);
 #endif
   
   /* 7) If using radiation pressure, calculate minimum dt */
@@ -236,13 +236,13 @@ float grid::ComputePhotonTimestep()
       for (dim = 0; dim < GridRank; dim++) {
 	dtTemp = sqrt(CellWidth[dim][0] / (fabs(BaryonField[RPresNum1+dim][i])+
 					   tiny_number));
-	dtRadPressure = min(dtRadPressure, dtTemp);
+	dtRadPressure = enzo_min(dtRadPressure, dtTemp);
       }
     
     if (dtRadPressure < huge_number)
       dtRadPressure *= 0.5;
 
-    dt = min(dt, dtRadPressure);
+    dt = enzo_min(dt, dtRadPressure);
 
   } /* ENDIF RadiationPressure */
 
@@ -253,7 +253,7 @@ float grid::ComputePhotonTimestep()
     dtSafetyVelocity = a*CellWidth[0][0] / 
       (TimestepSafetyVelocity*1e5 / VelocityUnits);    // parameter in km/s
 
-  dt = min(dt, dtSafetyVelocity);
+  dt = enzo_min(dt, dtSafetyVelocity);
 
   /* 9) If we're calculating the timestep for RT, limit it (doesn't
      affect hydro dt). */
@@ -271,7 +271,7 @@ float grid::ComputePhotonTimestep()
     if (dx_ratio > 1)
       dtPhotonSafety *= dx_ratio;
   }
-  dt = max(dt, CourantSafetyNumber*dtPhotonSafety);
+  dt = enzo_max(dt, CourantSafetyNumber*dtPhotonSafety);
 
   /* Debugging info. */
 

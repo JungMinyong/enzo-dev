@@ -126,13 +126,13 @@ int grid::ChangeParticleTypeBeforeSN(int _type, int level,
 		       Diameter, factor, DesiredResolution, CellWidth[0][0],
 		       MustRefineParticlesRefineToLevel);
 		MustRefineParticlesRefineToLevel =
-		  min(max(MustRefineParticlesRefineToLevel, 0),
+		  enzo_min(enzo_max(MustRefineParticlesRefineToLevel, 0),
 		      MaximumRefinementLevel);
 
 		// Now calculate the number of cells we want to refine
 		// around the particle.
 		*ParticleBufferSize = int(Diameter / CellWidth[0][0]);
-		*ParticleBufferSize = max(*ParticleBufferSize, 1) + 1;
+		*ParticleBufferSize = enzo_max(*ParticleBufferSize, 1) + 1;
 		printf("ParticleBufferSize = %d (%f)\n",
 		       *ParticleBufferSize, Diameter/CellWidth[0][0]);
 
@@ -185,7 +185,7 @@ double CalculateBlastWaveRadius(double Mass, double n0, double Time)
 
   // Because we inject thermal energy, the blastwave is delayed by a
   // sound crossing time.
-  SNTemperature = min(double(Mass*SolarMass) / double(mh) / kboltz, 1e8);
+  SNTemperature = enzo_min(double(Mass*SolarMass) / double(mh) / kboltz, 1e8);
   SoundSpeed = sqrt(kboltz * SNTemperature / (0.6*mh));
   SoundCrossingTime = PopIIISupernovaRadius * pc_cm / SoundSpeed;
 
@@ -202,7 +202,7 @@ double CalculateBlastWaveRadius(double Mass, double n0, double Time)
 	 ShockVelocity, StartTime, STradius);
 
   // Correct the time by a sound crossing time and StartTime (see above)
-  //Time = max(Time-StartTime-SoundCrossingTime, 0);
+  //Time = enzo_max(Time-StartTime-SoundCrossingTime, 0);
   printf("\t Time = %g\n", Time);
 
   // Free expansion (for now, assume a constant velocity.  In reality,

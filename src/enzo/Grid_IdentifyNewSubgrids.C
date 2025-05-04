@@ -73,13 +73,13 @@ void grid::IdentifyNewSubgrids(GridList &SubGridList)
  
 	      NewSubgrid->GridRank = GridRank;
 	      for (dim = 0; dim < GridRank; dim++)
-		NewSubgrid->GridDimension[dim] = min(GridDimension[dim], 3);
-	      NewSubgrid->StartIndex[0] = max(i-1, Start[0]);
-	      NewSubgrid->EndIndex[0]   = min(i+1, End[0]);
-	      NewSubgrid->StartIndex[1] = max(j-1, Start[1]);
-	      NewSubgrid->EndIndex[1]   = min(j+1, End[1]);
-	      NewSubgrid->StartIndex[2] = max(k-1, Start[2]);
-	      NewSubgrid->EndIndex[2]   = min(k+1, End[2]);
+		NewSubgrid->GridDimension[dim] = enzo_min(GridDimension[dim], 3);
+	      NewSubgrid->StartIndex[0] = enzo_max(i-1, Start[0]);
+	      NewSubgrid->EndIndex[0]   = enzo_min(i+1, End[0]);
+	      NewSubgrid->StartIndex[1] = enzo_max(j-1, Start[1]);
+	      NewSubgrid->EndIndex[1]   = enzo_min(j+1, End[1]);
+	      NewSubgrid->StartIndex[2] = enzo_max(k-1, Start[2]);
+	      NewSubgrid->EndIndex[2]   = enzo_min(k+1, End[2]);
 	      NewSubgrid->NumberFlagged = 1;
  
 	      /* insert NewSubgrid at head of list */

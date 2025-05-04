@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
+
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -46,7 +48,6 @@ int grid::FindAllStarParticles(int level)
 
 	/* Read only active star particles.  Unborn stars will be read later
 		 in grid::FindNewStarParticles. */
-	fprintf(stdout,"NumberOfParticles=%d\n",NumberOfParticles);
 
 	for (i = 0; i < NumberOfParticles; i++) {
 		//StarType = abs(ParticleType[i]);

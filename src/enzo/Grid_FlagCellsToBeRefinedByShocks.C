@@ -69,7 +69,7 @@ int grid::FlagCellsToBeRefinedByShocks()
   for (dim = 0; dim < GridRank; dim++)
     if (GridDimension[dim] > 1) {
  
-      /* For shock: (p(j+1) - p(j-1))/min(p(j+1),p(j-1)) > parameter1,
+      /* For shock: (p(j+1) - p(j-1))/enzo_min(p(j+1),p(j-1)) > parameter1,
 	             u(j-1) - u(j+1)                     > 0,
 		     e(j)/E(j)                           > parameter2 */
  
@@ -83,7 +83,7 @@ int grid::FlagCellsToBeRefinedByShocks()
 	      DelPressure = fabs(
 		      (Pressure[index + Offset] -
 		       Pressure[index - Offset]  ) /
-		   min(Pressure[index + Offset],
+		   enzo_min(Pressure[index + Offset],
 		       Pressure[index - Offset]  )  );
  
 	      DelVelocity = BaryonField[Vel1Num+dim][index - Offset] -
@@ -98,7 +98,7 @@ int grid::FlagCellsToBeRefinedByShocks()
 	      Energy3        = BaryonField[TENum  ][index - Offset] *
 			       BaryonField[DensNum][index - Offset] ;
  
-	      EnergyRatio = EnergyThisCell/max(max(Energy1, Energy2), Energy3);
+	      EnergyRatio = EnergyThisCell/enzo_max(enzo_max(Energy1, Energy2), Energy3);
  
 //	      EnergyRatio =  Pressure[index]/
 //		            (BaryonField[DensNum][index]*(Gamma-1.0)*

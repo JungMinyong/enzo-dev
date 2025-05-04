@@ -143,7 +143,7 @@ int ActiveParticleType_PopIII::EvaluateFormation
 	  np->Lifetime = LifetimeInYears * yr_s / supp_data.TimeUnits;
 	} else {
 	  bmass = density[index] * supp_data.MassUnits;
-	  np->Mass = min(0.5 * bmass, StarMass / supp_data.MassUnits);
+	  np->Mass = enzo_min(0.5 * bmass, StarMass / supp_data.MassUnits);
 	  np->Lifetime = LifetimeInYears * yr_s / supp_data.TimeUnits;
 	}
 

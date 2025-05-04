@@ -12,3 +12,37 @@ pair communicatino will do
 - I gotta work on position update for Stars in StarParticleFinalize
 
 - and also Stars should update Grid stars
+
+-  Grid_UpdateStarParticles is done in StarParticleFindAll
+
+ 
+- multi pair wise communication failed. (too bad)
+
+
+-background acceleration update needed.
+-each star particle should have a variable of the rank that they belong
+
+- UpdateParticlePositions should be edited.
+- Star particles are updated from particle in the grids.
+
+
+- In RebuildHierarchy, feedback mode of new particles will be adjusted. 
+Here, the particle type will become positive again. (in Grid_StarParticleHandler, it's negative when they're born)
+- In MirrorToParticle, it seems like particle data is transferred back to Grids, but why?
+this rountine can be improved by using StarMap.. why was it written like this in the first place...
+
+
+- In Grid_DepositMustRefineParticles, allstars is used to flag a cell for refinement, but not sure if they need all the stars from other processors as well.
+
+- in the current setup, all stars will be updated only for each processor. Brocast will be done later on only if needed.
+
+- background gravity history is only needed when polynomical approximation is applied. in that case, I can include them within star object. For now, I can just use background acceleration within grid.
+
+- Grid has Star list but is not linked to AllStars I think. that's simple stupid.
+- Can't really understand why it's written in this extremely unefficient way.
+
+
+-  /* Set MetaData->NumberOfParticles and prepare TotalStarParticleCountPrevious
+           these are to be used in CommunicationUpdateStarParticleCount
+           in StarParticleFinalize */ in StarParticleInitialize
+           it seems like it's not good to delete particles right away.

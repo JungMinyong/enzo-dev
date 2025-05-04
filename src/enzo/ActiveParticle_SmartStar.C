@@ -192,7 +192,7 @@ int ActiveParticleType_SmartStar::EvaluateFormation
 	    POW(data.LengthUnits*dx*RefineByJeansLengthSafetyFactor,2);
 
 	  JeansDensity /= data.DensityUnits;
-	  DensityThreshold = min(DensityThreshold,JeansDensity);
+	  DensityThreshold = enzo_min(DensityThreshold,JeansDensity);
 	}
 	if (DensityThreshold == huge_number)
 	  ENZO_VFAIL("Error in Accreting Particles: DensityThreshold = huge_number! \n"
@@ -524,12 +524,12 @@ int ActiveParticleType_SmartStar::EvaluateFeedback(grid *thisgrid_orig,
 
     if (FeedbackDistRadius > 0)
       {
-	i = max(NumberOfGhostZones + FeedbackDistRadius,
-		min(GridXSize - NumberOfGhostZones - FeedbackDistRadius - 1, i));
-	j = max(NumberOfGhostZones + FeedbackDistRadius,
-		min(GridYSize - NumberOfGhostZones - FeedbackDistRadius - 1, j));
-	k = max(NumberOfGhostZones + FeedbackDistRadius,
-		min(GridZSize - NumberOfGhostZones - FeedbackDistRadius - 1, k));	
+	i = enzo_max(NumberOfGhostZones + FeedbackDistRadius,
+		enzo_min(GridXSize - NumberOfGhostZones - FeedbackDistRadius - 1, i));
+	j = enzo_max(NumberOfGhostZones + FeedbackDistRadius,
+		enzo_min(GridYSize - NumberOfGhostZones - FeedbackDistRadius - 1, j));
+	k = enzo_max(NumberOfGhostZones + FeedbackDistRadius,
+		enzo_min(GridZSize - NumberOfGhostZones - FeedbackDistRadius - 1, k));	
       }
     // Add energy to the energy field
     for (int kc = k - FeedbackDistRadius; kc <= k + FeedbackDistRadius; kc++){
@@ -1008,7 +1008,7 @@ static float GetStellarRadius(float cmass, float accrate)
     stellar_radius = A1*POW(cmass, 3.0);
   }
   else
-    stellar_radius = max(A2*POW(cmass, -2.0), R_ms);
+    stellar_radius = enzo_max(A2*POW(cmass, -2.0), R_ms);
 
 
   return stellar_radius; //in solar radii

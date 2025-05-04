@@ -39,8 +39,8 @@ int grid::CollectGridInformation(int &GridMemory, float &GridVolume,
                      (DomainRightEdge[dim] - DomainLeftEdge[dim]);
     CellsActive *= DimActive;
     CellsTotal *= GridDimension[dim];
-    MaxDim = max(MaxDim, DimActive);
-    MinDim = min(MinDim, DimActive);
+    MaxDim = enzo_max(MaxDim, DimActive);
+    MinDim = enzo_min(MinDim, DimActive);
   }
 
   Particles = NumberOfParticles;

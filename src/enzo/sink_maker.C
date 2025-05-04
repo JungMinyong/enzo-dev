@@ -213,7 +213,7 @@ int sink_maker(int *nx, int *ny, int *nz, int *size, float *d, float *u,
 	  /* Calculate change in density */
 
 	  if (*jlrefine > 0)
-	    maxdens = min(jlsquared * my_temp / dx2, densthresh);
+	    maxdens = enzo_min(jlsquared * my_temp / dx2, densthresh);
 	  else
 	    maxdens = densthresh;
 	  

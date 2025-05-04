@@ -90,8 +90,8 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
     GridHierarchyPointer[i]->GridData->
       ReturnGridInfo(&Rank, Dims, LeftEdge, RightEdge);
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
-      BoundingBox[0][dim] = min(BoundingBox[0][dim], LeftEdge[dim]);
-      BoundingBox[1][dim] = max(BoundingBox[1][dim], RightEdge[dim]);
+      BoundingBox[0][dim] = enzo_min(BoundingBox[0][dim], LeftEdge[dim]);
+      BoundingBox[1][dim] = enzo_max(BoundingBox[1][dim], RightEdge[dim]);
     }
   } // ENDFOR grids
   
@@ -245,12 +245,12 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 	}
 	grid_num += direction;
       } // ENDWHILE move grids
-      MinWork = min(MinWork, ProcessorWork[i]);
-      MaxWork = max(MaxWork, ProcessorWork[i]);
+      MinWork = enzo_min(MinWork, ProcessorWork[i]);
+      MaxWork = enzo_max(MaxWork, ProcessorWork[i]);
     } // ENDFOR processors
 
-    MinWork = min(MinWork, ProcessorWork[NumberOfProcessors-1]);
-    MaxWork = max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
+    MinWork = enzo_min(MinWork, ProcessorWork[NumberOfProcessors-1]);
+    MaxWork = enzo_max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
     WorkImbalance = float(MaxWork - MinWork) / float(MinWork);
     if (WorkImbalance < CriticalBalance)
       break;
@@ -263,9 +263,9 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
     printf("LoadBalance (grids=%"ISYM"): \n", NumberOfGrids);
     float norm = ProcessorWork[0];
     for (i = 1; i < NumberOfProcessors; i++)
-      norm = max(norm, ProcessorWork[i]);
+      norm = enzo_max(norm, ProcessorWork[i]);
     for (i = 0; i < NumberOfProcessors; i++)
-      ww[i] = float(ProcessorWork[i]) / max(norm, 1.0e-10);
+      ww[i] = float(ProcessorWork[i]) / enzo_max(norm, 1.0e-10);
     // WriteListOfFloats(stdout, NumberOfProcessors, ProcessorComputeTime);
     fpcol(ww, NumberOfProcessors, 16, stdout);
   }
@@ -384,8 +384,8 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
   for (i = 0; i < NumberOfGrids; i++) {
     GridPointers[i]->ReturnGridInfo(&Rank, Dims, LeftEdge, RightEdge);
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
-      BoundingBox[0][dim] = min(BoundingBox[0][dim], LeftEdge[dim]);
-      BoundingBox[1][dim] = max(BoundingBox[1][dim], RightEdge[dim]);
+      BoundingBox[0][dim] = enzo_min(BoundingBox[0][dim], LeftEdge[dim]);
+      BoundingBox[1][dim] = enzo_max(BoundingBox[1][dim], RightEdge[dim]);
     }
   } // ENDFOR grids
   
@@ -538,12 +538,12 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
 	}
 	grid_num += direction;
       } // ENDWHILE move grids
-      MinWork = min(MinWork, ProcessorWork[i]);
-      MaxWork = max(MaxWork, ProcessorWork[i]);
+      MinWork = enzo_min(MinWork, ProcessorWork[i]);
+      MaxWork = enzo_max(MaxWork, ProcessorWork[i]);
     } // ENDFOR processors
 
-    MinWork = min(MinWork, ProcessorWork[NumberOfProcessors-1]);
-    MaxWork = max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
+    MinWork = enzo_min(MinWork, ProcessorWork[NumberOfProcessors-1]);
+    MaxWork = enzo_max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
     WorkImbalance = float(MaxWork - MinWork) / float(MinWork);
     if (WorkImbalance < CriticalBalance)
       break;
@@ -557,9 +557,9 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
     printf("LoadBalance (grids=%"ISYM"): \n", NumberOfGrids);
     float norm = ProcessorWork[0];
     for (i = 1; i < NumberOfProcessors; i++)
-      norm = max(norm, ProcessorWork[i]);
+      norm = enzo_max(norm, ProcessorWork[i]);
     for (i = 0; i < NumberOfProcessors; i++)
-      ww[i] = float(ProcessorWork[i]) / max(norm, 1.0e-10);
+      ww[i] = float(ProcessorWork[i]) / enzo_max(norm, 1.0e-10);
     // WriteListOfFloats(stdout, NumberOfProcessors, ProcessorComputeTime);
     fpcol(ww, NumberOfProcessors, 16, stdout);
   }
@@ -621,8 +621,8 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
   for (i = 0; i < NumberOfGrids; i++) {
     GridPointers[i]->ReturnGridInfo(&Rank, Dims, LeftEdge, RightEdge);
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
-      BoundingBox[0][dim] = min(BoundingBox[0][dim], LeftEdge[dim]);
-      BoundingBox[1][dim] = max(BoundingBox[1][dim], RightEdge[dim]);
+      BoundingBox[0][dim] = enzo_min(BoundingBox[0][dim], LeftEdge[dim]);
+      BoundingBox[1][dim] = enzo_max(BoundingBox[1][dim], RightEdge[dim]);
     }
   } // ENDFOR grids
   
@@ -793,12 +793,12 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
 	}
 	grid_num += direction;
       } // ENDWHILE move grids
-      MinWork = min(MinWork, ProcessorWork[i]);
-      MaxWork = max(MaxWork, ProcessorWork[i]);
+      MinWork = enzo_min(MinWork, ProcessorWork[i]);
+      MaxWork = enzo_max(MaxWork, ProcessorWork[i]);
     } // ENDFOR processors
 
-    MinWork = min(MinWork, ProcessorWork[NumberOfProcessors-1]);
-    MaxWork = max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
+    MinWork = enzo_min(MinWork, ProcessorWork[NumberOfProcessors-1]);
+    MaxWork = enzo_max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
     WorkImbalance = float(MaxWork - MinWork) / float(MinWork);
     if (WorkImbalance < CriticalBalance)
       break;
@@ -813,9 +813,9 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
     printf("LoadBalance (grids=%"ISYM"): \n", NumberOfGrids);
     float norm = ProcessorWork[0];
     for (i = 1; i < NumberOfProcessors; i++)
-      norm = max(norm, ProcessorWork[i]);
+      norm = enzo_max(norm, ProcessorWork[i]);
     for (i = 0; i < NumberOfProcessors; i++)
-      ww[i] = float(ProcessorWork[i]) / max(norm, 1.0e-10);
+      ww[i] = float(ProcessorWork[i]) / enzo_max(norm, 1.0e-10);
     // WriteListOfFloats(stdout, NumberOfProcessors, ProcessorComputeTime);
     fpcol(ww, NumberOfProcessors, 16, stdout);
   }

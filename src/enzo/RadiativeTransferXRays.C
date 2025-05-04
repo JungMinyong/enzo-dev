@@ -37,9 +37,9 @@ int grid::RadiativeTransferXRays(PhotonPackageEntry **PP, FLOAT *dPXray, int cel
   if (tau > 2.e1) 
     dPXray[species] = (1.0+BFLOAT_EPSILON) * (*PP)->Photons;
   else if (tau > 1.e-4) 
-    dPXray[species] = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+    dPXray[species] = enzo_min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
   else
-    dPXray[species] = min((*PP)->Photons*tau, (*PP)->Photons);
+    dPXray[species] = enzo_min((*PP)->Photons*tau, (*PP)->Photons);
   
   dP1 = dPXray[species] * geo_correction;
 
@@ -82,9 +82,9 @@ int grid::RadiativeTransferComptonHeating(PhotonPackageEntry **PP, FLOAT *dPXray
   if (tau > 2.e1) 
     dPXray[COMPTON] = (1.0+BFLOAT_EPSILON) * (*PP)->Photons;
   else if (tau > 1.e-4) 
-    dPXray[COMPTON] = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+    dPXray[COMPTON] = enzo_min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
   else
-    dPXray[COMPTON] = min((*PP)->Photons*tau, (*PP)->Photons);
+    dPXray[COMPTON] = enzo_min((*PP)->Photons*tau, (*PP)->Photons);
   dP1 = dPXray[COMPTON] * geo_correction;
 
   // the heating rate by energy transfer during Compton scattering

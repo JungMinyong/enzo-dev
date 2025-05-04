@@ -13,6 +13,7 @@
  ************************************************************************/
 
 #include <stdio.h>
+
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -82,9 +83,14 @@ int grid::UpdateParticleVelocity(float TimeStep)
 
 			for (i = 0; i < NumberOfParticles; i++) {
 #ifdef NBODY
+#ifdef INDIVIDUALSTAR
+				if ( ParticleType[i] != PARTICLE_TYPE_DARK_MATTER && ParticleType[i] != PARTICLE_TYPE_GAS) continue;
+				//#define PARTICLE_TYPE_MUST_REFINE    4 should I include this?
+#else
 				// by YS Jo
 				if ( ParticleType[i] == PARTICLE_TYPE_NBODY || ParticleType[i] == PARTICLE_TYPE_NBODY_NEW || ParticleType[i] == PARTICLE_TYPE_NBODY_REMOVE) continue;
 				//&& GridLevel != MaximumRefinementLevel )
+#endif
 #endif				
 
 #ifdef VELOCITY_METHOD1
@@ -135,7 +141,12 @@ int grid::UpdateParticleVelocity(float TimeStep)
 
 			for (i = 0; i < NumberOfParticles; i++) {
 #ifdef NBODY
+#ifdef INDIVIDUALSTAR
+				if ( ParticleType[i] != PARTICLE_TYPE_DARK_MATTER && ParticleType[i] != PARTICLE_TYPE_GAS) continue;
+				//#define PARTICLE_TYPE_MUST_REFINE    4 should I include this?
+#else
 				if ( ParticleType[i] != PARTICLE_TYPE_NBODY  && ParticleType[i] != PARTICLE_TYPE_NBODY_NEW  && ParticleType[i] != PARTICLE_TYPE_NBODY_REMOVE ) 
+#endif
 #endif
 					ParticleVelocity[dim][i] += ParticleAcceleration[dim][i] * TimeStep;
 			}

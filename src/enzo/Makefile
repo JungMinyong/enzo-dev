@@ -348,7 +348,7 @@ verbose: $(EXE).exe
 	@rm -f $@
 	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(NCXX) -c -std=c++11 -march=native -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle  -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
+	  $(NCXX) -c -std=c++11 -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle  -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
@@ -359,7 +359,7 @@ verbose: $(EXE).exe
              exit 1; \
           fi ; \
 	else \
-	  $(NCXX) -c -std=c++11 -march=native -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
+	  $(NCXX) -c -std=c++11 -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
 	    >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \

@@ -76,7 +76,7 @@ int grid::TestGravitySphereCheckResults(FILE *fptr)
     ftang = 0.0;
     for (dim = 0; dim < GridRank; dim++)
       ftang += POW((*(ParticleVelocity[dim] + i))/Time, FLOAT(2));
-    ftang = sqrt(max(ftang - fradial*fradial, tiny_number));
+    ftang = sqrt(enzo_max(ftang - fradial*fradial, tiny_number));
  
     /* Compute analytic acceleration. */
  
@@ -144,7 +144,7 @@ int grid::TestGravitySphereCheckResults(FILE *fptr)
 	  ftang = 0.0;
 	  for (dim = 0; dim < GridRank; dim++)
 	    ftang += POW((*(BaryonField[2+dim] + n))/Time, FLOAT(2));
-	  ftang = sqrt(max(ftang - fradial*fradial, tiny_number));
+	  ftang = sqrt(enzo_max(ftang - fradial*fradial, tiny_number));
  
 	  /* Compute analytic acceleration. */
  

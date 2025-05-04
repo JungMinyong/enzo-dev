@@ -30,6 +30,8 @@
 	/
  ************************************************************************/
 #include "preincludes.h"
+#include <cstddef>
+#include <unordered_map>
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -53,6 +55,7 @@
 #include "CosmologyParameters.h"
 #include "communication.h"
 #include "CommunicationUtilities.h"
+
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
@@ -159,16 +162,19 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
 #define NO_REDUCE_FRAGMENTATION
 
 #ifdef INDIVIDUALSTAR
-  int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
-                             int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
-                             int ThisLevel, Star *&AllStars,
-                             int TotalStarParticleCountPrevious[],
-                             int SkipFeedbackFlag = 0);
+int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
+                           int NumberOfGrids, LevelHierarchyEntry *LevelArray[],
+                           int ThisLevel, Star *&AllStars,
+                           int TotalStarParticleCountPrevious[],
+#ifdef NBODY
+                           std::unordered_map<int, Star *> &LocalStarLookupMap,
+#endif
+                           int SkipFeedbackFlag = 0);
 
-  void DeleteStarList(Star *&Node);
+void DeleteStarList(Star *&Node);
 
-  int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
-                        HierarchyEntry **Grids[]);
+int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
+                      HierarchyEntry **Grids[]);
 
 #endif
 int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
@@ -412,17 +418,17 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 		if(CheckpointRestart == FALSE) {
 			while (Temp != NULL) {
 				float dtProcTemp = Temp->GridData->ComputeTimeStep();
-				dtProc = min(dtProc, dtProcTemp);
+				dtProc = enzo_min(dtProc, dtProcTemp);
 				Temp = Temp->NextGridThisLevel;
 			}
 
 			dt = RootGridCourantSafetyNumber*CommunicationMinValue(dtProc);
-			dt = min(MetaData.MaximumTopGridTimeStep, dt);
+			dt = enzo_min(MetaData.MaximumTopGridTimeStep, dt);
 
 			if (debug) fprintf(stderr, "dt, Initialdt: %g %g \n", dt, Initialdt);
 			if (Initialdt != 0) {
 
-				dt = min(dt, Initialdt);
+				dt = enzo_min(dt, Initialdt);
 				if (debug) fprintf(stderr, "dt, Initialdt: %g %g \n", dt, Initialdt);
 				Initialdt = 0;
 			}
@@ -432,21 +438,21 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 			if (ComovingCoordinates)
 				for (i = 0; i < MAX_NUMBER_OF_OUTPUT_REDSHIFTS; i++)
 					if (CosmologyOutputRedshift[i] != -1)
-						dt = min(1.0001*(CosmologyOutputRedshiftTime[i]-MetaData.Time), dt);
+						dt = enzo_min(1.0001*(CosmologyOutputRedshiftTime[i]-MetaData.Time), dt);
 			for (i = 0; i < MAX_TIME_ACTIONS; i++)
 				if (TimeActionTime[i] > 0 && TimeActionType[i] > 0)
-					dt = min(1.0001*(TimeActionTime[i] - MetaData.Time), dt);
+					dt = enzo_min(1.0001*(TimeActionTime[i] - MetaData.Time), dt);
 			if (MetaData.dtDataDump > 0.0) {
 				while (MetaData.TimeLastDataDump+MetaData.dtDataDump < MetaData.Time)
 					MetaData.TimeLastDataDump += MetaData.dtDataDump;
-				dt = min(1.0001*(MetaData.TimeLastDataDump + MetaData.dtDataDump -
+				dt = enzo_min(1.0001*(MetaData.TimeLastDataDump + MetaData.dtDataDump -
 							MetaData.Time), dt);
 			}
 
 			/* Set the time step.  If it will cause Time += dt > StopTime, then
 				 set dt = StopTime - Time */
 
-			dt = min(MetaData.StopTime - MetaData.Time, dt);
+			dt = enzo_min(MetaData.StopTime - MetaData.Time, dt);
 		} else { 
 			dt = dtThisLevel[0]; 
 		}
@@ -454,7 +460,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 		/* Set the time step.  If it will cause Time += dt > StopTime, then
 			 set dt = StopTime - Time */
 
-		dt = min(MetaData.StopTime - MetaData.Time, dt);
+		dt = enzo_min(MetaData.StopTime - MetaData.Time, dt);
 		Temp = LevelArray[0];
 		// Stop skipping
 
@@ -648,9 +654,15 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     int NumberOfGrids = GenerateGridArray(LevelArray, 0, &Grids);
     int *TotalStarParticleCountPrevious = new int[NumberOfGrids];
 
-    StarParticleInitialize(Grids, &MetaData, NumberOfGrids, LevelArray,
-                           0, AllStars, TotalStarParticleCountPrevious, 1); //last arg, don't set flags
-		if (ProblemType != 25 && Restart == FALSE)
+		std::unordered_map<int, Star*> empty;
+                StarParticleInitialize(Grids, &MetaData, NumberOfGrids,
+                                       LevelArray, 0, AllStars,
+                                       TotalStarParticleCountPrevious,
+#ifdef NBODY
+                                       empty,
+#endif
+                                       1); // last arg, don't set flags
+    if (ProblemType != 25 && Restart == FALSE)
       RebuildHierarchy(&MetaData, LevelArray, 0, AllStars);
     PrintMemoryUsage("Post loop rebuild");
     delete [] TotalStarParticleCountPrevious;

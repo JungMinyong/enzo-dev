@@ -87,7 +87,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
   TIME_MSG("UpdateFromFinerGrids");
   LCAPERF_START("GetProjectedBoundaryFluxes");
   for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-    EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+    EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
     /* -------------- FIRST PASS ----------------- */
 
@@ -223,7 +223,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
   TIME_MSG("Projecting solution to parent");
   LCAPERF_START("ProjectSolutionToParentGrid");
   for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-    EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+    EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
     /* -------------- FIRST PASS ----------------- */
 

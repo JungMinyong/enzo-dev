@@ -239,8 +239,8 @@ int gFLDProblem::lsetup(EnzoVector *u)
 	  for (iy=ghYl; iy<ghYl+usz[1]; iy++) {
 	    for (ix=ghXl; ix<ghXl+usz[0]; ix++) {
 	      idx = (iz*ArrDims[1] + iy)*ArrDims[0] + ix;
-	      // sigma = sqrt(epsilon)*max(fabs(uarray[idx]),1.0);
-	      sigma = sqrt(epsilon)*max(fabs(uarray[idx]),typfac*utypical[ns]);
+	      // sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),1.0);
+	      sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),typfac*utypical[ns]);
 	      utmparray[idx] += sigma;
 	    }
 	  }
@@ -258,8 +258,8 @@ int gFLDProblem::lsetup(EnzoVector *u)
 	  for (iy=ghYl; iy<ghYl+usz[1]; iy++) {
 	    for (ix=ghXl; ix<ghXl+usz[0]; ix++) {
 	      idx = (iz*ArrDims[1] + iy)*ArrDims[0] + ix;
-	      // sigma = sqrt(epsilon)*max(fabs(uarray[idx]),1.0);
-	      sigma = sqrt(epsilon)*max(fabs(uarray[idx]),typfac*utypical[ns]);
+	      // sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),1.0);
+	      sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),typfac*utypical[ns]);
 	      Lblock[idx] = -dt*theta*(ftmparray[idx]-farray[idx])/sigma;
 	    }  // ix loop
 	  }  // iy loop
@@ -283,8 +283,8 @@ int gFLDProblem::lsetup(EnzoVector *u)
 	  for (iy=ghYl; iy<ghYl+usz[1]; iy++) {
 	    for (ix=ghXl; ix<ghXl+usz[0]; ix++) {
 	      idx = (iz*ArrDims[1] + iy)*ArrDims[0] + ix;
-	      // sigma = sqrt(epsilon)*max(fabs(uarray[idx]),1.0);
-	      sigma = sqrt(epsilon)*max(fabs(uarray[idx]),typfac*utypical[ns]);
+	      // sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),1.0);
+	      sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),typfac*utypical[ns]);
 	      utmparray[idx] += sigma;
 	    }
 	  }
@@ -303,8 +303,8 @@ int gFLDProblem::lsetup(EnzoVector *u)
 	    for (iy=ghYl; iy<ghYl+usz[1]; iy++) {
 	      for (ix=ghXl; ix<ghXl+usz[0]; ix++) {
 		idx = (iz*ArrDims[1] + iy)*ArrDims[0] + ix;
-		// sigma = sqrt(epsilon)*max(fabs(uarray[idx]),1.0);
-		sigma = sqrt(epsilon)*max(fabs(uarray[idx]),typfac*utypical[ns]);
+		// sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),1.0);
+		sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),typfac*utypical[ns]);
 		Lblock[idx] = (ftmparray[idx]-farray[idx])/sigma;
 	      }  // ix loop
 	    }  // iy loop
@@ -331,8 +331,8 @@ int gFLDProblem::lsetup(EnzoVector *u)
 	  for (iy=ghYl; iy<ghYl+usz[1]; iy++) {
 	    for (ix=ghXl; ix<ghXl+usz[0]; ix++) {
 	      idx = (iz*ArrDims[1] + iy)*ArrDims[0] + ix;
-	      // sigma = sqrt(epsilon)*max(fabs(uarray[idx]),1.0);
-	      sigma = sqrt(epsilon)*max(fabs(uarray[idx]),typfac*utypical[ns]);
+	      // sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),1.0);
+	      sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),typfac*utypical[ns]);
 	      utmparray[idx] += sigma;
 	    }
 	  }
@@ -351,8 +351,8 @@ int gFLDProblem::lsetup(EnzoVector *u)
 	    for (iy=ghYl; iy<ghYl+usz[1]; iy++) {
 	      for (ix=ghXl; ix<ghXl+usz[0]; ix++) {
 		idx = (iz*ArrDims[1] + iy)*ArrDims[0] + ix;
-		// sigma = sqrt(epsilon)*max(fabs(uarray[idx]),1.0);
-		sigma = sqrt(epsilon)*max(fabs(uarray[idx]),typfac*utypical[ns]);
+		// sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),1.0);
+		sigma = sqrt(epsilon)*enzo_max(fabs(uarray[idx]),typfac*utypical[ns]);
 		Lblock[idx] = -dt*theta*(ftmparray[idx]-farray[idx])/sigma;
 	      }  // ix loop
 	    }  // iy loop

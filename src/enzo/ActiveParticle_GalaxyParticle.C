@@ -25,11 +25,11 @@ FLOAT calc_dist2(FLOAT x1, FLOAT y1, FLOAT z1,
     float part_dist2, xdist, ydist, zdist;
     // Periodicity
     xdist = fabs(x1 - x2);
-    xdist = min(xdist, period[0] - xdist);
+    xdist = enzo_min(xdist, period[0] - xdist);
     ydist = fabs(y1 - y2);
-    ydist = min(ydist, period[1] - ydist);
+    ydist = enzo_min(ydist, period[1] - ydist);
     zdist = fabs(z1 - z2);
-    zdist = min(zdist, period[2] - zdist);
+    zdist = enzo_min(zdist, period[2] - zdist);
     part_dist2 = xdist * xdist + ydist * ydist + zdist * zdist;
     return part_dist2;
 }

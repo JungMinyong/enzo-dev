@@ -19,7 +19,7 @@
 /
 /  PURPOSE: Computes the rad-hydro time step size.  We note that this 
 /           value affects the global hydrodynamics time step: 
-/                 dt = min(dt_hydro,dt_radiation).
+/                 dt = enzo_min(dt_hydro,dt_radiation).
 /           This routine is called just before gFLDProblem::Return, so 
 /           it sees the same units as the rest of the solver module.
 /
@@ -78,7 +78,7 @@ float gFLDProblem::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew,
   float dt_est = huge_number;
   float test = dtfac[0];
   int i;
-  for (i=0; i<2+Nchem; i++)  test = min(dtfac[i],test);
+  for (i=0; i<2+Nchem; i++)  test = enzo_min(dtfac[i],test);
   if (test != huge_number) {
 
     // initialize variables
@@ -219,25 +219,25 @@ float gFLDProblem::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew,
     float dt_est_var[Nvar];
     for (l=0; l<Nvar; l++) {
       dt_est_var[l] = (glob_est[l] == 0.0) ? huge_number : dt/glob_est[l];
-      dt_est_var[l] = min(dt_est_var[l], huge_number);
+      dt_est_var[l] = enzo_min(dt_est_var[l], huge_number);
     }
 
     // set estimated time step as minimum of component time steps
     dt_est = maxdt*TimeUnits;    // max time step estimate (physical units)
     for (l=0; l<Nvar; l++) {
-      dt_est = min(dt_est, dt_est_var[l]);
+      dt_est = enzo_min(dt_est, dt_est_var[l]);
     }
 
     // limit maximum growth per step
-    dt_est = min(dt_est, 1.1*dt);    // time step growth (physical units)
+    dt_est = enzo_min(dt_est, 1.1*dt);    // time step growth (physical units)
 
     // rescale dt estimates to normalized values
     dt_est /= TimeUnits;
     for (l=0; l<Nvar; l++)  dt_est_var[l] /= TimeUnits;
 
     // account for min/max time step size (according to user)
-    dt_est = max(dt_est, mindt);
-    dt_est = min(dt_est, maxdt);
+    dt_est = enzo_max(dt_est, mindt);
+    dt_est = enzo_min(dt_est, maxdt);
 
     if (debug) {
       printf("gFLDProblem_ComputeTimestep: (E, e, ni) dt_est = (");
@@ -247,8 +247,8 @@ float gFLDProblem::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew,
   }
 
   // account for min/max time step size (according to user)
-  dt_est = max(dt_est, mindt);
-  dt_est = min(dt_est, maxdt);
+  dt_est = enzo_max(dt_est, mindt);
+  dt_est = enzo_min(dt_est, maxdt);
 
   return dt_est;
 }

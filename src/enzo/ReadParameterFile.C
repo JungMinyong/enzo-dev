@@ -2146,7 +2146,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       (StarFeedbackDistRadius > 0)) {
 
     // Calculate number of cells in the shape over which to distribute feedback.
-    StarFeedbackDistRadius = min(StarFeedbackDistRadius,
+    StarFeedbackDistRadius = enzo_min(StarFeedbackDistRadius,
 				 StarFeedbackDistCellStep);
     int i, j, k, cell_step;
 
@@ -2202,14 +2202,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if (MaximumGravityRefinementLevel == INT_UNDEFINED)
     MaximumGravityRefinementLevel = (RadiativeCooling && SelfGravity
 				     && HydroMethod == Zeus_Hydro) ?
-       max(MaximumRefinementLevel-2, 5) : MaximumRefinementLevel;
+       enzo_max(MaximumRefinementLevel-2, 5) : MaximumRefinementLevel;
 #else
   if (MaximumGravityRefinementLevel == INT_UNDEFINED)
     MaximumGravityRefinementLevel = MaximumRefinementLevel;
 #endif
 
   MaximumGravityRefinementLevel =
-    min(MaximumGravityRefinementLevel, MaximumRefinementLevel);
+    enzo_min(MaximumGravityRefinementLevel, MaximumRefinementLevel);
 
   /* If MultiSpecies < 2, we can't simulate Pop III star formation */
 

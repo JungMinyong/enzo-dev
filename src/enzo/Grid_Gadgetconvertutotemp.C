@@ -89,7 +89,7 @@ float grid::Gadgetconvert_u_to_temp(float u, float rho, float *ne_guess)
       temp_new = GAMMA_MINUS1 / BOLTZMANN * u * PROTONMASS * mu;
 
       max =
-	max(max,
+	enzo_max(max,
 	     temp_new / (1 + yhelium + *ne_guess) * fabs((*ne_guess - ne_old) / (temp_new - temp_old + 1.0)));
 
       temp = temp_old + (temp_new - temp_old) / (1 + max);

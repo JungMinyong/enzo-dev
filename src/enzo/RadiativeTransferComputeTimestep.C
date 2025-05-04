@@ -131,7 +131,7 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
 	    ComputePhotonTimestepHII(DensityUnits, LengthUnits, VelocityUnits, 
 				     afloat, MetaData->GlobalMaximumkphIfront);
 	  if (ThisPhotonDT > lowerLimit)
-	    dtPhoton = min(dtPhoton, ThisPhotonDT);
+	    dtPhoton = enzo_min(dtPhoton, ThisPhotonDT);
 	}
 
   // Calculate timestep by limiting to a max change in intensity
@@ -143,7 +143,7 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
 	    ComputePhotonTimestepTau(DensityUnits, LengthUnits, VelocityUnits, 
 				     afloat);
 	  if (ThisPhotonDT > lowerLimit)
-	    dtPhoton = min(dtPhoton, ThisPhotonDT);
+	    dtPhoton = enzo_min(dtPhoton, ThisPhotonDT);
 	}
 
     dtPhoton = PhotonCourantFactor * CommunicationMinValue(dtPhoton);
@@ -179,13 +179,13 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
   if (dtPhoton >= unchangedLimit) {
     for (Temp = LevelArray[maxLevel]; Temp; Temp = Temp->NextGridThisLevel) {
       ThisPhotonDT = Temp->GridData->ComputePhotonTimestep();
-      dtPhoton = min(dtPhoton, ThisPhotonDT);
+      dtPhoton = enzo_min(dtPhoton, ThisPhotonDT);
     } // ENDFOR grids
     dtPhoton = CommunicationMinValue(dtPhoton);
 
     // Ensure that not too many photon timesteps are taken per hydro step
     HydroTime = LevelArray[maxLevel]->GridData->ReturnTime();
-    dtPhoton = max(dtPhoton, 
+    dtPhoton = enzo_max(dtPhoton, 
 		   (HydroTime - PhotonTime) / MaxStepsPerHydroStep);
     //LastTimestepUseHII = FALSE;
   } // ENDIF
@@ -202,15 +202,15 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
       printf("HydroTime = %"PSYM", PhotonTime = %"PSYM
 	     ", dtPhoton = %g, dtPhoton0 = %g\n",
 	     HydroTime, PhotonTime, dtPhoton, Saved_dtPhoton);
-    dtPhoton = min(1.01 * (HydroTime - PhotonTime), Saved_dtPhoton);
-    dtPhoton = max(dtPhoton, 1e-4*Saved_dtPhoton);
+    dtPhoton = enzo_min(1.01 * (HydroTime - PhotonTime), Saved_dtPhoton);
+    dtPhoton = enzo_max(dtPhoton, 1e-4*Saved_dtPhoton);
     //LastTimestepUseHII = FALSE;
   }
 
   //LastTimestepUseHII = CommunicationMaxValue(LastTimestepUseHII);
 
   //if (InitialTimestep && !MetaData->FirstTimestepAfterRestart)
-  //  dtPhoton = min(dtPhoton, dtLevelAbove);
+  //  dtPhoton = enzo_min(dtPhoton, dtLevelAbove);
 
   if (RadiativeTransferAdaptiveTimestep == FALSE && debug)
     printf("RadiativeTransfer: Setting dtPhoton = %g = %g years\n",

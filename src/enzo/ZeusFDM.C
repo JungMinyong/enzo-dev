@@ -60,14 +60,14 @@ int ZeusFDM(float *d, float *e, float *u, float *v, float *w, float *p,
 
   /* Compute varients on start indexes */
 
-  jsm1 = max(js-1, 0);
-  jsm2 = max(js-2, 0);
-  jep1 = min(je+1, jn-1);
-  jep2 = min(je+2, jn-1);
-  ksm1 = max(ks-1, 0);
-  ksm2 = max(ks-2, 0);
-  kep1 = min(ke+1, kn-1);
-  kep2 = min(ke+2, kn-1);
+  jsm1 = enzo_max(js-1, 0);
+  jsm2 = enzo_max(js-2, 0);
+  jep1 = enzo_min(je+1, jn-1);
+  jep2 = enzo_min(je+2, jn-1);
+  ksm1 = enzo_max(ks-1, 0);
+  ksm2 = enzo_max(ks-2, 0);
+  kep1 = enzo_min(ke+1, kn-1);
+  kep2 = enzo_min(ke+2, kn-1);
 
   /* compute log of density */
   
@@ -91,69 +91,69 @@ int ZeusFDM(float *d, float *e, float *u, float *v, float *w, float *p,
 
 	  //1st order differentiaion - keep just in case it is useful to explore this
 #ifdef QP_1ST_ORDER
-	p[IDX(i,j,k)] = (pow(d[IDX(max(i-1,0),j,k)],0.5)-2.0*pow(d[IDX(i,j,k)],0.5)+pow(d[IDX(min(i+1,in-1),j,k)],0.5))/pow(dx[i],2);
+	p[IDX(i,j,k)] = (pow(d[IDX(enzo_max(i-1,0),j,k)],0.5)-2.0*pow(d[IDX(i,j,k)],0.5)+pow(d[IDX(enzo_min(i+1,in-1),j,k)],0.5))/pow(dx[i],2);
 #endif
 
           //2nd order differentiation - keep just in case it is useful to explore this
 #ifdef QP_2ND_ORDER
-	p[IDX(i,j,k)] = (logd[IDX(max(i-1,0),j,k)]-2.0*logd[IDX(i,j,k)]+logd[IDX(min(i+1,in-1),j,k)])/(dx[i]*dx[i])/2.;
-	p[IDX(i,j,k)] = p[IDX(i,j,k)] + pow((logd[IDX(min(i+1,in-1),j,k)]-logd[IDX(max(i-1,0),j,k)])/(dx[i]*2.),2)/4.;
+	p[IDX(i,j,k)] = (logd[IDX(enzo_max(i-1,0),j,k)]-2.0*logd[IDX(i,j,k)]+logd[IDX(enzo_min(i+1,in-1),j,k)])/(dx[i]*dx[i])/2.;
+	p[IDX(i,j,k)] = p[IDX(i,j,k)] + pow((logd[IDX(enzo_min(i+1,in-1),j,k)]-logd[IDX(enzo_max(i-1,0),j,k)])/(dx[i]*2.),2)/4.;
 #endif
 
           //4th order differentiation - use this
 #ifdef QP_4TH_ORDER
-          p[IDX(i,j,k)] = (-1./12.*(logd[IDX(max(i-2,0),j,k)]+logd[IDX(min(i+2,in-1),j,k)])
-          				  +4./3.*(logd[IDX(max(i-1,0),j,k)]+logd[IDX(min(i+1,in-1),j,k)])
+          p[IDX(i,j,k)] = (-1./12.*(logd[IDX(enzo_max(i-2,0),j,k)]+logd[IDX(enzo_min(i+2,in-1),j,k)])
+          				  +4./3.*(logd[IDX(enzo_max(i-1,0),j,k)]+logd[IDX(enzo_min(i+1,in-1),j,k)])
           				  -5./2.*logd[IDX(i,j,k)])/(dx[i]*dx[i])/2.;
           p[IDX(i,j,k)] = p[IDX(i,j,k)] 
-          				+ pow((1./12.*(logd[IDX(max(i-2,0),j,k)]-logd[IDX(min(i+2,in-1),j,k)])
-          				  -2./3.*(logd[IDX(max(i-1,0),j,k)]-logd[IDX(min(i+1,in-1),j,k)]))/dx[i],2)/4.;
+          				+ pow((1./12.*(logd[IDX(enzo_max(i-2,0),j,k)]-logd[IDX(enzo_min(i+2,in-1),j,k)])
+          				  -2./3.*(logd[IDX(enzo_max(i-1,0),j,k)]-logd[IDX(enzo_min(i+1,in-1),j,k)]))/dx[i],2)/4.;
 #endif /* QP_4TH_ORDER */
 
-          //visx[IDX(i,j,k)] = u[IDX(max(i-1,0),j,k)]-2.0*u[IDX(i,j,k)]+u[IDX(min(i+1,in-1),j,k)];
+          //visx[IDX(i,j,k)] = u[IDX(enzo_max(i-1,0),j,k)]-2.0*u[IDX(i,j,k)]+u[IDX(enzo_min(i+1,in-1),j,k)];
 
           if (rank > 1) {
 #ifdef QP_1ST_ORDER
-	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (pow(d[IDX(i,max(j-1,0),k)],0.5)-2.0*pow(d[IDX(i,j,k)],0.5)+pow(d[IDX(i,min(j+1,jn-1),k)],0.5))/pow(dy[j],2);
+	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (pow(d[IDX(i,enzo_max(j-1,0),k)],0.5)-2.0*pow(d[IDX(i,j,k)],0.5)+pow(d[IDX(i,enzo_min(j+1,jn-1),k)],0.5))/pow(dy[j],2);
 #endif
 
 #ifdef QP_2ND_ORDER
-	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (logd[IDX(i,max(j-1,0),k)]-2.0*logd[IDX(i,j,k)]+logd[IDX(i,min(j+1,jn-1),k)])/(dy[j]*dy[j])/2.;
-	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + pow((logd[IDX(i,min(j+1,jn-1),k)]-logd[IDX(i,max(j-1,0),k)])/(dy[j]*2.),2)/4.;
+	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (logd[IDX(i,enzo_max(j-1,0),k)]-2.0*logd[IDX(i,j,k)]+logd[IDX(i,enzo_min(j+1,jn-1),k)])/(dy[j]*dy[j])/2.;
+	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + pow((logd[IDX(i,enzo_min(j+1,jn-1),k)]-logd[IDX(i,enzo_max(j-1,0),k)])/(dy[j]*2.),2)/4.;
 #endif
 
 	    //4th order differentiation
 #ifdef QP_4TH_ORDER
 	    p[IDX(i,j,k)] = p[IDX(i,j,k)]
-          				  +(-1./12.*(logd[IDX(i,max(j-2,0),k)]+logd[IDX(i,min(j+2,jn-1),k)])
-          				  +4./3.*(logd[IDX(i,max(j-1,0),k)]+logd[IDX(i,min(j+1,jn-1),k)])
+          				  +(-1./12.*(logd[IDX(i,enzo_max(j-2,0),k)]+logd[IDX(i,enzo_min(j+2,jn-1),k)])
+          				  +4./3.*(logd[IDX(i,enzo_max(j-1,0),k)]+logd[IDX(i,enzo_min(j+1,jn-1),k)])
           				  -5./2.*logd[IDX(i,j,k)])/(dy[j]*dy[j])/2.;
 	    p[IDX(i,j,k)] = p[IDX(i,j,k)] 
-          				+ pow((1./12.*(logd[IDX(i,max(j-2,0),k)]-logd[IDX(i,min(j+2,jn-1),k)])
-          				  -2./3.*(logd[IDX(i,max(j-1,0),k)]-logd[IDX(i,min(j+1,jn-1),k)]))/dy[j],2)/4.;
+          				+ pow((1./12.*(logd[IDX(i,enzo_max(j-2,0),k)]-logd[IDX(i,enzo_min(j+2,jn-1),k)])
+          				  -2./3.*(logd[IDX(i,enzo_max(j-1,0),k)]-logd[IDX(i,enzo_min(j+1,jn-1),k)]))/dy[j],2)/4.;
 #endif /* QP_4TH_ORDER */
 
           }// end rank > 1
 
           if (rank > 2) {
 #ifdef QP_1ST_ORDER
-	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (pow(d[IDX(i,j,max(k-1,0))],0.5)-2.0*pow(d[IDX(i,j,k)],0.5)+pow(d[IDX(i,j,min(k+1,kn-1))],0.5))/pow(dz[k],2);
+	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (pow(d[IDX(i,j,enzo_max(k-1,0))],0.5)-2.0*pow(d[IDX(i,j,k)],0.5)+pow(d[IDX(i,j,enzo_min(k+1,kn-1))],0.5))/pow(dz[k],2);
 #endif
 		
 #ifdef QP_2ND_ORDER
-	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (logd[IDX(i,j,max(k-1,0))]-2.0*logd[IDX(i,j,k)]+logd[IDX(i,j,min(k+1,kn-1))])/(dz[k]*dz[k])/2.;
-	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + pow((logd[IDX(i,j,min(k+1,kn-1))]-logd[IDX(i,j,max(k-1,0))])/(dz[k]*2.),2)/4.;
+	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + (logd[IDX(i,j,enzo_max(k-1,0))]-2.0*logd[IDX(i,j,k)]+logd[IDX(i,j,enzo_min(k+1,kn-1))])/(dz[k]*dz[k])/2.;
+	    p[IDX(i,j,k)] = p[IDX(i,j,k)] + pow((logd[IDX(i,j,enzo_min(k+1,kn-1))]-logd[IDX(i,j,enzo_max(k-1,0))])/(dz[k]*2.),2)/4.;
 #endif
 	    
           //4th order differentiation
 #ifdef QP_4TH_ORDER
 	    p[IDX(i,j,k)] = p[IDX(i,j,k)]
-          				  +(-1./12.*(logd[IDX(i,j,max(k-2,0))]+logd[IDX(i,j,min(k+2,kn-1))])
-          				  +4./3.*(logd[IDX(i,j,max(k-1,0))]+logd[IDX(i,j,min(k+1,kn-1))])
+          				  +(-1./12.*(logd[IDX(i,j,enzo_max(k-2,0))]+logd[IDX(i,j,enzo_min(k+2,kn-1))])
+          				  +4./3.*(logd[IDX(i,j,enzo_max(k-1,0))]+logd[IDX(i,j,enzo_min(k+1,kn-1))])
           				  -5./2.*logd[IDX(i,j,k)])/(dz[k]*dz[k])/2.;
 	    p[IDX(i,j,k)] = p[IDX(i,j,k)] 
-          				+ pow((1./12.*(logd[IDX(i,j,max(k-2,0))]-logd[IDX(i,j,min(k+2,kn-1))])
-          				  -2./3.*(logd[IDX(i,j,max(k-1,0))]-logd[IDX(i,j,min(k+1,kn-1))]))/dz[k],2)/4.;
+          				+ pow((1./12.*(logd[IDX(i,j,enzo_max(k-2,0))]-logd[IDX(i,j,enzo_min(k+2,kn-1))])
+          				  -2./3.*(logd[IDX(i,j,enzo_max(k-1,0))]-logd[IDX(i,j,enzo_min(k+1,kn-1))]))/dz[k],2)/4.;
 #endif /* QP_4TH_ORDER */
 
           }// end rank > 2

@@ -134,8 +134,8 @@ int grid::ClusterSMBHFeedback(int level)
 [dim][0]);
     DiskEndIndex[dim] = nint((DiskRightCorner[dim] - CellLeftEdge[dim][0] - 0.5*CellWidth[dim][0])/CellWidth[
 dim][0]);
-    DiskStartIndex[dim] = max(DiskStartIndex[dim], GridStartIndex[dim]);
-    DiskEndIndex[dim] = min(DiskEndIndex[dim], GridEndIndex[dim]);
+    DiskStartIndex[dim] = enzo_max(DiskStartIndex[dim], GridStartIndex[dim]);
+    DiskEndIndex[dim] = enzo_min(DiskEndIndex[dim], GridEndIndex[dim]);
 
     /* If Disk is not on this grid, return. */
     if (DiskStartIndex[dim] > GridEndIndex[dim] || DiskEndIndex[dim] < GridStartIndex[dim])
@@ -182,15 +182,15 @@ if (JetOnGrid == true){
   Tramp = ClusterSMBHTramp*1.0e6*yr_s/TimeUnits;  // from Myr to code units 
 
   JetVelocity = sqrt((ClusterSMBHJetEdot*1.0e44*ClusterSMBHKineticFraction*2)/(ClusterSMBHJetMdot*SolarMass/yr_s))/VelocityUnits;
-  JetVelocity *= min((Time-ClusterSMBHStartTime)/Tramp, 1.0);     //linear ramp
+  JetVelocity *= enzo_min((Time-ClusterSMBHStartTime)/Tramp, 1.0);     //linear ramp
   
   /* Clip edge of jet launching disk so we don't set cell off the edge of the grid. */
 
 
   for (dim = 0; dim < GridRank; dim++) {
     if (dim != jet_dim) {
-      JetStartIndex[dim] = max(JetStartIndex[dim], 0);
-      JetEndIndex[dim] = min(JetEndIndex[dim], GridDimension[dim]-1);
+      JetStartIndex[dim] = enzo_max(JetStartIndex[dim], 0);
+      JetEndIndex[dim] = enzo_min(JetEndIndex[dim], GridDimension[dim]-1);
     }
   }
 

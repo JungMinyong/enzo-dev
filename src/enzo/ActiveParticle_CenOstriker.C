@@ -180,9 +180,9 @@ int ActiveParticleType_CenOstriker::EvaluateFormation(grid *thisgrid_orig, Activ
 	}
 
 	// 6) Check to see if star is above threshold (given in units of M_solar)
-	StarFraction = min(MassEfficiency *
+	StarFraction = enzo_min(MassEfficiency *
                            thisGrid->ReturnTimeStep() / DynamicalTime, 0.9);
-	DynamicalTime = max(DynamicalTime, MinimumDynamicalTime * yr_s /
+	DynamicalTime = enzo_max(DynamicalTime, MinimumDynamicalTime * yr_s /
                             data.TimeUnits);
 	
 	// 7) If we allow stochastic star formation, make new particles 
@@ -193,7 +193,7 @@ int ActiveParticleType_CenOstriker::EvaluateFormation(grid *thisgrid_orig, Activ
 	    UnfulfilledStarFormationMass += StarFraction*BaryonMass;
 	    if (UnfulfilledStarFormationMass < MinimumStarMass) 
 	      continue;
-	    StarFraction = min(MinimumStarMass/BaryonMass, 0.5);
+	    StarFraction = enzo_min(MinimumStarMass/BaryonMass, 0.5);
 	    UnfulfilledStarFormationMass -= StarFraction*BaryonMass;
 	  } 
 	}
@@ -344,7 +344,7 @@ int ActiveParticleType_CenOstriker::EvaluateFeedback
     StarFormationDensityThisTimestep = ParticleInitialMass * ((1.0 + xv1)*exp(-xv1) - 
                                                               (1.0 + xv2)*exp(-xv2));
     
-    StarFormationDensityThisTimestep = max(min(StarFormationDensityThisTimestep,ParticleMass),0.0);
+    StarFormationDensityThisTimestep = enzo_max(enzo_min(StarFormationDensityThisTimestep,ParticleMass),0.0);
       
     // Calculate 3D grid indices
 
@@ -378,12 +378,12 @@ int ActiveParticleType_CenOstriker::EvaluateFeedback
 
     if (FeedbackDistRadius > 0)
       {
-	i = max(NumberOfGhostZones + FeedbackDistRadius,
-		min(GridXSize - NumberOfGhostZones - FeedbackDistRadius - 1, i));
-	j = max(NumberOfGhostZones + FeedbackDistRadius,
-		min(GridYSize - NumberOfGhostZones - FeedbackDistRadius - 1, j));
-	k = max(NumberOfGhostZones + FeedbackDistRadius,
-		min(GridZSize - NumberOfGhostZones - FeedbackDistRadius - 1, k));	
+	i = enzo_max(NumberOfGhostZones + FeedbackDistRadius,
+		enzo_min(GridXSize - NumberOfGhostZones - FeedbackDistRadius - 1, i));
+	j = enzo_max(NumberOfGhostZones + FeedbackDistRadius,
+		enzo_min(GridYSize - NumberOfGhostZones - FeedbackDistRadius - 1, j));
+	k = enzo_max(NumberOfGhostZones + FeedbackDistRadius,
+		enzo_min(GridZSize - NumberOfGhostZones - FeedbackDistRadius - 1, k));	
       }
 
     // Subtract ejected mass from particle

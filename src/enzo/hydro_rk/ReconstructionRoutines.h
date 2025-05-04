@@ -109,7 +109,7 @@ inline float minmod(float a, float b)
   /*if (a*b <= 0) {
     return 0.0;
     } */
-  return 0.5*(sign(a)+sign(b))*min(fabs(a), fabs(b));
+  return 0.5*(sign(a)+sign(b))*enzo_min(fabs(a), fabs(b));
 }  
   
 

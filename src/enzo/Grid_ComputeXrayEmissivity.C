@@ -185,7 +185,7 @@ int grid::ComputeXrayEmissivity(float *temperature,
        greater than 100 keV cm^2. */
  
     if (BaryonField[DensNum][i] > 0.04/OmegaMatterNow*200.0) {
-      //      ne = min(ne, POW(temperature[i]/(100*1.16e7), 1.5));
+      //      ne = enzo_min(ne, POW(temperature[i]/(100*1.16e7), 1.5));
       ne = POW((POW(ne, -0.666666) + 200*1.16e7/temperature[i]), -1.5);
       nH = ne*2.0*fh/(1.0+fh);
     }
@@ -194,7 +194,7 @@ int grid::ComputeXrayEmissivity(float *temperature,
  
     /* Look-up temperature and compute temperature bins to interpolate from. */
  
-    temp = min(max(temp, temp1), temp2*0.999);
+    temp = enzo_min(enzo_max(temp, temp1), temp2*0.999);
     j = int((temp-temp1)/deltemp);
     frac = (temp - (temp1+j*deltemp))/deltemp;
  
@@ -202,7 +202,7 @@ int grid::ComputeXrayEmissivity(float *temperature,
       ENZO_VFAIL("prob: %"GSYM" %"ISYM" %"ISYM" %"GSYM"\n", frac, j, i, temp)
 
     }
-    frac = min(max(frac, 0), 1);
+    frac = enzo_min(enzo_max(frac, 0), 1);
  
     /* Add up the emissivity in selected (redshifted) band and multiply
        by n_e * n_H (assuming complete ionization!),
@@ -211,7 +211,7 @@ int grid::ComputeXrayEmissivity(float *temperature,
     xray_emissivity[i] = TotalEmissivity[j  ]*     frac +
                          TotalEmissivity[j+1]*(1.0-frac);
     xray_emissivity[i] *= ne*nH;
-    xray_emissivity[i] = max(xray_emissivity[i], 1e-20);
+    xray_emissivity[i] = enzo_max(xray_emissivity[i], 1e-20);
  
   }
  

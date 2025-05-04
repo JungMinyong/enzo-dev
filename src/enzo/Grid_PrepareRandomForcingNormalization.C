@@ -91,8 +91,8 @@ int grid::PrepareRandomForcingNormalization(float * GlobVal, int GlobNum)
 	}
 	GlobVal[6] += BaryonField[DensNum][index]*
 	  BaryonField[DensNum][index];
-	GlobVal[7]  = min(GlobVal[7], BaryonField[DensNum][index]);
-	GlobVal[8]  = max(GlobVal[8], BaryonField[DensNum][index]);
+	GlobVal[7]  = enzo_min(GlobVal[7], BaryonField[DensNum][index]);
+	GlobVal[8]  = enzo_max(GlobVal[8], BaryonField[DensNum][index]);
       }
  
   /* clean up. */

@@ -89,7 +89,7 @@ int grid::ComputeOneZoneCollapseFactor(float *force_factor)
                                log10(freefall_density[1][index] /
                                      freefall_density[2][index])) - gamma_eff);
         }
-        gamma_eff = min(gamma_eff, (4./3.));
+        gamma_eff = enzo_min(gamma_eff, (4./3.));
 
 	if (gamma_eff < 0.83) {
 	  force_factor[index] = 0.0;
@@ -102,8 +102,8 @@ int grid::ComputeOneZoneCollapseFactor(float *force_factor)
 	  force_factor[index] = 1.0 + 0.2 * (gamma_eff - (4./3.)) -
 	    2.9 * POW((gamma_eff - (4./3.)), 2.);
 	}
-	force_factor[index] = max(force_factor[index], 0.0);
-	force_factor[index] = min(force_factor[index], 0.95);
+	force_factor[index] = enzo_max(force_factor[index], 0.0);
+	force_factor[index] = enzo_min(force_factor[index], 0.95);
 
       }
     }

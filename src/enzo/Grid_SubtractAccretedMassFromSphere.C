@@ -89,7 +89,7 @@ int grid::SubtractAccretedMassFromSphere(Star *cstar, int level, float radius, f
               MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
     ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
-  MetalNum = max(MetalNum, SNColourNum);
+  MetalNum = enzo_max(MetalNum, SNColourNum);
   MetallicityField = (MetalNum > 0) ? TRUE : FALSE;
 
 
@@ -110,29 +110,29 @@ int grid::SubtractAccretedMassFromSphere(Star *cstar, int level, float radius, f
     
     delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - cstar->pos[2];
     delz = fabs(delz);
-    delz = min(delz, DomainWidth[2]-delz);
+    delz = enzo_min(delz, DomainWidth[2]-delz);
     
     for (j = 0; j < GridDimension[1]; j++) {
       
       dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - cstar->pos[1];
       dely = fabs(dely);
-      dely = min(dely, DomainWidth[1]-dely);
+      dely = enzo_min(dely, DomainWidth[1]-dely);
 
       index = (k*GridDimension[1] + j)*GridDimension[0];
       for (i = 0; i < GridDimension[0]; i++, index++) {
 	
 	delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - cstar->pos[0];
 	delx = fabs(delx);
-	delx = min(delx, DomainWidth[0]-delx);
+	delx = enzo_min(delx, DomainWidth[0]-delx);
 	
 	radius2 = delx*delx + dely*dely + delz*delz;
 	if (radius2 <= radius*radius) {
 
-	  increase = max(1-Subtraction, 0.9); 
+	  increase = enzo_max(1-Subtraction, 0.9); 
 
 #ifdef SUBTRACTION_UNIFORM 
 	  // check CalculateSubtractionParameters.C if you want this
-	  increase = max(BaryonField[DensNum][index] + Subtraction, 0.90*BaryonField[DensNum][index]) 
+	  increase = enzo_max(BaryonField[DensNum][index] + Subtraction, 0.90*BaryonField[DensNum][index]) 
 	    / BaryonField[DensNum][index];
 #endif
 

@@ -131,7 +131,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
     if (index != FromNumber) {
       fprintf(stdout, "CommSendPhotons WARNING: Counted %"ISYM" photon packages, but"
 	      " FromNumber = %"ISYM"\n", index, FromNumber);
-      FromNumber = min(index, FromNumber);
+      FromNumber = enzo_min(index, FromNumber);
       fprintf(stdout, "CommSendPhotons: Correcting FromNumber to %"ISYM"\n", 
 	      FromNumber);
       //ENZO_FAIL("Photon package mismatch!\n");

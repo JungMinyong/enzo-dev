@@ -73,7 +73,7 @@ int ealInt::Min(){
   int min_element = Array[0];
 
   for( int i=1; i < Size; i++)
-    min_element = min( min_element, Array[i] );
+    min_element = enzo_min( min_element, Array[i] );
 
   return min_element;
 }
@@ -82,7 +82,7 @@ int ealInt::Max(){
   int max_element = Array[0];
 
   for( int i=1; i < Size; i++)
-    max_element = max( max_element, Array[i] );
+    max_element = enzo_max( max_element, Array[i] );
 
   return max_element;
 }

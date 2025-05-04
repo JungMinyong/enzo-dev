@@ -62,8 +62,8 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
   logC_in   = log(ColumnDensity);
   logC_out  = log(ColumnDensity + dColumnDensity);
 
-  index_in  = min(nbins-1, max(1, int((logC_in  - logC_start)/logC_step)+1));
-  index_out = min(nbins-1, max(1, int((logC_out - logC_start)/logC_step)+1));
+  index_in  = enzo_min(nbins-1, enzo_max(1, int((logC_in  - logC_start)/logC_step)+1));
+  index_out = enzo_min(nbins-1, enzo_max(1, int((logC_out - logC_start)/logC_step)+1));
 
   /* find mean energy */
   
@@ -91,7 +91,7 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
        frac_in = exp(-pseudo_CrossSection * ColumnDensity) */
     
     pseudo_CrossSection = -log(frac_in) / 
-      max(ColumnDensity, RadiativeTransferSpectrumTable.columndensity_table[0]);
+      enzo_max(ColumnDensity, RadiativeTransferSpectrumTable.columndensity_table[0]);
 
     /* expf(-tau) = frac_out / frac_in, below is to avoid cases such as frac_in = 0.0 */
 
@@ -104,9 +104,9 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
     if (tau > 2.e1) 
       photon_fraction = (1.0+BFLOAT_EPSILON);
     else if (tau > 1.e-4) 
-      photon_fraction = min(1 - frac_out / frac_in, 1.0);
+      photon_fraction = enzo_min(1 - frac_out / frac_in, 1.0);
     else
-      photon_fraction = min(dColumnDensity * pseudo_CrossSection, 1.0);  
+      photon_fraction = enzo_min(dColumnDensity * pseudo_CrossSection, 1.0);  
 
 //    fprintf(stderr, "RVFST: id_in = %d, id_out = %d, f_in =%f, f_out = %f, tau = %f, photon_f = %f\n", 
 //	    index_in, index_out, frac_in, frac_out, tau, photon_fraction); 
@@ -139,9 +139,9 @@ float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity,
     if (tau > 2.e1) 
       photon_fraction = (1.0+BFLOAT_EPSILON);
     else if (tau > 1.e-4) 
-      photon_fraction = min((1-expf(-tau)), 1.0);
+      photon_fraction = enzo_min((1-expf(-tau)), 1.0);
     else
-      photon_fraction = min(tau, 1.0);  
+      photon_fraction = enzo_min(tau, 1.0);  
 
     return photon_fraction;
 

@@ -40,13 +40,13 @@ int grid::FindMinimumParticleMass(float &min_mass, int level)
     for (i = 0; i < NumberOfParticles; i++)
       if (ParticleType[i] == PARTICLE_TYPE_DARK_MATTER && 
 	  ParticleMass[i] > threshold)
-	min_mass = min(min_mass, MassFactor*ParticleMass[i]);
+	min_mass = enzo_min(min_mass, MassFactor*ParticleMass[i]);
   } else {
     for (i = 0; i < NumberOfParticles; i++)
       if (ParticleType[i] == PARTICLE_TYPE_DARK_MATTER &&
 	  ParticleAttribute[0][i] <= 0.0 &&
 	  ParticleMass[i] > threshold)
-	min_mass = min(min_mass, MassFactor*ParticleMass[i]);
+	min_mass = enzo_min(min_mass, MassFactor*ParticleMass[i]);
   }
 
   return SUCCESS;

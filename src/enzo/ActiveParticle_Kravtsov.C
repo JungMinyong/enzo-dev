@@ -120,7 +120,7 @@ int ActiveParticleType_Kravtsov::EvaluateFormation
     supp_data.NumberOfNewParticles++;
 
 	// Make sure that we never give put than 90% of the cell's mass into a star particle
-	gasfrac = min( 0.9, tg->dtFixed / timeconstant );
+	gasfrac = enzo_min( 0.9, tg->dtFixed / timeconstant );
 	
 	// Calculate star mass in solar masses.  If this is less than
 	// the user-defined threshold mass, do NOT make a star in this

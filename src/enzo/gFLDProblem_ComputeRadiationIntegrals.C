@@ -135,7 +135,7 @@ int gFLDProblem::ComputeRadiationIntegrals()
 
     //      set quadrature points in interval
     xl = xr;  // cannot start at 0, so shift over a bit
-    xr = min(xl+FreqH,Ulimit);
+    xr = enzo_min(xl+FreqH,Ulimit);
     xm = 0.5*(xl+xr);
 
     //      copy left subinterval function value, location, etc
@@ -201,7 +201,7 @@ int gFLDProblem::ComputeRadiationIntegrals()
 
     //      set quadrature points in interval
     xl = xr;  // cannot start at 0, so shift over a bit
-    xr = min(xl+FreqH,Ulimit);
+    xr = enzo_min(xl+FreqH,Ulimit);
     xm = 0.5*(xl+xr);
 
     //      copy left subinterval function value, location, etc
@@ -261,7 +261,7 @@ int gFLDProblem::ComputeRadiationIntegrals()
 
     //      set quadrature points in interval
     xl = xr;  // cannot start at 0, so shift over a bit
-    xr = min(xl+FreqH,Ulimit);
+    xr = enzo_min(xl+FreqH,Ulimit);
     xm = 0.5*(xl+xr);
 
     //      copy left subinterval function value, location, etc

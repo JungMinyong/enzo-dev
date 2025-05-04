@@ -234,7 +234,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
      time to initialize them. */
 
   int SetupLoopCount, npart = 0;
-  for (SetupLoopCount = 0; SetupLoopCount < 1+min(SphereUseParticles, 1);
+  for (SetupLoopCount = 0; SetupLoopCount < 1+enzo_min(SphereUseParticles, 1);
        SetupLoopCount++) {
 
   /* Set densities */
@@ -457,7 +457,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	  cindex = (i-GridStartIndex[0]) + ActiveDims[0] *
 	    ((j-GridStartIndex[1]) + (k-GridStartIndex[2])*ActiveDims[1]);
 	  if (density_field != NULL)
-	    density = max(density_field[cindex], 1e-6);
+	    density = enzo_max(density_field[cindex], 1e-6);
 	  else
 	    density = 1.0;
 	  if (HII_field != NULL)
@@ -491,7 +491,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	  r = sqrt(pow(fabs(x-SpherePosition[sphere][0]), 2) +
 		   pow(fabs(y-SpherePosition[sphere][1]), 2) +
 		   pow(fabs(z-SpherePosition[sphere][2]), 2) );
-	  r = max(r, 0.1*CellWidth[0][0]);
+	  r = enzo_max(r, 0.1*CellWidth[0][0]);
 
 	  outer_radius = (SphereSmoothSurface[sphere] == TRUE) ? 
 	    SphereSmoothRadius[sphere]*SphereRadius[sphere] : SphereRadius[sphere];
@@ -624,7 +624,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	      else
 		dens1 = normalization / POW(BlastTime*TimeUnits, 3.0) /
 		  POW(speed/v_core, DensitySlope) / DensityUnits;
-	      dens1 = max(dens1, SphereDensity[sphere]);
+	      dens1 = enzo_max(dens1, SphereDensity[sphere]);
 	      Velocity[0] = speed * xpos / r;
 	      Velocity[1] = speed * ypos / r;
 	      Velocity[2] = speed * zpos / r;
@@ -638,7 +638,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	      dens1 = SphereDensity[sphere];
 	      temp1 = HydrostaticTemperature[sphere] *
 		pow(r / SphereRadius[sphere], 2.0);
-	      temp1 = max(temp1, 1.0);
+	      temp1 = enzo_max(temp1, 1.0);
 	    } // ENDIF type 7
 
 	    /* 10) disk (ok, it's not a sphere, so shoot me) */
@@ -676,14 +676,14 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 
 		/* If we're above the disk, then exit. */
 
-//		if (zheight > max(5.0*ScaleHeightz, 2.0*CellWidth[0][0]))
+//		if (zheight > enzo_max(5.0*ScaleHeightz, 2.0*CellWidth[0][0]))
 //		  continue;
 
 		/* Compute density (Kruit & Searle 1982). */
 
 		if (dim == 0)
 		  dens1 = SphereDensity[sphere]*PEXP(-drad/ScaleHeightR)/
-		    pow(cosh(zheight/max(ScaleHeightz, CellWidth[0][0])), 2);
+		    pow(cosh(zheight/enzo_max(ScaleHeightz, CellWidth[0][0])), 2);
 
 		if (dens1 < density)
 		  break;
@@ -762,7 +762,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 		  r > SphereRadius[sphere]) {
 	    float ramp = 1.0 - 1.0 * tanh((3.0/(SphereSmoothRadius[sphere]-1.0))*
 					  (r/SphereRadius[sphere] - 1.0));
-	    ramp = max(ramp, 1.0/density);
+	    ramp = enzo_max(ramp, 1.0/density);
 	    density *= ramp;
 	    if (SphereConstantPressure[sphere] == TRUE) {
 	      temperature /= ramp;
@@ -773,7 +773,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 
 	/* Set density. */
 
-	BaryonField[0][n] = max(density*BaryonMeanDensity, tiny_number);
+	BaryonField[0][n] = enzo_max(density*BaryonMeanDensity, tiny_number);
 
 	/* If doing multi-species (HI, etc.), set these. */
 

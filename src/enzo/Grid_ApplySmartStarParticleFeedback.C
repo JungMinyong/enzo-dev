@@ -192,7 +192,7 @@ int grid::ApplySmartStarParticleFeedback(ActiveParticleType** ThisParticle){
 	      newGE = (Density * this->BaryonField[GENum][index] +
 		       ramp * factor * EjectaThermalEnergy) / Density;
 
-	      newGE = min(newGE, maxGE);  
+	      newGE = enzo_min(newGE, maxGE);  
 	      //printf("%s: Energy Before = %e\t Energy injected = %e\t Increase = %e\n", __FUNCTION__, 
 	      //	     oldGE,ramp * factor * EjectaThermalEnergy / Density, (newGE - oldGE)/oldGE);
 	      fflush(stdout);
@@ -212,7 +212,7 @@ int grid::ApplySmartStarParticleFeedback(ActiveParticleType** ThisParticle){
 	      newGE = (Density * this->BaryonField[TENum][index] +
 		       ramp * factor * EjectaThermalEnergy) / Density;
 
-	      newGE = min(newGE, maxGE);  
+	      newGE = enzo_min(newGE, maxGE);  
 	      this->BaryonField[TENum][index] = newGE;
 
 	    } //end if(GENum >= 0 && DualEnergyFormalism)
@@ -378,7 +378,7 @@ int grid::ApplySmartStarParticleFeedback(ActiveParticleType** ThisParticle){
     }
     printf("SSFEED_DEBUG: %s: Lets Eject!!!!!!!!!!!\n", __FUNCTION__);
 #if IMPOSETHRESHOLD
-    float MassKeptInReserve = max(MassEjected - THRESHOLDFRACTION*SolarMass/MassUnits, 0.0);
+    float MassKeptInReserve = enzo_max(MassEjected - THRESHOLDFRACTION*SolarMass/MassUnits, 0.0);
     MassEjected = MassEjected - MassKeptInReserve;
 #endif
     printf("Cumulative Mass to be ejected in jet will be %f Msolar\n", MassEjected*MassUnits/SolarMass);

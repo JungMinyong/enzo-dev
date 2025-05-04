@@ -143,8 +143,8 @@ int grid::CopyActiveZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSIO
           /* Compute left and right positions in problem space.
          note: include buffer zones of this grid but not the other grid. */
      
-          Left[dim]  = max(ActiveLeft[dim], OtherGrid->GridLeftEdge[dim]);
-          Right[dim] = min(ActiveRight[dim], OtherGrid->GridRightEdge[dim]);
+          Left[dim]  = enzo_max(ActiveLeft[dim], OtherGrid->GridLeftEdge[dim]);
+          Right[dim] = enzo_min(ActiveRight[dim], OtherGrid->GridRightEdge[dim]);
      
           /* Convert this to index positions in this grid */
      
@@ -366,8 +366,8 @@ int grid::CopyActiveZonesFromGridNoStar(grid *OtherGrid, FLOAT EdgeOffset[MAX_DI
           /* Compute left and right positions in problem space.
          note: include buffer zones of this grid but not the other grid. */
      
-          Left[dim]  = max(ActiveLeft[dim], OtherGrid->GridLeftEdge[dim]);
-          Right[dim] = min(ActiveRight[dim], OtherGrid->GridRightEdge[dim]);
+          Left[dim]  = enzo_max(ActiveLeft[dim], OtherGrid->GridLeftEdge[dim]);
+          Right[dim] = enzo_min(ActiveRight[dim], OtherGrid->GridRightEdge[dim]);
      
           /* Convert this to index positions in this grid */
      

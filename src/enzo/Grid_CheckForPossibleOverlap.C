@@ -181,11 +181,11 @@ int grid::CheckForPossibleOverlapHelper(grid *OtherGrid,
  
   for (dim = 0; dim < GridRank; dim++) {
  
-    Left[dim] = max(
+    Left[dim] = enzo_max(
           GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim],
 	  OtherGrid->GravitatingMassFieldLeftEdge[dim]);
  
-    Right[dim] = min(
+    Right[dim] = enzo_min(
 	  GravitatingMassFieldLeftEdge[dim] +
 	  GravitatingMassFieldCellSize * GravitatingMassFieldDimension[dim] +
 	  EdgeOffset[dim],

@@ -65,7 +65,8 @@ int ABYSS() {
 #endif
 
 
-	InitialCommunication();
+	if (AbyssProcessorNumber == ROOT)
+		InitialCommunication();
 
 	// things that should be synchronized. this can be moved to GlobalVariable
 	MPI_Barrier(abyss_comm);

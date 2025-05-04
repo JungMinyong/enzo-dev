@@ -88,7 +88,7 @@ int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
 	for (Temp = LevelArray[RadiativeTransferFLDCallOnLevel];
 	     Temp; Temp = Temp->NextGridThisLevel) {
 	  dtGrid = Temp->GridData->ComputeTimeStep();
-	  dtLocal = min(dtLocal, dtGrid);
+	  dtLocal = enzo_min(dtLocal, dtGrid);
 	}
 	MetaData->dtFLD = CommunicationMinValue(dtLocal);
       } else
@@ -161,7 +161,7 @@ int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
 	for (Temp = LevelArray[RadiativeTransferFLDCallOnLevel];
 	     Temp; Temp = Temp->NextGridThisLevel) {
 	  dtGrid = Temp->GridData->ComputeTimeStep();
-	  dtLocal = min(dtLocal, dtGrid);
+	  dtLocal = enzo_min(dtLocal, dtGrid);
 	}
 	MetaData->dtFLD = CommunicationMinValue(dtLocal);
       } else

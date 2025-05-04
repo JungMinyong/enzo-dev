@@ -124,10 +124,10 @@ int grid::GetEnclosedMass(Star *star, float radius, float &mass,
 
   for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
     delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - star->pos[2];
-    delz = min(delz, DomainWidth[2]-delz);
+    delz = enzo_min(delz, DomainWidth[2]-delz);
     for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
       dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - star->pos[1];
-      dely = min(dely, DomainWidth[1]-dely);
+      dely = enzo_min(dely, DomainWidth[1]-dely);
       index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) { 
 
@@ -135,7 +135,7 @@ int grid::GetEnclosedMass(Star *star, float radius, float &mass,
 	  continue;
 
 	delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - star->pos[0];
-	delx = min(delx, DomainWidth[0]-delx);
+	delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	dr2 = delx*delx + dely*dely + delz*delz;
 
@@ -265,10 +265,10 @@ int grid::GetEnclosedMass(FLOAT star_pos[], float radius, float &mass,
 
   for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
     delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - star_pos[2];
-    delz = min(delz, DomainWidth[2]-delz);
+    delz = enzo_min(delz, DomainWidth[2]-delz);
     for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
       dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - star_pos[1];
-      dely = min(dely, DomainWidth[1]-dely);
+      dely = enzo_min(dely, DomainWidth[1]-dely);
       index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) { 
 
@@ -276,7 +276,7 @@ int grid::GetEnclosedMass(FLOAT star_pos[], float radius, float &mass,
 	  continue;
 
 	delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - star_pos[0];
-	delx = min(delx, DomainWidth[0]-delx);
+	delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	dr2 = delx*delx + dely*dely + delz*delz;
 
@@ -293,7 +293,7 @@ int grid::GetEnclosedMass(FLOAT star_pos[], float radius, float &mass,
 	    metallicity += BaryonField[SNColourNum][index] * MassConversion;
 	  //OneOverRSqauredSum used in Grid_AddFeedbackSphere for MBHFeedback=1
 	  //imposed upperbound of 1/(2*CellWidth)^2
-	  OneOverRSquaredSum += min(1.0/dr2, 1.0/(4.0*CellWidthTemp*CellWidthTemp));  
+	  OneOverRSquaredSum += enzo_min(1.0/dr2, 1.0/(4.0*CellWidthTemp*CellWidthTemp));  
 	}
 	
       }

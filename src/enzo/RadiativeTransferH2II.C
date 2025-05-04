@@ -38,9 +38,9 @@ int grid::RadiativeTransferH2II(PhotonPackageEntry **PP, int cellindex,
   if (tau > 2.e1) //Completely Optically Thick
     dPH2II = (1.0+BFLOAT_EPSILON) * (*PP)->Photons;
   else if (tau > 1.e-4) //Exponential decline in photons
-    dPH2II = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+    dPH2II = enzo_min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
   else //Optically thin case
-    dPH2II = min((*PP)->Photons*tau, (*PP)->Photons);
+    dPH2II = enzo_min((*PP)->Photons*tau, (*PP)->Photons);
   
   //dPH2II is the number of absorptions due to H2II
   dPH2II = dPH2II * geo_correction;

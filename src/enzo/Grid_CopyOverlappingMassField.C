@@ -50,10 +50,10 @@ int grid::CopyOverlappingMassField(grid *OtherGrid,
 
 	for (dim = 0; dim < GridRank; dim++) {
 
-		Left[dim] = max(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim],
+		Left[dim] = enzo_max(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim],
 				OtherGrid->GridLeftEdge[dim]);
 
-		Right[dim] = min(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim] +
+		Right[dim] = enzo_min(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim] +
 				GravitatingMassFieldCellSize *
 				GravitatingMassFieldDimension[dim],
 				OtherGrid->GridRightEdge[dim]);
@@ -196,10 +196,10 @@ int grid::CopyOverlappingMassFieldNoStar(grid *OtherGrid,
 
 	for (dim = 0; dim < GridRank; dim++) {
 
-		Left[dim] = max(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim],
+		Left[dim] = enzo_max(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim],
 				OtherGrid->GridLeftEdge[dim]);
 
-		Right[dim] = min(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim] +
+		Right[dim] = enzo_min(GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim] +
 				GravitatingMassFieldCellSize *
 				GravitatingMassFieldDimension[dim],
 				OtherGrid->GridRightEdge[dim]);

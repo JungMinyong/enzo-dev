@@ -157,7 +157,7 @@ if(FDMCollapseAbsorbingBoundary){
 
 
       fprintf(stderr, "initialize particles \n" );
-    for (SetupLoopCount = 0; SetupLoopCount < 1+min(UseParticles, 1); SetupLoopCount++) {
+    for (SetupLoopCount = 0; SetupLoopCount < 1+enzo_min(UseParticles, 1); SetupLoopCount++) {
      if (SetupLoopCount > 0) {
       /* If particles already exist (coarse particles), then delete. */
         if (NumberOfParticles > 0) this->DeleteParticles();
@@ -238,14 +238,14 @@ if(FDMCollapseAbsorbingBoundary){
             vx = (BaryonField[RePsiNum][ind]*(BaryonField[ImPsiNum][indxp]-BaryonField[ImPsiNum][indxn])
                   - BaryonField[ImPsiNum][ind]*(BaryonField[RePsiNum][indxp]-BaryonField[RePsiNum][indxn]))
                   *hmcoef/BaryonField[FDMDensNum][ind]/(2*CellWidth[0][i]);
-            //vx = max(vx,10);
+            //vx = enzo_max(vx,10);
             ParticleVelocity[0][npart] = vx;
             //printf("vx %f \n",vx);
             if (GridRank>1){
               vy = (BaryonField[RePsiNum][ind]*(BaryonField[ImPsiNum][indyp]-BaryonField[ImPsiNum][indyn])
                   - BaryonField[ImPsiNum][ind]*(BaryonField[RePsiNum][indyp]-BaryonField[RePsiNum][indyn]))
                   *hmcoef/BaryonField[FDMDensNum][ind]/(2*CellWidth[1][j]);
-              //vy = max(vy,10);
+              //vy = enzo_max(vy,10);
               ParticleVelocity[1][npart] = vy;
               //printf("vy %f \n",vy);
             }
@@ -253,7 +253,7 @@ if(FDMCollapseAbsorbingBoundary){
               vz = (BaryonField[RePsiNum][ind]*(BaryonField[ImPsiNum][indzp]-BaryonField[ImPsiNum][indzn])
                   - BaryonField[ImPsiNum][ind]*(BaryonField[RePsiNum][indzp]-BaryonField[RePsiNum][indzn]))
                   *hmcoef/BaryonField[FDMDensNum][ind]/(2*CellWidth[2][k]);
-              //vz = max(vz,10);
+              //vz = enzo_max(vz,10);
               ParticleVelocity[2][npart] = vz;
               //printf("vz %f \n",vz);
             }

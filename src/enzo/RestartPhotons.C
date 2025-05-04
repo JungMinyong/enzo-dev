@@ -76,7 +76,7 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   int savedAdaptiveTimestep = RadiativeTransferAdaptiveTimestep;
   PhotonTime -= LightCrossingTime;
   if (RadiativeTransferAdaptiveTimestep == FALSE)
-    dtPhoton = min(dtPhoton, LightCrossingTime);
+    dtPhoton = enzo_min(dtPhoton, LightCrossingTime);
   else
     dtPhoton = 1.0*LightCrossingTime;
 

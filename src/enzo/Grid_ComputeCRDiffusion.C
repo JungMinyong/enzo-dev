@@ -103,7 +103,7 @@ int grid::ComputeCRDiffusion(){
 
     // make sure we don't extend past dtFixed
 
-    dtSubcycle = min(dtSubcycle, dtFixed-dtSoFar);
+    dtSubcycle = enzo_min(dtSubcycle, dtFixed-dtSoFar);
 
     // compute dCR/dt for each cell.
 

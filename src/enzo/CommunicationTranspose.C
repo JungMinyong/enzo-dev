@@ -119,7 +119,7 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
 	//  fprintf(stderr, "CT(%"ISYM"): start From=%"ISYM"  To=%"ISYM"\n", MyProcessorNumber,
 	//	  NumberOfFromRegions, NumberOfToRegions);
 
-	int NumberOfRegions = max(NumberOfFromRegions, NumberOfToRegions);
+	int NumberOfRegions = enzo_max(NumberOfFromRegions, NumberOfToRegions);
 	region *Sends = new region[NumberOfRegions];
 	region *Receives = new region[NumberOfRegions];
 
@@ -364,7 +364,7 @@ int OptimizedUnigridCommunicationTranspose(
 
 		// Loop over processor jumps (number of processors ahead to send)
 
-		int MaxRegions = max(NumberOfFromRegions, NumberOfToRegions);
+		int MaxRegions = enzo_max(NumberOfFromRegions, NumberOfToRegions);
 
 		int *jtrue = new int[NumberOfFromRegions];
 		int *itrue = new int[NumberOfToRegions];
@@ -825,7 +825,7 @@ int OptimizedUnigridCommunicationTranspose(
 					MyProcessorNumber, NumberOfFromRegions, NumberOfToRegions);
 #endif
 
-			int NumberOfRegions = max(NumberOfFromRegions, NumberOfToRegions);
+			int NumberOfRegions = enzo_max(NumberOfFromRegions, NumberOfToRegions);
 			commSndRcv commNB[PROCS_PER_LOOP];
 			region *Sends, *Receives;
 
@@ -863,7 +863,7 @@ int OptimizedUnigridCommunicationTranspose(
 				/* Receive every PROCS_PER_LOOP (and last) cycle.  The first cycle
 					 is special because there is no communication. */
 
-				ni = (max(n-1,0)) % PROCS_PER_LOOP;
+				ni = (enzo_max(n-1,0)) % PROCS_PER_LOOP;
 				ReceiveMode = (ni == PROCS_PER_LOOP-1 || n == NumberOfProcessors-1 || n==0);
 
 				sends = receives = 0;

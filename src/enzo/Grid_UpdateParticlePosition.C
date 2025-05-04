@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 #include <math.h>
+
+
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -29,6 +31,7 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+
 
 /* function prototypes */
 
@@ -161,9 +164,13 @@ int grid::UpdateParticlePositionNoStar(float TimeStep, int OffProcessorUpdate)
 			for (i = 0; i < NumberOfParticles; i++) {
 				/* Only particle not nbody will be updated */
 				//&& GridLevel != MaximumRefinementLevel )
+#ifdef INDIVIDUALSTAR
+				if ( ParticleType[i] == PARTICLE_TYPE_DARK_MATTER || ParticleType[i] == PARTICLE_TYPE_GAS) {
+#else
 				if ( ParticleType[i] != PARTICLE_TYPE_NBODY 
 						&& ParticleType[i] != PARTICLE_TYPE_NBODY_NEW  
 						&& ParticleType[i] != PARTICLE_TYPE_NBODY_REMOVE)  {
+#endif
 					ParticlePosition[dim][i] += Coefficient*ParticleVelocity[dim][i];
 				}
 			} // ENDFOR particles
@@ -172,6 +179,7 @@ int grid::UpdateParticlePositionNoStar(float TimeStep, int OffProcessorUpdate)
 		}
 	}
 
+#ifndef INDIVIDUALSTAR
 	if (NumberOfActiveParticles > 0) {
 		for (i = 0; i < NumberOfActiveParticles; i++) {
 
@@ -192,6 +200,7 @@ int grid::UpdateParticlePositionNoStar(float TimeStep, int OffProcessorUpdate)
 			ActiveParticles[i]->SetPositionPeriod(period);
 		}
 	}
+#endif
 	return SUCCESS;
 }
 #endif

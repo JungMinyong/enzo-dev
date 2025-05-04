@@ -69,17 +69,17 @@ int grid::InitializeGravitatingMassField(int RefinementFactor)
        plus the GravityBufferSize (in Parent cell units) on either size. */
  
     DimTemp = GridEndIndex[dim] - GridStartIndex[dim] + 1;
-    //      BufferSize = min(RefinementFactor*GravityBufferSize, DimTemp);
+    //      BufferSize = enzo_min(RefinementFactor*GravityBufferSize, DimTemp);
     BufferSize = RefinementFactor*GravityBufferSize;
     //      if (int(DimTemp/4)*4 != DimTemp && RefinementFactor == 2)
 
     BufferSize = ( (BufferSize <= NumberOfGhostZones ) ? NumberOfGhostZones + 1 : BufferSize ) ;
  
     GravitatingMassFieldDimension[dim] = DimTemp +
-      2*max(BufferSize, NumberOfGhostZones);
+      2*enzo_max(BufferSize, NumberOfGhostZones);
     GravitatingMassFieldCellSize = CellWidth[dim][0];
     GravitatingMassFieldLeftEdge[dim] = GridLeftEdge[dim] -
-      max(BufferSize, NumberOfGhostZones)*
+      enzo_max(BufferSize, NumberOfGhostZones)*
       GravitatingMassFieldCellSize;
   }
  

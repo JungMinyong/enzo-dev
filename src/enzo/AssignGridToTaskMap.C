@@ -178,7 +178,7 @@ int AssignGridToTaskMap(Eint64 GridIndex[], Eint64 Memory[], int Ntask)
     freecpu[n] = tasks_per_node[n];
     freemem[n] = ((double) actual_free[n])/1024.0;
 
-    for ( j = n*MAX_TASKS_PER_NODE; j < min((n+1)*MAX_TASKS_PER_NODE, nt); j++ ) {
+    for ( j = n*MAX_TASKS_PER_NODE; j < enzo_min((n+1)*MAX_TASKS_PER_NODE, nt); j++ ) {
       task_table[n][j-n*MAX_TASKS_PER_NODE] = j;
     }
   }

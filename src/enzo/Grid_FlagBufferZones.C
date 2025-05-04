@@ -189,7 +189,7 @@ int grid::FlagBufferZones()
 	      RefineRegionRightEdge[2])
 	    FlaggingField[Index] = 0;
 	
-	FlaggingField[Index] = min(FlaggingField[Index], 1);
+	FlaggingField[Index] = enzo_min(FlaggingField[Index], 1);
       }
     }
  

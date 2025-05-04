@@ -36,9 +36,9 @@ int grid::RadiativeTransferLW(PhotonPackageEntry **PP, FLOAT &dPLW, int cellinde
   if (tau > 2.e1) //Completely Optically Thick
     dPLW = (*PP)->Photons;
   else if (tau > 1.e-4) //Exponential decline in photons
-    dPLW = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+    dPLW = enzo_min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
   else //Optically thin case
-    dPLW = min((*PP)->Photons*tau, (*PP)->Photons);
+    dPLW = enzo_min((*PP)->Photons*tau, (*PP)->Photons);
   
   //dPLW is the number of absorptions due to H2I 
   dPLW = dPLW * geo_correction;

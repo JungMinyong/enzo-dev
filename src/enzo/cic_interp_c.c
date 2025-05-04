@@ -103,8 +103,8 @@ int cic_interp_c(FLOAT *posx, FLOAT *posy, FLOAT *posz, int *ndim,
 /* Computing min */
 /* Computing max */
 	    r__2 = (posx[n] - leftedge[1]) * fact;
-	    r__1 = max(r__2,(FLOAT).500);
-	    xpos = min(r__1,edge1);
+	    r__1 = enzo_max(r__2,(FLOAT).500);
+	    xpos = enzo_min(r__1,edge1);
 
 /*           Convert this into an integer index */
 
@@ -136,13 +136,13 @@ int cic_interp_c(FLOAT *posx, FLOAT *posy, FLOAT *posz, int *ndim,
 /* Computing min */
 /* Computing max */
 	    r__2 = (posx[n] - leftedge[1]) * fact;
-	    r__1 = max(r__2,(FLOAT).500);
-	    xpos = min(r__1,edge1);
+	    r__1 = enzo_max(r__2,(FLOAT).500);
+	    xpos = enzo_min(r__1,edge1);
 /* Computing min */
 /* Computing max */
 	    r__2 = (posy[n] - leftedge[2]) * fact;
-	    r__1 = max(r__2,(FLOAT).500);
-	    ypos = min(r__1,edge2);
+	    r__1 = enzo_max(r__2,(FLOAT).500);
+	    ypos = enzo_min(r__1,edge2);
 
 /*           Convert this into an integer index */
 
@@ -179,18 +179,18 @@ int cic_interp_c(FLOAT *posx, FLOAT *posy, FLOAT *posz, int *ndim,
 /* Computing min */
 /* Computing max */
 	    r__2 = (posx[n] - leftedge[1]) * fact;
-	    r__1 = max(r__2,(FLOAT).500);
-	    xpos = min(r__1,edge1);
+	    r__1 = enzo_max(r__2,(FLOAT).500);
+	    xpos = enzo_min(r__1,edge1);
 /* Computing min */
 /* Computing max */
 	    r__2 = (posy[n] - leftedge[2]) * fact;
-	    r__1 = max(r__2,(FLOAT).500);
-	    ypos = min(r__1,edge2);
+	    r__1 = enzo_max(r__2,(FLOAT).500);
+	    ypos = enzo_min(r__1,edge2);
 /* Computing min */
 /* Computing max */
 	    r__2 = (posz[n] - leftedge[3]) * fact;
-	    r__1 = max(r__2,(FLOAT).500);
-	    zpos = min(r__1,edge3);
+	    r__1 = enzo_max(r__2,(FLOAT).500);
+	    zpos = enzo_min(r__1,edge3);
 
 /*           Convert this into an integer index */
 

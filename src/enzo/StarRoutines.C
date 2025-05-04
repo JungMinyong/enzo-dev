@@ -18,8 +18,10 @@
 #include <search.h>
 #include <string.h>
 #include <map>
-#include "performance.h"
+#include <unordered_map>
+
 #include "ErrorExceptions.h"
+#include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -28,11 +30,10 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "Hierarchy.h"
-#include "TopGridData.h"
 #include "LevelHierarchy.h"
+#include "TopGridData.h"
 #include "phys_constants.h"
 
-#include <unordered_map>
 #define LIFETIME_IN_TDYN 12.0
 
 void DeleteStar(Star * &Node);
@@ -116,6 +117,9 @@ Star::Star(grid *_grid, int _id, int _level)
   Radius = Teff = SurfaceGravity = -1.0;
 
   GridID = _grid->ID;
+#ifdef NBODY
+  GridParticleIndex = _id;
+#endif
   type = _grid->ParticleType[_id];
   Identifier = _grid->ParticleNumber[_id];
   Mass = FinalMass = BirthMass = (double)(_grid->ParticleMass[_id]);
@@ -174,13 +178,16 @@ Star::Star(StarBuffer *buffer, int n)
 {
   int i;
   CurrentGrid = NULL;
+#ifdef NBODY
+  GridParticleIndex = buffer[n].GridParticleIndex;
+#endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer[n].pos[i];
     vel[i] = buffer[n].vel[i];
     delta_vel[i] = buffer[n].delta_vel[i];
     accreted_angmom[i] = buffer[n].accreted_angmom[i];
   }
-  naccretions = min(buffer[n].naccretions, MAX_ACCR);
+  naccretions = enzo_min(buffer[n].naccretions, MAX_ACCR);
   if (naccretions > 0) {
     accretion_time = new FLOAT[naccretions];
     accretion_rate = new float[naccretions];
@@ -238,13 +245,16 @@ Star::Star(StarBuffer buffer)
 {
   int i;
   CurrentGrid = NULL;
+  #ifdef NBODY
+  GridParticleIndex = buffer.GridParticleIndex;
+  #endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer.pos[i];
     vel[i] = buffer.vel[i];
     delta_vel[i] = buffer.delta_vel[i];
     accreted_angmom[i] = buffer.accreted_angmom[i];
   }
-  naccretions = min(buffer.naccretions, MAX_ACCR);
+  naccretions = enzo_min(buffer.naccretions, MAX_ACCR);
   if (naccretions > 0) {
     accretion_time = new FLOAT[naccretions];
     accretion_rate = new float[naccretions];
@@ -323,6 +333,9 @@ void Star::operator=(Star a)
   int i, dim;
   //NextStar = a.NextStar;
   CurrentGrid = a.CurrentGrid;
+#ifdef NBODY
+  GridParticleIndex = a.GridParticleIndex;
+#endif
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     pos[dim] = a.pos[dim];
     vel[dim] = a.vel[dim];
@@ -413,6 +426,9 @@ Star *Star::copy(void)
   a->NextStar = NULL;
   a->PrevStar = NULL;
   a->CurrentGrid = CurrentGrid;
+#ifdef NBODY
+  a->GridParticleIndex = GridParticleIndex;
+#endif
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     a->pos[dim] = pos[dim];
     a->vel[dim] = vel[dim];
@@ -578,20 +594,24 @@ std::map<int, Star*> Star::MakeStarsMap() // makes lookup table to quickly find 
   return StarLookupMap;
 }
 
-std::unordered_map<int, Star*> Star::MakeStarsUnorderedMap() // makes lookup table to quickly find stars in grid during CopyToGrid
+#if defined (NBODY) && defined (INDIVIDUALSTAR)
+void Star::MakeStarsUnorderedMap(
+    std::unordered_map<int, Star *>
+        &StarLookupMap) // makes lookup table to quickly find stars in grid
+                        // during CopyToGrid
 {
-  std::unordered_map<int, Star*> StarLookupMap;
-  Star *cstar;
-  Star *ThisStar;
-  for (ThisStar = this; ThisStar; ThisStar = ThisStar->NextStar) {
-    if ((ThisStar->CurrentGrid != NULL) && (StarLookupMap[ThisStar->Identifier] == NULL)) {
-      for (cstar = ThisStar->CurrentGrid->Stars; cstar; cstar = cstar->NextStar) {
-        StarLookupMap.insert({cstar->Identifier, cstar}); // adding Identifiers as keys, stars as values
-      }
+  /*
+  Star *temp = this;
+  while (temp) {
+    auto it = StarLookupMap.find(temp->Identifier);
+    if (it == StarLookupMap.end()) {
+      StarLookupMap.insert(
+          {temp->Identifier,
+           temp}); // adding Identifiers as keys, stars as values
     }
-  }
-  return StarLookupMap;
+  }*/
 }
+#endif
 
 void Star::CopyToGridMap(std::map<int, Star*>* const &StarLookupMap)
 {
@@ -1018,6 +1038,10 @@ void Star::StarListToBuffer(StarBuffer *&result, int n)
     result[count].PopIIIStar = tmp->PopIIIStar;
     result[count].AddedEmissivity = tmp->AddedEmissivity;
 
+#ifdef NBODY
+    result[count].GridParticleIndex = tmp->GridParticleIndex;
+#endif
+
     for (i = 0; i < 2; i++){
       result[count].se_table_position[i] = tmp->se_table_position[i];
       result[count].yield_table_position[i] = tmp->yield_table_position[i];
@@ -1081,6 +1105,10 @@ void Star::StarToBuffer(StarBuffer *result)
   result->SNIaType = tmp->SNIaType;
   result->PopIIIStar = tmp->PopIIIStar;
   result->AddedEmissivity = tmp->AddedEmissivity;
+
+#ifdef NBODY
+  result->GridParticleIndex = tmp->GridParticleIndex;
+#endif
 
   /* AJE */
   for(i =0; i < 2; i++){

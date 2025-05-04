@@ -53,8 +53,8 @@ int grid::TracerParticleCreateParticles(FLOAT LeftEdge[], FLOAT RightEdge[],
   FLOAT ActiveLeft[MAX_DIMENSION], ActiveRight[MAX_DIMENSION];
 
   for (dim = 0; dim < GridRank; dim++) {
-    ActiveLeft[dim] = max(GridLeftEdge[dim],LeftEdge[dim]);
-    ActiveRight[dim] = min(GridRightEdge[dim], RightEdge[dim]);
+    ActiveLeft[dim] = enzo_max(GridLeftEdge[dim],LeftEdge[dim]);
+    ActiveRight[dim] = enzo_min(GridRightEdge[dim], RightEdge[dim]);
     ActiveDims[dim] = nint( (ActiveRight[dim]-ActiveLeft[dim])/Spacing );
     NumberToAllocate *= ActiveDims[dim];
     Dims[dim] = nint((RightEdge[dim] - LeftEdge[dim])/Spacing);

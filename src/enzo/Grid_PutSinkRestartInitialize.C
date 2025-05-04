@@ -141,7 +141,7 @@ int grid::PutSinkRestartInitialize(int level, int *NumberOfCellsSet)
 //   for (k = 0; k < GridDimension[2]; k++) {
 //     if (GridRank > 1) {
 //       delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - EjectaCenter[2];
-//       delz = min(delz, DomainWidth[2]-delz);
+//       delz = enzo_min(delz, DomainWidth[2]-delz);
 //     }
 //     else
 //       delz = 0;
@@ -149,14 +149,14 @@ int grid::PutSinkRestartInitialize(int level, int *NumberOfCellsSet)
 //     for (j = 0; j < GridDimension[1]; j++) {
 //       if (GridRank > 0) {
 // 	dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - EjectaCenter[1];
-// 	dely = min(dely, DomainWidth[1]-dely);
+// 	dely = enzo_min(dely, DomainWidth[1]-dely);
 //       }
 //       else
 // 	dely = 0;
  
 //       for (i = 0; i < GridDimension[0]; i++, n++) {
 // 	delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - EjectaCenter[0];
-// 	delx = min(delx, DomainWidth[0]-delx);
+// 	delx = enzo_min(delx, DomainWidth[0]-delx);
  
 // 	/* Compute square of distance from cell to center. */
  
@@ -165,7 +165,7 @@ int grid::PutSinkRestartInitialize(int level, int *NumberOfCellsSet)
 // 	if (radius2 <= EjectaRadius*EjectaRadius*1.2*1.2) {
  
 // 	  float r1 = sqrt(radius2)/EjectaRadius;
-// 	  float ramp = min(max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
+// 	  float ramp = enzo_min(enzo_max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
  
 // 	  /* Cell is within ejecta, so set density, etc. */
  

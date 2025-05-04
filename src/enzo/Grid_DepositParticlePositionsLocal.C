@@ -115,10 +115,10 @@ int grid::DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField,
        DepositField == PARTICLE_MASS_FLAGGING_FIELD) &&
       DepositParticleMaximumParticleMass > 0 && MassFactor != 1.0) {
     for (i = 0; i < NumberOfParticles; i++)
-      ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
+      ParticleMassPointer[i] = enzo_min(DepositParticleMaximumParticleMass,
                                    ParticleMassPointer[i]);
     for (i = 0; i < NumberOfActiveParticles; i++)
-      ActiveParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
+      ActiveParticleMassPointer[i] = enzo_min(DepositParticleMaximumParticleMass,
                                          ActiveParticleMassPointer[i]);
   }
  

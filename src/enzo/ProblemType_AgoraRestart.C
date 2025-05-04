@@ -832,12 +832,12 @@ public:
 					if (iflag[index] == 0)
 					{
 						int xlow, xhigh, ylow, yhigh, zlow, zhigh;
-						xlow = max(index - xo, 0);
-						xhigh = min(index + xo, size - 1);
-						ylow = max(index - yo, 0);
-						yhigh = min(index + yo, size - 1);
-						zlow = max(index - zo, 0);
-						zhigh = min(index + zo, size - 1);
+						xlow = enzo_max(index - xo, 0);
+						xhigh = enzo_min(index + xo, size - 1);
+						ylow = enzo_max(index - yo, 0);
+						yhigh = enzo_min(index + yo, size - 1);
+						zlow = enzo_max(index - zo, 0);
+						zhigh = enzo_min(index + zo, size - 1);
 
 						float total_mass = 0.0; // density
 						total_mass = iflag[xhigh] * thisgrid->BaryonField[DensNum][xhigh] +

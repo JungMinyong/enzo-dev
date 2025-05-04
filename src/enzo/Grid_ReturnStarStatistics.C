@@ -37,7 +37,7 @@ int grid::ReturnStarStatistics(int &Number, float &minLife)
 	ParticleType[i] != PARTICLE_TYPE_TRACER &&
 	ParticleType[i] != PARTICLE_TYPE_MUST_REFINE) {
       if (this->Time < ParticleAttribute[0][i]+ParticleAttribute[1][i])
-	minLife = min(minLife, ParticleAttribute[1][i]);
+	minLife = enzo_min(minLife, ParticleAttribute[1][i]);
       Number++;
     }
 

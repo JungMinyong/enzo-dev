@@ -161,7 +161,7 @@ int grid::InterpolateStarParticlesToGrid(int NumberOfSPFields)
 	    
 	    minitial = ParticleMass[i] / (1.0 - StarMassEjectionFraction*(1.0 - (1.0 + xv1)*exp(-xv1)));	    
 	    mform = minitial * ((1.0 + xv1)*exp(-xv1) - (1.0 + xv2)*exp(-xv2));
-	    mform = max(min(mform, ParticleMass[i]), 0.0);
+	    mform = enzo_max(enzo_min(mform, ParticleMass[i]), 0.0);
 	    
 	    // (11) forming stellar mass density (in code density unit)
 	    InterpolatedField[FormingStarDensNum][index] += (float)((1.0 - StarMassEjectionFraction)*mform); 

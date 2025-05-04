@@ -72,7 +72,7 @@ int grid::FlagCellsToBeRefinedByTotalJeansLength()
       if (this->ComputeTemperatureField(temperature) == FAIL)
 	ENZO_FAIL("Error in grid->ComputeTemperature.");
       for (i = 0; i < size; i++) 
-	temperature[i] = max(JeansRefinementColdTemperature, temperature[i]);
+	temperature[i] = enzo_max(JeansRefinementColdTemperature, temperature[i]);
     }
   }
  
@@ -159,19 +159,19 @@ int grid::FlagCellsToBeRefinedByTotalJeansLength()
 	double det = 0.;
 	det = rhox*rhoy*rhoz + rhoxy*rhoyz*rhoxz + rhoxz*rhoxy*rhoyz 
 	   - rhoxz*rhoy*rhoxz - rhoxy*rhoxy*rhoz - rhox*rhoyz*rhoyz; 
-	//	MaxDensity[index] = max(max(rhox, max(rhoy, rhoz)), tiny_number)/ GravitationalConstant/CellWidthSquared;
+	//	MaxDensity[index] = enzo_max(enzo_max(rhox, enzo_max(rhoy, rhoz)), tiny_number)/ GravitationalConstant/CellWidthSquared;
 	if (det > 0.) 
 	  MaxDensity[index] = pow(det, 0.33334)/ GravitationalConstant/CellWidthSquared;
 
 	// divergence without negative values
-	//	MaxDensity[index] = (max(rhox, 0)+max(rhoy, 0)+max(rhoz, 0))/ GravitationalConstant/CellWidthSquared ;
+	//	MaxDensity[index] = (enzo_max(rhox, 0)+enzo_max(rhoy, 0)+enzo_max(rhoz, 0))/ GravitationalConstant/CellWidthSquared ;
 	
 	// largest component
-	//MaxDensity[index] = max(rhoxz, max(rhoyz, max(rhoxy,max(max(rhox, max(rhoy, rhoz)),tiny_number))))/ GravitationalConstant/CellWidthSquared ;
+	//MaxDensity[index] = enzo_max(rhoxz, enzo_max(rhoyz, enzo_max(rhoxy,enzo_max(enzo_max(rhox, enzo_max(rhoy, rhoz)),tiny_number))))/ GravitationalConstant/CellWidthSquared ;
 	
 	BaryonField[NumberOfBaryonFields-1][index] = MaxDensity[index]; // for debugging copy into Debug field	
 	//	BaryonField[NumberOfBaryonFields-1][index] = Phi[index]; // for debugging copy into Debug field	
-	MaxDensity[index] = max(MaxDensity[index], BaryonField[DensNum][index]);
+	MaxDensity[index] = enzo_max(MaxDensity[index], BaryonField[DensNum][index]);
       }
     }
   };

@@ -56,10 +56,10 @@ int grid::InitializeGravitatingMassFieldParticles(int RefinementFactor)
  
       GravitatingMassFieldParticlesDimension[dim] =
 	(GridEndIndex[dim] - GridStartIndex[dim] + 1) +
-	  2*max(RefinementFactor*GravityBufferSize, NumberOfGhostZones);
+	  2*enzo_max(RefinementFactor*GravityBufferSize, NumberOfGhostZones);
       GravitatingMassFieldParticlesCellSize = CellWidth[dim][0];
       GravitatingMassFieldParticlesLeftEdge[dim] = GridLeftEdge[dim] -
-	max(RefinementFactor*GravityBufferSize, NumberOfGhostZones)*
+	enzo_max(RefinementFactor*GravityBufferSize, NumberOfGhostZones)*
 	  GravitatingMassFieldParticlesCellSize;
       break;
  

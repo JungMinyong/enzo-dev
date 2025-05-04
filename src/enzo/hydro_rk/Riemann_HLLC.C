@@ -94,8 +94,8 @@ int hllc(float **FluxLine, float **priml, float **primr, int ActiveSize)
     lp_r = vx_r + cs_r;
     lm_r = vx_r - cs_r;
 
-    lam_l = min(lm_l, lm_r);
-    lam_r = max(lp_l, lp_r);
+    lam_l = enzo_min(lm_l, lm_r);
+    lam_r = enzo_max(lp_l, lp_r);
 
 
     lam_c = (rho_r*vx_r*(lam_r-vx_r) - rho_l*vx_l*(lam_l-vx_l)+p_l-p_r)/

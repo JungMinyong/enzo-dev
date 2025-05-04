@@ -81,8 +81,8 @@ int CosmologyTableComputeTimeFromRedshift(FLOAT z, FLOAT *time)
   dloga = (CosmologyTableLogaFinal - CosmologyTableLogaInitial) /
     (CosmologyTableNumberOfBins - 1);
 
-  i = min(CosmologyTableNumberOfBins - 2,
-          max(0, int((loga - CosmologyTableLogaInitial) / dloga)));
+  i = enzo_min(CosmologyTableNumberOfBins - 2,
+          enzo_max(0, int((loga - CosmologyTableLogaInitial) / dloga)));
   *time = POW(10, ((CosmologyTableLogt[i+1] - CosmologyTableLogt[i]) *
                    (loga - CosmologyTableLoga[i]) / dloga +
                    CosmologyTableLogt[i]));

@@ -75,7 +75,7 @@ int grid::ApplyTemperatureLimit(void){
     if( (temperature[i] > IndividualStarTemperatureLimit) &&
         ((BaryonField[DensNum][i] > low_density_threshold) &&
          (BaryonField[DensNum][i] < high_density_threshold))  ){
-      float factor = min(temperature[i] / IndividualStarTemperatureLimit,
+      float factor = enzo_min(temperature[i] / IndividualStarTemperatureLimit,
                          IndividualStarTemperatureLimitFactor);
       float old_dens = BaryonField[DensNum][i];
 

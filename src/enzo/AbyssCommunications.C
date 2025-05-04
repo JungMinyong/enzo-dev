@@ -12,6 +12,7 @@
 
 
 #if defined (NBODY) && defined (INDIVIDUALSTAR)
+#include <unordered_map>
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -27,9 +28,6 @@
 #define ENZO_ONLY
 #include "NbodyRoutines.h" //added
 #include "Star.h"
-
-#undef max
-#include <unordered_map>
 //#undef max
 //#undef min
 //#include "abyss/global.h"
@@ -53,12 +51,12 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level,
 int CommunicationToAbyssInitialize(
    // LevelHierarchyEntry *LevelArray[], int level, 
     Star *&AllStars,
-    std::unordered_map<int, Star *> LocalStarLookupMap);
+    std::unordered_map<int, Star *> &LocalStarLookupMap);
 
 
 int SendParticleToAbyss(//LevelHierarchyEntry *LevelArray[], int level,
                         Star *&AllStars,
-                        std::unordered_map<int, Star *> LocalStarLookupMap) {
+                        std::unordered_map<int, Star *> &LocalStarLookupMap) {
 
     if (NbodyFirst) {
       if (CommunicationToAbyssInitialize(AllStars, LocalStarLookupMap))
@@ -71,10 +69,10 @@ int SendParticleToAbyss(//LevelHierarchyEntry *LevelArray[], int level,
 
 int CommunicationToAbyssInitialize(
     // LevelHierarchyEntry *LevelArray[], int level,
-    Star *&AllStars, std::unordered_map<int, Star *> LocalStarLookupMap) {
+    Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
 
-  fprintf(stdout, "ENZO: CommunicationToAbyssInitializ ...\n");
-  fprintf(stderr, "ENZO: CommunicationToAbyssInitializ ...\n");
+  fprintf(stdout, "ENZO: CommunicationToAbyssInitialize ...\n");
+  fprintf(stderr, "ENZO: CommunicationToAbyssInitialize ...\n");
 
   /* Do direct calculation!*/
   double dt = 1e-3, scale_factor = 1.0;
@@ -167,9 +165,10 @@ int CommunicationToAbyssInitialize(
     MPI_Isend(params_double, double_size, MPI_DOUBLE, 1, 200, inter_comm,
               &requests[0]);
     MPI_Isend(params_int, int_size, MPI_INT, 1, 300, inter_comm, &requests[1]);
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
     delete[] params_double;
     delete[] params_int;
-
   }
 
   /*-------------------------------------------*/
@@ -187,18 +186,19 @@ int CommunicationToAbyssInitialize(
   }
   fprintf(stdout, "ENZO: Buffer Ready!\n");
 
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
 
-  int ReceiverRank =
-      NumberOfProcessors + MyProcessorNumber % NumberOfAbyssProcessors;
-  MPI_Isend(&NumberOfParticles, 1, MPI_INT, ReceiverRank, 100, MPI_COMM_WORLD, &requests[0]);
-  MPI_Isend(packet, NumberOfParticles, MPI_ENZO_PTCL, ReceiverRank, 200, MPI_COMM_WORLD, &requests[1]);
-  delete [] packet;
+  //MPI_Send(&NumberOfParticles, 1, MPI_INT, ReceiverRank, 100, MPI_COMM_WORLD);
+  //fprintf(stderr, "ENZO: done %d\n", MyProcessorNumber);
+  //MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Send(packet, NumberOfParticles, MPI_ENZO_PTCL, ReceiverRank, 200, MPI_COMM_WORLD);
+
+  MPI_Isend(&NumberOfParticles, 1, MPI_INT, 1, 100, inter_comm, &requests[0]);
+  MPI_Isend(packet, NumberOfParticles, MPI_ENZO_PTCL, 1, 200, inter_comm, &requests[1]);
 
   fprintf(stdout, "ENZO: Waiting for ABYSS to send data (first) \n");
   fprintf(stderr, "ENZO: Waiting for ABYSS to send data (first) \n");
   MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+  delete [] packet;
 #endif
 
   return SUCCESS;
@@ -206,7 +206,7 @@ int CommunicationToAbyssInitialize(
 
 #ifdef TEST
 int CommunicationToAbyss(Star *&AllStars,
-                         std::unordered_map<int, Star *> LocalStarLookupMap) {
+                         std::unordered_map<int, Star *> &LocalStarLookupMap) {
 
   /* Do direct calculation!*/
   double dt = 1e-3, scale_factor = 1.0;
@@ -267,12 +267,12 @@ int CommunicationToAbyss(Star *&AllStars,
   MPI_Send(&OldNumberOfParticles, 1, MPI_INT, ReceiverRank, 100, inter_comm);
   if (OldNumberOfParticles != 0)
     MPI_Isend(ptcl_old, OldNumberOfParticles, MPI_ENZO_PTCL_SEND, ReceiverRank,
-              200, MPI_COMM_WORLD, &request);
+              200, inter_comm, &request);
   MPI_Wait(&request, MPI_STATUSES_IGNORE);
   MPI_Send(&NewNumberOfParticles, 1, MPI_INT, ReceiverRank, 300, inter_comm);
   if (NewNumberOfParticles != 0)
     MPI_Isend(ptcl_new, NewNumberOfParticles, MPI_ENZO_PTCL, ReceiverRank, 400,
-              MPI_COMM_WORLD, &request);
+              inter_comm, &request);
   MPI_Wait(&request, MPI_STATUSES_IGNORE);
   fprintf(stderr, "ENZO: data sent! \n");
 
@@ -286,7 +286,7 @@ int CommunicationToAbyss(Star *&AllStars,
 
 int ReceiveParticleFromAbyss(
     LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars,
-    std::unordered_map<int, Star *> LocalStarLookupMap) {
+    std::unordered_map<int, Star *> &LocalStarLookupMap) {
   Star *ThisStar;
   if (LevelArray[level + 1] != NULL) {
     return SUCCESS;
@@ -304,7 +304,7 @@ int ReceiveParticleFromAbyss(
   MPI_Request requests[2];
   // let's use broadcast
   if (isNbodyParticleIdentification && isIdentificationOnTheFly) {
-    MPI_Irecv(NbodyClusterPosition, 3, MPI_DOUBLE, 1, 200, MPI_COMM_WORLD,
+    MPI_Irecv(NbodyClusterPosition, 3, MPI_DOUBLE, 1, 200, inter_comm,
               &requests[0]);
   }
   fprintf(stdout, "In Final, NbodyClusterPosition = (%e, %e, %e)\n",
@@ -337,7 +337,7 @@ int ReceiveParticleFromAbyss(
   int ReceiverRank =
       NumberOfProcessors + MyProcessorNumber % (NumberOfAbyssProcessors);
   MPI_Irecv(ptcl, NumberOfParticles, MPI_ENZO_PTCL_RECV, ReceiverRank, 100,
-            MPI_COMM_WORLD, &requests[1]);
+            inter_comm, &requests[1]);
 
   MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
 

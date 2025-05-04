@@ -137,7 +137,7 @@ int grid::AGNDiskInitializeGrid(float BlackHoleMass,
 	  ypos = y - 0.5;
 	  
 	  R = sqrt(xpos*xpos + ypos*ypos);
-	  R = max(R, 0.5*CellWidth[0][0]);
+	  R = enzo_max(R, 0.5*CellWidth[0][0]);
 	  Z = z-0.5;
 	  cosphi = xpos/sqrt(xpos*xpos+ypos*ypos);
 	  sinphi = ypos/sqrt(xpos*xpos+ypos*ypos);
@@ -152,7 +152,7 @@ int grid::AGNDiskInitializeGrid(float BlackHoleMass,
 	      double DiskMass = 2.0*M_PI*DiskDensity*DiskHeight*DiskRadius*(R-DiskHeight*log(R/DiskHeight+1))*MassUnits;
 	      double Mass = BlackHoleMass*SolarMass + DiskMass;
 	      printf("BH=%"GSYM", Disk=%"GSYM", r=%"GSYM"\n", BlackHoleMass, DiskMass/SolarMass, R);
-	      vrot = sqrt(GravConst*Mass/(max(R,5*CellWidth[0][0])*LengthUnits))/VelocityUnits;
+	      vrot = sqrt(GravConst*Mass/(enzo_max(R,5*CellWidth[0][0])*LengthUnits))/VelocityUnits;
 	      Velocity[0] = -vrot*sinphi;
 	      Velocity[1] = vrot*cosphi;
 	      

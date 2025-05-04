@@ -189,12 +189,12 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
 	}
 	grid_num += direction;
       } // ENDWHILE move grids
-      MinWork = min(MinWork, ProcessorWork[i]);
-      MaxWork = max(MaxWork, ProcessorWork[i]);
+      MinWork = enzo_min(MinWork, ProcessorWork[i]);
+      MaxWork = enzo_max(MaxWork, ProcessorWork[i]);
     } // ENDFOR processors
 
-    MinWork = min(MinWork, ProcessorWork[NumberOfProcessors-1]);
-    MaxWork = max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
+    MinWork = enzo_min(MinWork, ProcessorWork[NumberOfProcessors-1]);
+    MaxWork = enzo_max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
     WorkImbalance = float(MaxWork - MinWork) / float(MinWork);
     if (WorkImbalance < CriticalBalance)
       break;

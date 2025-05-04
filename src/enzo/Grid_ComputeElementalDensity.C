@@ -356,12 +356,12 @@ int grid::ComputeElementalDensity(float *temperature,
  
     /* Convert log(temperature.) into an integer in the table */
  
-    logt = log10(max(temperature[i], 1));
-    logt = min(max(logt, TableTemperature[0]),
+    logt = log10(enzo_max(temperature[i], 1));
+    logt = enzo_min(enzo_max(logt, TableTemperature[0]),
 	       TableTemperature[TableSize[1]-1]);
  
     ilogt = int((logt-TableTemperature[0])/delt);
-    ilogt = min(ilogt, TableSize[1]-1);
+    ilogt = enzo_min(ilogt, TableSize[1]-1);
  
     dt = (logt-TableTemperature[ilogt])/delt;
  
@@ -369,11 +369,11 @@ int grid::ComputeElementalDensity(float *temperature,
  
       /* Convert log(densit) into an integer in the table */
  
-      logd = log10(max(nH, tiny_number));
-      logd = min(max(logd, TableDensity[0]), TableDensity[TableSize[0]-1]);
+      logd = log10(enzo_max(nH, tiny_number));
+      logd = enzo_min(enzo_max(logd, TableDensity[0]), TableDensity[TableSize[0]-1]);
  
       ilogd = int((logd-TableDensity[0])/deld);
-      ilogd = min(ilogd, TableSize[0]-1);
+      ilogd = enzo_min(ilogd, TableSize[0]-1);
  
       dd = (logd-TableDensity[ilogd])/deld;
  

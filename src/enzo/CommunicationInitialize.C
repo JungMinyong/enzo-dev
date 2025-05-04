@@ -40,10 +40,10 @@ typedef int MPI_Arg;
 #ifdef NBODY
 #undef NormalStar
 #undef BlackHole
+#undef max
 #include "abyss/particle.h"
 #include "abyss/global.h"
 #include "abyss/def.h"
-#undef max
 #undef NormalStar
 #undef BlackHole
 
@@ -249,6 +249,16 @@ int CommunicationInitialize(int &argc, char *argv[])
 			fprintf(stderr,"inter: (%d, %d)\n", world_rank, inter_rank);
 		}
 
+#define no_COMM_TEST
+#ifdef COMM_TEST
+ 		if (MyProcessorNumber == ROOT_PROCESSOR) {
+			// get its Fortran handle too
+			MPI_Fint id_enzo = MPI_Comm_c2f(enzo_comm);
+			MPI_Fint id_inter = MPI_Comm_c2f(inter_comm);
+			MPI_Fint id_abyss = MPI_Comm_c2f(abyss_comm);
+			fprintf(stderr, "COMM ID: enzo_comm=%d, inter_comm=%d, abyss_comm=%d\n", (int) id_enzo, (int) id_inter, (int) id_abyss);
+		}
+#endif
 
 		/***********************************
 		 *     Struct MPI Data Type        *

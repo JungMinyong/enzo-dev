@@ -10,31 +10,33 @@
         /
  ************************************************************************/
 
-#include "CommunicationUtilities.h"
-#include "EnzoTiming.h"
-#include "ErrorExceptions.h"
-#include "ExternalBoundary.h"
-#include "Fluxes.h"
-#include "Grid.h"
-#include "GridList.h"
-#include "Hierarchy.h"
-#include "LevelHierarchy.h"
-#include "NbodyRoutines.h"
-#include "TopGridData.h"
-#include "global_data.h"
-#include "macros_and_parameters.h"
-#include "performance.h"
-#include "typedefs.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#undef max
+#include <unistd.h>
 #include <unordered_map>
+
+#include "ErrorExceptions.h"
+#include "EnzoTiming.h"
+#include "performance.h"
+#include "macros_and_parameters.h"
+#include "typedefs.h"
+#include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
+#include "Hierarchy.h"
+#include "LevelHierarchy.h"
+#include "TopGridData.h"
+#include "CommunicationUtilities.h"
+
 
 int StarParticlePopIII_IMFInitialize(void);
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
                         ,
-                        std::unordered_map<int, Star *> LocalStarLookupMap
+                        std::unordered_map<int, Star *> &LocalStarLookupMap
 #endif
 );
 int StarParticleMergeNew(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
@@ -55,7 +57,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 #ifdef INDIVIDUALSTAR
 #ifdef NBODY
                            ,
-                           std::unordered_map<int, Star *> LocalStarLookupMap
+                           std::unordered_map<int, Star *> &LocalStarLookupMap
 #endif
                            ,
                            int SkipFeedbackFlag = 0

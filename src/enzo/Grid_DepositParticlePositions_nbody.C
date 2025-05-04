@@ -336,7 +336,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 		if (DepositField == MASS_FLAGGING_FIELD &&
 				DepositParticleMaximumParticleMass > 0 && MassFactor != 1.0)
 			for (i = 0; i < NumberOfParticles; i++)
-				ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
+				ParticleMassPointer[i] = enzo_min(DepositParticleMaximumParticleMass,
 						ParticleMassPointer[i]);
 
 		/* Compute difference between current time and DepositTime. */
@@ -461,7 +461,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
 				if (DepositField == MASS_FLAGGING_FIELD &&
 						DepositParticleMaximumParticleMass > 0 && MassFactor != 1.0)
-					ActiveParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
+					ActiveParticleMassPointer[i] = enzo_min(DepositParticleMaximumParticleMass,
 							ParticleMassPointer[i]);
 			}
 			if (debug1) fprintf(stdout,"4-2-3-10\n");  // by YS

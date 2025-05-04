@@ -146,18 +146,18 @@ int grid::FindShocks()
 	index = i + GridDimension[0]*(j + GridDimension[1]*k);
 	
 	tempgrad_dot_entropygrad[index] = inv2dx2*
-	  ((max(ShockTemperatureFloor,temperature[index+1])-max(ShockTemperatureFloor,temperature[index-1]))*
+	  ((enzo_max(ShockTemperatureFloor,temperature[index+1])-enzo_max(ShockTemperatureFloor,temperature[index-1]))*
 	   (entropy[index+1]-entropy[index-1]));
 	if (GridRank > 1)
 	  tempgrad_dot_entropygrad[index] += inv2dx2*
-	    ((max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
-	      max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))*
+	    ((enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
+	      enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))*
 	    (entropy[index+GridDimension[0]]-
 	     entropy[index-GridDimension[0]]));
 	if (GridRank > 2)
 	  tempgrad_dot_entropygrad[index] += inv2dx2*
-	    ((max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
-	      max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))*
+	    ((enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
+	      enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))*
 	     (entropy[index+GridDimension[0]*GridDimension[1]]-
 	      entropy[index-GridDimension[0]*GridDimension[1]]));
 	
@@ -220,34 +220,34 @@ int grid::FindShocks()
 	postT = temperature[index];	
 
 	tempjumpmag = 
-	  (max(ShockTemperatureFloor,temperature[index+1])-max(ShockTemperatureFloor,temperature[index-1]))*
-	  (max(ShockTemperatureFloor,temperature[index+1])-max(ShockTemperatureFloor,temperature[index-1]));
+	  (enzo_max(ShockTemperatureFloor,temperature[index+1])-enzo_max(ShockTemperatureFloor,temperature[index-1]))*
+	  (enzo_max(ShockTemperatureFloor,temperature[index+1])-enzo_max(ShockTemperatureFloor,temperature[index-1]));
 	if (GridRank > 1)
 	  tempjumpmag += 
-	    (max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
-	     max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))*
-	    (max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
-	     max(ShockTemperatureFloor,temperature[index-GridDimension[0]]));
+	    (enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
+	     enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))*
+	    (enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
+	     enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]]));
 	if (GridRank > 2)
 	  tempjumpmag += 
-	    (max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
-	     max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))*
-	    (max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
-	     max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]));
+	    (enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
+	     enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))*
+	    (enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
+	     enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]));
 
 	tempjumpmag = sqrt(tempjumpmag);
 
 	gradtx = 
-	  (max(ShockTemperatureFloor,temperature[index+1])-max(ShockTemperatureFloor,temperature[index-1]))/
+	  (enzo_max(ShockTemperatureFloor,temperature[index+1])-enzo_max(ShockTemperatureFloor,temperature[index-1]))/
 	  tempjumpmag;
 	if (GridRank > 1)
 	  gradty = 
-	    (max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
-	     max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))/tempjumpmag;
+	    (enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
+	     enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))/tempjumpmag;
 	if (GridRank > 2)
 	  gradtz = 
-	    (max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
-	     max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))/
+	    (enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
+	     enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))/
 	    tempjumpmag;
 
 	
@@ -320,7 +320,7 @@ int grid::FindShocks()
 	maxdiv = flowdivergence[index];
 	tempi = index;
 	while(true){
-	  //Find next pre-cell along max(ShockTemperatureFloor,temperature gradient
+	  //Find next pre-cell along enzo_max(ShockTemperatureFloor,temperature gradient
 	  //Make sure you are still in the grid
 	  if( ((i-(int)(num*gradtx)) > (GridDimension[0]-1)) ||
 	      ((i-(int)(num*gradtx)) < 0) )
@@ -379,8 +379,8 @@ int grid::FindShocks()
 	if(num == -1)
 	  continue;
 
-	temprat = max(ShockTemperatureFloor,postT)/(max(ShockTemperatureFloor,preT));
-	//temprat = max(postT,ShockTemperatureFloor)/(max(preT,ShockTemperatureFloor));
+	temprat = enzo_max(ShockTemperatureFloor,postT)/(enzo_max(ShockTemperatureFloor,preT));
+	//temprat = enzo_max(postT,ShockTemperatureFloor)/(enzo_max(preT,ShockTemperatureFloor));
 	
 	if(temprat < 1.0)
 	  continue;
@@ -398,7 +398,7 @@ int grid::FindShocks()
 	mach[index] = tempmach;
 
 	if(StorePreShockFields){
-	  pstemp[index] = max(temperature[prei],ShockTemperatureFloor);
+	  pstemp[index] = enzo_max(temperature[prei],ShockTemperatureFloor);
 	  psden[index] = density[prei];
 	}
       }
@@ -728,7 +728,7 @@ int grid::FindVelShocks()
 	maxdiv = flowdivergence[index];
 	tempi = index;
 	while(true){
-	  //Find next pre-cell along max(ShockTemperatureFloor,temperature gradient
+	  //Find next pre-cell along enzo_max(ShockTemperatureFloor,temperature gradient
 	  //Make sure you are still in the grid
 	  if( ((i-(int)(num*gradvx)) > (GridDimension[0]-1)) ||
 	      ((i-(int)(num*gradvx)) < 0) )
@@ -805,10 +805,10 @@ int grid::FindVelShocks()
 	if(num == -1)
 	  continue;
 
-	//temprat = max(ShockTemperatureFloor,postV)/(max(ShockTemperatureFloor,preV));
-	//temprat = max(postV,ShockTemperatureFloor)/(max(preV,ShockTemperatureFloor));
+	//temprat = enzo_max(ShockTemperatureFloor,postV)/(enzo_max(ShockTemperatureFloor,preV));
+	//temprat = enzo_max(postV,ShockTemperatureFloor)/(enzo_max(preV,ShockTemperatureFloor));
 	
- 	if(max(temperature[posti],ShockTemperatureFloor) <= max(temperature[prei],ShockTemperatureFloor))
+ 	if(enzo_max(temperature[posti],ShockTemperatureFloor) <= enzo_max(temperature[prei],ShockTemperatureFloor))
  	  continue;
 
  	if(density[posti] <= density[prei])
@@ -843,7 +843,7 @@ int grid::FindVelShocks()
 	mach[index] = velmach; 
 
 	if(StorePreShockFields){
-	  pstemp[index] = max(temperature[prei],ShockTemperatureFloor);
+	  pstemp[index] = enzo_max(temperature[prei],ShockTemperatureFloor);
 	  psden[index] = density[prei];
 	}
       }
@@ -1075,7 +1075,7 @@ int grid::FindVelSplitShocks()
 	}	
 
 	if(StorePreShockFields){
-	  pstemp[index] = max(temperature[prei],ShockTemperatureFloor);
+	  pstemp[index] = enzo_max(temperature[prei],ShockTemperatureFloor);
 	  psden[index] = density[prei];
 	}	
 	
@@ -1212,18 +1212,18 @@ int grid::FindTempSplitShocks()
 	index = i + GridDimension[0]*(j + GridDimension[1]*k);
 
 	tempgrad_dot_entropygrad[index] = inv2dx2*
-	  ((max(ShockTemperatureFloor,temperature[index+1])-max(ShockTemperatureFloor,temperature[index-1]))*
+	  ((enzo_max(ShockTemperatureFloor,temperature[index+1])-enzo_max(ShockTemperatureFloor,temperature[index-1]))*
 	   (entropy[index+1]-entropy[index-1]));
 	if (GridRank > 1)
 	  tempgrad_dot_entropygrad[index] += inv2dx2*
-	    ((max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
-	      max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))*
+	    ((enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]])-
+	      enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]]))*
 	     (entropy[index+GridDimension[0]]-
 	      entropy[index-GridDimension[0]]));
 	if (GridRank > 2)
 	  tempgrad_dot_entropygrad[index] += inv2dx2*
-	    ((max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
-	      max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))*
+	    ((enzo_max(ShockTemperatureFloor,temperature[index+GridDimension[0]*GridDimension[1]])-
+	      enzo_max(ShockTemperatureFloor,temperature[index-GridDimension[0]*GridDimension[1]]))*
 	     (entropy[index+GridDimension[0]*GridDimension[1]]-
 	      entropy[index-GridDimension[0]*GridDimension[1]]));
 	
@@ -1343,7 +1343,7 @@ int grid::FindTempSplitShocks()
 	if(centerfound !=1 && 
 	   density[posti]>density[prei] &&
 	   temperature[posti]>temperature[prei]){
-	  temprat = max(postT,ShockTemperatureFloor)/(max(preT,ShockTemperatureFloor));
+	  temprat = enzo_max(postT,ShockTemperatureFloor)/(enzo_max(preT,ShockTemperatureFloor));
 	  
 	  mach[index] = 
 	    sqrt(( 8.0*temprat - 7.0e0 + 
@@ -1419,7 +1419,7 @@ int grid::FindTempSplitShocks()
 	  if(centerfound !=1 && 
 	   density[posti]>density[prei] &&
 	   temperature[posti]>temperature[prei]){
-	    temprat = max(postT,ShockTemperatureFloor)/(max(preT,ShockTemperatureFloor));
+	    temprat = enzo_max(postT,ShockTemperatureFloor)/(enzo_max(preT,ShockTemperatureFloor));
 	  
 	    mach1 = 
 	      sqrt(( 8.0*temprat - 7.0e0 + 
@@ -1496,7 +1496,7 @@ int grid::FindTempSplitShocks()
 	  if(centerfound !=1 && 
 	   density[posti]>density[prei] &&
 	   temperature[posti]>temperature[prei]){
-	    temprat = max(postT,ShockTemperatureFloor)/(max(preT,ShockTemperatureFloor));
+	    temprat = enzo_max(postT,ShockTemperatureFloor)/(enzo_max(preT,ShockTemperatureFloor));
 	  
 	    mach1 = 
 	      sqrt(( 8.0*temprat - 7.0e0 + 
@@ -1507,7 +1507,7 @@ int grid::FindTempSplitShocks()
 	  }
 	}  // GridRank > 2
 	if(StorePreShockFields){
-	  pstemp[index] = max(temperature[prei],ShockTemperatureFloor);
+	  pstemp[index] = enzo_max(temperature[prei],ShockTemperatureFloor);
 	  psden[index] = density[prei];
 	}
       } // for i

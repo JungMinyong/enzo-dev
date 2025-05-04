@@ -74,12 +74,12 @@ int grid::InitializeSource(RadiationSourceEntry *RS)
 
     pos[dim] = (int) ((RS->Position[dim] - GridLeftEdge[dim]) / 
 		      CellWidth[dim][0]) + GridStartIndex[dim];
-    rmin[dim] = min(pos[dim]-GridStartIndex[dim], GridEndIndex[dim]-pos[dim]);
-    radius = min(radius, rmin[dim]);
+    rmin[dim] = enzo_min(pos[dim]-GridStartIndex[dim], GridEndIndex[dim]-pos[dim]);
+    radius = enzo_min(radius, rmin[dim]);
 
   } /* ENDFOR dim */
 
-  radius = min(radius, MAX_RADIUS);
+  radius = enzo_min(radius, MAX_RADIUS);
   printf("InitializeSource: radius = %"ISYM"\n", radius);
 
   /* Select the correct field if we're using the coupled transfer/rate solver */
@@ -121,7 +121,7 @@ int grid::InitializeSource(RadiationSourceEntry *RS)
 
 	deli = i - pos[0];
 	delCell = sqrt(delk*delk + delj*delj + deli*deli);
-	delCell = max(delCell, 0.1);
+	delCell = enzo_max(delCell, 0.1);
 	delr = delCell * CellWidth[0][0] * LengthUnits;  // in cm
 	
 	if (delCell > radius) continue;

@@ -98,7 +98,7 @@ int grid::SphericalInfallGetProfile(int level, int ReportLevel)
 	if (GridRank > 2)
 	  DivVel += BaryonField[Vel3Num][index+offset2] -
 	            BaryonField[Vel3Num][index-offset2];
-	MaxDivVel = max(MaxDivVel, fabs(DivVel));
+	MaxDivVel = enzo_max(MaxDivVel, fabs(DivVel));
       }
     }
   MaxDivVel /= 2.0*a*CellWidth[0][0];
@@ -109,16 +109,16 @@ int grid::SphericalInfallGetProfile(int level, int ReportLevel)
   for (dim = 0; dim < GridRank; dim++) {
     MinVel[dim] = MaxVel[dim] = 0;
     for (i = 0; i < GridDimension[0]*GridDimension[1]*GridDimension[2]; i++) {
-      MinVel[dim] = min(MinVel[dim], BaryonField[Vel1Num+dim][i]);
-      MaxVel[dim] = max(MaxVel[dim], BaryonField[Vel1Num+dim][i]);
+      MinVel[dim] = enzo_min(MinVel[dim], BaryonField[Vel1Num+dim][i]);
+      MaxVel[dim] = enzo_max(MaxVel[dim], BaryonField[Vel1Num+dim][i]);
     }
   }
   float MaxDens = 0, MinEntropy = huge_number, MaxDensVel = 0;
   for (i = 0; i < GridDimension[0]*GridDimension[1]*GridDimension[2]; i++) {
-    MaxDens = max(MaxDens, BaryonField[DensNum][i]);
+    MaxDens = enzo_max(MaxDens, BaryonField[DensNum][i]);
     if (MaxDens == BaryonField[DensNum][i])
       MaxDensVel = BaryonField[Vel1Num][i];
-    MinEntropy = min(MinEntropy, BaryonField[GENum][i]/
+    MinEntropy = enzo_min(MinEntropy, BaryonField[GENum][i]/
                                  POW(BaryonField[DensNum][i], Gamma-1));
   }
  

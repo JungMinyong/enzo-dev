@@ -147,7 +147,7 @@ int ActiveParticleType_AccretingParticle::EvaluateFormation
 	  JeansDensity = JeansDensityUnitConversion * OverflowFactor * CellTemperature /
 	    POW(data.LengthUnits*dx*4.0,2);
 	  JeansDensity /= data.DensityUnits;
-	  DensityThreshold = min(DensityThreshold,JeansDensity);
+	  DensityThreshold = enzo_min(DensityThreshold,JeansDensity);
 	}
 	if (DensityThreshold == huge_number)
 	  ENZO_VFAIL("Error in Accreting Particles: DensityThreshold = huge_number! \n"

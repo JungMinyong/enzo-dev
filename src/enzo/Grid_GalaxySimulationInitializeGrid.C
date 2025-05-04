@@ -488,7 +488,7 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
        r = sqrt(POW(fabs(x-DiskPosition[0]), 2) +
                 POW(fabs(y-DiskPosition[1]), 2) +
                 POW(fabs(z-DiskPosition[2]), 2) );
-       r = max(r, 0.1*CellWidth[0][0]);           // make sure r is non-zero
+       r = enzo_max(r, 0.1*CellWidth[0][0]);           // make sure r is non-zero
 
        density = HaloGasDensity(r)/DensityUnits;
        temperature = temp1 = init_temp = HaloGasTemperature(r);
@@ -1183,7 +1183,7 @@ float HaloGasDensity(FLOAT R){
 		T0 = HaloGasTemperature(GalaxySimulationGasHaloScaleRadius*Mpc_cm/LengthUnits);
 		haloDensity = GalaxySimulationGasHaloDensity*(T0/HaloGasTemperature(R));
 		haloDensity /= POW((R*LengthUnits/GalaxySimulationGasHaloScaleRadius/Mpc_cm),3);
-		return min(haloDensity,GalaxySimulationGasHaloDensity);
+		return enzo_min(haloDensity,GalaxySimulationGasHaloDensity);
 	}
 	return densicm;
 } // end HaloGasDensity

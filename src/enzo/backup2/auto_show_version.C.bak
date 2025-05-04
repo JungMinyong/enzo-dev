@@ -1,0 +1,7 @@
+#include <stdio.h>
+void auto_show_version(FILE *fp) {
+   fprintf (fp,"\n");
+   fprintf (fp,"Git Branch   EnzoAA\n");
+   fprintf (fp,"Git Revision 44eff214427c5a9f85f52e37a416545cf88f16aa\n");
+   fprintf (fp,"\n");
+}

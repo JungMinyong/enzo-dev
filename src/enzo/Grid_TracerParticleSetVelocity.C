@@ -133,7 +133,7 @@ int InterpolateTracerValues(FLOAT *Position[MAX_DIMENSION],
  
 	/* Compute the position of the central cell */
  
-	xpos = min(max((Position[0][n] - LeftEdge[0])*fact, half), edge1);
+	xpos = enzo_min(enzo_max((Position[0][n] - LeftEdge[0])*fact, half), edge1);
  
 	/* Convert this into an integer index */
 	
@@ -176,8 +176,8 @@ int InterpolateTracerValues(FLOAT *Position[MAX_DIMENSION],
  
 	/* Compute the position of the central cell */
  
-	xpos = min(max((Position[0][n] - LeftEdge[0])*fact, half), edge1);
-	ypos = min(max((Position[1][n] - LeftEdge[1])*fact, half), edge2);
+	xpos = enzo_min(enzo_max((Position[0][n] - LeftEdge[0])*fact, half), edge1);
+	ypos = enzo_min(enzo_max((Position[1][n] - LeftEdge[1])*fact, half), edge2);
  
 	/* Convert this into an integer index */
 	
@@ -229,9 +229,9 @@ int InterpolateTracerValues(FLOAT *Position[MAX_DIMENSION],
  
 	/* Compute the position of the central cell */
  
-	xpos = min(max((Position[0][n] - LeftEdge[0])*fact, half), edge1);
-	ypos = min(max((Position[1][n] - LeftEdge[1])*fact, half), edge2);
-	zpos = min(max((Position[2][n] - LeftEdge[2])*fact, half), edge3);
+	xpos = enzo_min(enzo_max((Position[0][n] - LeftEdge[0])*fact, half), edge1);
+	ypos = enzo_min(enzo_max((Position[1][n] - LeftEdge[1])*fact, half), edge2);
+	zpos = enzo_min(enzo_max((Position[2][n] - LeftEdge[2])*fact, half), edge3);
  
 	/* Convert this into an integer index */
 	

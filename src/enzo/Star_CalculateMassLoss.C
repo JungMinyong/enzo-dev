@@ -42,7 +42,7 @@ float Star::CalculateMassLoss(const float dt)
 		     (1.0 - (1.0 + xv1) * exp(-xv1)));
   Mform = M0 * ((1.0 + xv1) * exp(-xv1) -
 		       (1.0 + xv2) * exp(-xv2));
-  Mform = max(min(Mform, this->Mass), 0.0);
+  Mform = enzo_max(enzo_min(Mform, this->Mass), 0.0);
   MassLoss = StarMassEjectionFraction * Mform;
 #endif
 

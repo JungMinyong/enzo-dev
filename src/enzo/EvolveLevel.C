@@ -78,9 +78,9 @@
 #include <unistd.h>
 #include <math.h>
 
+#include "ErrorExceptions.h"
 #include "EnzoTiming.h"
 #include "performance.h"
-#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -92,6 +92,7 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
+
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
@@ -124,11 +125,11 @@ void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int le
 #else
 int SendParticleToAbyss(//LevelHierarchyEntry *LevelArray[], int level,
                         Star *&AllStars,
-                        std::unordered_map<int, Star *> LocalStarLookupMap);
+                        std::unordered_map<int, Star *> &LocalStarLookupMap);
 #ifdef TEST
 int ReceiveParticleFromAbyss(
     LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar,
-    std::unordered_map<int, Star *> LocalStarLookupMap);
+    std::unordered_map<int, Star *> &LocalStarLookupMap);
 #endif
 #endif
 #endif
@@ -263,7 +264,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
                            int TotalStarParticleCountPrevious[]
 #ifdef INDIVIDUALSTAR
 #ifdef NBODY
-                           , std::unordered_map<int, Star *> LocalStarLookupMap
+                           , std::unordered_map<int, Star *> &LocalStarLookupMap
 #endif
                            , int SkipFeedbackFlag = 0
 #endif
@@ -273,7 +274,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		int level, Star *&AllStars,
 		int TotalStarParticleCountPrevious[], int &OutputNow
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-                         , std::unordered_map<int, Star *> LocalStarLookupMap
+                         , std::unordered_map<int, Star *> &LocalStarLookupMap
 #endif
 		);
 int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[], 

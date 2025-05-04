@@ -23,7 +23,7 @@ if (io_log)
  
   for(j=0;j<n;j=j+m)
   {
-    for(i=j;i<min(j+m,n);i++)
+    for(i=j;i<enzo_min(j+m,n);i++)
     {
       fprintf(log_fptr, "%12.4g", x[i]);
     }
@@ -53,7 +53,7 @@ if (io_log)
  
   for(j=0;j<n;j=j+m)
   {
-    for(i=j;i<min(j+m,n);i++)
+    for(i=j;i<enzo_min(j+m,n);i++)
     {
       fprintf(log_fptr, "%12.4lg", x[i]);
     }

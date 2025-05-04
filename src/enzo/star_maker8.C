@@ -304,7 +304,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
       }
       
      
-      densgrid *= min(POW((*dx)/r_bh, 1.5), 1.0);
+      densgrid *= enzo_min(POW((*dx)/r_bh, 1.5), 1.0);
       mdot = 4.0 * pi * densgrid * POW(r_bh, 2) * sqrt(1.2544*csgrid2 + vrel2);
       drho = mdot * (*dt) / POW(*dx,3);
       /* printf("dt = %g, mdot * (*dt) / POW(*dx,3) = %g, 0.25 * d[index] =%g  \n",(*dt),mdot * (*dt) / POW(*dx,3),0.25 * d[index] );
@@ -323,8 +323,8 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 	//printf("DensityFloor =%g = %g cgs \n",DensityFloor, DensityFloor*(*d1));
 	if (d[ind_cell[ic]]-(weight_cell[ic]/weight_total)*drho < DensityFloor) 
 	  printf("DENSITY lower limit reached,d[ind_cell[ic]]-(weight_cell[ic]/weight_total)*drho = %g, d[ind_cell[ic]] = %g, (weight_cell[ic]/weight_total)*drho = %g,DensityFloor = %g\n",d[ind_cell[ic]]-(weight_cell[ic]/weight_total)*drho , d[ind_cell[ic]],(weight_cell[ic]/weight_total)*drho, DensityFloor);
-	del_rho = min((weight_cell[ic]/weight_total)*drho,d[ind_cell[ic]]-DensityFloor);
-	d[ind_cell[ic]] = max(DensityFloor,d[ind_cell[ic]]-(weight_cell[ic]/weight_total)*drho);
+	del_rho = enzo_min((weight_cell[ic]/weight_total)*drho,d[ind_cell[ic]]-DensityFloor);
+	d[ind_cell[ic]] = enzo_max(DensityFloor,d[ind_cell[ic]]-(weight_cell[ic]/weight_total)*drho);
 	//printf("DEL_RHO = %g \n",del_rho );
 	dens_sum += del_rho;
 	 } 
@@ -370,12 +370,12 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
       //printf("star_maker8: Accretion routine, msink = %"FSYM" = %"FSYM" SolarMass\n", msink, msink*umass );
       r_bh = G*msink / (csgrid2 + vrel2);
       // printf("star_maker8: Accretion routine, r_bh = %"FSYM" = %"FSYM" pc, dx = %"FSYM" = %"FSYM" pc, r_bh/dx = %"FSYM"\n",r_bh, r_bh*(*x1)/pc_cm,*dx, *dx*(*x1)/pc_cm, r_bh/(*dx));
-      densgrid *= min(POW((*dx)/r_bh, 1.5), 1.0);
+      densgrid *= enzo_min(POW((*dx)/r_bh, 1.5), 1.0);
       mdot = 4.0 * pi * densgrid * POW(r_bh, 2) * sqrt(1.2544*csgrid2 + vrel2);
-      drho = min(mdot * (*dt) / POW(*dx,3), 0.25 * d[index]);
+      drho = enzo_min(mdot * (*dt) / POW(*dx,3), 0.25 * d[index]);
     
       /*maxdens = jlsquared * temp[index] / dx2;
-	drho = max(0.0, d[index] - maxdens);*/        
+	drho = enzo_max(0.0, d[index] - maxdens);*/        
       //printf("star_maker8: Accretion routine, mass added = %"FSYM" SolarMass, drho = %"FSYM"\n",drho*POW(*dx,3)*umass,drho );
 
       upold[bb] = (mpold[bb]*usink + drho*ugrid) / (mpold[bb] + drho);
@@ -667,7 +667,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
       v_wind = 1.e5*(-355.554+892.32*log10(mpold[bb]*POW(*dx,3)*umass - 5.24765))/(*v1);
       mdot_wind1 = (POW(10,-9.47)*POW(mpold[bb]*POW(*dx,3)*umass,2.2427))*((*t1)*(*dx)/v_wind)/(yr_s*umass);
       mdot_wind2 = (POW(10,-9.47)*POW(mpold[bb]*POW(*dx,3)*umass,2.2427))*(*dt)*(*t1)/(yr_s*umass);
-      mdot_wind = max(mdot_wind1,mdot_wind2);
+      mdot_wind = enzo_max(mdot_wind1,mdot_wind2);
       //(POW(10,-9.47)*POW(mpold[bb]*POW(*dx,3)*umass,2.2427)) - mass loss in SolarMass/yr (from N. Smith 2006 table 1)
       mdot_wind = mdot_wind/(4.0*pi);/* mass Per solid angle */
 
@@ -825,7 +825,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 	      /* Calculate change in density */
 
 	      if (*jlrefine > 0)
-		maxdens = min(jlsquared * temp[index] / dx2, densthresh);
+		maxdens = enzo_min(jlsquared * temp[index] / dx2, densthresh);
 	      else
 		maxdens = densthresh;
 	      oldrho = d[index];

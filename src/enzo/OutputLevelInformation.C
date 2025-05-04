@@ -149,7 +149,7 @@ int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
     } else {
       MeanAxialRatio[level] /= float(Grids[level]);
       FractionFlagged[level] = float(CellsFlagged[level])/
-	float(max(CellsActive[level], 1));
+	float(enzo_max(CellsActive[level], 1));
     }
 
   }

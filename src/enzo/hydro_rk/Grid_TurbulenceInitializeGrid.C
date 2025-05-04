@@ -221,7 +221,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
 	z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
 	r = sqrt(pow(x-xc,2) + pow(y-yc,2) + pow(z-zc,2));
-	r = max(r, CellWidth[0][0]);
+	r = enzo_max(r, CellWidth[0][0]);
 
 	xpos = x - xc;
 	ypos = y - yc;
@@ -324,18 +324,18 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	  }
 
           if (CloudType ==3) {
-	    Density = max(DensityUnits, CloudDensity/(1.0 + pow(6.0*r/CloudRadius,2)));
+	    Density = enzo_max(DensityUnits, CloudDensity/(1.0 + pow(6.0*r/CloudRadius,2)));
 	    eint = CloudInternalEnergy;
 	  }
 
 	  if (CloudType == 4) {
-	    Density = max(DensityUnits,0.5*4.25*CloudDensity/(1.0 + pow(9.0*r/CloudRadius,2)));
+	    Density = enzo_max(DensityUnits,0.5*4.25*CloudDensity/(1.0 + pow(9.0*r/CloudRadius,2)));
 	    eint = CloudInternalEnergy*200.0; //400.0;
 	  }
 
 
           if (CloudType ==6) {
-	    //Density = max(DensityUnits, 0.5*CloudDensity/(1.0 + pow(4.0*r/CloudRadius,2)));
+	    //Density = enzo_max(DensityUnits, 0.5*CloudDensity/(1.0 + pow(4.0*r/CloudRadius,2)));
 	    Density = 0.1*CloudDensity/(1.0 + pow(4.0,2));
 	    eint = CloudInternalEnergy*100.0; //400.0;
 	  }
@@ -452,9 +452,9 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     }
     if (CloudType == 4 || CloudType == 6) {
       k1 = 2.0;
-      k2 = min(34.0, int(GridDimension[0]/10));
+      k2 = enzo_min(34.0, int(GridDimension[0]/10));
       printf("                GridDimension[0] = %"ISYM"\n",GridDimension[0] );
-      dk = max(1.0,int((k2-k1)/10));
+      dk = enzo_max(1.0,int((k2-k1)/10));
     }
     if (CloudType == 7) {
       k1 = 1.0;
@@ -503,7 +503,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	  z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
 	  
 	  r = sqrt(pow(fabs(x-xc),2)+pow(fabs(y-yc),2)+pow(fabs(z-zc),2));
-	  r = max(r, 0.1*CellWidth[0][0]);
+	  r = enzo_max(r, 0.1*CellWidth[0][0]);
 	  
 	  if (r < CloudRadius) {
 	    BaryonField[ivx][igrid] += TurbulenceVelocity[0][n];
@@ -569,7 +569,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	  z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
 	  
 	  r = sqrt(pow(fabs(x-xc),2)+pow(fabs(y-yc),2)+pow(fabs(z-zc),2));
-	  r = max(r, 0.1*CellWidth[0][0]);
+	  r = enzo_max(r, 0.1*CellWidth[0][0]);
 	  
 	  if (r <= CloudRadius) {
 	    VelRMS += BaryonField[iden][igrid] * 

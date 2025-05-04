@@ -39,9 +39,9 @@ int grid::RadiativeTransferIonization(PhotonPackageEntry **PP, FLOAT *dPi, int c
   if (tau > 2.e1) //Completely Optically Thick
     dPi[species] = (1.0+BFLOAT_EPSILON) * (*PP)->Photons;
   else if (tau > 1.e-4) //Exponential decline in photons
-    dPi[species] = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+    dPi[species] = enzo_min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
   else //Optically thin case
-    dPi[species] = min((*PP)->Photons*tau, (*PP)->Photons);
+    dPi[species] = enzo_min((*PP)->Photons*tau, (*PP)->Photons);
 #endif
   
   //dP1 is the number of absorptions

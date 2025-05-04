@@ -44,6 +44,10 @@ struct StarBuffer {
   double Radius;
   double SurfaceGravity;
   double Teff;
+  
+  #ifdef NBODY
+  int GridParticleIndex;
+  #endif
 
   /* AJE: for individual stars - yield table numbers */
   int se_table_position[2];

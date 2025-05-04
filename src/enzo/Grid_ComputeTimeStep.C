@@ -135,7 +135,7 @@ float grid::ComputeTimeStep()
 
 						index = i + j*GridDimension[0] + k*GridDimension[0]*GridDimension[1];
 
-						dt = min(dt, POW(((3 * pi) / 
+						dt = enzo_min(dt, POW(((3 * pi) / 
 										(32 * GravitationalConstant * 
 										 BaryonField[DensNum][index] *
 										 (1 - force_factor[index]))), 0.5));
@@ -358,8 +358,8 @@ float grid::ComputeTimeStep()
 						dt_temp = dt_ltemp;
 						rho_dt = rho;
 						B_dt = sqrt(Bx*Bx+By*By+Bz*Bz);
-						v_dt = max(fabs(vx), fabs(vy));
-						v_dt = max(v_dt, fabs(vz));
+						v_dt = enzo_max(fabs(vx), fabs(vy));
+						v_dt = enzo_max(v_dt, fabs(vz));
 					}
 
 				}
@@ -385,12 +385,12 @@ float grid::ComputeTimeStep()
 		for (dim = 0; dim < GridRank; dim++) {
 			float dCell = CellWidth[dim][0]*a;
 			for (i = 0; i < NumberOfParticles; i++) {
-				dtTemp = dCell/max(fabs(ParticleVelocity[dim][i]), tiny_number);
-				dtParticles = min(dtParticles, dtTemp);
+				dtTemp = dCell/enzo_max(fabs(ParticleVelocity[dim][i]), tiny_number);
+				dtParticles = enzo_min(dtParticles, dtTemp);
 			}
 			for (i = 0; i < NumberOfActiveParticles; i++) {
-				dtTemp = dCell/max(fabs(ActiveParticles[i]->ReturnVelocity()[dim]), tiny_number);
-				dtParticles = min(dtParticles, dtTemp);
+				dtTemp = dCell/enzo_max(fabs(ActiveParticles[i]->ReturnVelocity()[dim]), tiny_number);
+				dtParticles = enzo_min(dtParticles, dtTemp);
 			}
 		}
 
@@ -419,7 +419,7 @@ float grid::ComputeTimeStep()
 				for (i = 0; i < size; i++) {
 					dtTemp = sqrt(CellWidth[dim][0]/
 							fabs(AccelerationField[dim][i])+tiny_number);
-					dtAcceleration = min(dtAcceleration, dtTemp);
+					dtAcceleration = enzo_min(dtAcceleration, dtTemp);
 				}
 		if (dtAcceleration != huge_number)
 			dtAcceleration *= 0.5;
@@ -472,7 +472,7 @@ float grid::ComputeTimeStep()
 			for (j = GridStartIndex[1]; j < GridEndIndex[1]; j++) {
 				index = GRIDINDEX_NOGHOST(GridStartIndex[0], j, k);
 				for (i = GridStartIndex[0]; i < GridEndIndex[0]; i++, index++) {
-					dtCooling = min(dtCooling, cooling_time[index]);
+					dtCooling = enzo_min(dtCooling, cooling_time[index]);
 				}
 			}
 		}
@@ -490,10 +490,10 @@ float grid::ComputeTimeStep()
 		FLOAT dx = CellWidth[0][0]*afloat;
 
 		if (GridRank>1)
-			dx = min( dx, CellWidth[1][0]*afloat);
+			dx = enzo_min( dx, CellWidth[1][0]*afloat);
 
 		if (GridRank>2)
-			dx = min( dx, CellWidth[2][0]*afloat);
+			dx = enzo_min( dx, CellWidth[2][0]*afloat);
 
 		dtQuantum = POW(dx,2)/hmcoef/2.;
 
@@ -503,7 +503,7 @@ float grid::ComputeTimeStep()
 			int gsize = GravitatingMassFieldDimension[0]*GravitatingMassFieldDimension[1]*GravitatingMassFieldDimension[2];
 
 			for (int i=0; i<gsize; ++i){
-				dtQuantum = min(dtQuantum, fabs(hmcoef*1./(PotentialField[i])));
+				dtQuantum = enzo_min(dtQuantum, fabs(hmcoef*1./(PotentialField[i])));
 			}
 		}
 
@@ -511,16 +511,16 @@ float grid::ComputeTimeStep()
 
 	/* 8) calculate minimum timestep */
 
-	dt = min(dtBaryons, dtParticles);
-	dt = min(dt, dtMHD);
-	dt = min(dt, dtViscous);
-	dt = min(dt, dtAcceleration);
-	dt = min(dt, dtExpansion);
-	dt = min(dt, dtConduction);
-	dt = min(dt, dtCR);
-	dt = min(dt, dtGasDrag);
-	dt = min(dt, dtCooling);
-	dt = min(dt, dtQuantum); //FDM
+	dt = enzo_min(dtBaryons, dtParticles);
+	dt = enzo_min(dt, dtMHD);
+	dt = enzo_min(dt, dtViscous);
+	dt = enzo_min(dt, dtAcceleration);
+	dt = enzo_min(dt, dtExpansion);
+	dt = enzo_min(dt, dtConduction);
+	dt = enzo_min(dt, dtCR);
+	dt = enzo_min(dt, dtGasDrag);
+	dt = enzo_min(dt, dtCooling);
+	dt = enzo_min(dt, dtQuantum); //FDM
 
 #ifdef TRANSFER
 
@@ -541,13 +541,13 @@ float grid::ComputeTimeStep()
 			for (dim = 0; dim < GridRank; dim++) {
 				dtTemp = sqrt(CellWidth[dim][0] / (fabs(BaryonField[RPresNum1+dim][i])+
 							tiny_number));
-				dtRadPressure = min(dtRadPressure, dtTemp);
+				dtRadPressure = enzo_min(dtRadPressure, dtTemp);
 			}
 
 		if (dtRadPressure < huge_number)
 			dtRadPressure *= 0.5;
 
-		dt = min(dt, dtRadPressure);
+		dt = enzo_min(dt, dtRadPressure);
 
 	} /* ENDIF RadiationPressure */
 
@@ -558,12 +558,12 @@ float grid::ComputeTimeStep()
 		dtSafetyVelocity = a*CellWidth[0][0] / 
 			(TimestepSafetyVelocity*1e5 / VelocityUnits);    // parameter in km/s
 
-	dt = min(dt, dtSafetyVelocity);
+	dt = enzo_min(dt, dtSafetyVelocity);
 
 
 	/* 10) FLD Radiative Transfer timestep limitation */
 	if (RadiativeTransferFLD)
-		dt = min(dt, MaxRadiationDt);
+		dt = enzo_min(dt, MaxRadiationDt);
 
 #endif /* TRANSFER */
 

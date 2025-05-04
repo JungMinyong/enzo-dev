@@ -507,15 +507,15 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     ddr    = dr;
 
     // nor do we want transport longer than the grid timestep
-    ddr    = min(ddr, c*(EndTime-(*PP)->CurrentTime));
+    ddr    = enzo_min(ddr, c*(EndTime-(*PP)->CurrentTime));
     cdt = ddr * c_inv;
 
     // Check for ray merging, only consider a fraction of the ray to
     // make r=PauseRadius and return.
     if ((*PP)->Radius+ddr > PauseRadius) {
       fraction = (PauseRadius-(*PP)->Radius) / ddr;
-      fraction = max(fraction, PFLOAT_EPSILON);
-      //fraction = min(fraction,0.1);
+      fraction = enzo_max(fraction, PFLOAT_EPSILON);
+      //fraction = enzo_min(fraction,0.1);
       //fraction = 1.0;
       ddr *= fraction;
       cdt *= fraction;
@@ -545,7 +545,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     for (dim = 1, nearest_edge = m[0]; dim < 3; dim++)
       if (m[dim] > nearest_edge) nearest_edge = m[dim];
     sangle_inv = 1.0 / (dtheta*radius);
-    slice_factor = min(0.5f + (dxhalf-nearest_edge) * sangle_inv, 1.0f);
+    slice_factor = enzo_min(0.5f + (dxhalf-nearest_edge) * sangle_inv, 1.0f);
     slice_factor2 = slice_factor * slice_factor;
 #else
     slice_factor2 = 1.0;
@@ -707,7 +707,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
       // Shull & van Steenberg (1985)
       if (RadiationXRaySecondaryIon) {
-	xx = max(fields[HIIField][index] / 
+	xx = enzo_max(fields[HIIField][index] / 
 		 (fields[HIIField][index] + fields[HIIField][index]), 1e-4);
 	heat_factor    = 0.9971 * (1 - powf(1 - powf(xx, 0.2663f), 1.3163));
 

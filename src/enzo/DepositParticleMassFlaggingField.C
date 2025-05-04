@@ -28,11 +28,13 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "TopGridData.h"
 #include "communication.h"
 #include "SortCompareFunctions.h"
+
+
 
 /* Because we're basically doing a non-blocking MPI_Reduce(MPI_SUM),
    we need to allocate buffers for each on all processors.  Split up
@@ -308,7 +310,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
     
     ProcessorsPerLoop = 
       int(CELLS_PER_LOOP / (TotalNumberOfCells/NumberOfProcessors));
-    ProcessorsPerLoop = min(max(ProcessorsPerLoop, 1), NumberOfProcessors);
+    ProcessorsPerLoop = enzo_min(enzo_max(ProcessorsPerLoop, 1), NumberOfProcessors);
 //    ProcessorsPerLoop = NumberOfProcessors;
 
     int *SendProcs;
@@ -319,14 +321,14 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 	 StartProc += ProcessorsPerLoop) {
 
       count = 0;
-      EndProc = min(StartProc + ProcessorsPerLoop, NumberOfProcessors);
+      EndProc = enzo_min(StartProc + ProcessorsPerLoop, NumberOfProcessors);
 
       for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
 
 #ifdef TIMING
 	tt0 = ReturnWallTime();
 #endif
-	EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+	EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 	/* Post receives */
 

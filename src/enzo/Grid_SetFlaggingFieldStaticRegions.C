@@ -55,9 +55,9 @@ int grid::SetFlaggingFieldStaticRegions(int level, int &NumberOfFlaggedCells)
  
       int Overlap = TRUE;
       for (dim = 0; dim < GridRank; dim++) {
-	Left[dim] = max(StaticRefineRegionLeftEdge[region][dim],
+	Left[dim] = enzo_max(StaticRefineRegionLeftEdge[region][dim],
 			GridLeftEdge[dim]);
-	Right[dim] = min(StaticRefineRegionRightEdge[region][dim],
+	Right[dim] = enzo_min(StaticRefineRegionRightEdge[region][dim],
 			GridRightEdge[dim]);
 	if (Left[dim] >= Right[dim])
 	  Overlap = FALSE;

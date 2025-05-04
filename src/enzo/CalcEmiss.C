@@ -127,7 +127,7 @@ int CalcEmiss(int *nx, int *ny, int *nz,
 	   this timestep */
 	mform = minitial * ((1.0 + xv1)*exp(-xv1) - (1.0 + xv2)*exp(-xv2));
 	//mp is particle mass
-	mform = max(min(mform, mp[n]), 0.0);
+	mform = enzo_max(enzo_min(mform, mp[n]), 0.0);
 
 	/* Calculate the cell index of the star particle */
 	/* 

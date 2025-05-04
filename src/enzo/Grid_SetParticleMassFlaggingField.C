@@ -17,6 +17,7 @@
  
 #include <stdio.h>
 #include <math.h>
+
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -124,7 +125,7 @@ int grid::SetParticleMassFlaggingField(
       //fprintf(stderr, "level=%d, MustRefineParticlesRefineToLevel=%d, KeepFlaggingField %d\n", level, MustRefineParticlesRefineToLevel, KeepFlaggingField);
       NumberOfFlaggedCells = this->DepositMustRefineParticles(ParticleMassMethod,
                                                               level, KeepFlaggingField);
-#ifdef NDIVIDUALSTAR
+#ifdef INDIVIDUALSTAR
       KeepFlaggingField = KeepFlaggingField || (level == IndividualStarRefineToLevel);
       if (level < IndividualStarRefineToLevel)
       {

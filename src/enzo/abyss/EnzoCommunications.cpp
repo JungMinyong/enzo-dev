@@ -1,3 +1,4 @@
+#include <cstdio>
 #ifdef INDIVIDUALSTAR
 #include <algorithm>
 #include <cmath>
@@ -37,15 +38,12 @@ extern MPI_Datatype MPI_ENZO_PTCL_RECV;
 extern int NumberOfProcessors;
 extern int TotalNumberOfProcessors;
 double EnzoCurrentTime, ClusterRadius2;
+extern int WorldProcessorNumber;
 double ClusterAcceleration[Dim], ClusterPosition[Dim], ClusterVelocity[Dim],
     EnzoClusterPosition[Dim + 1];
 double eta_tmp;
 int FixNumNeighbor0, IdentifyNbodyParticles;
 int BinaryRegularization, IdentifyOnTheFly;
-
-#define MAX_COMMUNICATIONS 10
-MPI_Request requests[MAX_COMMUNICATIONS];
-MPI_Status statuses[MAX_COMMUNICATIONS];
 
 // double KSTime;
 // double KSDistance;
@@ -78,177 +76,151 @@ const int width = 18;
 // int InitialCommunication(std::vector<Particle*> &particle) {
 int InitialCommunication() {
 
-  fprintf(nbpout, "NBODY+: First Waiting for Enzo to receive data...\n");
+  fprintf(nbpout, "ABYSS: First Waiting for Enzo to receive data...\n");
+  fprintf(stderr, "ABYSS: First Waiting for Enzo to receive data...\n");
 
   /*-------------------------------------------*/
   /****   Receive Parameters from ENZO  ********/
   /*-------------------------------------------*/
-  if (AbyssProcessorNumber == ROOT) {
-    fprintf(stderr, "ENZO: ComovingCoordinates=%d\n", ComovingCoordinates);
-    MPI_Recv(&ComovingCoordinates, 1, MPI_INT, 0, 100, inter_comm,
-             &statuses[0]);
-    if (ComovingCoordinates)
-      MPI_Recv(&CosmologyTableNumberOfBins, 1, MPI_INT, 0, 150, inter_comm,
-               &statuses[0]);
+  MPI_Request requests[2];
+  MPI_Status statuses[2];
+  MPI_Recv(&ComovingCoordinates, 1, MPI_INT, 0, 100, inter_comm, &statuses[0]);
+  fprintf(stderr, "ABYSS: ComovingCoordinates=%d\n", ComovingCoordinates);
+  if (ComovingCoordinates)
+    MPI_Recv(&CosmologyTableNumberOfBins, 1, MPI_INT, 0, 150, inter_comm,
+             &statuses[1]);
 
-    /* Prepare buffer array */
-    double *CosmologyTableLoga;
-    double *CosmologyTableLogt;
-    double TimeStep, TimeUnits, LengthUnits, VelocityUnits, DensityUnits;
-    int double_size = 13;
-    int int_size = 6;
-    if (ComovingCoordinates) {
-      double_size += 14;
-      double_size += 2 * CosmologyTableNumberOfBins;
-      int_size += 1;
-      CosmologyTableLoga =
-          new double[CosmologyTableNumberOfBins]; // (Query) EW: not
-                                                  // deleted later?
-      CosmologyTableLogt =
-          new double[CosmologyTableNumberOfBins]; // (Query) EW: not
-                                                  // deleted later?
-    }
-    double *params_double = new double[double_size];
-    int *params_int = new int[int_size];
-
-    MPI_Irecv(params_double, double_size, MPI_DOUBLE, 0, 200, inter_comm,
-              &requests[0]);
-    MPI_Irecv(params_int, int_size, MPI_INT, 0, 300, inter_comm, &requests[1]);
-    MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
-    fprintf(nbpout, "Data received!\n");
-
-    TimeStep = params_double[0];
-    TimeUnits = params_double[1];
-    LengthUnits = params_double[2];
-    DensityUnits = params_double[3];
-    VelocityUnits = params_double[4];
-    StarMassEjectionFraction = params_double[5];
-    EnzoCurrentTime = params_double[6];
-    EPS2 = params_double[7];
-    eta_tmp = params_double[8];
-    InitialNeighborRadius2 = params_double[9];
-    EnzoClusterPosition[0] = params_double[10];
-    EnzoClusterPosition[1] = params_double[11];
-    EnzoClusterPosition[2] = params_double[12];
-    EnzoClusterPosition[3] = params_double[13];
-
-    StarParticleFeedback = params_int[0];
-    IdentifyNbodyParticles = params_int[1];
-    IdentifyOnTheFly = params_int[2];
-    FixNumNeighbor = params_int[3];
-    MaxNumNeighbor = params_int[4];
-    BinaryRegularization = params_int[5];
-
-    if (ComovingCoordinates) {
-      HubbleConstantNow = params_double[14];
-      OmegaMatterNow = params_double[15];
-      OmegaDarkMatterNow = params_double[16];
-      OmegaLambdaNow = params_double[17];
-      OmegaRadiationNow = params_double[18];
-      ComovingBoxSize = params_double[19];
-      MaxExpansionRate = params_double[20];
-      InitialTimeInCodeUnits = params_double[21];
-      InitialRedshift = params_double[22];
-      FinalRedshift = params_double[23];
-      CosmologyTableLogaInitial = params_double[24];
-      CosmologyTableLogaFinal = params_double[25];
-      for (int i = 0; i < CosmologyTableNumberOfBins; i++) {
-        CosmologyTableLoga[i] = params_double[26 + i];
-      }
-      for (int i = 0; i < CosmologyTableNumberOfBins; i++) {
-        CosmologyTableLogt[i] =
-            params_double[26 + CosmologyTableNumberOfBins + i];
-      }
-      CosmologyTableLogtIndex = params_int[7];
-    }
-    ClusterRadius2 = EnzoClusterPosition[3]; // it's already squared
-
-    // Enzo to Nbody unit convertors
-    // EnzoMass         = MassUnits/Msun/mass_unit;
-    EnzoMass = DensityUnits * pow(LengthUnits, 3.) / Msun / mass_unit;
-    EnzoLength = LengthUnits / pc / position_unit;
-    EnzoVelocity = VelocityUnits / pc * yr / velocity_unit;
-    EnzoTime = TimeUnits / yr / time_unit;
-    // EnzoAcceleration =
-    // LengthUnits/TimeUnits/TimeUnits/pc*yr*yr/position_unit*time_unit*time_unit;
-    EnzoAcceleration = EnzoLength / EnzoTime / EnzoTime;
-
-    // Unit conversion
-    global_variable->EnzoTimeStep = TimeStep * EnzoTime;
-
-    EnzoCurrentTime *= EnzoTime;
-
-    if (EPS2 < 0)
-      EPS2 = -1;
-    else {
-      EPS2 *= EnzoLength;
-      EPS2 *= EPS2;
-    }
-
-    InitialNeighborRadius2 *= EnzoLength;
-    InitialNeighborRadius2 *= InitialNeighborRadius2;
-    FixNumNeighbor0 = FixNumNeighbor;
-
-    // need to fix units
-    // fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
-    fprintf(nbpout, "Nbody Time               = %lf\n", EnzoCurrentTime);
-    fprintf(nbpout, "Nbody TimeStep           = %lf\n",
-            global_variable->EnzoTimeStep);
-    fprintf(nbpout, "EPS2                     = %lf pc**2\n",
-            EPS2 * position_unit * position_unit);
-    fprintf(nbpout, "InitialNeighborRadius2        = %.2e pc**2\n",
-            InitialNeighborRadius2 * position_unit * position_unit);
-    fprintf(nbpout, "eta                      = %lf\n", eta);
-    fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n",
-            ClusterRadius2 * position_unit * position_unit);
-    fprintf(nbpout, "StarMassEjectionFraction = %lf\n",
-            StarMassEjectionFraction);
-    fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
-    fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
-    fprintf(nbpout, "BinaryRegularization     = %d\n",
-            BinaryRegularization); // (Query) EW: What is this?
-    // fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
-    // fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
-    fprintf(nbpout, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
-    fprintf(nbpout, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
+  /* Prepare buffer array */
+  double *CosmologyTableLoga;
+  double *CosmologyTableLogt;
+  double TimeStep, TimeUnits, LengthUnits, VelocityUnits, DensityUnits;
+  int double_size = 13;
+  int int_size = 6;
+  if (ComovingCoordinates) {
+    double_size += 14;
+    double_size += 2 * CosmologyTableNumberOfBins;
+    int_size += 1;
+    CosmologyTableLoga =
+        new double[CosmologyTableNumberOfBins]; // (Query) EW: not
+                                                // deleted later?
+    CosmologyTableLogt =
+        new double[CosmologyTableNumberOfBins]; // (Query) EW: not
+                                                // deleted later?
   }
+  double *params_double = new double[double_size];
+  int *params_int = new int[int_size];
+
+  MPI_Irecv(params_double, double_size, MPI_DOUBLE, 0, 200, inter_comm,
+            &requests[0]);
+  MPI_Irecv(params_int, int_size, MPI_INT, 0, 300, inter_comm, &requests[1]);
+  MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+  fprintf(nbpout, "Data received!\n");
+
+  TimeStep = params_double[0];
+  TimeUnits = params_double[1];
+  LengthUnits = params_double[2];
+  DensityUnits = params_double[3];
+  VelocityUnits = params_double[4];
+  StarMassEjectionFraction = params_double[5];
+  EnzoCurrentTime = params_double[6];
+  EPS2 = params_double[7];
+  eta_tmp = params_double[8];
+  InitialNeighborRadius2 = params_double[9];
+  EnzoClusterPosition[0] = params_double[10];
+  EnzoClusterPosition[1] = params_double[11];
+  EnzoClusterPosition[2] = params_double[12];
+  EnzoClusterPosition[3] = params_double[13];
+
+  StarParticleFeedback = params_int[0];
+  IdentifyNbodyParticles = params_int[1];
+  IdentifyOnTheFly = params_int[2];
+  FixNumNeighbor = params_int[3];
+  MaxNumNeighbor = params_int[4];
+  BinaryRegularization = params_int[5];
+
+  if (ComovingCoordinates) {
+    HubbleConstantNow = params_double[14];
+    OmegaMatterNow = params_double[15];
+    OmegaDarkMatterNow = params_double[16];
+    OmegaLambdaNow = params_double[17];
+    OmegaRadiationNow = params_double[18];
+    ComovingBoxSize = params_double[19];
+    MaxExpansionRate = params_double[20];
+    InitialTimeInCodeUnits = params_double[21];
+    InitialRedshift = params_double[22];
+    FinalRedshift = params_double[23];
+    CosmologyTableLogaInitial = params_double[24];
+    CosmologyTableLogaFinal = params_double[25];
+    for (int i = 0; i < CosmologyTableNumberOfBins; i++) {
+      CosmologyTableLoga[i] = params_double[26 + i];
+    }
+    for (int i = 0; i < CosmologyTableNumberOfBins; i++) {
+      CosmologyTableLogt[i] =
+          params_double[26 + CosmologyTableNumberOfBins + i];
+    }
+    CosmologyTableLogtIndex = params_int[7];
+  }
+  ClusterRadius2 = EnzoClusterPosition[3]; // it's already squared
+
+  // Enzo to Nbody unit convertors
+  // EnzoMass         = MassUnits/Msun/mass_unit;
+  EnzoMass = DensityUnits * pow(LengthUnits, 3.) / Msun / mass_unit;
+  EnzoLength = LengthUnits / pc / position_unit;
+  EnzoVelocity = VelocityUnits / pc * yr / velocity_unit;
+  EnzoTime = TimeUnits / yr / time_unit;
+  // EnzoAcceleration =
+  // LengthUnits/TimeUnits/TimeUnits/pc*yr*yr/position_unit*time_unit*time_unit;
+  EnzoAcceleration = EnzoLength / EnzoTime / EnzoTime;
+
+  // Unit conversion
+  global_variable->EnzoTimeStep = TimeStep * EnzoTime;
+
+  EnzoCurrentTime *= EnzoTime;
+
+  if (EPS2 < 0)
+    EPS2 = -1;
+  else {
+    EPS2 *= EnzoLength;
+    EPS2 *= EPS2;
+  }
+
+  InitialNeighborRadius2 *= EnzoLength;
+  InitialNeighborRadius2 *= InitialNeighborRadius2;
+  FixNumNeighbor0 = FixNumNeighbor;
+
+  // need to fix units
+  // fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
+  fprintf(nbpout, "Nbody Time               = %lf\n", EnzoCurrentTime);
+  fprintf(nbpout, "Nbody TimeStep           = %lf\n",
+          global_variable->EnzoTimeStep);
+  fprintf(nbpout, "EPS2                     = %lf pc**2\n",
+          EPS2 * position_unit * position_unit);
+  fprintf(nbpout, "InitialNeighborRadius2        = %.2e pc**2\n",
+          InitialNeighborRadius2 * position_unit * position_unit);
+  fprintf(nbpout, "eta                      = %lf\n", eta);
+  fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n",
+          ClusterRadius2 * position_unit * position_unit);
+  fprintf(nbpout, "StarMassEjectionFraction = %lf\n", StarMassEjectionFraction);
+  fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
+  fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
+  fprintf(nbpout, "BinaryRegularization     = %d\n",
+          BinaryRegularization); // (Query) EW: What is this?
+  // fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
+  // fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
+  fprintf(nbpout, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
+  fprintf(nbpout, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
+  fflush(nbpout);
 
   /*------------------===-------------------------*/
   /********   Receive Particles to ABYSS  *********/
   /*----------------===---------------------------*/
-  int LocalNumberOfParticles;
-  int *buf;
-  int num_sender = int((NumberOfProcessors+1)/NumberOfAbyssProcessors)+1;
-  buf = new int[num_sender+1];
-  buf[num_sender] = 0; // to store the actual number of communications
+  // int LocalNumberOfParticles=0;
 
-  for (int i=0; i<num_sender; i++) {
-    int SenderRank = AbyssProcessorNumber + i*NumberOfAbyssProcessors;
-    if (SenderRank >= NumberOfProcessors)
-      break;
-    MPI_Irecv(&buf[i], 1, MPI_INT, SenderRank, 100, MPI_COMM_WORLD,
-          &requests[i]);
-    LocalNumberOfParticles += buf[i];
-    buf[num_sender]++;
-  }
-  MPI_Waitall(buf[num_sender], requests, MPI_STATUSES_IGNORE);
-  fprintf(nbpout, "NBODY+: NumberOfParticles=%d\n", LocalNumberOfParticles);
-
-  int start_index=0;
-  ParticleDataType *packet = new ParticleDataType[LocalNumberOfParticles];
-  for (int i=0; i<num_sender; i++) {
-    int SenderRank = AbyssProcessorNumber + i*NumberOfAbyssProcessors;
-    if (SenderRank >= NumberOfProcessors)
-      break;
-    MPI_Irecv(&packet[start_index], buf[i], MPI_ENZO_PTCL, SenderRank, 200, MPI_COMM_WORLD,
-          &requests[i]);
-    start_index += buf[i];
-  }
-
-  MPI_Waitall(buf[num_sender], requests, MPI_STATUSES_IGNORE);
-
-  // I gotta use gatherv to share the number of particles across processors
-
+  MPI_Recv(&NumberOfSingleParticle, 1, MPI_INT, 0, 100, inter_comm,
+           MPI_STATUS_IGNORE);
+  ParticleDataType *packet = new ParticleDataType[NumberOfSingleParticle];
+  MPI_Recv(packet, NumberOfSingleParticle, MPI_ENZO_PTCL, 0, 200, inter_comm,
+           MPI_STATUS_IGNORE);
 
   /* Unpack the Packet */
   for (int dim = 0; dim < Dim; dim++) {
@@ -305,17 +277,15 @@ int InitialCommunication() {
   }
      */
 
-  //NumberOfParticle = NumberOfSingleParticle;
-  //global_variable->LastParticleIndex = NumberOfSingleParticle - 1;
+  // NumberOfParticle = NumberOfSingleParticle;
+  // global_variable->LastParticleIndex = NumberOfSingleParticle - 1;
 
-  //fprintf(nbpout, "NBODY+: %d particles loaded!\n", NumberOfSingleParticle);
-  //fflush(nbpout);
-  exit(0);
+  fprintf(nbpout, "ABYSS: %d particles loaded on %d!\n", NumberOfSingleParticle,
+          AbyssProcessorNumber);
+  fflush(nbpout);
+  // exit(0);
   return true;
 }
-
-
-
 
 #ifdef TEST
 int ReceiveParticleFromEnzo() {
@@ -330,12 +300,12 @@ int ReceiveParticleFromEnzo() {
 
   MPI_Request request;
   MPI_Status status;
-  fprintf(nbpout, "NBODY+: Waiting for Enzo to receive data...\n");
+  fprintf(nbpout, "ABYSS: Waiting for Enzo to receive data...\n");
 
-  fprintf(stdout, "NBODY+: Waiting for Enzo to receive data...\n");
+  fprintf(stdout, "ABYSS: Waiting for Enzo to receive data...\n");
   CommunicationInterBarrier();
-  fprintf(nbpout, "NBODY+: Receiving data from Enzo...\n");
-  fprintf(stdout, "NBODY+: Receiving data from Enzo...\n");
+  fprintf(nbpout, "ABYSS: Receiving data from Enzo...\n");
+  fprintf(stdout, "ABYSS: Receiving data from Enzo...\n");
 
   // Existing Particle Information
 
@@ -421,8 +391,8 @@ int ReceiveParticleFromEnzo() {
   global_variable->OldEnzoTimeStep = global_variable->EnzoTimeStep;
   global_variable->EnzoTimeStep = TimeStep * EnzoTime;
 
-  std::cout << "NBODY+: Data transferred!" << std::endl;
-  fprintf(stdout, "NBODY+: Data transferred!\n");
+  std::cout << "ABYSS: Data transferred!" << std::endl;
+  fprintf(stdout, "ABYSS: Data transferred!\n");
   EnzoCurrentTime = EnzoCurrentTime * EnzoTime;
   global_variable->EnzoCurrentTime = EnzoCurrentTime * 1e4; // in Myr unit
 
@@ -670,7 +640,7 @@ int ReceiveParticleFromEnzo() {
     Mass:" << newMass[0] << std::endl; std::cout << "nbody Mass:" <<
     newMass[0]*EnzoMass << std::endl;
     */
-    std::cout << "NBODY+    : " << newNumberOfSingleParticle
+    std::cout << "ABYSS    : " << newNumberOfSingleParticle
               << " new particles loaded!" << std::endl;
 
     // This includes modification of regular force and irregular force
@@ -718,43 +688,43 @@ int ReceiveParticleFromEnzo() {
   NumberOfParticle += newNumberOfSingleParticle;
 
   //  (Query) Do I need this?
-  // fprintf(nbpout, "NBODY+    : Acceleration for particles on GPU.\n");
+  // fprintf(nbpout, "ABYSS    : Acceleration for particles on GPU.\n");
   /*
   if (NumberOfSingleParticle > 1) {
           CalculateAllAccelerationOnGPU(particle);
   }*/
 
   // UpdateNextRegTime(particle);
-  //  fprintf(nbpout, "NBODY+    : Acceleration and neighbors are updated.\n");
+  //  fprintf(nbpout, "ABYSS    : Acceleration and neighbors are updated.\n");
 
   fprintf(
       nbpout,
-      "NBODY+    : In ReceiveFromEnzo (after new particle might be added): \n");
+      "ABYSS    : In ReceiveFromEnzo (after new particle might be added): \n");
   fprintf(nbpout,
-          "NBODY+    : original NumberOfSingleParticle      = %d (+%d)\n",
+          "ABYSS    : original NumberOfSingleParticle      = %d (+%d)\n",
           NumberOfSingleParticle - newNumberOfSingleParticle,
           newNumberOfSingleParticle);
-  fprintf(nbpout, "NBODY+    : newly updated NumberOfSingleParticle = %d\n",
+  fprintf(nbpout, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
           NumberOfSingleParticle, newNumberOfSingleParticle);
-  // fprintf(nbpout, "NBODY+    : Particle size     = %d\n", particle.size());
-  //  fprintf(nbpout, "NBODY+    : NextRegTimeStep   = %.3e\n",
-  //  NextRegTimeBlock*global_variable->time_step); fprintf(nbpout, "NBODY+    :
+  // fprintf(nbpout, "ABYSS    : Particle size     = %d\n", particle.size());
+  //  fprintf(nbpout, "ABYSS    : NextRegTimeStep   = %.3e\n",
+  //  NextRegTimeBlock*global_variable->time_step); fprintf(nbpout, "ABYSS    :
   //  NextRegTimeBlock  = %d\n", NextRegTimeBlock);
-  // fprintf(nbpout, "NBODY+    : RegularList size  = %d\n",
+  // fprintf(nbpout, "ABYSS    : RegularList size  = %d\n",
   // RegularList.size());
-  fprintf(nbpout, "NBODY+    : FixNumNeighbor    = %d\n", FixNumNeighbor);
+  fprintf(nbpout, "ABYSS    : FixNumNeighbor    = %d\n", FixNumNeighbor);
 
   fprintf(
       stderr,
-      "NBODY+    : In ReceiveFromEnzo (after new particle might be added): \n");
+      "ABYSS    : In ReceiveFromEnzo (after new particle might be added): \n");
   fprintf(stderr,
-          "NBODY+    : original NumberOfSingleParticle      = %d (+%d)\n",
+          "ABYSS    : original NumberOfSingleParticle      = %d (+%d)\n",
           NumberOfSingleParticle - newNumberOfSingleParticle,
           newNumberOfSingleParticle);
-  fprintf(stderr, "NBODY+    : newly updated NumberOfSingleParticle = %d\n",
+  fprintf(stderr, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
           NumberOfSingleParticle, newNumberOfSingleParticle);
-  // fprintf(stderr, "NBODY+    : Particle size     = %d\n", particle.size());
-  // fprintf(stderr, "NBODY+    : RegularList size = %d\n", RegularList.size());
+  // fprintf(stderr, "ABYSS    : Particle size     = %d\n", particle.size());
+  // fprintf(stderr, "ABYSS    : RegularList size = %d\n", RegularList.size());
   fflush(stderr);
   fflush(nbpout);
   // fflush(gpuout);
@@ -769,9 +739,9 @@ int ReceiveParticleFromEnzo() {
 // 2025.3.13
 int SendParticleToEnzo(Worker *workers) {
 
-  std::cout << "NBODY+: Entering SendToEnzo..." << std::endl;
+  std::cout << "ABYSS: Entering SendToEnzo..." << std::endl;
   if (NumberOfSingleParticle == 0 && newNumberOfSingleParticle == 0) {
-    std::cout << "NBODY+: Skipping SendToEnzo..." << std::endl;
+    std::cout << "ABYSS: Skipping SendToEnzo..." << std::endl;
     return 1; // SUCCESS -> 1 by EW 2025.3.11
   }
   MPI_Request request;
@@ -826,10 +796,10 @@ int SendParticleToEnzo(Worker *workers) {
 #endif
 
   /*
-  std::cout << "NBODY+: NumberOfSingleParticle=" << NumberOfSingleParticle << ",
+  std::cout << "ABYSS: NumberOfSingleParticle=" << NumberOfSingleParticle << ",
   newNumberOfSingleParticle=" << newNumberOfSingleParticle << std::endl;
-  std::cout << "NBODY+: size=" << particle.size() << std::endl;
-  std::cout << "NBODY+: FirstParticleInEnzo PID=" << \
+  std::cout << "ABYSS: size=" << particle.size() << std::endl;
+  std::cout << "ABYSS: FirstParticleInEnzo PID=" << \
           FirstParticleInEnzo->PID << " in SendToEzno" << std::endl;
   */
 
@@ -1007,7 +977,7 @@ int SendParticleToEnzo(Worker *workers) {
 #endif
         NumberOfEscapeParticle++;
       }
-      // fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
+      // fprintf(stdout, "ABYSS: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
 
 #ifdef SEVN
       InitialMass[i] = ptcl->InitialMass; // This is already in Msun unit!!!
@@ -1217,7 +1187,7 @@ int SendParticleToEnzo(Worker *workers) {
         memEscape = false;
         break;
       }
-      // fprintf(stdout, "NBODY+: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
+      // fprintf(stdout, "ABYSS: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
     }
     if (memEscape) {
       fprintf(stderr, "Binary escape!\n");
@@ -1296,8 +1266,8 @@ int SendParticleToEnzo(Worker *workers) {
         std::min(RS0 * RS0, originalInitialNeighborRadius2);
 #endif
 
-  // std::cerr << "NBODY+: Waiting for Enzo to send data..." << std::endl;
-  fprintf(nbpout, "NBODY+: Waiting for Enzo to send data...\n");
+  // std::cerr << "ABYSS: Waiting for Enzo to send data..." << std::endl;
+  fprintf(nbpout, "ABYSS: Waiting for Enzo to send data...\n");
   CommunicationInterBarrier();
   if (NumberOfSingleParticle - newNumberOfSingleParticle != 0) {
     for (int dim = 0; dim < Dim; dim++) {
@@ -1323,7 +1293,7 @@ int SendParticleToEnzo(Worker *workers) {
              MPI_DOUBLE, 0, 1600, inter_comm);
 #endif
   }
-  // std::cerr << "NBODY+: Escape particles=" << EscapeParticleNum << std::endl;
+  // std::cerr << "ABYSS: Escape particles=" << EscapeParticleNum << std::endl;
 
   // fprintf(stderr,"NewNumberOfSingleParticles=%d\n",NumberOfNewNbodyParticles);
   if (newNumberOfSingleParticle != 0) {
@@ -1364,7 +1334,7 @@ int SendParticleToEnzo(Worker *workers) {
   }
 
   CommunicationInterBarrier();
-  fprintf(stdout, "NBODY+: Data sent!\n");
+  fprintf(stdout, "ABYSS: Data sent!\n");
 
   for (int dim = 0; dim < Dim; dim++) {
     if (NumberOfSingleParticle - newNumberOfSingleParticle != 0) {
@@ -1402,24 +1372,24 @@ int SendParticleToEnzo(Worker *workers) {
 #else
   NumberOfParticle -= NumberOfEscapeParticle;
 #endif
-  std::cout << "NBODY+: Sending data finished." << std::endl;
+  std::cout << "ABYSS: Sending data finished." << std::endl;
 
   fprintf(stderr,
-          "NBODY+    : In SendToEnzo (after particle might be escaped): \n");
+          "ABYSS    : In SendToEnzo (after particle might be escaped): \n");
   fprintf(
-      stderr, "NBODY+    : original NumberOfSingleParticle      = %d (-%d)\n",
+      stderr, "ABYSS    : original NumberOfSingleParticle      = %d (-%d)\n",
       NumberOfSingleParticle + NumberOfEscapeParticle, NumberOfEscapeParticle);
-  fprintf(stderr, "NBODY+    : newly updated NumberOfSingleParticle = %d\n",
+  fprintf(stderr, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
           NumberOfSingleParticle);
-  fprintf(stderr, "NBODY+    : newly updated NumberOfParticle = %d\n",
+  fprintf(stderr, "ABYSS    : newly updated NumberOfParticle = %d\n",
           NumberOfParticle);
 
   fprintf(nbpout,
-          "NBODY+    : In SendToEnzo (after particle might be escaped): \n");
+          "ABYSS    : In SendToEnzo (after particle might be escaped): \n");
   fprintf(
-      nbpout, "NBODY+    : original NumberOfSingleParticle      = %d (-%d)\n",
+      nbpout, "ABYSS    : original NumberOfSingleParticle      = %d (-%d)\n",
       NumberOfSingleParticle + NumberOfEscapeParticle, NumberOfEscapeParticle);
-  fprintf(nbpout, "NBODY+    : newly updated NumberOfSingleParticle = %d\n",
+  fprintf(nbpout, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
           NumberOfSingleParticle);
 
   fflush(stderr);

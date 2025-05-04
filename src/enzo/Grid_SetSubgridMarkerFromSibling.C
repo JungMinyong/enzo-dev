@@ -74,8 +74,8 @@ int grid::SetSubgridMarkerFromSibling(grid *Sibling,
     /* Compute left and right positions in problem space.  note:
        include buffer zones of this grid but not the other grid. */
  
-    Left[dim]  = max(GridLeft[dim], Sibling->GridLeftEdge[dim]);
-    Right[dim] = min(GridRight[dim], Sibling->GridRightEdge[dim]);
+    Left[dim]  = enzo_max(GridLeft[dim], Sibling->GridLeftEdge[dim]);
+    Right[dim] = enzo_min(GridRight[dim], Sibling->GridRightEdge[dim]);
 
     /* Convert this to index positions in this grid */
  

@@ -125,8 +125,8 @@ int grid::ComputeTemperatureField(float *temperature,int IncludeCRs)
 
   if (ProblemType == 31 && this->_GalaxySimulationInitialization == 1) { // hardcode mu=0.6 for ICs only
     for (i = 0; i < size; i++)
-      temperature[i] = max((TemperatureUnits*temperature[i]*0.6
-		         /max(BaryonField[DensNum][i], tiny_number)),
+      temperature[i] = enzo_max((TemperatureUnits*temperature[i]*0.6
+		         /enzo_max(BaryonField[DensNum][i], tiny_number)),
 			 min_temperature);
     if (debug) printf("GalaxySimulation: Overriding mean molecular weight to be 0.6\n");
     return SUCCESS;
@@ -138,8 +138,8 @@ int grid::ComputeTemperatureField(float *temperature,int IncludeCRs)
        Compute temperature T = p/d and assume mu = Mu (global data). */
  
     for (i = 0; i < size; i++)
-      temperature[i] = max((TemperatureUnits*temperature[i]*mol_weight
-		         /max(BaryonField[DensNum][i], tiny_number)),
+      temperature[i] = enzo_max((TemperatureUnits*temperature[i]*mol_weight
+		         /enzo_max(BaryonField[DensNum][i], tiny_number)),
 			 min_temperature);
   else {
  
@@ -169,8 +169,8 @@ int grid::ComputeTemperatureField(float *temperature,int IncludeCRs)
  
       /* Ignore deuterium. */
  
-      temperature[i] *= TemperatureUnits/max(number_density, tiny_number);
-      temperature[i] = max(temperature[i], MINIMUM_TEMPERATURE);
+      temperature[i] *= TemperatureUnits/enzo_max(number_density, tiny_number);
+      temperature[i] = enzo_max(temperature[i], MINIMUM_TEMPERATURE);
     }
   }
  

@@ -337,12 +337,12 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
               // stop at grid edge if cell near boundary
               istart = iend = jstart = jend = kstart = kend = 0;
               if (integer_sep > 0){
-                istart   = min( i - ibuff             , integer_sep);
-                iend     = min( (nx - ibuff - 1 ) - i, integer_sep);
-                jstart   = min( j - ibuff             , integer_sep);
-                jend     = min( (ny - ibuff - 1 ) - j, integer_sep);
-                kstart   = min( k - ibuff             , integer_sep);
-                kend     = min( (nz - ibuff - 1 ) - k, integer_sep);
+                istart   = enzo_min( i - ibuff             , integer_sep);
+                iend     = enzo_min( (nx - ibuff - 1 ) - i, integer_sep);
+                jstart   = enzo_min( j - ibuff             , integer_sep);
+                jend     = enzo_min( (ny - ibuff - 1 ) - j, integer_sep);
+                kstart   = enzo_min( k - ibuff             , integer_sep);
+                kend     = enzo_min( (nz - ibuff - 1 ) - k, integer_sep);
               }
 
               // loop through cells and add up total amount of mass available for SF
@@ -395,7 +395,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
               if( bmass*IndividualStarMassFraction > IndividualStarSFGasMassThreshold ){
                 // if true, we can try and form stars. compute probability that this mass will
                 // form stars this timestep
-                star_fraction  = min(StarMakerMassEfficiency*(this->dtFixed)/tdyn, 1.0);
+                star_fraction  = enzo_min(StarMakerMassEfficiency*(this->dtFixed)/tdyn, 1.0);
                 mass_to_stars  = star_fraction * bmass;
 
                 pstar          = mass_to_stars / IndividualStarSFGasMassThreshold;

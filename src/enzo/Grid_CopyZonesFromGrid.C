@@ -140,8 +140,8 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 			/* Compute left and right positions in problem space.
 note: include buffer zones of this grid but not the other grid. */
 
-			Left[dim]  = max(GridLeft[dim], OtherGrid->GridLeftEdge[dim]);
-			Right[dim] = min(GridRight[dim], OtherGrid->GridRightEdge[dim]);
+			Left[dim]  = enzo_max(GridLeft[dim], OtherGrid->GridLeftEdge[dim]);
+			Right[dim] = enzo_min(GridRight[dim], OtherGrid->GridRightEdge[dim]);
 
 			/* Convert this to index positions in this grid */
 

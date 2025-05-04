@@ -155,8 +155,8 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
   if (Nchem > 0) {
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
       // first ensure that no densities are negative
-      nHI[i]  = max(0.0, nHI[i]);
-      nHII[i] = max(0.0, nHII[i]);
+      nHI[i]  = enzo_max(0.0, nHI[i]);
+      nHII[i] = enzo_max(0.0, nHII[i]);
 
       // set rhochem as the total H 'density' according to H* species
       rhochem = nHI[i] + nHII[i];
@@ -165,8 +165,8 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
       nHI[i] *= rho[i]*HFrac/rhochem;
 
       // correct if precision isn't good enough, and all rho is HI
-      nHI[i]  = min(nHI[i],rho[i]*HFrac);
-      nHII[i] = max(0.0, rho[i]*HFrac - nHI[i]);
+      nHI[i]  = enzo_min(nHI[i],rho[i]*HFrac);
+      nHII[i] = enzo_max(0.0, rho[i]*HFrac - nHI[i]);
     }
   }
 
@@ -176,9 +176,9 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
 
       // first ensure that no densities are negative
-      nHeI[i]   = max(0.0, nHeI[i]);
-      nHeII[i]  = max(0.0, nHeII[i]);
-      nHeIII[i] = max(0.0, nHeIII[i]);
+      nHeI[i]   = enzo_max(0.0, nHeI[i]);
+      nHeII[i]  = enzo_max(0.0, nHeII[i]);
+      nHeIII[i] = enzo_max(0.0, nHeIII[i]);
 
       // set rhochem as the total He 'density' according to He* species
       rhochem = nHeI[i] + nHeII[i] + nHeIII[i];
@@ -186,7 +186,7 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
       // update HeI, HeII as appropriate fractions of 'true' density
       nHeI[i]   *= rho[i]*(1.0-HFrac)/rhochem;
       nHeII[i]  *= rho[i]*(1.0-HFrac)/rhochem;
-      nHeIII[i] = max(0.0, rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i]);
+      nHeIII[i] = enzo_max(0.0, rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i]);
     }
   }
 
@@ -244,7 +244,7 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
   float dtmp;
   for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
     UTypVals[1] += eh[i]*eh[i];
-    UMaxVals[1] = max(UMaxVals[1],eh[i]*eh[i]);
+    UMaxVals[1] = enzo_max(UMaxVals[1],eh[i]*eh[i]);
   }
   UTypVals[1] = sqrt(UTypVals[1]/ArrDims[0]/ArrDims[1]/ArrDims[2]);
   UMaxVals[1] = sqrt(UMaxVals[1]);
@@ -385,19 +385,19 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
   //   enforce minimum values on solution (not yet copied into Enzo data)
   float *sol_Er = sol->GetData(0);
   for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-    sol_Er[i] = max(sol_Er[i],epsilon);
+    sol_Er[i] = enzo_max(sol_Er[i],epsilon);
   if (Nchem > 0) {
     float *sol_HI = sol->GetData(2);
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-      sol_HI[i] = min(max(sol_HI[i],epsilon2),rho[i]*HFrac);
+      sol_HI[i] = enzo_min(enzo_max(sol_HI[i],epsilon2),rho[i]*HFrac);
   }
   if (Nchem > 1) {
     float *sol_HeI = sol->GetData(3);
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-      sol_HeI[i] = max(sol_HeI[i],epsilon2);
+      sol_HeI[i] = enzo_max(sol_HeI[i],epsilon2);
     float *sol_HeII = sol->GetData(4);
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-      sol_HeII[i] = max(sol_HeII[i],epsilon2);
+      sol_HeII[i] = enzo_max(sol_HeII[i],epsilon2);
   }
 
   // Rescale solution arrays to get back from solver to Enzo units
@@ -413,11 +413,11 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
   //   Add fluid correction to fluid energy field (with floor)
   float *eh_tot = ThisGrid->GridData->AccessTotalEnergy();
   for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
-    eh_tot[i] = max(eh_tot[i]+FluidEnergyCorrection[i],tiny_number);
+    eh_tot[i] = enzo_max(eh_tot[i]+FluidEnergyCorrection[i],tiny_number);
   if (DualEnergyFormalism) {
     float *eh_gas = ThisGrid->GridData->AccessGasEnergy();
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
-      eh_gas[i] = max(eh_gas[i]+FluidEnergyCorrection[i],tiny_number);
+      eh_gas[i] = enzo_max(eh_gas[i]+FluidEnergyCorrection[i],tiny_number);
   }
 
   //   Update dependent chemical species densities (ne, nHII, nHeIII) 
@@ -426,14 +426,14 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
   }
   else if (Nchem == 1) {   // update ne, HII
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
-      nHII[i] = max(rho[i]*HFrac - nHI[i], 0.0);
+      nHII[i] = enzo_max(rho[i]*HFrac - nHI[i], 0.0);
       ne[i] = nHII[i];
     }
   }
   else if (Nchem == 3) {   // update ne, HII, HeIII
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
-      nHII[i] = max(rho[i]*HFrac - nHI[i], 0.0);
-      nHeIII[i] = max(rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i], 0.0);
+      nHII[i] = enzo_max(rho[i]*HFrac - nHI[i], 0.0);
+      nHeIII[i] = enzo_max(rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i], 0.0);
       ne[i] = nHII[i] + nHeII[i]/4.0 + nHeIII[i]/2.0;
     }
   }

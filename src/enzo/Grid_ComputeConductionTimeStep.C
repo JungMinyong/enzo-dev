@@ -58,7 +58,7 @@ float grid::ComputeConductionTimeStep (float &dt) {
 
   float SpitzerFraction;
   if (IsotropicConduction && AnisotropicConduction) {
-    SpitzerFraction = max(IsotropicConductionSpitzerFraction, 
+    SpitzerFraction = enzo_max(IsotropicConductionSpitzerFraction, 
 			  AnisotropicConductionSpitzerFraction);
   }
   else if (IsotropicConduction) {
@@ -170,7 +170,7 @@ float grid::ComputeConductionTimeStep (float &dt) {
 	  }
 
 	  dt_est = rho[ELT(i,j,k)] / r.kappa;
-	  dt = min(dt, dt_est);
+	  dt = enzo_min(dt, dt_est);
 	}
       }
     }
@@ -199,7 +199,7 @@ float grid::ComputeConductionTimeStep (float &dt) {
 	  }
 
 	  dt_est = rho[ELT(i,j,k)] / r.kappa;
-	  dt = min(dt, dt_est);
+	  dt = enzo_min(dt, dt_est);
 	}
       }
     }
@@ -228,7 +228,7 @@ float grid::ComputeConductionTimeStep (float &dt) {
 	  }
 
 	  dt_est = rho[ELT(i,j,k)] / r.kappa;
-	  dt = min(dt, dt_est);
+	  dt = enzo_min(dt, dt_est);
 	}
       }
     }
@@ -245,7 +245,7 @@ float grid::ComputeConductionTimeStep (float &dt) {
 
   if (SpeedOfLightTimeStepLimit) {
     light_cross_time = dx * VelocityUnits / clight;
-    dt = max(dt, light_cross_time);
+    dt = enzo_max(dt, light_cross_time);
   }
 
   delete [] Temp;

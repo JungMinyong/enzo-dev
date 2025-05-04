@@ -43,9 +43,9 @@ void Star::MultiplyAccretionRate(float &RecalibrateAccretingMassRatio)
 
   // Below is exactly the same as in Star_CalculateMassAccretion
   mdot_Edd = 4.0 * PI * GravConst * this->Mass * mh /
-    max(MBHFeedbackRadiativeEfficiency, 0.1) / sigma_thompson / clight; 
+    enzo_max(MBHFeedbackRadiativeEfficiency, 0.1) / sigma_thompson / clight; 
 
-  accretion_rate[0] = min(mdot, mdot_Edd);
+  accretion_rate[0] = enzo_min(mdot, mdot_Edd);
 
 //  fprintf(stderr, "RecalibrateAccretingMassRatio = %g\n", 
 //	  RecalibrateAccretingMassRatio);  

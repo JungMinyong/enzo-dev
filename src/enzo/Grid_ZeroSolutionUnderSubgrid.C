@@ -108,8 +108,8 @@ int grid::ZeroSolutionUnderSubgrid(grid *Subgrid, int FieldsToZero,
 				nint((Subgrid->GridRightEdge[dim] - GridLeftEdge[dim]) / 
 						CellWidth[dim][0]) + GridStartIndex[dim] - 1;
 
-			SubgridStart[dim] = max(SubgridStart[dim], GridStartIndex[dim]);
-			SubgridEnd[dim]   = min(SubgridEnd[dim], GridEndIndex[dim]);
+			SubgridStart[dim] = enzo_max(SubgridStart[dim], GridStartIndex[dim]);
+			SubgridEnd[dim]   = enzo_min(SubgridEnd[dim], GridEndIndex[dim]);
 
 		} 
 
@@ -133,8 +133,8 @@ int grid::ZeroSolutionUnderSubgrid(grid *Subgrid, int FieldsToZero,
 			SubgridEnd[dim] = nint((Subgrid->GridRightEdge[dim] - Left) / 
 					CellWidth[dim][0]) - 1;
 
-			SubgridStart[dim] = max(SubgridStart[dim], 0);
-			SubgridEnd[dim]   = min(SubgridEnd[dim], GridDimension[dim]-1);
+			SubgridStart[dim] = enzo_max(SubgridStart[dim], 0);
+			SubgridEnd[dim]   = enzo_min(SubgridEnd[dim], GridDimension[dim]-1);
 		}
 
 		//    printf("  ZeroSUS: %"ISYM", %"ISYM", %"ISYM"\n", dim, SubgridStart[dim], SubgridEnd[dim]);

@@ -212,7 +212,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	  for (i = 0; i < MAX_DIMENSION; i++) {
 	    /* calculate the offset, so the index of the refined fluxes can
 	       be determined from the grid's index */
-	    RefinedOffset[i] = max(InitialFluxes->LeftFluxStartGlobalIndex[dim][i]-
+	    RefinedOffset[i] = enzo_max(InitialFluxes->LeftFluxStartGlobalIndex[dim][i]-
 				   RefinedFluxes->LeftFluxStartGlobalIndex[dim][i],0);
 	  }
  
@@ -240,11 +240,11 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	     initial and refined fluxes */
 	
 	  for (i = 0; i < GridRank; i++) {
-	    Start[i] = max(InitialFluxes->LeftFluxStartGlobalIndex[dim][i],
+	    Start[i] = enzo_max(InitialFluxes->LeftFluxStartGlobalIndex[dim][i],
 			   RefinedFluxes->LeftFluxStartGlobalIndex[dim][i]) -
 	      nlongint((CellLeftEdge[i][0] - DomainLeftEdge[i])/
 		       CellWidth[i][0]);
-	    End[i] = min(InitialFluxes->LeftFluxEndGlobalIndex[dim][i],
+	    End[i] = enzo_min(InitialFluxes->LeftFluxEndGlobalIndex[dim][i],
 			 RefinedFluxes->LeftFluxEndGlobalIndex[dim][i]) -
 	      nlongint((CellLeftEdge[i][0] - DomainLeftEdge[i])/
 		       CellWidth[i][0]);
@@ -264,7 +264,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	     Start[dim] and End[dim] should be the same because the
 	     layer to be corrected is but one cell thick. */
 	
-	  Start[dim] = max(Start[dim] - 1, 0);
+	  Start[dim] = enzo_max(Start[dim] - 1, 0);
 	  End[dim]   = Start[dim];
  
 	  /* Compute Dimensions of InitialFluxes */
@@ -278,7 +278,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	
 	  Offset = InitialFluxes->RightFluxStartGlobalIndex[dim][dim] -
 	    InitialFluxes->LeftFluxStartGlobalIndex[dim][dim] + 2;
-	  Offset = min(Offset, GridDimension[dim]-1);  // this isn't needed (?)
+	  Offset = enzo_min(Offset, GridDimension[dim]-1);  // this isn't needed (?)
  
  
 	  //For SUBling grids, alter Offset, Start, and End to reflect that we're
@@ -295,7 +295,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	    for(i=0;i<GridRank;i++)
 	      if(i != dim){
 		Dim[i] = GridEndIndex[i]-GridStartIndex[i]+1;
-		InitialOffset[i] = max( RefinedFluxes->LeftFluxStartGlobalIndex[dim][i]-
+		InitialOffset[i] = enzo_max( RefinedFluxes->LeftFluxStartGlobalIndex[dim][i]-
 					InitialFluxes->LeftFluxStartGlobalIndex[dim][i],
 					0);
 	      }else{
@@ -819,9 +819,9 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		i1 = (k*GridDimension[1] + j)*GridDimension[0] + Start[0];
 		i2 = i1 + Offset;
 		for (i = Start[0]; i <= End[0]; i++, i1++, i2++) {
-		  BaryonField[GENum][i1] = max(BaryonField[GENum][i1],
+		  BaryonField[GENum][i1] = enzo_max(BaryonField[GENum][i1],
 					       tiny_number);
-		  BaryonField[GENum][i2] = max(BaryonField[GENum][i2],
+		  BaryonField[GENum][i2] = enzo_max(BaryonField[GENum][i2],
 					       tiny_number);
 		  BaryonField[TENum][i1] = BaryonField[GENum][i1] +
 		    0.5 * BaryonField[Vel1Num][i1] * BaryonField[Vel1Num][i1];

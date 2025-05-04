@@ -114,7 +114,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
         for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
           igrid = (k * GridDimension[1] + j) * GridDimension[0] + GridStartIndex[0];
           for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++, igrid++) {
-            Prim[field][igrid] = min(1.0, max((Prim[field][igrid]/D[n]), SmallX));
+            Prim[field][igrid] = enzo_min(1.0, enzo_max((Prim[field][igrid]/D[n]), SmallX));
             sum[n] += Prim[field][igrid];
           }
         }
@@ -207,7 +207,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
 
 	  printf("UpdateMHDPrim: rho <0 at %"ISYM" %"ISYM" %"ISYM": rho_old=%"FSYM", rho=%"FSYM", rho_new=%"FSYM", dU[iD]=%"FSYM"\n", 
 		 i, j, k, rho_old, rho, D_new, dU[iD][n]);
-	  D_new = max(rho, SmallRho);
+	  D_new = enzo_max(rho, SmallRho);
 	  printf("UpdateMHDPrim: use rho: %"FSYM"\n", D_new);
 	  //	  D_new = rho;
 
@@ -275,7 +275,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
 	      eint1 > 0.5*eint) {
 	    eint = eint1;
 	  }
-	  eint = max(eint, emin);
+	  eint = enzo_max(eint, emin);
 	  BaryonField[GENum][igrid] = eint;
 	  BaryonField[TENum][igrid] = eint + 0.5*v2 + 0.5*B2/D_new;
 

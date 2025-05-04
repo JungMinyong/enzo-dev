@@ -88,7 +88,7 @@ int grid::RegridPausedPhotonPackage(PhotonPackageEntry** PP, grid* ParentGrid,
   (*PP)->Radius = length;
   (*PP)->level = (int) (0.5*ln2_inv * 
 		     logf(3 * M_1_PI * ((*PP)->Radius*(*PP)->Radius * dx2_inv)));
-  (*PP)->level = min(max((*PP)->level, 0), MAX_HEALPIX_LEVEL);
+  (*PP)->level = enzo_min(enzo_max((*PP)->level, 0), MAX_HEALPIX_LEVEL);
 
   // Adjust CurrentTime to equal (Radius / c)
   (*PP)->CurrentTime = PhotonTime + length / LightSpeed;

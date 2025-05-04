@@ -206,7 +206,7 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
   UTypVals[1] = 0.0;  UMaxVals[1] = 0.0;
   for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
     UTypVals[1] += eh[i]*eh[i];
-    UMaxVals[1] = max(UMaxVals[1],eh[i]*eh[i]);
+    UMaxVals[1] = enzo_max(UMaxVals[1],eh[i]*eh[i]);
   }
   UTypVals[1] = sqrt(UTypVals[1]/ArrDims[0]/ArrDims[1]/ArrDims[2]);
   UMaxVals[1] = sqrt(UMaxVals[1]);
@@ -266,10 +266,10 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
       float NiMax = UMaxVals[2];
       float NiTyp = UTypVals[2];
       if (Nchem > 1) {
-        NiMax = max(NiMax, UMaxVals[3]);
-        NiTyp = max(NiTyp, UTypVals[3]);
-        NiMax = max(NiMax, UMaxVals[4]);
-        NiTyp = max(NiTyp, UTypVals[4]);
+        NiMax = enzo_max(NiMax, UMaxVals[3]);
+        NiTyp = enzo_max(NiTyp, UTypVals[3]);
+        NiMax = enzo_max(NiMax, UMaxVals[4]);
+        NiTyp = enzo_max(NiTyp, UTypVals[4]);
       }
       if ((NiMax - NiTyp) > ScaleCorrTol*NiMax)
        NiScaleCorr = NiMax;
@@ -329,7 +329,7 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
       // if the radiation step was unsuccessful, back-track to previous 
       // step and pull back on dtrad
       if (recompute_step) {
-       dtrad = max(dtrad*0.5, mindt);
+       dtrad = enzo_max(dtrad*0.5, mindt);
        tnew = told;
        radstop = 0;
       }
@@ -360,8 +360,8 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
       chemstop = 0;
       for (chemstep=0; chemstep<=maxchemsub*2; chemstep++) {
       	// update tchem
-        thisdt = min(dtchem, dt);             // do not exceed radiation dt
-        thisdt = max(thisdt, dt/maxchemsub);  // set max subcycle count wrt radiation
+        thisdt = enzo_min(dtchem, dt);             // do not exceed radiation dt
+        thisdt = enzo_max(thisdt, dt/maxchemsub);  // set max subcycle count wrt radiation
         tchem += thisdt;                      // update chemistry time
         if ((tchem - tnew)/tnew > -1.0e-14) { // do not exceed radiation time
           thisdt = tnew - (tchem - thisdt);   // get max time step
@@ -379,7 +379,7 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
         // update chemistry time step size based on changes to chem+energy
         //   (limit growth at each cycle)
         dtchem2 = this->ComputeTimeStep(U0,sol,1);
-        dtchem = min(dtchem2, 2.0*dtchem);
+        dtchem = enzo_min(dtchem2, 2.0*dtchem);
 
         //   Zero out fluid energy correction fields
         for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
@@ -413,7 +413,7 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
     // update the radiation time step size for next time step
     //   (limit growth at each cycle)
     float dt_est = this->ComputeTimeStep(U0,sol,0);
-    dtrad = min(dt_est, dtgrowth*dtrad);
+    dtrad = enzo_min(dt_est, dtgrowth*dtrad);
 
     // update Enzo radiation field with new values
     U0->copy_component(sol, 0);
@@ -453,23 +453,23 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
 
   // update scaling factors to account for new values
   if (StartAutoScale && autoScale) {
-    ErScale *= max(ErScaleCorr, 1.0);
-    ecScale *= max(ecScaleCorr, 1.0);
-    NiScale *= max(NiScaleCorr, 1.0);
+    ErScale *= enzo_max(ErScaleCorr, 1.0);
+    ecScale *= enzo_max(ecScaleCorr, 1.0);
+    NiScale *= enzo_max(NiScaleCorr, 1.0);
   }
 
   //   Update dependent chemical species densities (ne, nHII, nHeIII) 
   //   using computed values
   if (Nchem == 1) {   // update ne, HII
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
-      nHII[i] = max(rho[i]*HFrac - nHI[i], 0.0);
+      nHII[i] = enzo_max(rho[i]*HFrac - nHI[i], 0.0);
       ne[i] = nHII[i];
     }
   }
   else if (Nchem == 3) {   // update ne, HII, HeIII
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
-      nHII[i] = max(rho[i]*HFrac - nHI[i], 0.0);
-      nHeIII[i] = max(rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i], 0.0);
+      nHII[i] = enzo_max(rho[i]*HFrac - nHI[i], 0.0);
+      nHeIII[i] = enzo_max(rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i], 0.0);
       ne[i] = nHII[i] + nHeII[i]/4.0 + nHeIII[i]/2.0;
     }
   }
@@ -572,20 +572,20 @@ int gFLDSplit::ChemStep(HierarchyEntry *ThisGrid, float thisdt, float tcur)
   int i;
   if (Nchem > 0)
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-      sol_HI[i] = min(max(sol_HI[i],epsilon2),rho[i]*HFrac);
+      sol_HI[i] = enzo_min(enzo_max(sol_HI[i],epsilon2),rho[i]*HFrac);
   if (Nchem > 1) {
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-      sol_HeI[i] = max(sol_HeI[i],epsilon2);
+      sol_HeI[i] = enzo_max(sol_HeI[i],epsilon2);
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-      sol_HeII[i] = max(sol_HeII[i],epsilon2);
+      sol_HeII[i] = enzo_max(sol_HeII[i],epsilon2);
   }
   
   //   Add fluid correction to fluid energy field (with floor)
   for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
-    eh_tot[i] = max(eh_tot[i]+sol_ec[i]*ecScale,tiny_number);
+    eh_tot[i] = enzo_max(eh_tot[i]+sol_ec[i]*ecScale,tiny_number);
   if (DualEnergyFormalism) {
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
-      eh_gas[i] = max(eh_gas[i]+sol_ec[i]*ecScale,tiny_number);
+      eh_gas[i] = enzo_max(eh_gas[i]+sol_ec[i]*ecScale,tiny_number);
   }
 
   // rescale thisdt, tcur back to normalized values
@@ -635,8 +635,8 @@ int gFLDSplit::ChemBounds(HierarchyEntry *ThisGrid)
   if (Nchem > 0) {
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
       // first ensure that no densities are negative
-      nHI[i]  = max(0.0, nHI[i]);
-      nHII[i] = max(0.0, nHII[i]);
+      nHI[i]  = enzo_max(0.0, nHI[i]);
+      nHII[i] = enzo_max(0.0, nHII[i]);
 
       // set rhochem as the total H 'density' according to H* species
       rhochem = nHI[i] + nHII[i];
@@ -645,8 +645,8 @@ int gFLDSplit::ChemBounds(HierarchyEntry *ThisGrid)
       nHI[i] *= rho[i]*HFrac/rhochem;
 
       // correct if precision isn't good enough, and all rho is HI
-      nHI[i]  = min(nHI[i],rho[i]*HFrac);
-      nHII[i] = max(0.0, rho[i]*HFrac - nHI[i]);
+      nHI[i]  = enzo_min(nHI[i],rho[i]*HFrac);
+      nHII[i] = enzo_max(0.0, rho[i]*HFrac - nHI[i]);
     }
   }
 
@@ -656,9 +656,9 @@ int gFLDSplit::ChemBounds(HierarchyEntry *ThisGrid)
     for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++) {
 
       // first ensure that no densities are negative
-      nHeI[i]   = max(0.0, nHeI[i]);
-      nHeII[i]  = max(0.0, nHeII[i]);
-      nHeIII[i] = max(0.0, nHeIII[i]);
+      nHeI[i]   = enzo_max(0.0, nHeI[i]);
+      nHeII[i]  = enzo_max(0.0, nHeII[i]);
+      nHeIII[i] = enzo_max(0.0, nHeIII[i]);
 
       // set rhochem as the total He 'density' according to He* species
       rhochem = nHeI[i] + nHeII[i] + nHeIII[i];
@@ -666,7 +666,7 @@ int gFLDSplit::ChemBounds(HierarchyEntry *ThisGrid)
       // update HeI, HeII as appropriate fractions of 'true' density
       nHeI[i]   *= rho[i]*(1.0-HFrac)/rhochem;
       nHeII[i]  *= rho[i]*(1.0-HFrac)/rhochem;
-      nHeIII[i] = max(0.0, rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i]);
+      nHeIII[i] = enzo_max(0.0, rho[i]*(1.0-HFrac) - nHeI[i] - nHeII[i]);
     }
   }
 
@@ -798,8 +798,8 @@ int gFLDSplit::RadStep(HierarchyEntry *ThisGrid, int eta_set)
   
   // set linear solver tolerance (rescale to relative residual and not actual)
   delta = (rhsnorm > 1.e-8) ? sol_tolerance/rhsnorm : delta;
-  //  delta = min(delta, 1.0e-6);
-  delta = min(delta, 1.0e-2);
+  //  delta = enzo_min(delta, 1.0e-6);
+  delta = enzo_min(delta, 1.0e-2);
   
   // insert sol initial guess into HYPRE vector x 
   int xBuff, yBuff, zBuff, Zbl, Ybl, ix, iy, iz;  // mesh indexing shortcuts
@@ -860,7 +860,7 @@ int gFLDSplit::RadStep(HierarchyEntry *ThisGrid, int eta_set)
 	Ndir /= 2;
       }
     }
-    max_levels = min(level,max_levels);
+    max_levels = enzo_min(level,max_levels);
   }
   if (rank > 2) {
     if (BdryType[2][0] == 0) {
@@ -871,7 +871,7 @@ int gFLDSplit::RadStep(HierarchyEntry *ThisGrid, int eta_set)
 	Ndir /= 2;
       }
     }
-    max_levels = min(level,max_levels);
+    max_levels = enzo_min(level,max_levels);
   }
 
   //    set preconditioner options
@@ -1043,7 +1043,7 @@ int gFLDSplit::RadStep(HierarchyEntry *ThisGrid, int eta_set)
   float epsilon=1.0;      // radiation floor
   while (epsilon*0.25 > 0.0)  epsilon*=0.5;
   for (int i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-    Eg_new[i] = max(Eg_new[i],epsilon);
+    Eg_new[i] = enzo_max(Eg_new[i],epsilon);
 
   // rescale dt, told, tnew, adot back to normalized values
   dt   /= TimeUnits;

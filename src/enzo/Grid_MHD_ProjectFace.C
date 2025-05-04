@@ -158,8 +158,8 @@ int grid::MHD_ProjectFace(grid &ParentGrid,
 	  //For communication, it will be re-set later.
 	  ParentDim[dim] = ParentGrid.GridDimension[dim];
 	  MHD_ProjectThisFace[dim]=FALSE;	
-	  OverlapLeft = max(ParentGrid.GridLeftEdge[dim], MovedSubLeft[dim] );
-	  OverlapRight = min(ParentGrid.GridRightEdge[dim],MovedSubRight[dim]);
+	  OverlapLeft = enzo_max(ParentGrid.GridLeftEdge[dim], MovedSubLeft[dim] );
+	  OverlapRight = enzo_min(ParentGrid.GridRightEdge[dim],MovedSubRight[dim]);
 
 	  ParentStartIndex[dim]=
 	    nint( (OverlapLeft-ParentGrid.GridLeftEdge[dim])/

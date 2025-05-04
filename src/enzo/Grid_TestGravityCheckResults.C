@@ -47,7 +47,7 @@ int grid::TestGravityCheckResults(FILE *fptr, grid *TopGrid)
   /* Set top grid cell size. */
  
   float TopGridCellWidth = TopGrid->CellWidth[0][0];
-  dtFixed = max(dtFixed, TopGrid->dtFixed);
+  dtFixed = enzo_max(dtFixed, TopGrid->dtFixed);
  
   /* Loop over particles, computing radial distance from the center and
      comparing the analyic force to the compute acceleration (determined
@@ -86,7 +86,7 @@ int grid::TestGravityCheckResults(FILE *fptr, grid *TopGrid)
     ftang = 0.0;
     for (dim = 0; dim < GridRank; dim++)
       ftang += POW(ParticleVelocity[dim][i]/dtFixed, float(2.0));
-    ftang = sqrt(max(ftang - fradial*fradial, 0.0));
+    ftang = sqrt(enzo_max(ftang - fradial*fradial, 0.0));
  
     /* Compute analytic acceleration. */
  

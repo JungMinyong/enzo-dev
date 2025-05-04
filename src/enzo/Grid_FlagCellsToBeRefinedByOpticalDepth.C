@@ -105,7 +105,7 @@ int grid::FlagCellsToBeRefinedByOpticalDepth()
 	  tau1 = OpticalDepthConversion * BaryonField[HINum][index+i];
 	  tau2 = OpticalDepthConversion * BaryonField[HINum][index+i+offset];
 	  if (BaryonField[kphHINum][index+i] > tiny_number && // inv_dt_sec &&
-	      //	      max(tau0, MAX(tau1,tau2)) > MAX_TAU) {
+	      //	      enzo_max(tau0, MAX(tau1,tau2)) > MAX_TAU) {
 	      tau1 > MAX_TAU) {
 
 	    FlaggingField[index+i]++;
@@ -113,10 +113,10 @@ int grid::FlagCellsToBeRefinedByOpticalDepth()
 
 	    avgTau  += tau1;//tau0 + tau1 + tau2;
 	    avg_kph += BaryonField[kphHINum][index+i];
-	    minTau = min(tau1, minTau);
-	    maxTau = max(tau1, maxTau);
-	    minkph = min(BaryonField[kphHINum][index+i], minkph);
-	    maxkph = max(BaryonField[kphHINum][index+i], maxkph);
+	    minTau = enzo_min(tau1, minTau);
+	    maxTau = enzo_max(tau1, maxTau);
+	    minkph = enzo_min(BaryonField[kphHINum][index+i], minkph);
+	    maxkph = enzo_max(BaryonField[kphHINum][index+i], maxkph);
 
 //	    if (dim == 0)
 //	      printf("FlagTau: kph = %"FSYM", idx = %"ISYM"/%"ISYM" %"ISYM"/%"ISYM" %"ISYM"/%"ISYM" (%"ISYM")\n",

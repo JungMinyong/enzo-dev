@@ -107,8 +107,8 @@ int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime)
 
   logaInitial               = log10(1. / (1. + InitialRedshift));
   logaFinal                 = log10(1. / (1. + FinalRedshift));
-  CosmologyTableLogaInitial = min(CosmologyTableLogaInitial, logaInitial);
-  CosmologyTableLogaFinal   = max(CosmologyTableLogaFinal,   logaFinal);
+  CosmologyTableLogaInitial = enzo_min(CosmologyTableLogaInitial, logaInitial);
+  CosmologyTableLogaFinal   = enzo_max(CosmologyTableLogaFinal,   logaFinal);
 
   if (InitializeCosmologyTable() == FAIL) {
     ENZO_FAIL("Error in InitializeCosmologyTable.\n");

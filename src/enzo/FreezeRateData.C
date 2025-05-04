@@ -121,15 +121,15 @@ int FreezeRateData(FLOAT Time, HierarchyEntry &TopGrid)
 
   //    put the temperature together
   float mu = rho/num_density;
-  float Temp = max((Gamma-1.0)*mu*mh*eint/kboltz, 1.0);
+  float Temp = enzo_max((Gamma-1.0)*mu*mh*eint/kboltz, 1.0);
 
   // find temperature bin
   float lamT = 3.15614e5/Temp;
   float lTempS = log(CoolData.TemperatureStart);
   float lTempE = log(CoolData.TemperatureEnd);
   float dlTemp = (lTempE - lTempS)/(1.0*CoolData.NumberOfTemperatureBins - 1.0);
-  float lTemp  = min(max(log(Temp), lTempS), lTempE);
-  int Tidx = min(CoolData.NumberOfTemperatureBins-1, max(1, int((lTemp-lTempS)/dlTemp)+1));
+  float lTemp  = enzo_min(enzo_max(log(Temp), lTempS), lTempE);
+  int Tidx = enzo_min(CoolData.NumberOfTemperatureBins-1, enzo_max(1, int((lTemp-lTempS)/dlTemp)+1));
   int Tidxp = Tidx+1;
   float Tl = lTempS + (Tidx-1)*dlTemp;
   float Tr = lTempS +  Tidx*dlTemp;

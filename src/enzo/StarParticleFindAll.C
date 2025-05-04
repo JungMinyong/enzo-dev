@@ -16,9 +16,11 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
+#include <unordered_map>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "ErrorExceptions.h"
 #include "EnzoTiming.h"
 #include "macros_and_parameters.h"
@@ -32,7 +34,6 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
-#include <unordered_map>
 #ifdef USE_MPI
 static int FirstTimeCalled = TRUE;
 static MPI_Datatype MPI_STAR;
@@ -65,7 +66,7 @@ std::map<int, Star*> grid::MakeStarParticleMap() // makes lookup table to quickl
 
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-                        , std::unordered_map<int, Star*>LocalStarLookupMap
+                        , std::unordered_map<int, Star*> &LocalStarLookupMap
 #endif
 )
 {
@@ -163,9 +164,6 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 
 	} // ENDFOR level
 
-#if defined(NBODY) && defined(INDIVIDUALSTAR)
-	LocalStarLookupMap = LocalStars->MakeStarsUnorderedMap();
-#endif
 
 
 #ifdef aeos_debug
@@ -331,6 +329,10 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 		TotalNumberOfStars = LocalNumberOfStars;
 		AllStars = LocalStars;
 	}
+
+
+
+
 #ifdef aeos_debug
 		std::cout << "star find all 2" << std::endl;
 		//CommunicationBarrier();
@@ -339,9 +341,15 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 	/* Find minimum stellar lifetime */
   TIMER_START("StarParticleFindAll:MiniStellarLife");
 
-	for (cstar = AllStars; cstar; cstar = cstar->NextStar)
-		if (cstar->ReturnMass() > 1e-9)
-			minStarLifetime = min(minStarLifetime, cstar->ReturnLifetime());
+  for (cstar = AllStars; cstar; cstar = cstar->NextStar) {
+    if (cstar->ReturnMass() > 1e-9)
+      minStarLifetime = enzo_min(minStarLifetime, cstar->ReturnLifetime());
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+		if (cstar->ReturnCurrentGrid() != NULL) {
+			LocalStarLookupMap.insert({cstar->ReturnID(), cstar});
+		}
+#endif
+  }
 
   TIMER_STOP("StarParticleFindAll:MiniStellarLife");
 	/* Store in global variable */

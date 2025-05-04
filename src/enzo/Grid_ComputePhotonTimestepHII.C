@@ -132,8 +132,8 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
 	if (BaryonField[kphHINum][index] <= Ifront_kph &&
 	    BaryonField[kphHINum][index] > 0) {
 
-	  logtem = min( max( log(temperature[index]), logtem0 ), logtem9 );
-	  tidx = min( nbins-1, max(1, int((logtem - logtem0) / dlogtem)+1) );
+	  logtem = enzo_min( enzo_max( log(temperature[index]), logtem0 ), logtem9 );
+	  tidx = enzo_min( nbins-1, enzo_max(1, int((logtem - logtem0) / dlogtem)+1) );
 	  t1 = logtem0 + (tidx - 1) * dlogtem;
 	  t2 = logtem0 + (tidx    ) * dlogtem;
 	  tdef = t2 - t1;
@@ -160,7 +160,7 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
 
 	  alldt[index] = MAX_CHANGE * BaryonField[HIINum][index] / HIIdot;
 
-	} // ENDIF radiation > max(kph) in I-front (tau>~0.1)
+	} // ENDIF radiation > enzo_max(kph) in I-front (tau>~0.1)
 
 	/* If not in the I-front, use the normal Godunov formula */
 	else {
@@ -187,12 +187,12 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
 
   imin = INT_UNDEFINED;
   for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
-    k0 = max(k-1, GridStartIndex[2]);
-    k1 = min(k+1, GridEndIndex[2]);
+    k0 = enzo_max(k-1, GridStartIndex[2]);
+    k1 = enzo_min(k+1, GridEndIndex[2]);
     nz = k1-k0+1;
     for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
-      j0 = max(j-1, GridStartIndex[1]);
-      j1 = min(j+1, GridEndIndex[1]);
+      j0 = enzo_max(j-1, GridStartIndex[1]);
+      j1 = enzo_min(j+1, GridEndIndex[1]);
       ny = j1-j0+1;
       index = GRIDINDEX_NOGHOST(GridStartIndex[0],j,k);
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
@@ -200,8 +200,8 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
 	if (BaryonField[kphHINum][index] <= Ifront_kph &&
 	    BaryonField[kphHINum][index] > 0) {
 
-	  i0 = max(i-1, GridStartIndex[0]);
-	  i1 = min(i+1, GridEndIndex[1]);
+	  i0 = enzo_max(i-1, GridStartIndex[0]);
+	  i1 = enzo_min(i+1, GridEndIndex[1]);
 	  nx = i1-i0+1;
 	  weight = 0.0;
 	  this_dt = 0.0;
@@ -223,7 +223,7 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
 	  this_dt = (weight>0) ? this_dt/weight : huge_number;
 	  if (DEBUG)
 	    if (this_dt < dt) imin = GRIDINDEX_NOGHOST(i,j,k);
-	  dt = min(dt, this_dt);
+	  dt = enzo_min(dt, this_dt);
 
 	} // ENDIF kph (I-front)
       } // ENDFOR i

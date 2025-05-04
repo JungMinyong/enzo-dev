@@ -120,10 +120,10 @@ int SetEvolveRefineRegion (FLOAT time)
 	} // if(timestep == EvolveRefineRegionNtimes-1)
 
       } else {
-	RefineRegionLeftEdge[i] = max(EvolveRefineRegionLeftEdge[timestep][i],
+	RefineRegionLeftEdge[i] = enzo_max(EvolveRefineRegionLeftEdge[timestep][i],
 				      StaticRefineRegionLeftEdge[staticRegion][i]);
 	RefineRegionRightEdge[i] = 
-	  min(EvolveRefineRegionRightEdge[timestep][i],
+	  enzo_min(EvolveRefineRegionRightEdge[timestep][i],
 	      StaticRefineRegionRightEdge[staticRegion][i]);
       } // if (staticRegion < 0) {
 

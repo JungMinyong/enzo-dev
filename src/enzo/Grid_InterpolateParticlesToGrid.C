@@ -82,8 +82,8 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 		      (DomainRightEdge[0] - DomainLeftEdge[0]));
     max_slab = (int) (NumberOfProcessors * (GridRightEdge[0] - DomainLeftEdge[0]) /
 		      (DomainRightEdge[0] - DomainLeftEdge[0]));
-    min_slab = max(min_slab, 0);
-    max_slab = min(max_slab, NumberOfProcessors-1);
+    min_slab = enzo_max(min_slab, 0);
+    max_slab = enzo_min(max_slab, NumberOfProcessors-1);
   }
 
   /* Post receive mode :: allocate memory and post receives */
@@ -206,10 +206,10 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
       NumberOfProcessors;
     
     SlabStartIndex = (int) ((SlabLeftEdge - GridLeftEdge[0]) / CellWidth[0][0]);
-    SlabStartIndex = max(SlabStartIndex, 0);
+    SlabStartIndex = enzo_max(SlabStartIndex, 0);
 
     SlabEndIndex = (int) ((SlabRightEdge - GridLeftEdge[0]) / CellWidth[0][0]) - 1;
-    SlabEndIndex = min(SlabEndIndex, ActiveDim[0]-1);
+    SlabEndIndex = enzo_min(SlabEndIndex, ActiveDim[0]-1);
 
     // Allocate and zero memory
     for (field = 0; field < NumberOfFields; field++) {

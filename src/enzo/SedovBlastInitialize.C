@@ -134,7 +134,7 @@ const  char *Vel3Name = "z-velocity";
 
   /* Radius of initial explosion at t = 0 */
 
-  float dr = SedovBlastEnergyZones*dx*max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
+  float dr = SedovBlastEnergyZones*dx*enzo_max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
 
   /* Set up current problem time, ambient total energy. */
 

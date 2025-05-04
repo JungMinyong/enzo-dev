@@ -89,8 +89,8 @@ int grid::SetSubgridMarkerFromSubgrid(grid *Subgrid)
 	(Subgrid->GridRightEdge[dim] - GridLeftEdge[dim])/CellWidth[dim][0]
 			       ) + GridStartIndex[dim] - 1;
 
-    SubgridStart[dim] = max(SubgridStart[dim], 0);
-    SubgridEnd[dim]   = min(SubgridEnd[dim], GridDimension[dim]-1);
+    SubgridStart[dim] = enzo_max(SubgridStart[dim], 0);
+    SubgridEnd[dim]   = enzo_min(SubgridEnd[dim], GridDimension[dim]-1);
 
   }
 

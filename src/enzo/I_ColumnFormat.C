@@ -28,7 +28,7 @@ int i,j;
  
   for(j=0;j<n;j=j+m)
   {
-    for(i=j;i<min(j+m,n);i++)
+    for(i=j;i<enzo_min(j+m,n);i++)
     {
       fprintf(log_fptr, "%1"ISYM" ", x[i]);
     }

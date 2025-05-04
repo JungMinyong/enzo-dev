@@ -210,8 +210,8 @@ int DetermineSEDParameters(ActiveParticleType_SmartStar *SS, FLOAT Time, FLOAT d
     float epsilon = SS->eta_disk;
     double eddrate = 4*M_PI*GravConst*BHMass*SolarMass*mh/(epsilon*clight*sigma_thompson); // g/s
     eddrate = eddrate*yr_s/SolarMass; //in Msolar/yr
-    accrate = max(accrate, 1e-6);
-    BHMass = min(BHMass, 1.0);
+    accrate = enzo_max(accrate, 1e-6);
+    BHMass = enzo_min(BHMass, 1.0);
     int arrayindex = CalculateArrayIndex(BHMass, accrate);
     SS->LuminosityPerSolarMass = BHArray[arrayindex][0]/BHMass; //erg/s/msun
     

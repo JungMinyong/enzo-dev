@@ -182,7 +182,7 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	    ddr2[dim][i] = 
 	      fabs(CellLeftEdge[dim][index] + 0.5*CellWidth[dim][0] - 
 		   RS->Position[dim]);
-              if (RadiativeTransferPeriodicBoundary) ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
+              if (RadiativeTransferPeriodicBoundary) ddr2[dim][i] = enzo_min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
 	    ddr2[dim][i] = ddr2[dim][i] * ddr2[dim][i];
 	  }
 
@@ -205,7 +205,7 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	    for (i = 0; i < ActiveDims[0]; i++, index++) {
 	      radius2 = radius2_yz + ddr2[0][i];
 	      //if (radius2 < outerFront2 && radius2 > innerFront2) {
-	      //radius2 = max(radius2, dilRadius2);
+	      //radius2 = enzo_max(radius2, dilRadius2);
 	      if (radius2 < dilRadius2) {
 		BaryonField[kdissH2INum][index] += kdiss_r2 / dilRadius2;
 		BaryonField[kdissH2IINum][index] += kdiss_H2II / dilRadius2;
@@ -294,7 +294,7 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	  ddr2[dim][i] = 
 	    fabs(CellLeftEdge[dim][index] + 0.5*CellWidth[dim][0] -
 		 cstar->pos[dim]);
-//	  ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
+//	  ddr2[dim][i] = enzo_min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
 	  ddr2[dim][i] = ddr2[dim][i] * ddr2[dim][i];
 	      }
 	}
@@ -366,7 +366,7 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	    ddr2[dim][i] = 
 	      fabs(CellLeftEdge[dim][index] + 0.5*CellWidth[dim][0] - 
 		   RS->Position[dim]);
-	    ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
+	    ddr2[dim][i] = enzo_min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
 	    ddr2[dim][i] = ddr2[dim][i] * ddr2[dim][i];
 	  }
 
@@ -387,7 +387,7 @@ int grid::AddH2DissociationFromSources(Star *AllStars)
 	    for (i = 0; i < ActiveDims[0]; i++, index++) {
 	      radius2 = radius2_yz + ddr2[0][i];
 	      //if (radius2 < outerFront2 && radius2 > innerFront2) {
-	      //radius2 = max(radius2, dilRadius2);
+	      //radius2 = enzo_max(radius2, dilRadius2);
 	      if (radius2 < dilRadius2) {
 		BaryonField[kdissH2INum][index] += kdiss_r2 / dilRadius2;
 		BaryonField[kdissH2IINum][index] += kdiss_H2II / dilRadius2;

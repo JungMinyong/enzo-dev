@@ -90,8 +90,8 @@ int ExternalBoundary::SetShockPoolBoundary(FLOAT time)
       dim2 = dim1 + 1;
       dim2 = (dim2 == dim) ? dim2+1 : dim2;
       for (i = 0; i < 3; i++) {
-	NumberOfZones[i] = max(BoundaryDimension[i] - 2*NumberOfGhostZones,1);
-	Offset[i]        = min(NumberOfGhostZones, BoundaryDimension[i]) - 1;
+	NumberOfZones[i] = enzo_max(BoundaryDimension[i] - 2*NumberOfGhostZones,1);
+	Offset[i]        = enzo_min(NumberOfGhostZones, BoundaryDimension[i]) - 1;
       }
       pos[dim] = 0.0;
  

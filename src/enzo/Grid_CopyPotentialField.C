@@ -121,8 +121,8 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 			/* Compute left and right positions in problem space.
 note: include buffer zones of this grid but not the other grid. */
 
-			Left  = max(GridLeft[dim], OtherGridLeft[dim]);
-			Right = min(GridRight[dim], OtherGridRight[dim]);
+			Left  = enzo_max(GridLeft[dim], OtherGridLeft[dim]);
+			Right = enzo_min(GridRight[dim], OtherGridRight[dim]);
 
 			/* Convert this to index positions in this grid */
 
@@ -332,8 +332,8 @@ int grid::CopyPotentialFieldNoStar(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSI
 			/* Compute left and right positions in problem space.
 note: include buffer zones of this grid but not the other grid. */
 
-			Left  = max(GridLeft[dim], OtherGridLeft[dim]);
-			Right = min(GridRight[dim], OtherGridRight[dim]);
+			Left  = enzo_max(GridLeft[dim], OtherGridLeft[dim]);
+			Right = enzo_min(GridRight[dim], OtherGridRight[dim]);
 
 			/* Convert this to index positions in this grid */
 

@@ -185,7 +185,7 @@ int grid::LightBosonInitializeGrid(float CenterPosition, int LightBosonProblemTy
 
   int SetupLoopCount, npart = 0;
   fprintf(stderr, "initialize particles \n" );
-  for (SetupLoopCount = 0; SetupLoopCount < 1+min(UseParticles, 1); SetupLoopCount++) {
+  for (SetupLoopCount = 0; SetupLoopCount < 1+enzo_min(UseParticles, 1); SetupLoopCount++) {
 
     /* Set particles. */
 

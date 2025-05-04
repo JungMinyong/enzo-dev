@@ -147,7 +147,7 @@ int ActiveParticleType_SpringelHernquist::EvaluateFormation
 	 * ====================================================================
 	 */
 
-	starfraction = min(MinimumMass / bmass, 0.5);
+	starfraction = enzo_min(MinimumMass / bmass, 0.5);
 
 	ActiveParticleType_SpringelHernquist *np = 
       new ActiveParticleType_SpringelHernquist();

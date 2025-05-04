@@ -99,19 +99,19 @@ int grid::ProjectToPlane(FLOAT ProjectedFieldLeftEdge[],
   /* Find the start and stop indicies in the ProjectionDimension of this
      grid for the projected region. */
  
-  start = max(int((ProjectedFieldLeftEdge[ProjectionDimension] -
+  start = enzo_max(int((ProjectedFieldLeftEdge[ProjectionDimension] -
 	 	   GridLeftEdge[ProjectionDimension]) /
 	          CellWidth[ProjectionDimension][0]), 0);
-  stop  = min(int((ProjectedFieldRightEdge[ProjectionDimension] -
+  stop  = enzo_min(int((ProjectedFieldRightEdge[ProjectionDimension] -
 	           GridLeftEdge[ProjectionDimension]) /
 	          CellWidth[ProjectionDimension][0]),
 	      GridEndIndex[ProjectionDimension] -
 	      GridStartIndex[ProjectionDimension]);
  
-  LeftCellFraction = min(1.0 - ((ProjectedFieldLeftEdge[ProjectionDimension] -
+  LeftCellFraction = enzo_min(1.0 - ((ProjectedFieldLeftEdge[ProjectionDimension] -
 				 GridLeftEdge[ProjectionDimension]) /
 				CellWidth[ProjectionDimension][0] - start), 1);
-  RightCellFraction = min((ProjectedFieldRightEdge[ProjectionDimension] -
+  RightCellFraction = enzo_min((ProjectedFieldRightEdge[ProjectionDimension] -
 			   GridLeftEdge[ProjectionDimension]) /
 			  CellWidth[ProjectionDimension][0] - stop, 1);
  
@@ -263,13 +263,13 @@ int grid::ProjectToPlane(FLOAT ProjectedFieldLeftEdge[],
  
     /* Copy grid-like region of GravitatingMassFieldParticles to temp field. */
  
-    for (k = max(0,Offset[2]); k < GridDimension[2]-max(0,Offset[2]); k++)
-      for (j = max(0,Offset[1]); j < GridDimension[1]-max(0,Offset[1]); j++) {
-        bfindex = (k*GridDimension[1] + j)*GridDimension[0] + max(0,Offset[0]);
+    for (k = enzo_max(0,Offset[2]); k < GridDimension[2]-enzo_max(0,Offset[2]); k++)
+      for (j = enzo_max(0,Offset[1]); j < GridDimension[1]-enzo_max(0,Offset[1]); j++) {
+        bfindex = (k*GridDimension[1] + j)*GridDimension[0] + enzo_max(0,Offset[0]);
         dmindex = ((k - Offset[2])*GravitatingMassFieldParticlesDimension[1] +
                    (j - Offset[1]))*GravitatingMassFieldParticlesDimension[0] +
-		   (max(0, Offset[0]) - Offset[0]);
-	for (i = max(0,Offset[0]); i < GridDimension[0]-max(0,Offset[0]);
+		   (enzo_max(0, Offset[0]) - Offset[0]);
+	for (i = enzo_max(0,Offset[0]); i < GridDimension[0]-enzo_max(0,Offset[0]);
 	     i++, bfindex++, dmindex++)
 	  temp[bfindex] = GravitatingMassFieldParticles[dmindex];
       }
@@ -329,9 +329,9 @@ int grid::ProjectToPlane(FLOAT ProjectedFieldLeftEdge[],
   int PFStart[MAX_DIMENSION], PFStop[MAX_DIMENSION];
   for (dim = 0; dim < GridRank; dim++) {
  
-    PFStart[dim] = max(nint((GridLeftEdge[dim] - ProjectedFieldLeftEdge[dim])/
+    PFStart[dim] = enzo_max(nint((GridLeftEdge[dim] - ProjectedFieldLeftEdge[dim])/
 			     ProjectedFieldCellSize), 0);
-    PFStop[dim]  = min(nint((GridRightEdge[dim] - ProjectedFieldLeftEdge[dim])/
+    PFStop[dim]  = enzo_min(nint((GridRightEdge[dim] - ProjectedFieldLeftEdge[dim])/
 		 	     ProjectedFieldCellSize),
 		       ProjectedFieldDims[dim]) - 1;
   }

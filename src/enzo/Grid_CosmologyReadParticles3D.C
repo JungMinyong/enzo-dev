@@ -95,8 +95,8 @@ int grid::CosmologyReadParticles3D(
     skip = false;
     if (StaticRefineRegionLevel[region] == level) {
       for (dim = 0; dim < MAX_DIMENSION; dim++)
-	if (max(StaticRefineRegionLeftEdge[region][dim],  GridLeftEdge[dim]) >=
-	    min(StaticRefineRegionRightEdge[region][dim], GridRightEdge[dim]))
+	if (enzo_max(StaticRefineRegionLeftEdge[region][dim],  GridLeftEdge[dim]) >=
+	    enzo_min(StaticRefineRegionRightEdge[region][dim], GridRightEdge[dim]))
 	  skip = true;
       if (skip) break;
       for (dim = 0; dim < MAX_DIMENSION; dim++) {
@@ -104,8 +104,8 @@ int grid::CosmologyReadParticles3D(
 				       GridLeftEdge[dim]) / CellWidth[dim][0]);
 	EndRegion[dim] = (int) nint((StaticRefineRegionRightEdge[region][dim] - 
 				     GridLeftEdge[dim]) / CellWidth[dim][0]);
-	StartRegion[dim] = max(StartRegion[dim], 0);
-	EndRegion[dim] = min(EndRegion[dim], ActiveDim[dim]);
+	StartRegion[dim] = enzo_max(StartRegion[dim], 0);
+	EndRegion[dim] = enzo_min(EndRegion[dim], ActiveDim[dim]);
       }
 
       for (k = StartRegion[2]; k < EndRegion[2]; k++)
@@ -274,8 +274,8 @@ int grid::CosmologyReadParticles3D(
 	  inside1[dim] = StartRegion[dim]-1 >= 0 &&
 	    StartRegion[dim]-1 < ActiveDim[dim];
 	  inside2[dim] = EndRegion[dim]+1 > 0 && EndRegion[dim]+1 < ActiveDim[dim];
-	  StartRegion[dim] = max(StartRegion[dim], 0);
-	  EndRegion[dim] = min(EndRegion[dim], ActiveDim[dim]);
+	  StartRegion[dim] = enzo_max(StartRegion[dim], 0);
+	  EndRegion[dim] = enzo_min(EndRegion[dim], ActiveDim[dim]);
 	} // ENDFOR dim
 
 	for (dim = 0; dim < MAX_DIMENSION; dim++) {

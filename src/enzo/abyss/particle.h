@@ -1,11 +1,11 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include "def.h"
 #include <cmath>
 #include <limits> 
 #include <iostream>
 #include <iomanip>
+#include "def.h"
 #ifdef SEVN
 #include "star.h" // Eunwoo added for SEVN
 #endif

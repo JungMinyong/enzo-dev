@@ -45,7 +45,7 @@ int ProtoSubgrid::LargeAxisRatioCheck(int &SplitDim, int GridEnds[MAX_DIMENSION*
     //printf("GridDims are %d,\n",Center,SplitDim);
     GridEnds[SplitDim*2][0] = StartIndex[SplitDim];
     GridEnds[SplitDim*2][1] = StartIndex[SplitDim] + Center;
-    GridEnds[SplitDim*2+1][0] = min(GridEnds[SplitDim*2][1]+1, EndIndex[SplitDim]);
+    GridEnds[SplitDim*2+1][0] = enzo_min(GridEnds[SplitDim*2][1]+1, EndIndex[SplitDim]);
     GridEnds[SplitDim*2+1][1] = EndIndex[SplitDim];
 
     //    printf("Ori GridEnds: %d %d\n",StartIndex[SplitDim],EndIndex[SplitDim]);

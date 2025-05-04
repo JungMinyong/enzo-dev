@@ -27,8 +27,8 @@
 #include <unistd.h>
  
 #define DEFINE_STORAGE
-#include "EnzoTiming.h"
 #include "ErrorExceptions.h"
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"

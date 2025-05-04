@@ -107,11 +107,11 @@ int grid::AddExternalPotentialField(float *potential)
 	     Duplicate to acceleration version in Grid_ComputeAccelerationFieldExternal 
 	     but useful for testing  */
 	    
-	  rcore = max(0.1*CellWidth[0][0], ExternalGravityRadius)*LengthUnits;
+	  rcore = enzo_max(0.1*CellWidth[0][0], ExternalGravityRadius)*LengthUnits;
 	  
 	  rsquared = (xpos*xpos + ypos*ypos + zpos*zpos)*LengthUnits*LengthUnits;
 	  double GM = ExternalGravityConstant*LengthUnits*pow(VelocityUnits,2);
-	  ExternalPotential = -1.0*GM/max(rcore, sqrt(rsquared));
+	  ExternalPotential = -1.0*GM/enzo_max(rcore, sqrt(rsquared));
 
 	}
 

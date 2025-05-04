@@ -213,7 +213,7 @@ printf("PointSourceGravityConstant= %"GSYM"\n", PointSourceGravityConstant);
      time to initialize them. */
 
   int SetupLoopCount, npart = 0;
-  for (SetupLoopCount = 0; SetupLoopCount < 1+min(SphereUseParticles, 1);
+  for (SetupLoopCount = 0; SetupLoopCount < 1+enzo_min(SphereUseParticles, 1);
        SetupLoopCount++) {
 
 
@@ -262,7 +262,7 @@ printf("PointSourceGravityConstant= %"GSYM"\n", PointSourceGravityConstant);
           r = sqrt(POW(fabs(x-SpherePosition[sphere][0]), 2) +
                    POW(fabs(y-SpherePosition[sphere][1]), 2) +
                    POW(fabs(z-SpherePosition[sphere][2]), 2) );
-          r = max(r, 0.1*CellWidth[0][0]);
+          r = enzo_max(r, 0.1*CellWidth[0][0]);
 
           if (r < SphereRadius[sphere]) {
 
@@ -300,7 +300,7 @@ printf("PointSourceGravityConstant= %"GSYM"\n", PointSourceGravityConstant);
               vc = ClusterInitialSpinParameter*sqrt(GravConst*PointSourceGravityConstant*SolarMass/(PointSourceGravityCoreRadius)); /*in GCS unit*/
 
               rz = sqrt(POW(fabs(xpos), 2) + pow(fabs(ypos), 2));
-              rz = max(rz, 0.1*CellWidth[0][0]);
+              rz = enzo_max(rz, 0.1*CellWidth[0][0]);
               
               if (r > 6.25e-4) {  //10kpc
                 if (dim == 0 || dim == 1)

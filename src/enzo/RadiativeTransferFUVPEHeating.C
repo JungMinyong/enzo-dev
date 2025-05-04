@@ -48,9 +48,9 @@ int grid::RadiativeTransferFUVPEHeating(PhotonPackageEntry **PP,
   if (tau > 2.e1){
     dP_FUV = (1.0+BFLOAT_EPSILON) * (*PP)->Photons;
   } else if (tau > 1.0E-4){
-    dP_FUV = min((*PP)->Photons*(1-expf(-tau)), ((*PP)->Photons));
+    dP_FUV = enzo_min((*PP)->Photons*(1-expf(-tau)), ((*PP)->Photons));
   } else { // optically thin
-    dP_FUV = min((*PP)->Photons*tau, (*PP)->Photons);
+    dP_FUV = enzo_min((*PP)->Photons*tau, (*PP)->Photons);
   }
 
   // dP_FUV is the number of absorptions due to dust

@@ -175,7 +175,7 @@ int star_maker9(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 		  /* Calculate change in density */
 
 // 		  if (*jlrefine > 0)
-// 		    maxdens = min(jlsquared * temp[index] / dx2, densthresh);
+// 		    maxdens = enzo_min(jlsquared * temp[index] / dx2, densthresh);
 // 		  else
 // 		    maxdens = densthresh;
 // 		  oldrho = d[index];

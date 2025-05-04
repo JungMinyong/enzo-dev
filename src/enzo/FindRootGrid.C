@@ -50,9 +50,9 @@ int FindRootGrid(int &dummy, grid **Grids0, int nGrids0,
 
   // Make sure that bumped position is always within the domain
 
-  BumpPos[0] = max(min(rx+Bump[0],DomainRightEdge[0]-PFLOAT_EPSILON), PFLOAT_EPSILON);
-  BumpPos[1] = max(min(ry+Bump[1],DomainRightEdge[1]-PFLOAT_EPSILON), PFLOAT_EPSILON);
-  BumpPos[2] = max(min(rz+Bump[2],DomainRightEdge[2]-PFLOAT_EPSILON), PFLOAT_EPSILON);
+  BumpPos[0] = enzo_max(enzo_min(rx+Bump[0],DomainRightEdge[0]-PFLOAT_EPSILON), PFLOAT_EPSILON);
+  BumpPos[1] = enzo_max(enzo_min(ry+Bump[1],DomainRightEdge[1]-PFLOAT_EPSILON), PFLOAT_EPSILON);
+  BumpPos[2] = enzo_max(enzo_min(rz+Bump[2],DomainRightEdge[2]-PFLOAT_EPSILON), PFLOAT_EPSILON);
 
   for (i = 0; i < nGrids0; i++) {
     Grids0[i]->ReturnGridInfo(&Rank, Dims, Left, Right);

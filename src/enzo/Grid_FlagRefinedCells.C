@@ -70,8 +70,8 @@ int grid::FlagRefinedCells(grid *Subgrid)
 	(Subgrid->GridRightEdge[dim] - GridLeftEdge[dim])/CellWidth[dim][0]
 			       ) + GridStartIndex[dim] - 1;
 
-    SubgridStart[dim] = max(SubgridStart[dim], GridStartIndex[dim]);
-    SubgridEnd[dim]   = min(SubgridEnd[dim], GridEndIndex[dim]);
+    SubgridStart[dim] = enzo_max(SubgridStart[dim], GridStartIndex[dim]);
+    SubgridEnd[dim]   = enzo_min(SubgridEnd[dim], GridEndIndex[dim]);
 
   }
 

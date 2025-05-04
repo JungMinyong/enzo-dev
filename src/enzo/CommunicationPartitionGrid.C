@@ -153,7 +153,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
     /* Compute number of new grids along this dimension. */
  
     if (Layout[dim] == 0)
-      Layout[dim] = max(nint((float)(Dims[dim])/Edge), 1);
+      Layout[dim] = enzo_max(nint((float)(Dims[dim])/Edge), 1);
  
     GridDims[dim] = new int[Layout[dim]];
     StartIndex[dim] = new int[Layout[dim]];
@@ -299,10 +299,10 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 	// they don't go outside of the original grid.
 	if (CoarseSlab < NumberOfCoarseSlabs+FirstCoarseSlab &&
 	    CoarseSlab < Layout[dim])
-	  ThisEndIndex = min(CoarseEdges[CoarseSlab], Dims[dim]);
+	  ThisEndIndex = enzo_min(CoarseEdges[CoarseSlab], Dims[dim]);
 	else
 	  ThisEndIndex = Dims[dim];
-	ThisStartIndex = max(CoarseEdges[CoarseSlab-1], 0);
+	ThisStartIndex = enzo_max(CoarseEdges[CoarseSlab-1], 0);
 	ThisWidth = ThisEndIndex - ThisStartIndex;
 
 	// How many coarse slabs are left
@@ -310,13 +310,13 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 	
 	// Optimal splitting size and number of blocks within this coarse slab
 	ExactDimsLeft = float(Dims[dim] - ThisStartIndex) / (Layout[dim] - ThisSlab);
-	NumberOfSlabs = max( nint( float(ThisWidth) / ExactDimsLeft ), 1);
+	NumberOfSlabs = enzo_max( nint( float(ThisWidth) / ExactDimsLeft ), 1);
 	  
 	// Ensure that we don't over-split the current coarse slab so
 	// we have enough slabs left for the remaining coarse slabs.
 	CoarseLimit = NumberOfCoarseSlabsLeft - (Layout[dim] - ThisSlab) + 1;
 	if (CoarseLimit > 0 && ThisEndIndex != Dims[dim])
-	  NumberOfSlabs = min(NumberOfSlabs, CoarseLimit);
+	  NumberOfSlabs = enzo_min(NumberOfSlabs, CoarseLimit);
 	
 	// Now we can split the coarse slab
 	ThisExactDims = float(ThisWidth) / NumberOfSlabs;

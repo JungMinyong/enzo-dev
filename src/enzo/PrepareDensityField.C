@@ -153,7 +153,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 		 update the gravity at the MaximumGravityRefinementLevel. */
 
 	int reallevel = level;
-	level = min(level, MaximumGravityRefinementLevel);
+	level = enzo_min(level, MaximumGravityRefinementLevel);
 
 	/* Create an array (Grids) of all the grids. */
 
@@ -180,7 +180,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("Depositing particle mass field");
 	LCAPERF_START("DepositParticleMassField");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* First, generate the receive calls. */
 
@@ -230,7 +230,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("Depositing particle mass field");
 	LCAPERF_START("DepositParticleMassField");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* First, generate the receive calls. */
 
@@ -277,7 +277,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	float org,nostar;
 	int size=1;
 	for (StartGrid = 0; StartGrid< NumberOfGrids; StartGrid+=GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		ndiff=0;
 		diff=0;
@@ -317,7 +317,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("PrepareGravitatingMassField1");
 	LCAPERF_START("PrepareGravitatingMassField1");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* ----- section 1 ---- */
 		/* First, generate the receive calls. */
@@ -358,7 +358,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("PrepareGravitatingMassField2");
 	LCAPERF_START("PrepareGravitatingMassField2a");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* ----- section 2 ---- */
 		/* First, generate the receive calls. */
@@ -415,7 +415,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	/************************************************************************/
 	LCAPERF_START("PrepareGravitatingMassField2b");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* ----- section 2 ---- */
 		/* First, generate the receive calls. */
@@ -459,7 +459,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("PrepareGravitatingMassField1");
 	LCAPERF_START("PrepareGravitatingMassField1");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* ----- section 1 ---- */
 		/* First, generate the receive calls. */
@@ -500,7 +500,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("PrepareGravitatingMassField2");
 	LCAPERF_START("PrepareGravitatingMassField2a");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* ----- section 2 ---- */
 		/* First, generate the receive calls. */
@@ -557,7 +557,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	/************************************************************************/
 	LCAPERF_START("PrepareGravitatingMassField2b");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		/* ----- section 2 ---- */
 		/* First, generate the receive calls. */
@@ -606,7 +606,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("CopyOverlappingMassField");
 	LCAPERF_START("CopyOverlappingMassField");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 		CommunicationReceiveIndex = 0;
@@ -674,7 +674,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	TIME_MSG("CopyOverlappingMassField");
 	LCAPERF_START("CopyOverlappingMassField");
 	for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 		CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 		CommunicationReceiveIndex = 0;
@@ -816,7 +816,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	/*
 	
 	for (StartGrid = 0; StartGrid< NumberOfGrids; StartGrid+=GRIDS_PER_LOOP) {
-		EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+		EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 		for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 			if (Grids[grid1]->GridData->GetPotentialField()[0]==NULL) 
 				fprintf(stdout,"\nProc:%d, Grav Field is Null.\n", MyProcessorNumber); //by YS
@@ -878,7 +878,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 			TIME_MSG("CopyPotentialField");
 			for (StartGrid = 0; StartGrid < NumberOfGrids; 
 					StartGrid += GRIDS_PER_LOOP) {
-				EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+				EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 #ifdef BITWISE_IDENTICALITY
 				CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
@@ -1007,7 +1007,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 			TIME_MSG("CopyPotentialField");
 			for (StartGrid = 0; StartGrid < NumberOfGrids; 
 					StartGrid += GRIDS_PER_LOOP) {
-				EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+				EndGrid = enzo_min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
 
 #ifdef BITWISE_IDENTICALITY

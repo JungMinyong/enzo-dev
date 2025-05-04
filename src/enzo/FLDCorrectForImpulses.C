@@ -90,8 +90,8 @@ int FLDCorrectForImpulses(int field, LevelHierarchyEntry *LevelArray[],
       BirthTime = RS->CreationTime;
       Position = RS->Position;
       Luminosity = RS->Luminosity * RS->SED[3] / LConv;
-      TimeFraction = (min(RS->CreationTime + RS->LifeTime, FLDTime) -
-		      max(RS->CreationTime, FLDTime-dtFLD)) / dtFLD;
+      TimeFraction = (enzo_min(RS->CreationTime + RS->LifeTime, FLDTime) -
+		      enzo_max(RS->CreationTime, FLDTime-dtFLD)) / dtFLD;
       RS->AddedEmissivity = true;
     } else {
       BirthTime = cstar->ReturnBirthTime();
@@ -101,8 +101,8 @@ int FLDCorrectForImpulses(int field, LevelHierarchyEntry *LevelArray[],
       Position = cstar->ReturnPosition();
       cstar->ComputePhotonRates(TimeUnits, nbins, energies, LL);
       Luminosity = LL[3];
-      TimeFraction = (min(BirthTime + Lifetime, FLDTime) -
-		      max(BirthTime, FLDTime-dtFLD)) / dtFLD;
+      TimeFraction = (enzo_min(BirthTime + Lifetime, FLDTime) -
+		      enzo_max(BirthTime, FLDTime-dtFLD)) / dtFLD;
       cstar->AddEmissivityFlag();
     }
 

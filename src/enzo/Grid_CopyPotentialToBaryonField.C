@@ -62,7 +62,7 @@ int grid::CopyPotentialToBaryonField()
 	}
 
 	/* Well, it appears that currently GravitatingMassField is larger
-		 than active BaryonField by 2*max(BufferSize, NumberOfGhostZones) = 12
+		 than active BaryonField by 2*enzo_max(BufferSize, NumberOfGhostZones) = 12
 		 zones. BufferSize = GRAVITY_BUFFER_SIZE*RefinementFactor = 6.
 		 In other words, GravitatingMassField has 6 ghost zones, compared to 3
 		 for a BaryonField. That is why we use shift 6.
@@ -100,8 +100,8 @@ int grid::CopyPotentialToBaryonField()
 
 				BaryonField[field][jj++] = PotentialField[index];
 				// debuggin:
-				maxPot = max(maxPot,PotentialField[index]);
-				minPot = min(minPot,PotentialField[index]);
+				maxPot = enzo_max(maxPot,PotentialField[index]);
+				minPot = enzo_min(minPot,PotentialField[index]);
 			}
 
 		}

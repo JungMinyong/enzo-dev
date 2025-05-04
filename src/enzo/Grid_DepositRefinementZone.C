@@ -67,8 +67,8 @@ int grid::DepositRefinementZone(int level, FLOAT* ParticlePosition,
     }
     if (overlaps[dim] == false) {
       // check for periodicity.
-      pleft = max(period[dim] - fabs(left), left);
-      pright = min(fabs(right - period[dim]), right);
+      pleft = enzo_max(period[dim] - fabs(left), left);
+      pright = enzo_min(fabs(right - period[dim]), right);
       if ((pleft != left) && (RightCorner[dim] > left)) {
         overlaps[dim] = true;
       }

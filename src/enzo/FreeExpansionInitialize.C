@@ -79,7 +79,7 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   /* Use 3.5 zones on the finest level to resolve the initial explosion at t=0. */
 
-  float dr = 3.5*dx*max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
+  float dr = 3.5*dx*enzo_max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
 
   /* set no subgrids by default. */
 

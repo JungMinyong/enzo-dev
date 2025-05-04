@@ -32,9 +32,9 @@ int grid::RadiativeTransferIR(PhotonPackageEntry **PP, FLOAT &dPIR, int cellinde
   if (tau > 2.e1) //Completely Optically Thick
     dPIR = (1.0+BFLOAT_EPSILON) * (*PP)->Photons;
   else if (tau > 1.e-4) //Exponential decline in photons
-    dPIR = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+    dPIR = enzo_min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
   else //Optically thin case
-    dPIR = min((*PP)->Photons*tau, (*PP)->Photons);
+    dPIR = enzo_min((*PP)->Photons*tau, (*PP)->Photons);
   
   //dPIR is the number of absorptions
   dPIR = dPIR * geo_correction;

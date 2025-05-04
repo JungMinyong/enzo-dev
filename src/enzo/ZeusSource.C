@@ -57,14 +57,14 @@ int ZeusSource(float *d, float *e, float *u, float *v, float *w, float *p, float
 
   /* Compute varients on start indexes */
 
-  jsm1 = max(js-1, 0);
-  ksm1 = max(ks-1, 0);
-  jep1 = min(je+1, jn-1);
-  kep1 = min(ke+1, kn-1);
-  jsm2 = max(js-2, 0);
-  ksm2 = max(ks-2, 0);
-  jep2 = min(je+2, jn-1);
-  kep2 = min(ke+2, kn-1);
+  jsm1 = enzo_max(js-1, 0);
+  ksm1 = enzo_max(ks-1, 0);
+  jep1 = enzo_min(je+1, jn-1);
+  kep1 = enzo_min(ke+1, kn-1);
+  jsm2 = enzo_max(js-2, 0);
+  ksm2 = enzo_max(ks-2, 0);
+  jep2 = enzo_min(je+2, jn-1);
+  kep2 = enzo_min(ke+2, kn-1);
 
   gamma1 = gamma[0];  // if gamma is a scalar
 
@@ -85,8 +85,8 @@ int ZeusSource(float *d, float *e, float *u, float *v, float *w, float *p, float
 
 	for (i = 0; i < in; i++) {
 	  e1 = e[IDX(i,j,k)];
-	  e1 = max(e[IDX(i,j,k)], minsupecoef*d[IDX(i,j,k)]);
-	  p[IDX(i,j,k)] = max((gamma[IDX(i,j,k)]-1.0)*d[IDX(i,j,k)]*e1, pmin);
+	  e1 = enzo_max(e[IDX(i,j,k)], minsupecoef*d[IDX(i,j,k)]);
+	  p[IDX(i,j,k)] = enzo_max((gamma[IDX(i,j,k)]-1.0)*d[IDX(i,j,k)]*e1, pmin);
 	}
       } else {
 
@@ -94,8 +94,8 @@ int ZeusSource(float *d, float *e, float *u, float *v, float *w, float *p, float
 
 	for (i = 0; i < in; i++) {
 	  e1 = e[IDX(i,j,k)];
-	  e1 = max(e[IDX(i,j,k)], minsupecoef*d[IDX(i,j,k)]);
-	  p[IDX(i,j,k)] = max((gamma1-1.0)*d[IDX(i,j,k)]*e1, pmin);
+	  e1 = enzo_max(e[IDX(i,j,k)], minsupecoef*d[IDX(i,j,k)]);
+	  p[IDX(i,j,k)] = enzo_max((gamma1-1.0)*d[IDX(i,j,k)]*e1, pmin);
 
 	  if (e[IDX(i,j,k)] <= 0.0 || d[IDX(i,j,k)] <= 0.0) {
 	    printf("%"ISYM"\n", IDX(i,j,k));
@@ -109,7 +109,7 @@ int ZeusSource(float *d, float *e, float *u, float *v, float *w, float *p, float
     // If Cosmic Rays present, add pressure contribution
     if(CRModel && ipresfree != 1)
       for(i = 0; i < in; i++ )
-        p[IDX(i,j,k)] += max((CRgamma-1.0)*cr[IDX(i,j,k)],0.0);
+        p[IDX(i,j,k)] += enzo_max((CRgamma-1.0)*cr[IDX(i,j,k)],0.0);
 
     } // end loop over j
   } // end loop over k
@@ -358,7 +358,7 @@ int ZeusSource(float *d, float *e, float *u, float *v, float *w, float *p, float
   for (k = ksm2; k <= kep2; k++) {
     for (j = jsm2; j<= jep2; j++) {
       for (i = is-2; i <= ie+2; i++) {
-	p[IDX(i,j,k)] = max((gamma-1.0)*d[IDX(i,j,k)]*e[IDX(i,j,k)], pmin);
+	p[IDX(i,j,k)] = enzo_max((gamma-1.0)*d[IDX(i,j,k)]*e[IDX(i,j,k)], pmin);
 	if (e[IDX(i,j,k)] <= 0.0 || d[IDX(i,j,k)] <= 0.0) {
 	  ENZO_VFAIL("zeus_source2: e,d=%"GSYM",%"GSYM"  i,j,k=%"ISYM",%"ISYM",%"ISYM"\n",
 		  e(i,j,j),d[IDX(i,j,k)],i,j,k)

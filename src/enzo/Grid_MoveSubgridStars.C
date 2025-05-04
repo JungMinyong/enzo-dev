@@ -72,9 +72,9 @@ int grid::MoveSubgridStars(int NumberOfSubgrids, grid* ToGrids[],
       if (GridRank > 2)
 	k0 = int((cstar->pos[2] - CellLeftEdge[2][0])/CellWidth[2][0]);
 
-      i0 = max(min(GridEndIndex[0], i0), GridStartIndex[0]);
-      j0 = max(min(GridEndIndex[1], j0), GridStartIndex[1]);
-      k0 = max(min(GridEndIndex[2], k0), GridStartIndex[2]);
+      i0 = enzo_max(enzo_min(GridEndIndex[0], i0), GridStartIndex[0]);
+      j0 = enzo_max(enzo_min(GridEndIndex[1], j0), GridStartIndex[1]);
+      k0 = enzo_max(enzo_min(GridEndIndex[2], k0), GridStartIndex[2]);
 
       index = (k0*GridDimension[1] + j0)*GridDimension[0] + i0;
 

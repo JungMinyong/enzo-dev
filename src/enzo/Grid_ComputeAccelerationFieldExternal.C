@@ -167,8 +167,8 @@ int grid::ComputeAccelerationFieldExternal()
 								 Multiply by a(t) to offset the 1/a(t) in ComovingAccelTerm(). 
 								 (i.e. 1/a^2 * a = 1/a). */
 
-							rcore = max(0.1*CellWidth[0][0], PointSourceGravityCoreRadius);
-							accel = min(PointSourceGravityConstant/((rsquared)*POW(rsquared,0.5)*a),
+							rcore = enzo_max(0.1*CellWidth[0][0], PointSourceGravityCoreRadius);
+							accel = enzo_min(PointSourceGravityConstant/((rsquared)*POW(rsquared,0.5)*a),
 									PointSourceGravityConstant/(rcore*rcore*POW(rsquared,0.5)*a));
 
 						} else if (PointSourceGravity == 2) {
@@ -226,7 +226,7 @@ int grid::ComputeAccelerationFieldExternal()
 							//    
 							FLOAT a2 = PointSourceGravityCoreRadius*PointSourceGravityCoreRadius;
 							/*	      if (GridRank > 1)
-												a2 = max(a2, ypos*ypos);
+												a2 = enzo_max(a2, ypos*ypos);
 												if (GridRank > 2)
 												a2 += zpos*zpos;
 												*/
@@ -296,8 +296,8 @@ int grid::ComputeAccelerationFieldExternal()
 						 Multiply by a(t) to offset the 1/a(t) in ComovingAccelTerm(). 
 						 (i.e. 1/a^2 * a = 1/a). */
 
-					rcore = max(0.1*CellWidth[0][0], PointSourceGravityCoreRadius);
-					accel = min(PointSourceGravityConstant/(rsquared*POW(rsquared,0.5)*a),
+					rcore = enzo_max(0.1*CellWidth[0][0], PointSourceGravityCoreRadius);
+					accel = enzo_min(PointSourceGravityConstant/(rsquared*POW(rsquared,0.5)*a),
 							PointSourceGravityConstant/(rcore*rcore*POW(rsquared,0.5)*a));
 
 				}  // if (PointSourceGravity == 1)
@@ -664,7 +664,7 @@ int grid::ComputeAccelerationFieldExternal()
 								xpos -= 0.5*CellWidth[0][i];
 
 							r = sqrt(xpos*xpos+ypos*ypos+zpos*zpos);
-							r = max(r, CellWidth[0][0]);
+							r = enzo_max(r, CellWidth[0][0]);
 
 							if (r < rvir/LengthUnits) {
 								x1 = r*LengthUnits/rs;
@@ -712,7 +712,7 @@ int grid::ComputeAccelerationFieldExternal()
 				ypos = y - yc;
 				zpos = z - zc;
 				r = sqrt(xpos*xpos+ypos*ypos+zpos*zpos);
-				r = max(r, CellWidth[0][0]);
+				r = enzo_max(r, CellWidth[0][0]);
 
 				if (r < rvir/LengthUnits) {
 					x1 = r*LengthUnits/rs;

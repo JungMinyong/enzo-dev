@@ -239,7 +239,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 
   int SetupLoopCount, npart = 0;
   int UseBH = 0; //= (level == 0) ? 1 : 0;
-  for (SetupLoopCount = 0; SetupLoopCount < 1+min(UseParticles+UseBH, 1);
+  for (SetupLoopCount = 0; SetupLoopCount < 1+enzo_min(UseParticles+UseBH, 1);
        SetupLoopCount++) {
 
     /* Set densities */
@@ -332,7 +332,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 			*(BESSI0(yd)*BESSK0(yd)-BESSI1(yd)*BESSK1(yd)));
 	vpress = sqrt(2*R*(R+(F-1)*R_D)/(R_D*(R+F*R_D)))*c_s;
 	vdm =  sqrt(GravConst*NFWMass[i]/R) ;
-	Vrot = max(vdm + vphidisk - vpress,0); // do not go below 0
+	Vrot = enzo_max(vdm + vphidisk - vpress,0); // do not go below 0
 	Omega = Vrot/2/M_PI/R;
 	ToomreQ = c_s*Omega/SigmaR/GravConst;
 	fprintf(fptr, "%"ISYM" %"GOUTSYM"\t %g   \t %g\t  %g\t  %g\t  %g\t       %g\t  %g\t   %g\t %g \t %g\n", 
@@ -368,7 +368,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 	    r = sqrt(pow(fabs(x-HaloPosition[sphere][0]), 2) +
 		     pow(fabs(y-HaloPosition[sphere][1]), 2) +
 		     pow(fabs(z-HaloPosition[sphere][2]), 2) );
-	    r = max(r, 0.1*CellWidth[0][0]);
+	    r = enzo_max(r, 0.1*CellWidth[0][0]);
 	    
 	    if (r < HaloRadius[sphere]) {
 	      xpos = x-HaloPosition[sphere][0];
@@ -376,7 +376,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 	      zpos = z-HaloPosition[sphere][2];
 	      
 	      R = sqrt(xpos*xpos+ypos*ypos);
-	      //	      R = max(R, 0.1*CellWidth[0][0]);
+	      //	      R = enzo_max(R, 0.1*CellWidth[0][0]);
 
 	      // compute the azimuthal angle
 	      cosphi = xpos/sqrt(xpos*xpos+ypos*ypos);
@@ -612,7 +612,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 	      r = sqrt(pow(fabs(x-HaloPosition[sphere][0]), 2) +
 		       pow(fabs(y-HaloPosition[sphere][1]), 2) +
 		       pow(fabs(z-HaloPosition[sphere][2]), 2) );
-	      r = max(r, 0.1*CellWidth[0][0]);
+	      r = enzo_max(r, 0.1*CellWidth[0][0]);
 
 	      if (i >= GridStartIndex[0] && i <= GridEndIndex[0] &&
 		  j >= GridStartIndex[1] && j <= GridEndIndex[1] &&

@@ -145,14 +145,14 @@ int grid::ElectronFractionEstimate(float dt)
 	      - 0.5 * (BaryonField[Vel1Num][index]*BaryonField[Vel1Num][index]
 		       +BaryonField[Vel2Num][index]*BaryonField[Vel2Num][index]
 		       +BaryonField[Vel3Num][index]*BaryonField[Vel3Num][index]);
-	    pressure = max((Gamma - 1.0) * proper_d * pressure, tiny_number);
+	    pressure = enzo_max((Gamma - 1.0) * proper_d * pressure, tiny_number);
 	  }
 
 	  temperature = 0.25*(proper_hei + proper_heii + proper_heiii) 
 	    + proper_hi + proper_hii + proper_de;
 	  max_edotplus = (temperature * MAX_IONTEMP) 
 	    / ((Gamma - 1.0) * proper_d * TemperatureUnits);
-	  temperature = max(pressure*TemperatureUnits/temperature, MIN_TEMP);
+	  temperature = enzo_max(pressure*TemperatureUnits/temperature, MIN_TEMP);
 
 	  logtem = log(temperature);
 	  logtem0 = log(CoolData.TemperatureStart);
@@ -212,7 +212,7 @@ int grid::ElectronFractionEstimate(float dt)
 
 	  edotplus = CoolData.ipiht * BaryonField[gammaNum][index] * rtunits
 	    * proper_hi / dom;
-	  edotplus = min(edotplus, max_edotplus);
+	  edotplus = enzo_min(edotplus, max_edotplus);
 
 	  edot += edotplus;
 

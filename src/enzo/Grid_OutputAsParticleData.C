@@ -116,9 +116,9 @@ int grid::OutputAsParticleData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
        grid for the projected region. */
  
     for (dim = 0; dim < GridRank; dim++) {
-      start[dim] = max(int((RegionLeftEdge[dim] - GridLeftEdge[dim]) /
+      start[dim] = enzo_max(int((RegionLeftEdge[dim] - GridLeftEdge[dim]) /
 			   CellWidth[dim][0]), 0) + GridStartIndex[dim];
-      stop[dim]  = min(int((RegionRightEdge[dim] - GridLeftEdge[dim]) /
+      stop[dim]  = enzo_min(int((RegionRightEdge[dim] - GridLeftEdge[dim]) /
 			   CellWidth[dim][0]),
 		       GridEndIndex[dim] - GridStartIndex[dim]) +
 	GridStartIndex[dim];
@@ -286,7 +286,7 @@ int grid::OutputAsParticleData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
 	  ParticleVelocity[dim][n] * VelocityConversion;
       }
       //      ParticleList[itype]->ParticleRadius[count] = CellWidth[0][0]*
-      //	max(POW(ParticleMass[n]/density, 0.3333), 3);
+      //	enzo_max(POW(ParticleMass[n]/density, 0.3333), 3);
       ParticleList[itype]->ParticleRadius[count] = BaseRadius *
 	POW(1.0/density, 0.3333);
       ParticleList[itype]->ParticleValue[0][count] =

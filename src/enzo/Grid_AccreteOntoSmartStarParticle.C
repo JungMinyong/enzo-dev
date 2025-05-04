@@ -184,7 +184,7 @@ int grid::AccreteOntoSmartStarParticle(
     SS->beta_jet = (1.0/SmartStarJetVelocity)*(1.0/SmartStarJetVelocity)*2.0*eta_jet;
     float mdot_total = SS->mass_in_accretion_sphere/this->dtFixed; //This is the total mass available for accretion inside accretion sphere
     float accretion_ratio = mdot_total/(*AccretionRate);
-    SS->epsilon_deltat = min(1.0, accretion_ratio*(1.0/(1.0 - SS->eta_disk))*(1.0/(1.0 + SS->beta_jet)));
+    SS->epsilon_deltat = enzo_min(1.0, accretion_ratio*(1.0/(1.0 - SS->eta_disk))*(1.0/(1.0 + SS->beta_jet)));
     SS->MassToBeEjected = 0.0;
 #if  ACCRETE_DEBUG
     printf("%s: Eddrate = %e Msolar/yr AccRate = %e Msolar/yr\t Ratio = %f\n", __FUNCTION__,

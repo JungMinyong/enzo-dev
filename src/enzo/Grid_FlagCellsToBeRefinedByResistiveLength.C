@@ -86,7 +86,7 @@ int grid::FlagCellsToBeRefinedByResistiveLength()
 	  Bz[igrid]*Bz[igrid]  ;
 	curlB2 = curlBx*curlBx + curlBy*curlBy + curlBz*curlBz;
 
-	l_res = sqrt(absB2)/max(sqrt(curlB2),tiny_number);
+	l_res = sqrt(absB2)/enzo_max(sqrt(curlB2),tiny_number);
 
 	if (RefineByResistiveLengthSafetyFactor > l_res) {	  
 	  FlaggingField[igrid]++;

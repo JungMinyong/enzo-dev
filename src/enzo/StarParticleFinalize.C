@@ -14,6 +14,7 @@
 #endif
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "ErrorExceptions.h"
 #include "EnzoTiming.h"
 #include "performance.h"
@@ -67,7 +68,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
                          int level, Star *&AllStars,
                          int TotalStarParticleCountPrevious[], int &OutputNow
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-                         , std::unordered_map<int, Star *> LocalStarLookupMap
+                         , std::unordered_map<int, Star *> &LocalStarLookupMap
 #endif
 ) {
 

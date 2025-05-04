@@ -125,8 +125,8 @@ int grid::WriteNewMovieData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
   /* If outside the region, skip the grid */
   
   for (dim = 0; dim < GridRank; dim++) {
-    Left[dim] = max(RegionLeftEdge[dim], GridLeftEdge[dim]);
-    Right[dim] = min(RegionRightEdge[dim], GridRightEdge[dim]);
+    Left[dim] = enzo_max(RegionLeftEdge[dim], GridLeftEdge[dim]);
+    Right[dim] = enzo_min(RegionRightEdge[dim], GridRightEdge[dim]);
     if (Left[dim] >= Right[dim])
       return SUCCESS;
   }

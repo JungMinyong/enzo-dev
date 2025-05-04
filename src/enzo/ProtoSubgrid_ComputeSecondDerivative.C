@@ -41,7 +41,7 @@ int ProtoSubgrid::ComputeSecondDerivative(int CheckDim,
  
   if (GridDimension[CheckDim] < 4) {
     GridEnds[0][1] = StartIndex[CheckDim] + Center;
-    GridEnds[1][0] = min(GridEnds[0][1]+1, EndIndex[CheckDim]);
+    GridEnds[1][0] = enzo_min(GridEnds[0][1]+1, EndIndex[CheckDim]);
     return SUCCESS;
   }
  

@@ -219,7 +219,7 @@ int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
     }
     else  kappa_max = kappa_min = kappa_rms = kappa0;
     if (debug) 
-      printf("    max(kappa) = %10.4e, min(kappa) = %10.4e, mean(kappa) = %10.4e\n",
+      printf("    enzo_max(kappa) = %10.4e, enzo_min(kappa) = %10.4e, mean(kappa) = %10.4e\n",
 	     kappa_max, kappa_min, kappa_rms);
   }
   else
@@ -248,7 +248,7 @@ int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
   HYPRE_StructVectorSetBoxValues(rhsvec, ilower, iupper, rhsentries);
 
   //       set the linear solver tolerance (rescale to relative residual and not actual)
-  Eflt64 delta = min(sol_tolerance/rhsnorm, 1.0e-8);
+  Eflt64 delta = enzo_min(sol_tolerance/rhsnorm, 1.0e-8);
 
   //       insert zero initial guess into HYPRE vector solvec
   int ix, iy, iz, size;
@@ -353,7 +353,7 @@ int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
   // enforce a solution floor on the radiation values
   float Ef_floor = 1.0e-50;
   for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
-    Efnew[i] = max(Efnew[i], Ef_floor);
+    Efnew[i] = enzo_max(Efnew[i], Ef_floor);
 
   // output status of resulting solution
   Efs_rms = sol->rmsnorm();
@@ -424,17 +424,17 @@ int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
     
     // compute time step estimate (physical units)
     dt_suggest = (glob_est == 0.0) ? huge_number : dt/glob_est;
-    dt_suggest = min(dt_suggest, huge_number);
+    dt_suggest = enzo_min(dt_suggest, huge_number);
     
     // limit maximum growth per step
-    dt_suggest = min(dt_suggest, 1.1*dt);
+    dt_suggest = enzo_min(dt_suggest, 1.1*dt);
     
     // rescale dt estimates to normalized values
     dt_suggest /= TimeUnits;
     
     // account for min/max time step size (according to user)
-    dt_suggest = max(dt_suggest, mindt);
-    dt_suggest = min(dt_suggest, maxdt);
+    dt_suggest = enzo_max(dt_suggest, mindt);
+    dt_suggest = enzo_min(dt_suggest, maxdt);
 
     if (debug)  printf("    dt_suggest = %8.2e\n",dt_suggest);
     if (dt_suggest > 0.0)

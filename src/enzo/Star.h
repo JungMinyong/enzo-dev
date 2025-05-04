@@ -13,14 +13,14 @@
 ************************************************************************/
 #ifndef __STAR_H
 #define __STAR_H
+#ifdef NBODY
+#include <unordered_map>
+#endif
 #include "typedefs.h"
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "StarBuffer.h"
-#ifdef NBODY
-#include <unordered_map>
-#endif
 
 class Star
 {
@@ -55,6 +55,7 @@ class Star
   int            PopIIIStar;   // if popIII at any point
 
 #ifdef NBODY
+  int GridParticleIndex;
   double bg_acc[MAX_DIMENSION]; // background acceeleration for ABYSS
   bool isABYSS;        // in case we would like to exclude this particle from the ABYSS pool
   bool isNewlyFormed;   // in case we would like to exclude this particle from the ABYSS pool
@@ -98,6 +99,7 @@ public:
   bool ReturnNewStarFlag(){return isNewlyFormed;};   
   void SetAbyssFlag(bool is){isABYSS=is;};        // in case we would like to exclude this particle from the ABYSS pool
   void SetNewStarFlag(bool is){isNewlyFormed=is;};   
+  void MakeStarsUnorderedMap(std::unordered_map<int, Star*> &StarLookupMap); // makes lookup table to quickly find stars in grid during CopyToGrid
 #endif
   star_type ReturnType(void) { return type; };
   int   ReturnID(void) { return Identifier; };
@@ -209,7 +211,6 @@ public:
   void	DeleteCopyInGrid(void);
   int   DeleteCopyInGridGlobal(LevelHierarchyEntry *LevelArray[]);
   std::map<int, Star*> MakeStarsMap(void);
-  std::unordered_map<int, Star*> MakeStarsUnorderedMap(void);
   void  CopyToGridMap(std::map<int, Star*>* const &StarLookupMap);
   void	CopyToGrid(void);
   void  MirrorToParticle(void);

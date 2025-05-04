@@ -122,7 +122,7 @@ int grid::ConductHeat(){
       ENZO_FAIL("Error in ComputeConductionTimeStep.\n");
 
     // make sure we don't extend past dtFixed
-    dtSubcycle = min(dtSubcycle, dtFixed-dtSoFar);
+    dtSubcycle = enzo_min(dtSubcycle, dtFixed-dtSoFar);
 
     // compute de/dt for each cell.
     if (this->ComputeHeat(dedt) == FAIL) {

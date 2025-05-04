@@ -120,8 +120,8 @@ float grid::ComputePhotonTimestepTau(float DensityUnits, float LengthUnits,
 	  // optical depth in a cell
 	  tau = sigma_dx * BaryonField[HINum][index];
 
-	  logtem = min( max( log(temperature[index]), logtem0 ), logtem9 );
-	  tidx = min( nbins-1, max(1, int((logtem - logtem0) / dlogtem)+1) );
+	  logtem = enzo_min( enzo_max( log(temperature[index]), logtem0 ), logtem9 );
+	  tidx = enzo_min( nbins-1, enzo_max(1, int((logtem - logtem0) / dlogtem)+1) );
 	  t1 = logtem0 + (tidx - 1) * dlogtem;
 	  t2 = logtem0 + (tidx    ) * dlogtem;
 	  tdef = t2 - t1;
@@ -147,8 +147,8 @@ float grid::ComputePhotonTimestepTau(float DensityUnits, float LengthUnits,
 	    a3inv * BaryonField[HINum][index] * BaryonField[kphHINum][index];
 
 	  this_dt = MAX_CHANGE * BaryonField[HINum][index] / 
-	    (HIIdot * min(tau, 1.0));
-	  if (this_dt > 0) dt = min(dt, this_dt);
+	    (HIIdot * enzo_min(tau, 1.0));
+	  if (this_dt > 0) dt = enzo_min(dt, this_dt);
 #ifdef UNUSED
 	  if (this_dt > 0) {
 	    if (this_dt < dt) {

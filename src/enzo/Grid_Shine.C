@@ -117,7 +117,7 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
     float t = PhotonTime-RS->CreationTime+dtPhoton;
     float frac = t / (RS->RampTime+dtPhoton);
     RampPercent = (exp(frac)-1) / (M_E-1);   // M_E = e = 2.71828...
-    RampPercent = max(min(RampPercent, 1), 0);
+    RampPercent = enzo_max(enzo_min(RampPercent, 1), 0);
   }
 
   /* Shake source within the grid cell every time it shines */

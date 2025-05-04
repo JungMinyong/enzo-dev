@@ -106,7 +106,7 @@ int grid::RadiationComputeDensities(int level)
 	  itemp = int((log10(temperature[index])-
 		       RadiationData.TemperatureBinMinimum)/
 		      RadiationData.TemperatureBinWidth);
-	  itemp = max(min(itemp, RadiationData.NumberOfTemperatureBins-1), 0);
+	  itemp = enzo_max(enzo_min(itemp, RadiationData.NumberOfTemperatureBins-1), 0);
  
 	  /* Add density into appropriate bin. The densities are in number
 	     densities but missing factor of LengthUnits/mh.  The Volume factor

@@ -149,8 +149,8 @@ int grid::MHD_CIDWorker(grid* OldFineGrid, FLOAT EdgeOffset[MAX_DIMENSION]){
       OtherDim[dim]   = 1;
       
       //Determine position in Spatial coordinates
-      OverlapLeft  = max(GridLeft[dim], OldFineGrid->GridLeftEdge[dim]);
-      OverlapRight = min(GridRight[dim], OldFineGrid->GridRightEdge[dim]);
+      OverlapLeft  = enzo_max(GridLeft[dim], OldFineGrid->GridLeftEdge[dim]);
+      OverlapRight = enzo_min(GridRight[dim], OldFineGrid->GridRightEdge[dim]);
 
       //convert to GridCoordinates
       Start[dim] = nint((OverlapLeft  - GridLeft[dim]) / CellWidth[dim][0]);

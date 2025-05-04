@@ -192,12 +192,12 @@ float CalculateLWFromTree(const FLOAT pos[],
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     dx = fabs(Leaf->Position[dim] - pos[dim]);
     if (RadiativeTransferPeriodicBoundary)
-      dx = min(dx, (DomainRightEdge[dim]-DomainLeftEdge[dim]) - dx);
+      dx = enzo_min(dx, (DomainRightEdge[dim]-DomainLeftEdge[dim]) - dx);
     radius2 += dx*dx;
   }
 
   temp = (Eflt32)radius2;
-  temp = max(min_radius, temp);
+  temp = enzo_max(min_radius, temp);
   vrsqrt(&temp, &radius_inv);
   //radius_inv = 1.0 / sqrtf((float)radius2);
   tan_angle = Leaf->ClusteringRadius * radius_inv;
@@ -243,12 +243,12 @@ float CalculateIRFromTree(const FLOAT pos[],
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     dx = fabs(Leaf->Position[dim] - pos[dim]);
     if (RadiativeTransferPeriodicBoundary)
-      dx = min(dx, (DomainRightEdge[dim]-DomainLeftEdge[dim]) - dx);    
+      dx = enzo_min(dx, (DomainRightEdge[dim]-DomainLeftEdge[dim]) - dx);    
     radius2 += dx*dx;
   }
 
   temp = (Eflt32)radius2;
-  temp = max(min_radius, temp);
+  temp = enzo_max(min_radius, temp);
   vrsqrt(&temp, &radius_inv);
   //radius_inv = 1.0 / sqrtf((float)radius2);
   tan_angle = Leaf->ClusteringRadius * radius_inv;
@@ -294,12 +294,12 @@ float CalculateFUVFromTree(const FLOAT pos[],
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     dx = fabs(Leaf->Position[dim] - pos[dim]);
     if (RadiativeTransferPeriodicBoundary) 
-      dx = min(dx, (DomainRightEdge[dim]-DomainLeftEdge[dim]) - dx);
+      dx = enzo_min(dx, (DomainRightEdge[dim]-DomainLeftEdge[dim]) - dx);
     radius2 += dx*dx;
   }
 
   temp = (Eflt32)radius2;
-  temp = max(min_radius, temp);
+  temp = enzo_max(min_radius, temp);
   vrsqrt(&temp, &radius_inv);
   //radius_inv = 1.0 / sqrtf((float)radius2);
   tan_angle = Leaf->ClusteringRadius * radius_inv;

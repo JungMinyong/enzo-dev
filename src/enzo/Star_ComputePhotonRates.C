@@ -79,7 +79,7 @@ int Star::ComputePhotonRates(const float TimeUnits, int &nbins, float E[], doubl
       E[2] = 58.0;
       E[3] = LW_photon_energy;
       E[4] = IR_photon_energy;
-      _mass = max(min((float)(_mass), 500), 5);
+      _mass = enzo_max(enzo_min((float)(_mass), 500), 5);
       if (_mass > 9 && _mass <= 500) {
         Q[0] = POW(10.0, 43.61 + 4.9*x   - 0.83*x2);
         Q[1] = POW(10.0, 42.51 + 5.69*x  - 1.01*x2);
@@ -120,7 +120,7 @@ int Star::ComputePhotonRates(const float TimeUnits, int &nbins, float E[], doubl
 
       // Stars > the maximum mass will be treated at 100 and scaled
       // later. Stars below (10Msun) will just be extrapolated using fit
-      float fit_mass = min((float)(_mass), 100.0);
+      float fit_mass = enzo_min((float)(_mass), 100.0);
       const float mass_cut = 35.0; // separation in polynomials
       x = log10((float)(fit_mass));
       x2 = x*x;
@@ -180,7 +180,7 @@ int Star::ComputePhotonRates(const float TimeUnits, int &nbins, float E[], doubl
       E[2] = 58.0;
       E[3] = LW_photon_energy;
       E[4] = IR_photon_energy;
-      _mass = max(min((float)(_mass), 500), 5);
+      _mass = enzo_max(enzo_min((float)(_mass), 500), 5);
       if (_mass > 9 && _mass <= 500) {
         Q[0] = POW(10.0, 43.61 + 4.9*x   - 0.83*x2);
         Q[1] = POW(10.0, 42.51 + 5.69*x  - 1.01*x2);

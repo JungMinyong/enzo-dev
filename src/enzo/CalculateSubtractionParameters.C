@@ -202,7 +202,7 @@ int CalculateSubtractionParameters(LevelHierarchyEntry *LevelArray[], int level,
     Radius = SafetyFactor * 2.0 * GravConst * old_mass * SolarMass / (c_s * c_s) / LengthUnits;
   }
 
-  Radius = min(max(Radius, 4*StarLevelCellWidth), 100*StarLevelCellWidth);
+  Radius = enzo_min(enzo_max(Radius, 4*StarLevelCellWidth), 100*StarLevelCellWidth);
 
 
   while (MassEnclosed <= 0) {

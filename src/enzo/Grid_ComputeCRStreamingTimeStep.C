@@ -73,7 +73,7 @@ int grid::ComputeCRStreamingTimeStep (float &dt) {
 	v_stream = CRStreamVelocityFactor*sqrt(B2/rho);
 
 	dt_est = dx / (2.0 * CRStreamStabilityFactor * v_stream);
-	dt = min(dt, dt_est);
+	dt = enzo_min(dt, dt_est);
 
       } // end triple for loop
   return SUCCESS; 

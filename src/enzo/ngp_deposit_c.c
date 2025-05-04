@@ -41,7 +41,7 @@ int ngp_deposit_c(FLOAT *posx, FLOAT *posy, FLOAT *posz,
     int np = *npositions;
     if (*ndim == 1){
         for (n=0; n<np; n++){
-            xpos =  min(max((posx[n] - leftedge[0])*fact, half), edge1);
+            xpos =  enzo_min(max((posx[n] - leftedge[0])*fact, half), edge1);
 
             i1 = (int) (xpos + ((FLOAT) 0.5));
 
@@ -52,8 +52,8 @@ int ngp_deposit_c(FLOAT *posx, FLOAT *posy, FLOAT *posz,
 
     if (*ndim == 2){
         for (n=0; n<np; n++){
-            xpos =  min(max((posx[n] - leftedge[0])*fact, half), edge1);
-            ypos =  min(max((posy[n] - leftedge[1])*fact, half), edge2);
+            xpos =  enzo_min(max((posx[n] - leftedge[0])*fact, half), edge1);
+            ypos =  enzo_min(max((posy[n] - leftedge[1])*fact, half), edge2);
 
             i1 = (int) (xpos + 0.5);
             j1 = (int) (ypos + 0.5);
@@ -65,9 +65,9 @@ int ngp_deposit_c(FLOAT *posx, FLOAT *posy, FLOAT *posz,
 
     if (*ndim == 3){
         for (n=0; n<np; n++){
-            xpos =  min(max((posx[n] - leftedge[0])*fact, half), edge1);
-            ypos =  min(max((posy[n] - leftedge[1])*fact, half), edge2);
-            zpos =  min(max((posz[n] - leftedge[2])*fact, half), edge3);
+            xpos =  enzo_min(max((posx[n] - leftedge[0])*fact, half), edge1);
+            ypos =  enzo_min(max((posy[n] - leftedge[1])*fact, half), edge2);
+            zpos =  enzo_min(max((posz[n] - leftedge[2])*fact, half), edge3);
 
             i1 = (int) (xpos + 0.5);
             j1 = (int) (ypos + 0.5);

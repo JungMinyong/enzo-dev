@@ -1,18 +1,23 @@
 /***********************************************************************
-	/
-	/  CREATES STAR PARTICLES FROM EXISTING PARTICLES
-	/
-	/  written by: John Wise
-	/  date:       March, 2009
-	/  modified1:
-	/
-	/  NOTES:  negative types mark particles that have just been before 
-	/          and not been converted into a star particle.
-	/
+        /
+        /  CREATES STAR PARTICLES FROM EXISTING PARTICLES
+        /
+        /  written by: John Wise
+        /  date:       March, 2009
+        /  modified1:
+        /
+        /  NOTES:  negative types mark particles that have just been before
+        /          and not been converted into a star particle.
+        /
  ************************************************************************/
-#include <stdlib.h>
-#include <stdio.h>
+
+
+
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -22,31 +27,31 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 
-int grid::UpdateStarParticles(int level, std::map<int, Star*>* const &StarParticleLookupMap)
-{
 
-	if (MyProcessorNumber != ProcessorNumber)
-		return SUCCESS;
+int grid::UpdateStarParticles(
+    int level, std::map<int, Star *> *const &StarParticleLookupMap) {
 
-	if (NumberOfParticles == 0 || Stars == NULL)
-		return SUCCESS;
+  if (MyProcessorNumber != ProcessorNumber)
+    return SUCCESS;
 
-	int i;
-	Star *cstar;
+  if (NumberOfParticles == 0 || Stars == NULL)
+    return SUCCESS;
 
-	//for (cstar = Stars; cstar; cstar = cstar->NextStar) MergerYS
+  int i;
+  Star *cstar;
+
+  // for (cstar = Stars; cstar; cstar = cstar->NextStar) MergerYS
   for (i = 0; i < NumberOfParticles; i++) {
     auto search = (*StarParticleLookupMap).find(ParticleNumber[i]);
     if (search != (*StarParticleLookupMap).end()) {
       cstar = search->second;
-		if (cstar->type > 0)  // living stars only (<0 == waiting to be created)
-			//for (i = 0; i < NumberOfParticles; i++)
-				//if (cstar->Identifier == ParticleNumber[i]) {
-					cstar->CopyFromParticle(this, i, level);
-					//break;
-					}
-				} // ENDIF matched ID
+      if (cstar->type > 0) // living stars only (<0 == waiting to be created)
+                           // for (i = 0; i < NumberOfParticles; i++)
+                           // if (cstar->Identifier == ParticleNumber[i]) {
+        cstar->CopyFromParticle(this, i, level);
+      // break;
+    }
+  } // ENDIF matched ID
 
-	return SUCCESS;
-
+  return SUCCESS;
 }

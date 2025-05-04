@@ -17,7 +17,7 @@
 /
 /  PURPOSE: Computes the rad-hydro time step size.  We note that this 
 /           value affects the global hydrodynamics time step: 
-/                 dt = min(dt_hydro,dt_radiation).
+/                 dt = enzo_min(dt_hydro,dt_radiation).
 /           This routine is called with scaled arguments.
 /
 /           Also, the argument 'flag' determines which entries we use to 
@@ -94,7 +94,7 @@ float gFLDSplit::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew, int flag)
   //    step length equal to 1.
   float dt_est = huge_number;    // max time step (normalized units)
   float test = dtfactor[0];
-  for (i=0; i<2+Nchem; i++)  test = min(dtfactor[i],test);
+  for (i=0; i<2+Nchem; i++)  test = enzo_min(dtfactor[i],test);
   if (test != huge_number) {
 
     // initialize variables
@@ -235,18 +235,18 @@ float gFLDSplit::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew, int flag)
     float dt_est_var[Nvar];
     for (l=0; l<Nvar; l++) {
       dt_est_var[l] = (glob_est[l] == 0.0) ? huge_number : dt/glob_est[l];
-      dt_est_var[l] = min(dt_est_var[l], huge_number);
+      dt_est_var[l] = enzo_min(dt_est_var[l], huge_number);
     }
 
     // set estimated time step as minimum of component time steps
     dt_est = maxdt;    // max time step estimate (scaled units)
     for (l=0; l<Nvar; l++) {
-      dt_est = min(dt_est, dt_est_var[l]);
+      dt_est = enzo_min(dt_est, dt_est_var[l]);
     }
 
     // account for min/max time step size (according to user)
-    dt_est = max(dt_est, mindt);
-    dt_est = min(dt_est, maxdt);
+    dt_est = enzo_max(dt_est, mindt);
+    dt_est = enzo_min(dt_est, maxdt);
 
 //     if (debug) {
 //       printf("  gFLDSplit_ComputeTimestep: (E, e, ni) dt_est = (");
@@ -261,8 +261,8 @@ float gFLDSplit::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew, int flag)
   }
 
   // account for min/max time step size (according to user)
-  dt_est = max(dt_est, mindt);
-  dt_est = min(dt_est, maxdt);
+  dt_est = enzo_max(dt_est, mindt);
+  dt_est = enzo_min(dt_est, maxdt);
 
   return dt_est;
 

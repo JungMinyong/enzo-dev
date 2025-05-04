@@ -71,7 +71,7 @@ int grid::SaveSubgridFluxes(fluxes *SubgridFluxes[], int NumberOfSubgrids,
       End[dim] = SubgridFluxes[subgrid]->LeftFluxEndGlobalIndex[flux][dim]
 	-nlongint((GridLeftEdge[dim]-DomainLeftEdge[dim])/CellWidth[dim][0]);
 
-      //Start[flux] = max(Start[flux]-1, 0);
+      //Start[flux] = enzo_max(Start[flux]-1, 0);
       End[flux] = Start[flux];
 
     }
@@ -84,7 +84,7 @@ int grid::SaveSubgridFluxes(fluxes *SubgridFluxes[], int NumberOfSubgrids,
 
     Offset = SubgridFluxes[subgrid]->RightFluxStartGlobalIndex[flux][flux]
       - SubgridFluxes[subgrid]->LeftFluxStartGlobalIndex[flux][flux] + 1;
-    //Offset = min(Offset, GridDimension[flux] - 1);
+    //Offset = enzo_min(Offset, GridDimension[flux] - 1);
 
     for (int dim = 0; dim < flux; dim++) {
       Offset *= (Activesize[dim]+1);

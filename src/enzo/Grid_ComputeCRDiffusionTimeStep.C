@@ -79,7 +79,7 @@ int grid::ComputeCRDiffusionTimeStep (float &dt) {
 	  
 	dt_est = .5 * dx*dx / kappa;
 
-	dt = min(dt, dt_est);
+	dt = enzo_min(dt, dt_est);
 
       } // end triple for loop
   return SUCCESS; 

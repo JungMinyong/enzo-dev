@@ -176,7 +176,7 @@ int grid::AddPeHeatingFromSources(Star *AllStars)
         ddr2[dim][i] =
           fabs(CellLeftEdge[dim][index] + 0.5*CellWidth[dim][index] -
                cstar->pos[dim]);
-        if (RadiativeTransferPeriodicBoundary) ddr2[dim][i] = min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
+        if (RadiativeTransferPeriodicBoundary) ddr2[dim][i] = enzo_min(ddr2[dim][i], DomainWidth[dim]-ddr2[dim][i]);
         ddr2[dim][i] = ddr2[dim][i] * ddr2[dim][i];
       }
 

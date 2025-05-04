@@ -175,8 +175,8 @@ int grid::TestGravityInitializeGrid(float CentralDensity,
  
     int Middle[MAX_DIMENSION], Size[MAX_DIMENSION];
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
-      Middle[dim] = max(GridDimension[dim]/2 - 1, 0);
-      Size[dim]   = min(GridDimension[dim], 2);
+      Middle[dim] = enzo_max(GridDimension[dim]/2 - 1, 0);
+      Size[dim]   = enzo_min(GridDimension[dim], 2);
     }
     float SpikeDensity = CentralDensity/float(Size[0]*Size[1]*Size[2]);
  

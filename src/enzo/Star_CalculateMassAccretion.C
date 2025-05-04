@@ -242,7 +242,7 @@ int Star::CalculateMassAccretion(float &BondiRadius, float &density)
     if (MBHAccretingMassRatio > 0) {
       mdot *= MBHAccretingMassRatio;
     } else if (MBHAccretingMassRatio == BONDI_ACCRETION_CORRECT_ANALYTIC) {
-      mdot *= min(POW(CurrentGrid->CellWidth[0][0]/BondiRadius, 1.5), 1.0);
+      mdot *= enzo_min(POW(CurrentGrid->CellWidth[0][0]/BondiRadius, 1.5), 1.0);
     } 
     
     /* Don't take out too much mass suddenly; this is usually not needed 
@@ -251,7 +251,7 @@ int Star::CalculateMassAccretion(float &BondiRadius, float &density)
 //  mdot_UpperLimit = 0.10 * density * DensityUnits * 
 //	POW(CurrentGrid->CellWidth[0][0]*LengthUnits, 3.0) / SolarMass / 
 //	(CurrentGrid->dtFixed) / TimeUnits;
-//  mdot = min(mdot, mdot_UpperLimit);
+//  mdot = enzo_min(mdot, mdot_UpperLimit);
 
       
     /* If requested, just fix mdot (e.g. to 1e-4 SolarMass/yr) */
@@ -496,7 +496,7 @@ int Star::CalculateMassAccretion(float &BondiRadius, float &density)
 
       // Calculate accretion rate in SolarMass/s
       // mdot = -rho * A * div(v) in SolarMass/sec (if no converging flow, no accretion)
-      mdot = max(0.0, -density * DensityUnits * POW(CurrentGrid->CellWidth[0][0]*LengthUnits, 2.0) *
+      mdot = enzo_max(0.0, -density * DensityUnits * POW(CurrentGrid->CellWidth[0][0]*LengthUnits, 2.0) *
 		 divergence * VelocityUnits / SolarMass);	
     }		   
 
@@ -506,9 +506,9 @@ int Star::CalculateMassAccretion(float &BondiRadius, float &density)
        a logistical purpose (to combine radiative+mechanical feedbacks for example) */
 
     mdot_Edd = 4.0 * PI * GravConst * old_mass * mh /
-      max(MBHFeedbackRadiativeEfficiency, 0.1) / sigma_thompson / clight;     
+      enzo_max(MBHFeedbackRadiativeEfficiency, 0.1) / sigma_thompson / clight;     
     if (MBHAccretion < 10 && MBHAccretingMassRatio != BONDI_ACCRETION_CORRECT_NUMERICAL) {
-      mdot = min(mdot, mdot_Edd); 
+      mdot = enzo_min(mdot, mdot_Edd); 
     }
 
     /* No accretion if the BH is in some low-density and cold cell. */

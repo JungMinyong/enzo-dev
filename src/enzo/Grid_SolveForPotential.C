@@ -77,7 +77,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
     size *= GravitatingMassFieldDimension[dim];
     InverseVolumeElement *= (GravitatingMassFieldDimension[dim]-1);
   }
-  tol_dim = max(sqrt(float(size))*1e-6, tol_dim);
+  tol_dim = enzo_max(sqrt(float(size))*1e-6, tol_dim);
  
 #ifdef NBODY
 	float *rhs1 = new float[size];
@@ -150,7 +150,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
  
   /* Restrict fields to lower resolution if desired. */
  
-  int GravitySmooth = max(level - MaximumGravityRefinementLevel, 0);
+  int GravitySmooth = enzo_max(level - MaximumGravityRefinementLevel, 0);
   GravitySmooth = 0;
  
   /* Iterate with multigrid. */
@@ -214,10 +214,10 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
   float maxGM=-1e30, minGM=1e30;
   for (int i=0;i<size; i++) {
 
-		maxPot = max(maxPot,PotentialField[i]);
-		minPot = min(minPot,PotentialField[i]);
-    maxGM = max(maxGM,GravitatingMassField[i]);
-    minGM = min(minGM,GravitatingMassField[i]);
+		maxPot = enzo_max(maxPot,PotentialField[i]);
+		minPot = enzo_min(minPot,PotentialField[i]);
+    maxGM = enzo_max(maxGM,GravitatingMassField[i]);
+    minGM = enzo_min(minGM,GravitatingMassField[i]);
   }
   if (debug1) printf("SolvedPotential: Potential minimum: %g \t maximum: %g\n", minPot, maxPot);
   if (debug1) printf("SolvedPotential: GM minimum: %g \t maximum: %g\n", minGM, maxGM);

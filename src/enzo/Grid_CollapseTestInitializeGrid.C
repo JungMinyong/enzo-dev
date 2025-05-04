@@ -223,7 +223,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
      time to initialize them. */
 
   int SetupLoopCount, npart = 0;
-  for (SetupLoopCount = 0; SetupLoopCount < 1+min(SphereUseParticles, 1);
+  for (SetupLoopCount = 0; SetupLoopCount < 1+enzo_min(SphereUseParticles, 1);
        SetupLoopCount++) {
 
     /* Set densities */
@@ -486,8 +486,8 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 
 	    r = sqrt(xpos*xpos + ypos*ypos + zpos*zpos);
 	    rcyl = sqrt(xpos*xpos + ypos*ypos);
-	    r = max(r, 0.1*CellWidth[0][0]);
-	    rcyl = max(rcyl, 0.1*CellWidth[0][0]);
+	    r = enzo_max(r, 0.1*CellWidth[0][0]);
+	    rcyl = enzo_max(rcyl, 0.1*CellWidth[0][0]);
 
 	    /* Compute Cartesian coordinates for rotational properties */
 	    	    
@@ -645,7 +645,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 		else
 		  ScaleHeight = InnerScaleHeight * 
 		    POW(rcyl/ThickenTransitionRadius, 1.05);
-		ScaleHeight = max(ScaleHeight, 2*CellWidth[0][0]);
+		ScaleHeight = enzo_max(ScaleHeight, 2*CellWidth[0][0]);
 
 //		printf("r=%"FSYM", z=%"FSYM", h=%"GSYM", rho=%"GSYM", T=%"GSYM"\n", 
 //		       rcyl,zpos,ScaleHeight,MidplaneDensity,MidplaneTemperature);
@@ -700,14 +700,14 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 
 		  /* If we're above the disk, then exit. */
 
-		  //		if (zheight > max(5.0*ScaleHeightz, 2.0*CellWidth[0][0]))
+		  //		if (zheight > enzo_max(5.0*ScaleHeightz, 2.0*CellWidth[0][0]))
 		  //		  continue;
 
 		  /* Compute density (van der Kruit & Searle 1982  1982A&A...110...61V ). */
 
 		  if (dim == 0)
 		    dens1 = SphereDensity[sphere]*PEXP(-drad/ScaleHeightR)/
-		      POW(cosh(zheight/max(ScaleHeightz, CellWidth[0][0])), 2);
+		      POW(cosh(zheight/enzo_max(ScaleHeightz, CellWidth[0][0])), 2);
 
 		  //		if (dens1 < density)
 		  //		  break;
@@ -868,7 +868,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 		    r > SphereRadius[sphere]) {
 	      float ramp = 1.0 - 1.0 * tanh((3.0/(SphereSmoothRadius[sphere]-1.0))*
 					    (r/SphereRadius[sphere] - 1.0));
-	      ramp = max(ramp, 1.0/density);
+	      ramp = enzo_max(ramp, 1.0/density);
 	      density *= ramp;
 	      if (SphereConstantPressure[sphere] == TRUE) {
 		temperature /= ramp;

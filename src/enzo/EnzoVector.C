@@ -679,7 +679,7 @@ int EnzoVector::quotient(EnzoVector *x, EnzoVector *y)
 
 
 
-//  Vector minquotient operation, min(this(i)/y(i)), where y(i)!=0
+//  Vector minquotient operation, enzo_min(this(i)/y(i)), where y(i)!=0
 //  [operates on active data only]
 float EnzoVector::minquotient(EnzoVector *y)
 {
@@ -1035,7 +1035,7 @@ float EnzoVector::infnorm_component(int var) const
 }
 
 
-//   Relative pointwise difference,  max(abs(this-that)/abs(this))
+//   Relative pointwise difference,  enzo_max(abs(this-that)/abs(this))
 float EnzoVector::relative_difference(float *x, int var) const
 {
   if ((var < 0) || (var >= Nspecies)) {

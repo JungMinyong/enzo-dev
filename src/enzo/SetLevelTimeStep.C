@@ -64,7 +64,7 @@ int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
     *dtThisLevel = huge_number;
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       dtGrid      = Grids[grid1]->GridData->ComputeTimeStep();
-      *dtThisLevel = min(*dtThisLevel, dtGrid);
+      *dtThisLevel = enzo_min(*dtThisLevel, dtGrid);
     }
     *dtThisLevel = CommunicationMinValue(*dtThisLevel);
 
@@ -83,19 +83,19 @@ int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
       for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
         if (Grids[grid1]->GridData->ComputeConductionTimeStep(dt_cond_temp) == FAIL) 
           ENZO_FAIL("Error in ComputeConductionTimeStep.\n");
-	dt_conduction = min(dt_conduction,dt_cond_temp);
+	dt_conduction = enzo_min(dt_conduction,dt_cond_temp);
       }
       dt_conduction = CommunicationMinValue(dt_conduction);
       dt_conduction *= float(NumberOfGhostZones);  // for subcycling
 
-      int my_cycle_skip = max(1, (int) (*dtThisLevel / dt_conduction));
+      int my_cycle_skip = enzo_max(1, (int) (*dtThisLevel / dt_conduction));
       dtRebuildHierarchy[level] = *dtThisLevel;
       if (debug)
         fprintf(stderr, "Conduction dt[%"ISYM"] = %"GSYM", will rebuild hierarchy in about %"ISYM" cycles.\n",
                          level, dt_conduction, my_cycle_skip);
 
       /* Set actual timestep correctly. */
-      *dtThisLevel = min(*dtThisLevel, dt_conduction);
+      *dtThisLevel = enzo_min(*dtThisLevel, dt_conduction);
 
     }
 

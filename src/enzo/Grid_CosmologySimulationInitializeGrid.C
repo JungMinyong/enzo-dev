@@ -421,7 +421,7 @@ int grid::CosmologySimulationInitializeGrid(
             ENZO_FAIL("Error reading density field.");
     }
     for (i = 0; i < size; i++)
-      BaryonField[0][i] = max(BaryonField[0][i], DENSITY_FLOOR);
+      BaryonField[0][i] = enzo_max(BaryonField[0][i], DENSITY_FLOOR);
   }
  
 
@@ -1576,7 +1576,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions &&
  
       int ppbuffsize, pp1, pp2, ppoffset, ppcount;
  
-      ppbuffsize = min(1024,TotalParticleCount);
+      ppbuffsize = enzo_min(1024,TotalParticleCount);
  
 //    printf("ppbuffsize = %"ISYM"\n", ppbuffsize);
  
@@ -1587,7 +1587,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions &&
  
       for (pp1 = 0; pp1 < TotalParticleCount; pp1 = pp1 + ppbuffsize)
       {
-        pp2 = min(pp1+ppbuffsize-1,TotalParticleCount-1);
+        pp2 = enzo_min(pp1+ppbuffsize-1,TotalParticleCount-1);
         ppoffset = pp1;
         ppcount = pp2-pp1+1;
 //      if (io_log) fprintf(log_fptr, "PP1 = %"ISYM", PP2 = %"ISYM", PPoffset = %"ISYM", PPCount = %"ISYM"\n", pp1, pp2, ppoffset, ppcount);
@@ -1604,7 +1604,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions &&
  
       for (pp1 = 0; pp1 < TotalParticleCount; pp1 = pp1 + ppbuffsize)
       {
-        pp2 = min(pp1+ppbuffsize-1,TotalParticleCount-1);
+        pp2 = enzo_min(pp1+ppbuffsize-1,TotalParticleCount-1);
         ppoffset = pp1;
         ppcount = pp2-pp1+1;
  
@@ -1876,7 +1876,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions &&
  
       for (pp1 = 0; pp1 < TotalParticleCount; pp1 = pp1 + ppbuffsize)
       {
-        pp2 = min(pp1+ppbuffsize-1,TotalParticleCount-1);
+        pp2 = enzo_min(pp1+ppbuffsize-1,TotalParticleCount-1);
         ppoffset = pp1;
         ppcount = pp2-pp1+1;
  
@@ -1993,7 +1993,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions &&
  
       for (pp1 = 0; pp1 < TotalParticleCount; pp1 = pp1 + ppbuffsize)
       {
-        pp2 = min(pp1+ppbuffsize-1,TotalParticleCount-1);
+        pp2 = enzo_min(pp1+ppbuffsize-1,TotalParticleCount-1);
         ppoffset = pp1;
         ppcount = pp2-pp1+1;
  
@@ -2211,7 +2211,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions &&
  
       for (pp1 = 0; pp1 < TotalParticleCount; pp1 = pp1 + ppbuffsize)
       {
-        pp2 = min(pp1+ppbuffsize-1,TotalParticleCount-1);
+        pp2 = enzo_min(pp1+ppbuffsize-1,TotalParticleCount-1);
         ppoffset = pp1;
         ppcount = pp2-pp1+1;
  
@@ -2422,7 +2422,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions &&
  
       for (pp1 = 0; pp1 < TotalParticleCount; pp1 = pp1 + ppbuffsize)
       {
-        pp2 = min(pp1+ppbuffsize-1,TotalParticleCount-1);
+        pp2 = enzo_min(pp1+ppbuffsize-1,TotalParticleCount-1);
         ppoffset = pp1;
         ppcount = pp2-pp1+1;
  

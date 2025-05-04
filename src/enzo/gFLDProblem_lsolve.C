@@ -279,7 +279,7 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
 
   //       re-scale delta to relative residual and not actual
   delta /= b->rmsnorm();
-  delta = min(delta, 1.0e-6);
+  delta = enzo_min(delta, 1.0e-6);
 
   //       insert rhs, sol vectors into HYPRE vectors x and b
   ilower[0] = SolvIndices[0][0];

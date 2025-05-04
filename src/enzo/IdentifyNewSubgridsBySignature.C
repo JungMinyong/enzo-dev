@@ -134,7 +134,7 @@ int IdentifyNewSubgridsBySignature(ProtoSubgrid *SubgridList[],
 	    }
 
 	    int MinimumNewGridWidth;
-	    MinimumNewGridWidth = min(GridEnds[dim*2][1]-GridEnds[dim*2][0],
+	    MinimumNewGridWidth = enzo_min(GridEnds[dim*2][1]-GridEnds[dim*2][0],
 				      GridEnds[dim*2+1][1]-GridEnds[dim*2+1][0]);
 	    
 	    if (TempInt > MaxZeroCrossingStrength and MinimumNewGridWidth > MinimumSubgridEdge) {

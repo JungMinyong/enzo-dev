@@ -111,7 +111,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 				 Galaxy2ColourNum) == FAIL)
     ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
-  MetalNum = max(Metal2Num, SNColourNum);
+  MetalNum = enzo_max(Metal2Num, SNColourNum);
   MetallicityField = (MetalNum > 0) ? TRUE : FALSE;
   if (MetalNum > 0 && SNColourNum > 0 && cstar->type == PopIII)
     MetalNum = SNColourNum;
@@ -187,14 +187,14 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
       delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - cstar->pos[2];
       sz = sign(delz);
       delz = fabs(delz);
-      delz = min(delz, DomainWidth[2]-delz);
+      delz = enzo_min(delz, DomainWidth[2]-delz);
 
       for (j = 0; j < GridDimension[1]; j++) {
 
 	dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - cstar->pos[1];
 	sy = sign(dely);
 	dely = fabs(dely);
-	dely = min(dely, DomainWidth[1]-dely);
+	dely = enzo_min(dely, DomainWidth[1]-dely);
 
 	index = (k*GridDimension[1] + j)*GridDimension[0];
 	for (i = 0; i < GridDimension[0]; i++, index++) {
@@ -202,7 +202,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	  delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - cstar->pos[0];
 	  sx = sign(delx);
 	  delx = fabs(delx);
-	  delx = min(delx, DomainWidth[0]-delx);
+	  delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	  radius2 = delx*delx + dely*dely + delz*delz;
 	  if (radius2 <= outerRadius2) {
@@ -210,7 +210,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	    r1 = sqrt(radius2) / radius;
 	    norm = 0.98;
 	    ramp = norm*(0.5 - 0.5 * tanh(10.0*(r1-1.0)));
-//	    ramp = min(max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
+//	    ramp = enzo_min(enzo_max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
 
 	    /* 1/1.2^3 factor to dilute the density since we're
 	       depositing a uniform ejecta in a sphere of 1.2*radius
@@ -229,7 +229,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	      newGE = (OldDensity * BaryonField[GENum][index] +
 		       ramp * factor * EjectaDensity * EjectaThermalEnergy) /
 		BaryonField[DensNum][index];
-	      newGE = min(newGE, maxGE);
+	      newGE = enzo_min(newGE, maxGE);
 	      BaryonField[GENum][index] = newGE;
 	      BaryonField[TENum][index] = newGE;
 
@@ -244,7 +244,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 		       ramp * factor * EjectaDensity * EjectaThermalEnergy) /
 		BaryonField[DensNum][index];
 
-	      newGE = min(newGE, maxGE);  
+	      newGE = enzo_min(newGE, maxGE);  
 	      BaryonField[TENum][index] = newGE;
 
 	    } //end if(GENum >= 0 && DualEnergyFormalism)
@@ -306,14 +306,14 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
       delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - cstar->pos[2];
       sz = sign(delz);
       delz = fabs(delz);
-      delz = min(delz, DomainWidth[2]-delz);
+      delz = enzo_min(delz, DomainWidth[2]-delz);
 
       for (j = 0; j < GridDimension[1]; j++) {
 
 	dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - cstar->pos[1];
 	sy = sign(dely);
 	dely = fabs(dely);
-	dely = min(dely, DomainWidth[1]-dely);
+	dely = enzo_min(dely, DomainWidth[1]-dely);
 
 	index = (k*GridDimension[1] + j)*GridDimension[0];
 	for (i = 0; i < GridDimension[0]; i++, index++) {
@@ -321,7 +321,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	  delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - cstar->pos[0];
 	  sx = sign(delx);
 	  delx = fabs(delx);
-	  delx = min(delx, DomainWidth[0]-delx);
+	  delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	  radius2 = delx*delx + dely*dely + delz*delz;
 	  if (radius2 <= outerRadius2) {
@@ -329,7 +329,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	    r1 = sqrt(radius2) / radius;
 	    norm = 0.98;
 	    ramp = norm*(0.5 - 0.5 * tanh(10.0*(r1-1.0)));
-//          ramp = min(max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
+//          ramp = enzo_min(enzo_max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
 
 	    /* 1/1.2^3 factor to dilute the density since we're
 	       depositing a uniform ejecta in a sphere of 1.2*radius
@@ -355,7 +355,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 		 EjectaThermalEnergy in ergs/cm3/(1/cm^2) */
 	      newGE = (OldDensity * BaryonField[GENum][index] +
 		       ramp * factor * EjectaThermalEnergy * 
-		       min(1.0/radius2, 1.0/(4.0*CellWidth[0][0]*CellWidth[0][0]))) /
+		       enzo_min(1.0/radius2, 1.0/(4.0*CellWidth[0][0]*CellWidth[0][0]))) /
 		BaryonField[DensNum][index];
 #endif
 
@@ -366,7 +366,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 		OldDensity / BaryonField[DensNum][index];
 #endif
 
-	      newGE = min(newGE, maxGE);  
+	      newGE = enzo_min(newGE, maxGE);  
 
 	      BaryonField[GENum][index] = newGE;
 	      BaryonField[TENum][index] = newGE;
@@ -385,7 +385,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 #ifdef USE_ONE_OVER_RSQUARED
 	      newGE = (OldDensity * BaryonField[TENum][index] +
 		       ramp * factor * EjectaThermalEnergy * 
-		       min(1.0/radius2, 1.0/(4.0*CellWidth[0][0]*CellWidth[0][0]))) /
+		       enzo_min(1.0/radius2, 1.0/(4.0*CellWidth[0][0]*CellWidth[0][0]))) /
 		BaryonField[DensNum][index];
 #endif
 	      
@@ -398,7 +398,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 //		     OldDensity, BaryonField[DensNum][index], 
 //		     BaryonField[TENum][index], newGE, EjectaDensity, EjectaThermalEnergy * 1/radius2); 
 
-	      newGE = min(newGE, maxGE);  
+	      newGE = enzo_min(newGE, maxGE);  
 	      BaryonField[TENum][index] = newGE;
 
 	    } //end if(GENum >= 0 && DualEnergyFormalism)
@@ -776,27 +776,27 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
       delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - cstar->pos[2];
       sz = sign(delz);
       delz = fabs(delz);
-      delz = min(delz, DomainWidth[2]-delz);
+      delz = enzo_min(delz, DomainWidth[2]-delz);
 
       for (j = 0; j < GridDimension[1]; j++) {
 
 	dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - cstar->pos[1];
 	sy = sign(dely);
 	dely = fabs(dely);
-	dely = min(dely, DomainWidth[1]-dely);
+	dely = enzo_min(dely, DomainWidth[1]-dely);
 
 	for (i = 0; i < GridDimension[0]; i++, index++) {
 
 	  delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - cstar->pos[0];
 	  sx = sign(delx);
 	  delx = fabs(delx);
-	  delx = min(delx, DomainWidth[0]-delx);
+	  delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	  radius2 = delx*delx + dely*dely + delz*delz;
 	  if (radius2 <= 1.2*1.2*radius*radius) {
 
 	    float r1 = sqrt(radius2) / radius;
-	    float ramp = min(max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
+	    float ramp = enzo_min(enzo_max(1.0 - (r1 - 0.8)/0.4, 0.01), 1.0);
 	    
 	    BaryonField[DensNum][index] = EjectaDensity * ramp;
 	  
@@ -869,26 +869,26 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
       delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - cstar->pos[2];
       sz = sign(delz);
       delz = fabs(delz);
-      delz = min(delz, DomainWidth[2]-delz);
+      delz = enzo_min(delz, DomainWidth[2]-delz);
 
       for (j = 0; j < GridDimension[1]; j++) {
 
 	dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - cstar->pos[1];
 	sy = sign(dely);
 	dely = fabs(dely);
-	dely = min(dely, DomainWidth[1]-dely);
+	dely = enzo_min(dely, DomainWidth[1]-dely);
 
 	for (i = 0; i < GridDimension[0]; i++, index++) {
 
 	  delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - cstar->pos[0];
 	  sx = sign(delx);
 	  delx = fabs(delx);
-	  delx = min(delx, DomainWidth[0]-delx);
+	  delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	  radius2 = delx*delx + dely*dely + delz*delz;
 	  if (radius2 <= radius*radius) {
 
-	    radius2 = max(radius2, 0.0625*CellWidth[0][i]*CellWidth[0][i]); // (0.25*dx)^2
+	    radius2 = enzo_max(radius2, 0.0625*CellWidth[0][i]*CellWidth[0][i]); // (0.25*dx)^2
 
 	    if (MetallicityField == TRUE)
 	      metallicity = BaryonField[MetalNum][index] / BaryonField[DensNum][index];
@@ -951,21 +951,21 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
       delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - cstar->pos[2];
       sz = sign(delz);
       delz = fabs(delz);
-      delz = min(delz, DomainWidth[2]-delz);
+      delz = enzo_min(delz, DomainWidth[2]-delz);
 
       for (j = 0; j < GridDimension[1]; j++) {
 
 	dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - cstar->pos[1];
 	sy = sign(dely);
 	dely = fabs(dely);
-	dely = min(dely, DomainWidth[1]-dely);
+	dely = enzo_min(dely, DomainWidth[1]-dely);
 
 	for (i = 0; i < GridDimension[0]; i++, index++) {
 
 	  delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - cstar->pos[0];
 	  sx = sign(delx);
 	  delx = fabs(delx);
-	  delx = min(delx, DomainWidth[0]-delx);
+	  delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	  radius2 = delx*delx + dely*dely + delz*delz;
 	  if (radius2 <= radius*radius) {

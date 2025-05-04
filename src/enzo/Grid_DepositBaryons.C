@@ -133,7 +133,7 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
 			   TargetGrid->GravitatingMassFieldCellSize) - 1;
     
     if (TargetGrid == this)
-      GridOffset[dim] = max(GridOffset[dim],
+      GridOffset[dim] = enzo_max(GridOffset[dim],
 	nint((TargetGrid->GridLeftEdge[dim] -
 	      TargetGrid->GravitatingMassFieldLeftEdge[dim])/
 	     TargetGrid->GravitatingMassFieldCellSize) );
@@ -155,7 +155,7 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
 			   TargetGrid->GravitatingMassFieldCellSize);
 
     if (TargetGrid == this)
-      GridOffsetEnd[dim] = min(GridOffsetEnd[dim],
+      GridOffsetEnd[dim] = enzo_min(GridOffsetEnd[dim],
 	nint((TargetGrid->GridRightEdge[dim] -
 	      TargetGrid->GravitatingMassFieldLeftEdge[dim])/
 	     TargetGrid->GravitatingMassFieldCellSize)-1 );

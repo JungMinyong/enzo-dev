@@ -75,18 +75,18 @@ int grid::AddRadiationImpulse(int field, double Luminosity, double sigma,
   kdiss_r2 = (float) (Luminosity * sigma / (4.0 * pi));
   for (k = 0; k < GridDimension[2]; k++) {
     delz = fabs(CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - pos[2]);
-    delz = min(delz, DomainWidth[2]-delz);
+    delz = enzo_min(delz, DomainWidth[2]-delz);
     for (j = 0; j < GridDimension[1]; j++) {
       dely = fabs(CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - pos[1]);
-      dely = min(dely, DomainWidth[1]-dely);
+      dely = enzo_min(dely, DomainWidth[1]-dely);
       for (i = 0; i < GridDimension[0]; i++, index++) {
 	delx = fabs(CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - pos[0]);
-	delx = min(delx, DomainWidth[0]-delx);
+	delx = enzo_min(delx, DomainWidth[0]-delx);
 	radius2 = delx*delx + dely*dely + delz*delz;
 	if (radius2 > outerFront*outerFront || radius2 < innerFront*innerFront)
 	  continue;
 	
-	radius2 = max(radius2, dilRadius2);
+	radius2 = enzo_max(radius2, dilRadius2);
 	BaryonField[FieldNum][index] += kdiss_r2 / radius2;
 
       } // END: i-direction

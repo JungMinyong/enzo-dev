@@ -68,8 +68,8 @@ void grid::PrepareGrid(int Rank, int GridDim[],
  
   for (dim = 0; dim < GridRank; dim++) {
     GridDimension[dim]  = GridDim[dim];
-    GridStartIndex[dim] = min(NumberOfGhostZones, GridDim[dim]-1);
-    GridEndIndex[dim]   = min(ABS(GridDim[dim]-NumberOfGhostZones-1),
+    GridStartIndex[dim] = enzo_min(NumberOfGhostZones, GridDim[dim]-1);
+    GridEndIndex[dim]   = enzo_min(ABS(GridDim[dim]-NumberOfGhostZones-1),
 			      GridDim[dim]-1);
     GridLeftEdge[dim]   = LeftEdge[dim];
     GridRightEdge[dim]  = RightEdge[dim];

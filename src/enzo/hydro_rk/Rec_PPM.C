@@ -101,8 +101,8 @@ void ppm_dissipation(float **prim, float **p0l, float **p0r, int ActiveSize, int
      
       if (1) {
 	// 1) Contact steeping
-	if (Gamma*K0*fabs(rho_p1-rho_m1)/min(rho_p1,rho_m1) >= 
-	    fabs(p_p1-p_m1)/min(p_p1, p_m1)) {
+	if (Gamma*K0*fabs(rho_p1-rho_m1)/enzo_min(rho_p1,rho_m1) >= 
+	    fabs(p_p1-p_m1)/enzo_min(p_p1, p_m1)) {
 	  
 	  // compute da_j+1
 	  ap2ma = ap2 - a;
@@ -134,13 +134,13 @@ void ppm_dissipation(float **prim, float **p0l, float **p0r, int ActiveSize, int
 	  d2ap1 = ap2 - 2.0*ap1 + a;
 	  d2am1 = a - 2.0*am1 + am2;
 	  ap1mam1 = ap1 - am1;
-	  if (-d2ap1*d2am1 > 0 && fabs(ap1mam1) - eps1*min(fabs(ap1),fabs(am1)) > 0) {
+	  if (-d2ap1*d2am1 > 0 && fabs(ap1mam1) - eps1*enzo_min(fabs(ap1),fabs(am1)) > 0) {
 	    eta0 = -(d2a-d2am1)/(6.0*ap1mam1);
 	  } else {
 	    eta0 = 0.0;
 	  }
 	  
-	  eta = max(0.0, min(eta1*(eta0-eta2), 1.0));
+	  eta = enzo_max(0.0, enzo_min(eta1*(eta0-eta2), 1.0));
 	  
 	  p0l[field][i+1] = p0l[field][i+1]*(1.0-eta) + adl*eta;
 	  p0r[field][i] = p0r[field][i]*(1.0-eta) + adr*eta;
@@ -148,16 +148,16 @@ void ppm_dissipation(float **prim, float **p0l, float **p0r, int ActiveSize, int
 	
 	// 2) Shock flattening
 	if (i >= 1 && i <= ActiveSize) {
-	  if (fabs(p_p1-p_m1)/min(p_p1,p_m1) > eps2 && v_m1 > v_p1) {
-	    f0 = min(1.0, max(0.0, ((p_p1-p_m1)/(p_p2-p_m2) - w1)*w2));
+	  if (fabs(p_p1-p_m1)/enzo_min(p_p1,p_m1) > eps2 && v_m1 > v_p1) {
+	    f0 = enzo_min(1.0, enzo_max(0.0, ((p_p1-p_m1)/(p_p2-p_m2) - w1)*w2));
 	    if (p_p1 - p_m1 > 0) {
 	      p_p3 = prim[ipres][iprim+3];
-	      f0p1 = min(1.0, max(0.0, ((p_p2-p)/(p_p3-p_m1) - w1)*w2));
-	      f = max(f0, f0p1);
+	      f0p1 = enzo_min(1.0, enzo_max(0.0, ((p_p2-p)/(p_p3-p_m1) - w1)*w2));
+	      f = enzo_max(f0, f0p1);
 	    } else {
 	      p_m3 = prim[ipres][iprim-3];
-	      f0m1 = min(1.0, max(0.0, ((p-p_m2)/(p_p1-p_m3) - w1)*w2));
-	      f = max(f0, f0m1);
+	      f0m1 = enzo_min(1.0, enzo_max(0.0, ((p-p_m2)/(p_p1-p_m3) - w1)*w2));
+	      f = enzo_max(f0, f0m1);
 	    }
 	    
 	    p0l[field][i+1] = a*f + p0l[field][i+1]*(1.0-f);

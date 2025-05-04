@@ -133,10 +133,10 @@ int grid::GetEnclosedMassInShell(Star *star, float radius0, float radius1,
 
   for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
     delz = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - star->pos[2];
-    delz = min(delz, DomainWidth[2]-delz);
+    delz = enzo_min(delz, DomainWidth[2]-delz);
     for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
       dely = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - star->pos[1];
-      dely = min(dely, DomainWidth[1]-dely);
+      dely = enzo_min(dely, DomainWidth[1]-dely);
       index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) { 
 
@@ -144,7 +144,7 @@ int grid::GetEnclosedMassInShell(Star *star, float radius0, float radius1,
 	  continue;
 
 	delx = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - star->pos[0];
-	delx = min(delx, DomainWidth[0]-delx);
+	delx = enzo_min(delx, DomainWidth[0]-delx);
 
 	dr2 = delx*delx + dely*dely + delz*delz;
 

@@ -111,7 +111,7 @@ inline void EOS(float &p, float &rho, float &e, float &h, float &cs, float &dpdr
     // divided by 1000 is the suggested wengen EOS
     // doing to only 100 should reduce the resolution requirements
     // for the initial tests			
-    cs = (rho > 1) ?  cs* sqrt(max(1./(rho*sqrt(rho)), 1.e-3)) : cs ;
+    cs = (rho > 1) ?  cs* sqrt(enzo_max(1./(rho*sqrt(rho)), 1.e-3)) : cs ;
     p = rho*cs*cs ;
     e = p / ((Gamma-1.0)*rho);
     dpdrho = 1;

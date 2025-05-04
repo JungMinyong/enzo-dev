@@ -116,7 +116,7 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
       for (j = 0; j < GridDimension[1]; j++) {
 	igrid = (k * GridDimension[1] + j) * GridDimension[0];
         for (i = 0; i < GridDimension[0]; i++, n++, igrid++) {
-          Prim[field][igrid] = min(1.0, max((Prim[field][igrid]/D[n]), SmallX));
+          Prim[field][igrid] = enzo_min(1.0, enzo_max((Prim[field][igrid]/D[n]), SmallX));
 	  Prim[field][igrid] = Prim[field][igrid]/D[n];
           sum[n] += Prim[field][igrid];
         }
@@ -163,7 +163,7 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
 	for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	  igrid = (k * GridDimension[1] + j) * GridDimension[0] + GridStartIndex[0];
 	  for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++, igrid++) {
-	    Prim[field][igrid] = min(1.0, max((Prim[field][igrid]/D[n]), SmallX));
+	    Prim[field][igrid] = enzo_min(1.0, enzo_max((Prim[field][igrid]/D[n]), SmallX));
 	    sum[n] += Prim[field][igrid];
 	  }
 	}
@@ -242,13 +242,13 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
 
 	  printf("UpdatePrim: rho <0 at %"ISYM" %"ISYM" %"ISYM": rho_old=%"GSYM", rho=%"GSYM", rho_new=%"GSYM", dU[iD]=%"GSYM"\n", 
 		 i, j, k, rho_old, rho, D_new, dU[iD][n]);
-	  //D_new = max(D_new, SmallRho);
+	  //D_new = enzo_max(D_new, SmallRho);
 	  D_new = rho;
 	  //D_new = rho;
 	  return FAIL;
 	}
 
-	//D_new = max(D_new, SmallRho);
+	//D_new = enzo_max(D_new, SmallRho);
 
 	// convert back to primitives
 	vx = S1_new/D_new;
@@ -302,7 +302,7 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
 	  if (cs*cs > DualEnergyFormalismEta1*v2 && eint1 > 0.5*eint) {
 	    eint = eint1;
 	  }
-	  eint = max(eint, emin);
+	  eint = enzo_max(eint, emin);
 	  BaryonField[GENum][igrid] = eint;
 	  BaryonField[TENum][igrid] = eint + 0.5*v2;
 	  
