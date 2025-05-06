@@ -9,7 +9,7 @@
 #ifdef SEVN
 #include "star.h" // Eunwoo added for SEVN
 #endif
-#ifdef TEST // INDIVIDUALSTAR
+#ifdef INDIVIDUALSTAR
 #include "../NbodyRoutines.h"
 #endif
 
@@ -79,6 +79,9 @@ struct Particle {
 	int Members[10]; // ParticleIndex of group members; only used for cm ptcls by EW 2025.1.30
 	int NumberOfMember; // Number of group members; only used for cm ptcls by EW 2025.1.30
 
+#ifdef INDIVIDUALSTAR
+	int EnzoProcessorNumber;
+#endif
 #ifdef SEVN
 	// For SEVN
 	// (SEVN Query) InitialMass == ZAMS mass? Can I change InitialMass if steller merger happenes?
@@ -141,6 +144,9 @@ struct Particle {
 		WorldTime = 0.0; // Myr
 		SNEjectedMass = 0.0; // code unit
 		T_eff = 0.0; // [Kelvin] for wind feedback
+#endif
+#ifdef INDIVIDUALSTAR
+	int EnzoProcessorNumber;
 #endif
 	}
 
@@ -354,17 +360,18 @@ struct Particle {
 		for (int i = 0; i < ptcl->NewNumberOfNeighbor; i++)
 			this->NewNeighbors[i] = ptcl->NewNeighbors[i];
 	}
-#ifndef TEST //INDIVIDUALSTAR
+#ifndef INDIVIDUALSTAR
         void set(int *PID, double *Mass, double *CreationTime,
                  double *DynamicalTime, double *Metallicity,
                  double *Position[Dim], double *Velocity[Dim],
                  double *BackgroundAcceleration[Dim], int &i);
         void update(double *Mass, double *BackgroundAcceleration[Dim], int &i);
 #else
-        void set(ParticleDataType *ptcl);
-        void update(ParticleSendDataType *ptcl);
+        void set(const ParticleDataType &ptcl, const int& ProcessorNumber);
+        void update(const ParticleSendDataType &ptcl, const int& ProcessorNumber);
 #endif
 
+	void print(const double &umass, const double &upos, const double &uvel);
 	void setNewTimeStepWithNewEnzoTimeStep(double &OldEnzoTimeStep, double &NewEnzoTimeStep) ;
 };
 

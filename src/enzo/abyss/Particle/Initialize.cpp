@@ -1,4 +1,5 @@
 #include "../global.h"
+#include <cstdio>
 
 void CalculateAcceleration01(Particle* ptcl);
 void CalculateAcceleration23(Particle* ptcl);
@@ -60,6 +61,10 @@ void CalculateAcceleration01(Particle* ptcl1) {
 			v2    += v[dim]*v[dim];
 		}
 
+		if (r2==0) {
+			fprintf(nbpout, "r2 is zero");
+		}
+
 		m_r3 = ptcl2->Mass/r2/sqrt(r2); 
 
 		if (r2 > ptcl1->RadiusOfNeighbor) {
@@ -93,6 +98,7 @@ void CalculateAcceleration01(Particle* ptcl1) {
 			ptcl1->a_tot[dim][order] = ptcl1->a_reg[dim][order] + ptcl1->a_irr[dim][order]; 
 		}
 	}
+
 	return;
 }
 

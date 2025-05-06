@@ -12,7 +12,11 @@ int NumberOfCommunication;
 int *AvailableIndices; 
 int NumberOfAvailableIndices;
 std::unordered_map<int,int> PIDtoIndexMap; // (Query) EW: How about CM particles?
+#ifndef INDIVIDUALSTAR
 int *EnzoPIDs; 
+#else
+int *displs = NULL;
+#endif
 int newNumberOfSingleParticle;
 int NumberOfParticle; // The number of active particles (single + CM ptcl)
 int NumberOfSingleParticle; // The number of single particles (only single, not CM ptcl)
@@ -98,7 +102,9 @@ void DefaultGlobal() {
 	outputTime = 0.;
 
 	if (AbyssProcessorNumber == 0)  {
+#ifndef INDIVIDUALSTAR
 		EnzoPIDs         = new int[MaxNumberOfParticle];
+#endif
 		AvailableIndices = new int[MaxNumberOfParticle];
 		NumberOfAvailableIndices = 0;
 		for (int i=0; i<MaxNumberOfParticle; i++) {

@@ -123,14 +123,10 @@ int PrepareNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int level);
 #else
-int SendParticleToAbyss(//LevelHierarchyEntry *LevelArray[], int level,
-                        Star *&AllStars,
-                        std::unordered_map<int, Star *> &LocalStarLookupMap);
-#ifdef TEST
+int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level,
+    Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap);
 int ReceiveParticleFromAbyss(
-    LevelHierarchyEntry *LevelArray[], int level, Star *&AllStar,
-    std::unordered_map<int, Star *> &LocalStarLookupMap);
-#endif
+    Star *&AllStar, std::unordered_map<int, Star *> &LocalStarLookupMap);
 #endif
 #endif
 
@@ -660,29 +656,28 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				if (debug1) fprintf(stdout,"Proc:%d\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
 
-				//if (UseNBODY) {
+				if (UseNBODY) {
 				// by YS (Query) test
-				if (true) {
 #ifndef INDIVIDUALSTAR
 					if (PrepareNbodyComputation(LevelArray, level) == FAIL) {
 #else
+
+					/* Update Background Acceleration from Grids to Star */
+					//fprintf(stderr, "ENZO: in EvolveLevel, ID (%d) = ", MyProcessorNumber);
+					for (auto &kv : LocalStarLookupMap) {
+						Star *star = kv.second;
+						if (star->ReturnLevel() == level) {
+							//fprintf(stderr, "%d on %d,", level, star->ReturnID());
+							star->UpdateBackgroundAcceleration();
+						}
+					}
+
 				if (LevelArray[level+1] == NULL)
-					if (SendParticleToAbyss(AllStars, LocalStarLookupMap) == FAIL) {
+					if (SendParticleToAbyss(LevelArray, level,AllStars, LocalStarLookupMap) == FAIL) {
 #endif
 						ENZO_FAIL("Error in NbodyParticleFindAll.");
 					}
 				}
-				// by YS test for AllStars
-				bool debug2 = false; 
-				Star *ThisStar;
-				if (debug2) {
-					fprintf(stderr, "Star (ID, x, on this processor) of %d =", MyProcessorNumber);
-					for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar) {
-						fprintf(stderr, "(%d, %.5e, %d), ",
-						ThisStar->ReturnID(), ThisStar->ReturnPosition()[0], ThisStar->ReturnCurrentGrid()==NULL);
-					}
-					fprintf(stderr, "\n");
-                }
 #endif
 
 #define GravTest
@@ -825,22 +820,21 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				}//RK hydro
 
 #ifdef NBODY
-				//if (level == MaximumRefinementLevel) {
 				if (debug1) fprintf(stdout,"Proc: %d, 10\n",MyProcessorNumber);  // by YS
 				/* Create a master list of all nbody particles */
+
 				if (UseNBODY) {
 #ifndef INDIVIDUALSTAR
 					if(FinalizeNbodyComputation(LevelArray, level) == FAIL) {
 #else
-					//if(ReceiveParticleFromAbyss(LevelArray, level, AllStars, LocalStarLookupMap) == FAIL) {
-					{
+					if (LevelArray[level+1] == NULL)
+						if(ReceiveParticleFromAbyss(AllStars, LocalStarLookupMap) == FAIL) {
 #endif
-						ENZO_FAIL("Error in NbodyParticleFindAll.");
-					}
+							ENZO_FAIL("Error in NbodyParticleFindAll.");
+						}
+					if (debug1) fprintf(stdout,"Proc:%d 10-1\n",MyProcessorNumber);  // by YS
+					if (debug1) fprintf(stderr,"FNC done.\n");  // by YS
 				}
-				if (debug1) fprintf(stdout,"Proc:%d 10-1\n",MyProcessorNumber);  // by YS
-				if (debug1) fprintf(stderr,"FNC done.\n");  // by YS
-				//}
 #endif
 
 

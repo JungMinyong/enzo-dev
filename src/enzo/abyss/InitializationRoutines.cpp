@@ -25,10 +25,12 @@ void broadcastFromRoot(ULL &data);
 void broadcastFromRoot(int &data);
 void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vector<int> ParticleIndices);
 
-void formPrimordialBinaries(int beforeLastParticleIndex);
-
 void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
+
+#ifdef FEWBODY
+void formPrimordialBinaries(int beforeLastParticleIndex);
 void formBinariesAfterCommunication(std::vector<int>& newCMptcls, std::unordered_map<int,int>& existing, std::unordered_map<int,int>& terminated);
+#endif
 
 /* Initialization */
 void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
@@ -194,6 +196,10 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 ptcl->BackgroundAcceleration[1],
                 ptcl->BackgroundAcceleration[2]
                 );
+        fprintf(nbpout, "Neighbors=[");
+        for (int j=0; j<ptcl->NumberOfNeighbor; j++)
+            fprintf(nbpout, "%d, ", particles[ptcl->Neighbors[j]].PID);
+        fprintf(nbpout, "]\n\n");
     }
     fflush(nbpout);
     /* Particle Initialization Check */
@@ -414,6 +420,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
         fflush(nbpout);
         assert(NumberOfParticle == 0);
         */
+        #ifdef FEWBODY
 // /* // forming new binaries after communication with Enzo by EW 2025.3.27
         std::vector<int> newCMptcls;
         LastParticleIndex = global_variable->LastParticleIndex;
@@ -458,6 +465,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
             workers[rank_new].runQueue();
             workers[rank_new].callback();
         }
+#endif
 // */
         if (NumberOfParticle - NumberOfSingleParticle <= 2) {
 

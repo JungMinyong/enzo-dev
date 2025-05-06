@@ -90,9 +90,11 @@ extern MPI_Comm abyss_comm;
 extern MPI_Comm inter_comm;
 extern MPI_Comm local_comm;
 extern int local_rank, local_size;
-EXTERN MPI_Datatype MPI_ENZO_PTCL;
-EXTERN MPI_Datatype MPI_ENZO_PTCL_SEND;
-EXTERN MPI_Datatype MPI_ENZO_PTCL_RECV;
+#ifdef INDIVIDUALSTAR
+extern MPI_Datatype MPI_ENZO_PTCL;
+extern MPI_Datatype MPI_ENZO_PTCL_SEND;
+extern MPI_Datatype MPI_ENZO_PTCL_RECV;
+#endif
 #endif
 
 

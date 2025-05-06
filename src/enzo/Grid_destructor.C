@@ -59,6 +59,10 @@ grid::~grid()
 		if (ParticleAccelerationNoStar[i] != NULL) {
 			delete [] ParticleAccelerationNoStar[i];
 		}
+#ifdef INDIVIDUALSTAR
+    BackgroundAcceleration[i].clear();
+    BackgroundAcceleration[i].shrink_to_fit();
+#endif
 #endif
     delete [] AccelerationField[i];
     delete [] RandomForcingField[i];
@@ -66,6 +70,9 @@ grid::~grid()
     if (PhaseFctMultOdd[i] != NULL) delete[] PhaseFctMultOdd[i];
 
   }
+#if defined (NBODY) && (INDIVIDUALSTAR)
+		IDtoIndexforBG.clear(); // PID to Index convertor for background acceleration
+  #endif
  
   if (PhaseFctInitEven != NULL) delete[] PhaseFctInitEven;
   if (PhaseFctInitOdd != NULL) delete[] PhaseFctInitOdd;

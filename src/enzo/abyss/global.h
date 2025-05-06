@@ -76,7 +76,11 @@ extern double ClusterVelocity[Dim];
 extern double EnzoClusterPosition[Dim+1];
 extern int BinaryRegularization;
 extern int IdentifyOnTheFly;
+#ifndef INDIVIDUALSTAR
 extern int *EnzoPIDs; // stores the order of pids from enzo.
+#else
+extern int *displs;
+#endif
 extern int newNumberOfSingleParticle;
 extern int StarParticleFeedback;
 extern double StarMassEjectionFraction;

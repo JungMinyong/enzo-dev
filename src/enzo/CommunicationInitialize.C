@@ -21,6 +21,11 @@
 #include <algorithm>
 #include <cstdlib> // For getenv
 
+#define no_TEST_CUDA // (To be deleted)
+#ifdef TEST_CUDA
+#include <cuda.h> 
+#include <cuda_runtime.h>
+#endif
 
 typedef int MPI_Arg;
 //extern int local_rank, local_size;
@@ -32,7 +37,7 @@ typedef int MPI_Arg;
 //extern MPI_Errhandler CommunicationErrorHandler;
 //extern float CommunicationTime;
 //extern int CommunicationDirection;
-#include "ErrorExceptions.h"
+//#include "ErrorExceptions.h"
 //#include "macros_and_parameters.h"
 //#include "typedefs.h"
 //#include "global_data.h"
@@ -46,22 +51,36 @@ typedef int MPI_Arg;
 #include "abyss/def.h"
 #undef NormalStar
 #undef BlackHole
+#endif
 
-#define ENZO_ONLY
-#include "NbodyRoutines.h"
+#include "ErrorExceptions.h"
+#include "macros_and_parameters.h"
+#include "typedefs.h"
+#include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
 #include "communication.h"
+//#define ENZO_ONLY
+#if defined (NBODY) && defined (INDIVIDUALSTAR)
+#include "NbodyRoutines.h"
+#endif
 
-//extern int WorldProcessorNumber;
-//extern int AbyssProcessorNumber;
-//extern int NumberOfAbyssProcessors;
-//extern MPI_Datatype MPI_ENZO_PTCL;
-//extern MPI_Datatype MPI_ENZO_PTCL_SEND;
-//extern MPI_Datatype MPI_ENZO_PTCL_RECV;
-//extern MPI_Comm enzo_comm;
-//extern MPI_Comm abyss_comm;
-//extern MPI_Comm inter_comm;
-//extern MPI_Comm local_comm;
+/*
+extern int WorldProcessorNumber;
+extern int AbyssProcessorNumber;
+extern int NumberOfAbyssProcessors;
+extern MPI_Datatype MPI_ENZO_PTCL;
+extern MPI_Datatype MPI_ENZO_PTCL_SEND;
+extern MPI_Datatype MPI_ENZO_PTCL_RECV;
+extern MPI_Comm enzo_comm;
+extern MPI_Comm abyss_comm;
+extern MPI_Comm inter_comm;
+extern MPI_Comm local_comm;
+*/
 
+#ifdef NBODY
 Particle *particles_original;
 Particle *particles;
 int *ActiveIndexToOriginalIndex;
@@ -79,6 +98,11 @@ MPI_Comm inter_comm;
 MPI_Comm enzo_comm;
 MPI_Comm local_comm;
 
+#ifdef INDIVIDUALSTAR
+MPI_Datatype MPI_ENZO_PTCL = MPI_DATATYPE_NULL;
+MPI_Datatype MPI_ENZO_PTCL_SEND = MPI_DATATYPE_NULL;
+MPI_Datatype MPI_ENZO_PTCL_RECV = MPI_DATATYPE_NULL;
+#endif
 #endif
 
  
@@ -101,6 +125,8 @@ void CommunicationErrorHandlerFn(MPI_Comm *comm, MPI_Arg *err, ...);
 
 int CommunicationInitialize(int &argc, char *argv[])
 {
+
+
 
 #ifdef USE_MPI
  
@@ -176,13 +202,14 @@ int CommunicationInitialize(int &argc, char *argv[])
 
 
 		// This is for inter_comm
+		/*
 		int ranks_inter[2];
 		if (ordered_rank == 0) {
 			ranks_inter[0] = world_rank;
 		}
 		if (ordered_rank == NumberOfEnzoProcessors) {
 			ranks_inter[1] = world_rank;
-		}
+		}*/
 
 		// Create a Enzo communicator 
 		if (ordered_rank < NumberOfEnzoProcessors)
@@ -205,7 +232,11 @@ int CommunicationInitialize(int &argc, char *argv[])
 		}
 
 		// Create a Inter communicator
+		#ifdef INDIVIDUAL
+		if (ordered_rank <= NumberOfEnzoProcessors)
+		#else
 		if (ordered_rank == 0 || ordered_rank == NumberOfEnzoProcessors)
+		#endif
 		{
 			MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &inter_comm);
 		}
@@ -231,7 +262,11 @@ int CommunicationInitialize(int &argc, char *argv[])
 					  << std::endl;
 		}
 		int inter_rank;
+		#ifdef INDIVIDUAL
+		if (ordered_rank <= NumberOfEnzoProcessors)
+		#else
 		if (ordered_rank == 0 || ordered_rank == NumberOfEnzoProcessors)
+		#endif
 		{
 			MPI_Comm_rank(inter_comm, &inter_rank);
 			std::cout << "World rank " << world_rank << " (local rank " << local_rank << " of node " << node_id << ") is in inter_comm"
@@ -249,25 +284,34 @@ int CommunicationInitialize(int &argc, char *argv[])
 			fprintf(stderr,"inter: (%d, %d)\n", world_rank, inter_rank);
 		}
 
-#define no_COMM_TEST
+#define COMM_TEST // (To be deleted)
 #ifdef COMM_TEST
  		if (MyProcessorNumber == ROOT_PROCESSOR) {
 			// get its Fortran handle too
 			MPI_Fint id_enzo = MPI_Comm_c2f(enzo_comm);
 			MPI_Fint id_inter = MPI_Comm_c2f(inter_comm);
 			MPI_Fint id_abyss = MPI_Comm_c2f(abyss_comm);
-			fprintf(stderr, "COMM ID: enzo_comm=%d, inter_comm=%d, abyss_comm=%d\n", (int) id_enzo, (int) id_inter, (int) id_abyss);
+			fprintf(stderr, "COMM ID (%d): enzo_comm=%d, inter_comm=%d, abyss_comm=%d\n", world_rank, (int) id_enzo, (int) id_inter, (int) id_abyss);
 		}
 #endif
 
+#ifdef TEST_CUDA // (To be deleted)
+	int deviceCount, devid;
+	cudaGetDeviceCount(&deviceCount);
+	cudaDeviceProp prop;
+	cudaGetDeviceProperties(&prop, devid);
+	//  char *hostname = getenv("HOSTNAME");
+	fprintf(stderr, "# GPU initialization - rank: %d; NGPU %d; device: %d %s\n", world_rank, deviceCount, devid, prop.name);
+#endif
+
+#ifdef INDIVIDUALSTAR
 		/***********************************
 		 *     Struct MPI Data Type        *
 		 ***********************************/
-		MPI_Datatype MPI_ENZO_PTCL;
 		{
 			ParticleDataType dummy;
 
-			int block_lengths[6] = {
+			int block_lengths[5] = {
 				1,                      // ID
 				MAX_DIMENSION,          // Position
 				MAX_DIMENSION,          // Velocity
@@ -275,8 +319,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 				4                       // Mass, CreationTime, DynamicalTime, Metallicity
 			};
 
-			MPI_Aint displacements[6];
-			MPI_Datatype types[6] = {
+			MPI_Aint displacements[5];
+			MPI_Datatype types[5] = {
 				MPI_INT,
 				MPI_DOUBLE,
 				MPI_DOUBLE,
@@ -298,8 +342,10 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Type_create_struct(5, block_lengths, displacements, types, &MPI_ENZO_PTCL);
 			MPI_Type_commit(&MPI_ENZO_PTCL);
 		}
+		MPI_Aint lb, extent;
+		MPI_Type_get_extent(MPI_ENZO_PTCL, &lb, &extent);
+		fprintf(stderr,"Extent = %ld, sizeof = %zu\n", (long)extent, sizeof(ParticleDataType));
 
-		MPI_Datatype MPI_ENZO_PTCL_SEND;
 		{
 			ParticleSendDataType dummy;
 
@@ -311,15 +357,15 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Get_address(&dummy, &base);
 			MPI_Get_address(&dummy.ID, &displacements[0]);
 			MPI_Get_address(&dummy.BackgroundAcceleration, &displacements[1]);
+			//MPI_Get_address(&dummy.isNew, &displacements[2]);
 
-			displacements[0] -= base;
-			displacements[1] -= base;
+			for (int i = 0; i < 2; ++i)
+				displacements[i] -= base;
 
 			MPI_Type_create_struct(2, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND);
 			MPI_Type_commit(&MPI_ENZO_PTCL_SEND);
 		}
 
-		MPI_Datatype MPI_ENZO_PTCL_RECV;
 		{
 			ParticleReceiveDataType dummy;
 
@@ -340,6 +386,7 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Type_create_struct(3, block_lengths, displacements, types, &MPI_ENZO_PTCL_RECV);
 			MPI_Type_commit(&MPI_ENZO_PTCL_RECV);
 		}
+#endif
 
 		/***********************************
 		 *     Shared Memeory Setting      *
@@ -432,6 +479,9 @@ int CommunicationFinalize()
 	MPI_Comm_free(&enzo_comm);
 	MPI_Comm_free(&abyss_comm);
 	MPI_Comm_free(&inter_comm);
+	MPI_Type_free(&MPI_ENZO_PTCL);
+	MPI_Type_free(&MPI_ENZO_PTCL_RECV);
+	MPI_Type_free(&MPI_ENZO_PTCL_SEND);
 #endif
   MPI_Errhandler_free(&CommunicationErrorHandler);
   MPI_Finalize();

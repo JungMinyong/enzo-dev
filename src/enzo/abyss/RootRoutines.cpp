@@ -36,6 +36,8 @@ int writeParticle(double current_time, int outputNum);
 
 
 #ifdef INDIVIDUALSTAR
+int SendParticleToEnzo(Worker *workers);
+int ReceiveParticleFromEnzo();
 #else
 int SendToEnzo(Worker *workers);
 int ReceiveFromEnzo();
@@ -56,6 +58,7 @@ void RootRoutines()
 	
 	std::cout << "Root processor is ready." << std::endl;
 	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
+	fflush(nbpout);
 
 	Particle *ptcl;
 	// int worker_rank;
@@ -95,24 +98,7 @@ void RootRoutines()
 	std::chrono::high_resolution_clock::time_point end_point;
 #endif
 
-	/* Particle loading Check */
-	/*
-	{
-		//, NextRegTime= %.3e Myr(%llu),
-		for (int i=0; i<=LastParticleIndex; i++) {
-			ptcl = &particles[i];
-			fprintf(stdout, "PID=%d, pos=(%lf, %lf, %lf), vel=(%lf, %lf, %lf)\n",
-					ptcl->PID,
-					ptcl->Position[0],
-					ptcl->Position[1],
-					ptcl->Position[2],
-					ptcl->Velocity[0],
-					ptcl->Velocity[1],
-					ptcl->Velocity[2]
-					);
-		}
-		fflush(stdout);
-	}*/
+
 
 	if (NumberOfParticle >= 2)
 		InitializationRoutines(queue_scheduler, workers);
@@ -177,16 +163,16 @@ void RootRoutines()
 			nbody_durationtime = 0;
 
 
-			#ifdef INDIVIDUALSTAR
+#ifdef INDIVIDUALSTAR
 			//start_point_routine = std::chrono::high_resolution_clock::now();
-			//SendParticleToEnzo(workers);
+			SendParticleToEnzo(workers);
 			//end_point_routine = std::chrono::high_resolution_clock::now();
 			//fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
 			//start_point_routine = std::chrono::high_resolution_clock::now();
-			//ReceiveParticleFromEnzo();
+			ReceiveParticleFromEnzo();
 			//end_point_routine = std::chrono::high_resolution_clock::now();
 			//fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
-			#else
+#else
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			SendToEnzo(workers);
 			end_point_routine = std::chrono::high_resolution_clock::now();
@@ -195,7 +181,7 @@ void RootRoutines()
 			ReceiveFromEnzo();
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
-			#endif
+#endif
 
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			InitializationAfterCommunication(queue_scheduler, workers);

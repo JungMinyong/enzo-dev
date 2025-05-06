@@ -4,7 +4,7 @@
 #include "../../NbodyRoutines.h"
 #endif
 
-#ifndef TEST //INDIVIDUALSTAR
+#ifndef INDIVIDUALSTAR
 void Particle::set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime, double *Metallicity,
 			 	double *Position[Dim], double *Velocity[Dim],
 			 	double *BackgroundAcceleration[Dim], int &i) {
@@ -71,26 +71,26 @@ void Particle::update(double *Mass, double *BackgroundAcceleration[Dim], int &i)
 #endif
 }
 #else
-void Particle::set(ParticleDataType *ptcl) {
-
+void Particle::set(const ParticleDataType &ptcl, const int& ProcessorNumber) {
 	__initialize__();
 	this->isActive 					 = true;
-	this->PID                        = ptcl->ID;
-	this->Mass                       = ptcl->Mass*EnzoMass;
-	this->InitialMass                = this->Mass*mass_unit; // [Msol unit] by EW 2025.4.3
-	this->CreationTime               = ptcl->CreationTime*EnzoTime*1e4; // [Myr unit] by EW 2025.4.3
-	this->DynamicalTime              = ptcl->DynamicalTime*EnzoTime;
-	this->InitialMetallicity		 = ptcl->Metallicity; // [Absolute unit] No unit conversion here! by EW 2025.4.3
-	this->Position[0]                = ptcl->Position[0]*EnzoLength;
-	this->Position[1]                = ptcl->Position[1]*EnzoLength;
-	this->Position[2]                = ptcl->Position[2]*EnzoLength;
-	this->Velocity[0]                = ptcl->Velocity[0]*EnzoVelocity;
-	this->Velocity[1]                = ptcl->Velocity[1]*EnzoVelocity;
-	this->Velocity[2]                = ptcl->Velocity[2]*EnzoVelocity;
-	this->BackgroundAcceleration[0]  = ptcl->BackgroundAcceleration[0]*EnzoAcceleration;
-	this->BackgroundAcceleration[1]  = ptcl->BackgroundAcceleration[1]*EnzoAcceleration;
-	this->BackgroundAcceleration[2]  = ptcl->BackgroundAcceleration[2]*EnzoAcceleration;
+	this->PID                        = ptcl.ID;
+	this->Mass                       = ptcl.Mass*EnzoMass;
+	this->InitialMass                = ptcl.Mass*mass_unit; // [Msol unit] by EW 2025.4.3
+	this->CreationTime               = ptcl.CreationTime*EnzoTime*1e4; // [Myr unit] by EW 2025.4.3
+	this->DynamicalTime              = ptcl.DynamicalTime*EnzoTime;
+	this->InitialMetallicity		     = ptcl.Metallicity; // [Absolute unit] No unit conversion here! by EW 2025.4.3
+	this->Position[0]                = ptcl.Position[0]*EnzoLength;
+	this->Position[1]                = ptcl.Position[1]*EnzoLength;
+	this->Position[2]                = ptcl.Position[2]*EnzoLength;
+	this->Velocity[0]                = ptcl.Velocity[0]*EnzoVelocity;
+	this->Velocity[1]                = ptcl.Velocity[1]*EnzoVelocity;
+	this->Velocity[2]                = ptcl.Velocity[2]*EnzoVelocity;
+	this->BackgroundAcceleration[0]  = ptcl.BackgroundAcceleration[0]*EnzoAcceleration;
+	this->BackgroundAcceleration[1]  = ptcl.BackgroundAcceleration[1]*EnzoAcceleration;
+	this->BackgroundAcceleration[2]  = ptcl.BackgroundAcceleration[2]*EnzoAcceleration;
 	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
+	this->EnzoProcessorNumber        = ProcessorNumber;
 #ifndef SEVN
 	this->ParticleType = NoFeedbackStar;
 	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit
@@ -109,16 +109,17 @@ void Particle::set(ParticleDataType *ptcl) {
 }
 
 
-void Particle::update(ParticleSendDataType *ptcl)
+void Particle::update(const ParticleSendDataType &ptcl, const int& ProcessorNumber)
 {
 #ifndef SEVN
 	//this->Mass                       = ptcl->Mass*EnzoMass;
 #endif
-	this->BackgroundAcceleration[0]  = ptcl->BackgroundAcceleration[0]*EnzoAcceleration;
-	this->BackgroundAcceleration[1]  = ptcl->BackgroundAcceleration[1]*EnzoAcceleration;
-	this->BackgroundAcceleration[2]  = ptcl->BackgroundAcceleration[2]*EnzoAcceleration;
+	this->BackgroundAcceleration[0]  = ptcl.BackgroundAcceleration[0]*EnzoAcceleration;
+	this->BackgroundAcceleration[1]  = ptcl.BackgroundAcceleration[1]*EnzoAcceleration;
+	this->BackgroundAcceleration[2]  = ptcl.BackgroundAcceleration[2]*EnzoAcceleration;
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
+	this->EnzoProcessorNumber        = ProcessorNumber;
 #ifdef SEVN
 	if (this->StellarEvolution != nullptr) {
 		if (this->dm > 0.0 || this->SNEjectedMass > 0.0) { // This should be considered only once
@@ -136,3 +137,15 @@ void Particle::update(ParticleSendDataType *ptcl)
 #endif
 }
 #endif
+
+
+
+	void Particle::print(const double &umass, const double &upos, const double &uvel){
+          fprintf(nbpout,
+                  "PID: %d. Mass: %e Msun\n"
+									"x: %e pc, y: %e pc, z: %e\nvx: %e "
+                  "km/s, vy: %e km/s, vz: %e km/s\n",
+                  PID, Mass*umass, 
+									Position[0]*upos, Position[1]*upos,Position[2]*upos,
+									Velocity[0]*uvel, Velocity[1]*uvel,Velocity[2]*uvel);
+	};

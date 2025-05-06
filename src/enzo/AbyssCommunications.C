@@ -11,6 +11,9 @@
  ************************************************************************/
 
 
+//#undef NormalStar
+//#include "abyss/global.h"
+
 #if defined (NBODY) && defined (INDIVIDUALSTAR)
 #include <unordered_map>
 #ifdef USE_MPI
@@ -20,6 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -28,6 +32,7 @@
 #define ENZO_ONLY
 #include "NbodyRoutines.h" //added
 #include "Star.h"
+
 //#undef max
 //#undef min
 //#include "abyss/global.h"
@@ -35,41 +40,49 @@
 int GetUnits(double *DensityUnits, double *LengthUnits,
              double *TemperatureUnits, double *TimeUnits, double *VelocityUnits,
              double *MassUnits, double Time);
-
-
-
-#ifdef TEST
-
-
-
 int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level,
                          Star *&AllStar,
-                         std::unordered_map<int, Star *> LocalStarLookupMap);
-
-#endif
-
+                         std::unordered_map<int, Star *> &LocalStarLookupMap);
 int CommunicationToAbyssInitialize(
-   // LevelHierarchyEntry *LevelArray[], int level, 
+    LevelHierarchyEntry *LevelArray[], int level, 
     Star *&AllStars,
     std::unordered_map<int, Star *> &LocalStarLookupMap);
 
+/*
+*
+*
+*
+*
+*
+*/
 
-int SendParticleToAbyss(//LevelHierarchyEntry *LevelArray[], int level,
+int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level,
                         Star *&AllStars,
                         std::unordered_map<int, Star *> &LocalStarLookupMap) {
 
     if (NbodyFirst) {
-      if (CommunicationToAbyssInitialize(AllStars, LocalStarLookupMap))
+      if (CommunicationToAbyssInitialize(LevelArray, level, AllStars, LocalStarLookupMap))
         NbodyFirst = FALSE;
     } else {
-      //CommunicationToAbyss(LevelArray, level, AllStars, LocalStarLookupMap);
+      CommunicationToAbyss(LevelArray, level, AllStars, LocalStarLookupMap);
     }
   return SUCCESS;
 }
 
+/*
+*
+*
+*
+*
+*
+*/
+
+
 int CommunicationToAbyssInitialize(
-    // LevelHierarchyEntry *LevelArray[], int level,
+    LevelHierarchyEntry *LevelArray[], int level,
     Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
+
+
 
   fprintf(stdout, "ENZO: CommunicationToAbyssInitialize ...\n");
   fprintf(stderr, "ENZO: CommunicationToAbyssInitialize ...\n");
@@ -80,17 +93,23 @@ int CommunicationToAbyssInitialize(
          TemperatureUnits = 1;
   double MassUnits = 1;
   double Time, TimeStep;
+	Time = LevelArray[level]->GridData->ReturnTime(); 
+	TimeStep = LevelArray[level]->GridData->ReturnTimeStep(); 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
                &VelocityUnits, &MassUnits, Time) == FAIL) {
     ENZO_FAIL("Error in GetUnits.");
   }
 
-  Star *ThisStar;
+  fprintf(stderr, "LengthUnit                = %lf\n", LengthUnits);
+  fprintf(stderr, "DensityUnit               = %lf\n", DensityUnits);
+  fprintf(stderr, "TimeUnit                  = %lf\n", TimeUnits);
+  fprintf(stderr, "VelocityUnit              = %lf\n", VelocityUnits);
+
 
   /* Number of Star Particles */
-  int NumberOfParticles = LocalStarLookupMap.size();
+  int LocalNumberOfParticles = LocalStarLookupMap.size();
   fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessorNumber,
-          NumberOfParticles);
+          LocalNumberOfParticles);
 
 
 
@@ -159,169 +178,197 @@ int CommunicationToAbyssInitialize(
 
     /* Send Parameters First*/
     fprintf(stderr, "ENZO: ComovingCoordinates=%d\n", ComovingCoordinates);
-    MPI_Send(&ComovingCoordinates, 1, MPI_INT, 1, 100, inter_comm);
+    MPI_Send(&ComovingCoordinates, 1, MPI_INT, NumberOfProcessors, 100, inter_comm);
     if (ComovingCoordinates)
-      MPI_Send(&CosmologyTableNumberOfBins, 1, MPI_INT, 1, 150, inter_comm);
-    MPI_Isend(params_double, double_size, MPI_DOUBLE, 1, 200, inter_comm,
+      MPI_Send(&CosmologyTableNumberOfBins, 1, MPI_INT, NumberOfProcessors, 150, inter_comm);
+    MPI_Isend(params_double, double_size, MPI_DOUBLE, NumberOfProcessors, 200, inter_comm,
               &requests[0]);
-    MPI_Isend(params_int, int_size, MPI_INT, 1, 300, inter_comm, &requests[1]);
-    if (MyProcessorNumber == ROOT_PROCESSOR)
-      MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+    MPI_Isend(params_int, int_size, MPI_INT, NumberOfProcessors, 300, inter_comm, &requests[1]);
+    MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
     delete[] params_double;
     delete[] params_int;
   }
+
+
+#define no_TEST1
+#ifdef TEST1
+  fprintf(stderr, "ENZO: in CTABI, ID (%d) = ", MyProcessorNumber);
+  for (auto &kv : LocalStarLookupMap) {
+    Star *star = kv.second;
+    fprintf(stderr, "(1) %d,", star->ReturnID());
+    star->GetBackgroundAcceleration();
+    fprintf(stderr, "(2) %d,", star->ReturnID());
+  }
+  fprintf(stderr, "\n");
+#endif
 
   /*-------------------------------------------*/
   /********   Send Particles to ABYSS  *********/
   /*-------------------------------------------*/
 
-  /* Prepare Send Buffer Packet */
-  ParticleDataType *packet = new ParticleDataType[NumberOfParticles];
+  // Step 1: Gather sizes //I can make this MPI_Igather for a slight speep-up.
+  MPI_Gather(&LocalNumberOfParticles, 1, MPI_INT, NULL, 1, MPI_INT,
+            NumberOfProcessors, inter_comm);
 
-  /* Copy  Data to Send Buffer */
+  /* Step 2: Prepare Send Buffer sendbuf */
+  ParticleDataType *sendbuf = new ParticleDataType[LocalNumberOfParticles];
+
+  /* Step 3: Copy  Data to Send Buffer */
   int count = 0;
+  fprintf(stderr, "ENZO: ID (%d) = ", MyProcessorNumber);
+  //fprintf(stderr, "ENZO: Pos of x (%d) = ", MyProcessorNumber);
   for (auto &kv : LocalStarLookupMap) {
     Star *star = kv.second;
-    packet[count++].copyFrom(star);
+    sendbuf[count].copyFrom(star);
+    //fprintf(stderr, "(%d, %d, %e)", star->ReturnID(), star->ReturnType(), star->ReturnMass());
+    fprintf(stderr, "(%d, ", star->ReturnID());
+    //fprintf(stderr, "(%.5e,", star->ReturnPosition()[0]);
+    //fprintf(stderr, "%.5e, ),", sendbuf[count].Position[0]);
+    count++;
   }
-  fprintf(stdout, "ENZO: Buffer Ready!\n");
+  fprintf(stderr, ")\n");
+  fprintf(stderr, "ENZO: Buffer Ready!\n");
 
+  /* Step 4: Gatherv  */
+  MPI_Gatherv(sendbuf, LocalNumberOfParticles, MPI_ENZO_PTCL, NULL, NULL, NULL,
+              MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
 
-  //MPI_Send(&NumberOfParticles, 1, MPI_INT, ReceiverRank, 100, MPI_COMM_WORLD);
-  //fprintf(stderr, "ENZO: done %d\n", MyProcessorNumber);
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //MPI_Send(packet, NumberOfParticles, MPI_ENZO_PTCL, ReceiverRank, 200, MPI_COMM_WORLD);
-
-  MPI_Isend(&NumberOfParticles, 1, MPI_INT, 1, 100, inter_comm, &requests[0]);
-  MPI_Isend(packet, NumberOfParticles, MPI_ENZO_PTCL, 1, 200, inter_comm, &requests[1]);
-
-  fprintf(stdout, "ENZO: Waiting for ABYSS to send data (first) \n");
-  fprintf(stderr, "ENZO: Waiting for ABYSS to send data (first) \n");
-  MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
-  delete [] packet;
+  fprintf(stdout, "ENZO: data sent to ABYSS (first) \n");
+  fprintf(stderr, "ENZO: data sent to ABYSS (first) \n");
+  delete [] sendbuf;
 #endif
-
   return SUCCESS;
 }
 
-#ifdef TEST
-int CommunicationToAbyss(Star *&AllStars,
+/*
+*
+*
+*
+*
+*
+*/
+
+int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars,
                          std::unordered_map<int, Star *> &LocalStarLookupMap) {
+
+  fprintf(stdout, "ENZO: CommunicationToAbyss ...\n");
+  fprintf(stderr, "ENZO: CommunicationToAbyss ...\n");
 
   /* Do direct calculation!*/
   double dt = 1e-3, scale_factor = 1.0;
   double DensityUnits = 1, LengthUnits = 1, VelocityUnits = 1, TimeUnits = 1,
-         TemperatureUnits = 1;
+          TemperatureUnits = 1;
   double MassUnits = 1;
   double Time, TimeStep;
   Time = LevelArray[level]->GridData->ReturnTime();         // Not sure ?
   TimeStep = LevelArray[level]->GridData->ReturnTimeStep(); // Not sure ?
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
-               &VelocityUnits, &MassUnits, Time) == FAIL) {
+              &VelocityUnits, &MassUnits, Time) == FAIL) {
     ENZO_FAIL("Error in GetUnits.");
   }
   fprintf(stdout, "TimeStep: %e, %f\n", TimeStep, TimeUnits);
+
+
+  /* Number of Star Particles */
+  int LocalNumberOfParticlesOld = 0;
+  int LocalNumberOfParticlesNew = 0;
+  for (auto &kv : LocalStarLookupMap) {
+    Star *star = kv.second;
+    if (star->ReturnNewStarFlag())
+      LocalNumberOfParticlesNew++;
+    else
+      LocalNumberOfParticlesOld++;
+  }
+  fprintf(stderr, "ENZO: (%d) NumberOfParticlesOld=%d/ NewStar=%d\n", MyProcessorNumber,
+          LocalNumberOfParticlesOld, LocalNumberOfParticlesNew);
+
+
+
+  /*-------------------------------------------*/
+  /********   Send Parameters to ABYSS  ********/
+  /*-------------------------------------------*/
+  if (MyProcessorNumber == ROOT_PROCESSOR) {
+    double *params_double = new double[6];
+    params_double[0] = TimeStep;
+    params_double[1] = TimeUnits;
+    params_double[2] = Time;
+    params_double[3] = LengthUnits;
+    params_double[4] = DensityUnits;
+    params_double[5] = VelocityUnits;
+
+    /* Send Parameters First*/
+    MPI_Send(params_double, 6, MPI_DOUBLE, NumberOfProcessors, 100, inter_comm);
+
+    delete[] params_double;
+  }
+
 
 #ifdef USE_MPI
   /*---------------------------------------*/
   /******** Send PARTICLES to ABYSS    *****/
   /*---------------------------------------*/
-  int OldNumberOfParticles = 0, NewNumberOfParticles = 0;
 
-  /* Number of Star Particles */
+  // Step 1: Gather sizes //I can make this MPI_Igather for a slight speep-up.
+  MPI_Gather(&LocalNumberOfParticlesOld, 1, MPI_INT, NULL, 1, MPI_INT,
+            NumberOfProcessors, inter_comm);
+  MPI_Gather(&LocalNumberOfParticlesNew, 1, MPI_INT, NULL, 1, MPI_INT,
+            NumberOfProcessors, inter_comm);
+
+
+  /* Step 2: Prepare Send Buffer sendbuf */
+  ParticleSendDataType *sendbuf_old = new ParticleSendDataType[LocalNumberOfParticlesOld];
+  ParticleDataType *sendbuf_new = new ParticleDataType[LocalNumberOfParticlesNew];
+
+  /* Step 3: Copy  Data to Send Buffer */
+  int count = 0;
+  fprintf(stderr, "ENZO: ID (%d) = ", MyProcessorNumber);
+  //fprintf(stderr, "ENZO: Pos of x (%d) = ", MyProcessorNumber);
   for (auto &kv : LocalStarLookupMap) {
     Star *star = kv.second;
     if (star->ReturnNewStarFlag())
-      OldNumberOfParticles++;
+      sendbuf_new[count].copyFrom(star);
     else
-      NewNumberOfParticles++;
+      sendbuf_old[count].copyFrom(star);
+    //fprintf(stderr, "(%d, %d, %e)", star->ReturnID(), star->ReturnType(), star->ReturnMass());
+    fprintf(stderr, "(%d, ", star->ReturnID());
+    //fprintf(stderr, "(%.5e,", star->ReturnPosition()[0]);
+    //fprintf(stderr, "%.5e, ),", sendbuf[count].Position[0]);
+    count++;
   }
-  fprintf(stderr, "ENZO: (%d) OldNumberOfParticles=%d\n", MyProcessorNumber,
-          OldNumberOfParticles);
-  fprintf(stderr, "ENZO: (%d) NewNumberOfParticles=%d\n", MyProcessorNumber,
-          NewNumberOfParticles);
+  fprintf(stderr, ")\n");
+  fprintf(stderr, "ENZO: Buffer Ready!\n");
 
-  /* Prepare Send Buffer */
-  ParticleSendDataType *ptcl_old =
-      new ParticleSendDataType[OldNumberOfParticles];
-  ParticleDataType *ptcl_new = new ParticleDataType[NewNumberOfParticles];
+  /* Step 4: Gatherv  */
+  MPI_Gatherv(sendbuf_old, LocalNumberOfParticlesOld, MPI_ENZO_PTCL_SEND, NULL, NULL, NULL,
+              MPI_ENZO_PTCL_SEND, NumberOfProcessors, inter_comm);
+  MPI_Gatherv(sendbuf_new, LocalNumberOfParticlesNew, MPI_ENZO_PTCL, NULL, NULL, NULL,
+              MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
 
-  /* Copy  Data to Send Buffer */
-  int count_new = 0, count_old = 0;
-  for (auto &kv : LocalStarLookupMap) {
-    Star *star = kv.second;
-    // if (ThisStar->isABYSS) this is not implemented yet.
-    if (star->ReturnNewStarFlag())
-      ptcl_new[count_new++].copyFrom(star);
-    else
-      ptcl_old[count_old++].copyFrom(star);
-  }
-  fprintf(stdout, "ENZO: Buffer Ready!\n");
-
-  fprintf(stdout, "ENZO: Waiting for ABYSS to send data \n");
-  fprintf(stderr, "ENZO: Waiting for ABYSS to send data \n");
-  int ReceiverRank =
-      NumberOfProcessors + MyProcessorNumber % (NumberOfAbyssProcessors);
-
-  MPI_Request request;
-  MPI_Send(&OldNumberOfParticles, 1, MPI_INT, ReceiverRank, 100, inter_comm);
-  if (OldNumberOfParticles != 0)
-    MPI_Isend(ptcl_old, OldNumberOfParticles, MPI_ENZO_PTCL_SEND, ReceiverRank,
-              200, inter_comm, &request);
-  MPI_Wait(&request, MPI_STATUSES_IGNORE);
-  MPI_Send(&NewNumberOfParticles, 1, MPI_INT, ReceiverRank, 300, inter_comm);
-  if (NewNumberOfParticles != 0)
-    MPI_Isend(ptcl_new, NewNumberOfParticles, MPI_ENZO_PTCL, ReceiverRank, 400,
-              inter_comm, &request);
-  MPI_Wait(&request, MPI_STATUSES_IGNORE);
-  fprintf(stderr, "ENZO: data sent! \n");
-
-  delete[] ptcl_new;
-  delete[] ptcl_old;
-
+  fprintf(stdout, "ENZO: data sent to ABYSS \n");
+  fprintf(stderr, "ENZO: data sent to ABYSS \n");
+  delete [] sendbuf_old;
+  delete [] sendbuf_new;
 #endif
 
   return SUCCESS;
 }
 
+/*
+*
+*
+*
+*
+*
+*/
+
 int ReceiveParticleFromAbyss(
-    LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars,
-    std::unordered_map<int, Star *> &LocalStarLookupMap) {
-  Star *ThisStar;
-  if (LevelArray[level + 1] != NULL) {
-    return SUCCESS;
-  }
+    Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
 
   /* Number of Star Particles */
-  int NumberOfParticles = LocalStarLookupMap.size();
-
-
+  int LocalNumberOfParticles = LocalStarLookupMap.size();
   fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessorNumber,
-          NumberOfParticles);
+          LocalNumberOfParticles);
 
-#ifdef USE_MPI
-  MPI_Status statuses[2];
-  MPI_Request requests[2];
-  // let's use broadcast
-  if (isNbodyParticleIdentification && isIdentificationOnTheFly) {
-    MPI_Irecv(NbodyClusterPosition, 3, MPI_DOUBLE, 1, 200, inter_comm,
-              &requests[0]);
-  }
-  fprintf(stdout, "In Final, NbodyClusterPosition = (%e, %e, %e)\n",
-          NbodyClusterPosition[0], NbodyClusterPosition[1],
-          NbodyClusterPosition[2]);
-  /*
-  if (isNbodyParticleIdentification && isIdentificationOnTheFly)  {
-          MPI_Bcast(NbodyClusterPosition, 3, MPI_DOUBLE, ROOT_PROCESSOR,
-  enzo_comm);
-          //fprintf(stderr, "In Final all, NbodyClusterPosition = (%e, %e,
-  %e)\n", NbodyClusterPosition[0], NbodyClusterPosition[1],
-  NbodyClusterPosition[2]);
-  }*/
-#endif
-
-  if (NumberOfParticles == 0)
-    return SUCCESS;
 
 #ifdef USE_MPI
   /*------------------------------------------*/
@@ -329,35 +376,55 @@ int ReceiveParticleFromAbyss(
   /*------------------------------------------*/
 
   /* Prepare Send Buffer */
-  ParticleReceiveDataType *ptcl =
-      new ParticleReceiveDataType[NumberOfParticles];
-
+  ParticleReceiveDataType *recvbuf = new ParticleReceiveDataType[LocalNumberOfParticles];
+      
   fprintf(stdout, "ENZO: Waiting for ABYSS to receive data \n");
   fprintf(stderr, "ENZO: Waiting for ABYSS to receive data \n");
-  int ReceiverRank =
-      NumberOfProcessors + MyProcessorNumber % (NumberOfAbyssProcessors);
-  MPI_Irecv(ptcl, NumberOfParticles, MPI_ENZO_PTCL_RECV, ReceiverRank, 100,
-            inter_comm, &requests[1]);
+  fflush(stderr);
 
-  MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+  MPI_Scatterv(NULL, NULL, NULL, MPI_ENZO_PTCL_RECV,
+          recvbuf, LocalNumberOfParticles, MPI_ENZO_PTCL_RECV, NumberOfProcessors, inter_comm);
+  fprintf(stderr, "ENZO: data received! \n");
 
-  // think of broadcast
 
-  fprintf(stderr, "ENZO: data sent! \n");
+
+  // Synchronize Cluster Posiition
+  MPI_Request request;
+  if (isNbodyParticleIdentification && isIdentificationOnTheFly) {
+    MPI_Ibcast(NbodyClusterPosition, 3, MPI_DOUBLE, NumberOfProcessors, inter_comm,
+              &request);
+  }
+
+  fprintf(stderr, "ENZO: Data received from ABYSS\n");
 
   /* Copy Data to Star */
   int count = 0;
-	for (int i=0; i<NumberOfParticles; i++) {
-		Star *star = LocalStarLookupMap.at(ptcl[i].ID);
-		star->copyFrom(&ptcl[i]);
+	for (int i=0; i<LocalNumberOfParticles; i++) {
+		auto it  = LocalStarLookupMap.find(recvbuf[i].ID);
+    if (it != LocalStarLookupMap.end()) {
+      recvbuf[i].copyTo(it->second);
+      fprintf(stderr, "ENZO: %d successfully copied on %d.\n",
+      recvbuf[i].ID, MyProcessorNumber);
+    }
+    else {
+      fprintf(stderr, "ENZO: LocalStarLookupMap doesn't have %d on %d!\n",
+      recvbuf[i].ID, MyProcessorNumber);
+      exit(0);
+    }
 	}
-  for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar) {
-    ptcl[count++].copyTo(ThisStar);
-  }
-  fprintf(stdout, "ENZO: Copy to Star!\n");
+  fprintf(stdout, "ENZO: Copy-to-Star DONE!\n");
+  fprintf(stderr, "ENZO: Copy-to-Star DONE %d!\n", MyProcessorNumber);
+  delete[] recvbuf;
 
-  delete[] ptcl;
+  if (isNbodyParticleIdentification && isIdentificationOnTheFly) {
+    MPI_Wait(&request, MPI_STATUS_IGNORE);
+    fprintf(stderr, "In Final, NbodyClusterPosition = (%e, %e, %e)\n",
+            NbodyClusterPosition[0], NbodyClusterPosition[1],
+            NbodyClusterPosition[2]);
+  }
 #endif
+
+  std::cerr << "ENZO: Receiving data done!" << std::endl;
   return SUCCESS;
 }
 #endif
@@ -365,6 +432,3 @@ int ReceiveParticleFromAbyss(
 /*
 void Star::copyFrom(ParticleReceiveDataType *ptcl) {
 }*/
-
-
-#endif

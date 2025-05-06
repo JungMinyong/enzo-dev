@@ -20,6 +20,7 @@ void WorkerRoutines() {
 
 	std::cout << "Processor " << AbyssProcessorNumber << " is ready." << std::endl;
 	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
+	fflush(nbpout);
 
 	TaskName task = Error;
 	MPI_Status status;

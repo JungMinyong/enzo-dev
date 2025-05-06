@@ -1,5 +1,5 @@
 #define PerformanceTrace
-#define CUDA
+#define noCUDA
 
 #define FAIL    -1
 // #define SUCCESS  1

@@ -36,7 +36,8 @@ int StarParticlePopIII_IMFInitialize(void);
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
                         ,
-                        std::unordered_map<int, Star *> &LocalStarLookupMap
+                        std::unordered_map<int, Star *> &LocalStarLookupMap,
+                        int &ThisLevel
 #endif
 );
 int StarParticleMergeNew(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
@@ -156,7 +157,8 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   if (StarParticleFindAll(LevelArray, AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
                           ,
-                          LocalStarLookupMap
+                          LocalStarLookupMap,
+                          ThisLevel
 #endif
                           ) == FAIL) {
     ENZO_FAIL("Error in StarParticleFindAll.");

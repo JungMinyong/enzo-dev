@@ -113,6 +113,31 @@ public:
         }
     }
 
+    void assignQueueAutoRegularList() {
+        if (_queue_list_.size() == 0)
+            return;
+        for (auto worker = _FreeWorkers.begin(); worker != _FreeWorkers.end();)
+        {
+            if (_queue_list_.size() > 0 && (*worker)->NumberOfQueues == 0)
+            {
+                auto it = _queue_list_.begin();
+                _queue.task = _task;
+                _queue.pid = *it;
+                _queue_list_.erase(it);
+                _queue.next_time = _next_time;
+                (*worker)->addQueue(_queue);
+                WorkersToGo.insert(*worker);
+                _assigned_queues++;
+                worker = _FreeWorkers.erase(worker);
+                //_queue.print();
+            }
+            else {
+               ++worker; 
+            }
+        }
+    }
+
+
 
 
     Worker* waitQueue(int type) {

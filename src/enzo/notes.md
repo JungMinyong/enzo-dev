@@ -46,3 +46,28 @@ this rountine can be improved by using StarMap.. why was it written like this in
            these are to be used in CommunicationUpdateStarParticleCount
            in StarParticleFinalize */ in StarParticleInitialize
            it seems like it's not good to delete particles right away.
+
+
+
+**- we should output particle information indpenedently from ABYSS in accordance with Enzo output**
+
+- in abyss, pid to index seems like requiring updated during few-body isn't it? or during some re-ordering.
+
+
+
+- maybe we have to do merger first when receiving particles.
+
+
+
+
+- what am I gonna do with ramnents?
+- ~~ramnents with zero mass should be assigned with different star type~~
+  - ~~currently I removed all the zero mass particles~~
+
+
+- global_variable->time_step vs EnzoTimeStep. there has to be some fix.
+
+
+- ~~processor and ID matching within ABYSS I think? (done it was simple fix)~~
+
+

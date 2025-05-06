@@ -15,6 +15,7 @@
 #endif
 
 #define noDEBUG
+//#define DEBUG_ABYSS
 
 void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);

@@ -1,3 +1,4 @@
+#include "FewBody/ar_interaction.hpp"
 #include <cstdio>
 #ifdef INDIVIDUALSTAR
 #include <algorithm>
@@ -5,6 +6,9 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <mpi.h>
 #define MAX_NUMBER_OF_OUTPUT_REDSHIFTS 500
 #define FLOAT double
@@ -15,6 +19,7 @@
 #ifdef FEWBODY
 #include <unordered_set>
 #endif
+#define ABYSS_ONLY
 #include "../NbodyRoutines.h"
 
 #include "Worker.h"
@@ -53,10 +58,12 @@ void deleteParticle(int &PID, int &index);
 // outputNum); void InitializeParticle(std::vector<Particle*> &particle); void
 // InitializeNewParticle(std::vector<Particle*> &particle, int offset, int
 // newSize);
-void GetCenterOfMass(double *mass, double *x[Dim], double *v[Dim],
-                    double x_com[], double v_com[], int N);
+
+void GetCenterOfMass(ParticleDataType *ptcl, const int &N,
+                    double x_com[], double v_com[]);
 void GetNewCenterOfMass(int *PID, double *mass2, double *x2[Dim],
                         double *v2[Dim], int n2, double x_X[], double v_X[]);
+
 // void UpdateNextRegTime(std::vector<Particle*> &particle);
 int CommunicationInterBarrier();
 void broadcastFromRoot(int &data);
@@ -73,6 +80,15 @@ void initializeStellarEvolution(int ParticleIndex);
 using namespace std;
 const int width = 18;
 
+/*
+*
+*
+*
+*
+*
+*
+*
+*/
 // int InitialCommunication(std::vector<Particle*> &particle) {
 int InitialCommunication() {
 
@@ -186,10 +202,19 @@ int InitialCommunication() {
 
   InitialNeighborRadius2 *= EnzoLength;
   InitialNeighborRadius2 *= InitialNeighborRadius2;
+  // temporary
+  //InitialNeighborRadius2 = 0.001;
   FixNumNeighbor0 = FixNumNeighbor;
 
   // need to fix units
   // fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
+  fprintf(nbpout, "LengthUnit                = %lf\n", LengthUnits);
+  fprintf(nbpout, "DensityUnit               = %lf\n", DensityUnits);
+  fprintf(nbpout, "TimeUnit                  = %lf\n", TimeUnits);
+  fprintf(nbpout, "VelocityUnit              = %lf\n", VelocityUnits);
+
+
+
   fprintf(nbpout, "Nbody Time               = %lf\n", EnzoCurrentTime);
   fprintf(nbpout, "Nbody TimeStep           = %lf\n",
           global_variable->EnzoTimeStep);
@@ -214,26 +239,87 @@ int InitialCommunication() {
   /*------------------===-------------------------*/
   /********   Receive Particles to ABYSS  *********/
   /*----------------===---------------------------*/
-  // int LocalNumberOfParticles=0;
 
-  MPI_Recv(&NumberOfSingleParticle, 1, MPI_INT, 0, 100, inter_comm,
-           MPI_STATUS_IGNORE);
-  ParticleDataType *packet = new ParticleDataType[NumberOfSingleParticle];
-  MPI_Recv(packet, NumberOfSingleParticle, MPI_ENZO_PTCL, 0, 200, inter_comm,
-           MPI_STATUS_IGNORE);
+  bool debug1 = true;
+
+  int LocalNumberOfParticles=0;
+
+  if (debug1) {
+    fprintf(nbpout, "NumberOfProcessors=%d\n",NumberOfProcessors);
+    fflush(nbpout);
+  }
+
+  /* Step 1: Gather sizes */
+  int size = NumberOfProcessors+1; // the number of inter_comm processors
+  int *recv_counts = NULL;
+  recv_counts = (int*) malloc(size * sizeof(int));
+  MPI_Gather(&LocalNumberOfParticles, 1, MPI_INT, recv_counts, 1, MPI_INT,
+              NumberOfProcessors, inter_comm);
+
+
+  /* Step 2: Compute displacements */
+  NumberOfSingleParticle = 0;
+  displs = (int*) malloc(size * sizeof(int));
+  displs[0] = 0;
+  for (int i = 1; i < size; i++) {
+    displs[i] = displs[i - 1] + recv_counts[i - 1];
+  }
+  NumberOfSingleParticle = displs[size - 1] + recv_counts[size - 1];
+
+
+  if (debug1) {
+    fprintf(nbpout, "displs= ");
+    for (int i=0; i<size; i++)
+      fprintf(nbpout, "%d, ", displs[i]);
+    fprintf(nbpout, "\n NumberOfSingleParticle=%d\n",NumberOfSingleParticle);
+    fflush(nbpout);
+  }
+
+
+  /* Step 3: Allocate receive buffer on root */
+  ParticleDataType *recvbuf = (ParticleDataType*) malloc(NumberOfSingleParticle*sizeof(ParticleDataType));
+
+  if (debug1) {
+    fprintf(nbpout, "Receive Buffer Ready!\n");
+    fflush(nbpout);
+  }
+
+
+  /* Step 4: Gatherv */
+  MPI_Gatherv(NULL, LocalNumberOfParticles, MPI_ENZO_PTCL, recvbuf, recv_counts, displs,
+              MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
+  free(recv_counts);
+
+
+  if (debug1) {
+    //fprintf(stderr, "ABYSS: ID = ");
+    fprintf(nbpout, "ABYSS: ID = ");
+    for (int i=0; i<NumberOfSingleParticle; i++) {
+      //fprintf(stderr, "(%d, ", recvbuf[i].ID);
+      //fprintf(stderr, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
+      fprintf(nbpout, "(%d,  ", recvbuf[i].ID);
+      //fprintf(nbpout, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
+    }
+    //fprintf(stderr, "\n");
+    fprintf(nbpout, ")\n");
+    fflush(nbpout);
+  }
+
+
 
   /* Unpack the Packet */
+#pragma unroll Dim
   for (int dim = 0; dim < Dim; dim++) {
     ClusterAcceleration[dim] = 0;
     ClusterPosition[dim] = 0;
     ClusterVelocity[dim] = 0;
   }
 
-  /*
+
   if (NumberOfSingleParticle != 0) {
-    // set COM for background acc
-    GetCenterOfMass(Mass, Position, Velocity, ClusterPosition, ClusterVelocity,
-                    NumberOfSingleParticle);
+    // find COM 
+    GetCenterOfMass(recvbuf, NumberOfSingleParticle, ClusterPosition, ClusterVelocity);
+                    
 
 #ifdef COM_EVOLUTION
     ClusterAcceleration[0] = 0.;
@@ -251,150 +337,90 @@ int InitialCommunication() {
       ClusterAcceleration[dim] /= total_mass;
 #endif
 
-    for (int i = 0; i < LocalNumberOfParticles; i++) {
+    int EnzoProcessorNumber = 0;
+      fprintf(nbpout, "EnzoProcessorNumber=");
+    for (int i = 0; i < NumberOfSingleParticle; i++) {
+#pragma unroll Dim
       for (int dim = 0; dim < Dim; dim++) {
 #ifdef COM_EVOLUTION
         BackgroundAcceleration[dim][i] -= ClusterAcceleration[dim];
         Velocity[dim][i] -= ClusterVelocity[dim];
 #endif
-        // Position[dim][i]               -= ClusterPosition[dim];
+        recvbuf[i].Position[dim] -= ClusterPosition[dim];
       }
-      EnzoPIDs[i] = packet[i].ID;
-      particles[i].set(&packet[i]);
-      PIDtoIndexMap.insert({packet[i].ID, i});
+      //EnzoPIDs[i] = recvbuf[i].ID;
+      while (i >= displs[EnzoProcessorNumber+1])
+        EnzoProcessorNumber++;
+      particles[i].set(recvbuf[i], EnzoProcessorNumber);
       particles[i].ParticleIndex = i;
+      PIDtoIndexMap.insert({recvbuf[i].ID, i});
+      fprintf(nbpout, "%d, ", EnzoProcessorNumber);
     }
-    delete [] packet;
+    fprintf(nbpout, "\n");
+    fflush(nbpout);
+    free(recvbuf);
 
     global_variable->EnzoCurrentTime =
-        EnzoCurrentTime *
-        1e4; // This should be 0.0 // Unlike original value, this is Myr unit
+        EnzoCurrentTime * 1e4; // This should be 0.0 // Unlike original value, this is Myr unit
+        
     std::cerr << "EnzoCurrentTime:" << global_variable->EnzoCurrentTime
               << std::endl;
 #ifdef SEVN
     initializeStellarEvolution();
 #endif
   }
-     */
 
-  // NumberOfParticle = NumberOfSingleParticle;
-  // global_variable->LastParticleIndex = NumberOfSingleParticle - 1;
+  NumberOfParticle = NumberOfSingleParticle;
+  global_variable->LastParticleIndex = NumberOfSingleParticle - 1;
 
-  fprintf(nbpout, "ABYSS: %d particles loaded on %d!\n", NumberOfSingleParticle,
-          AbyssProcessorNumber);
+  fprintf(nbpout, "ABYSS: %d particles loaded!\n", NumberOfSingleParticle);
   fflush(nbpout);
-  // exit(0);
   return true;
 }
 
-#ifdef TEST
-int ReceiveParticleFromEnzo() {
 
-  int i;
-  int *PID, *newPID;
-  double *BackgroundAcceleration[Dim];
-  double *Mass, *newMass, *newPosition[Dim], *newVelocity[Dim],
-      *newBackgroundAcceleration[Dim];
-  double *newCreationTime, *newDynamicalTime, *newMetallicity;
-  double TimeStep;
+/*
+*
+*
+*
+*
+*
+*
+*
+*/
+
+
+
+int ReceiveParticleFromEnzo() {
 
   MPI_Request request;
   MPI_Status status;
-  fprintf(nbpout, "ABYSS: Waiting for Enzo to receive data...\n");
+  fprintf(nbpout, "ABYSS: Waiting for Enzo, to receive data...\n");
+  fprintf(stderr, "ABYSS: Waiting for Enzo, to receive data...\n");
 
-  fprintf(stdout, "ABYSS: Waiting for Enzo to receive data...\n");
-  CommunicationInterBarrier();
-  fprintf(nbpout, "ABYSS: Receiving data from Enzo...\n");
-  fprintf(stdout, "ABYSS: Receiving data from Enzo...\n");
 
-  // Existing Particle Information
+  //(Query) is this for cosmology?
+  /*-------------------------------------------*/
+  /*******  Receive Parameters to ABYSS  *******/
+  /*-------------------------------------------*/
+  double *params_double = new double[6];
 
-  int EnzoNumberOfSingleParticle;
-  MPI_Recv(&EnzoNumberOfSingleParticle, 1, MPI_INT, 0, 10, inter_comm, &status);
-  if (EnzoNumberOfSingleParticle != NumberOfSingleParticle) {
-    fprintf(stderr,
-            "The numbers of nbody and hydro do not match: "
-            "NumberOfSingleParticle=%d, EnzoNumberOfSingleParticle=%d\n",
-            NumberOfSingleParticle, EnzoNumberOfSingleParticle);
-    fflush(stderr);
-    throw runtime_error("");
-  }
-  if (NumberOfSingleParticle != 0) {
-    PID = new int[NumberOfSingleParticle];
-    Mass = new double[NumberOfSingleParticle];
-    MPI_Recv(PID, NumberOfSingleParticle, MPI_INT, 0, 25, inter_comm, &status);
-    MPI_Recv(Mass, NumberOfSingleParticle, MPI_DOUBLE, 0, 40, inter_comm,
-             &status);
-    for (int dim = 0; dim < Dim; dim++) {
-      BackgroundAcceleration[dim] = new double[NumberOfSingleParticle];
-      MPI_Recv(BackgroundAcceleration[dim], NumberOfSingleParticle, MPI_DOUBLE,
-               0, 50, inter_comm, &status);
-    }
-  }
-
-  // New Particle Information
-  MPI_Recv(&newNumberOfSingleParticle, 1, MPI_INT, 0, 100, inter_comm, &status);
-  if (newNumberOfSingleParticle > 0) {
-    newPID = new int[newNumberOfSingleParticle];
-    newMass = new double[newNumberOfSingleParticle];
-    newCreationTime = new double[newNumberOfSingleParticle];
-    newDynamicalTime = new double[newNumberOfSingleParticle];
-    newMetallicity = new double[newNumberOfSingleParticle];
-    MPI_Recv(newPID, newNumberOfSingleParticle, MPI_INT, 0, 200, inter_comm,
-             &status);
-    MPI_Recv(newMass, newNumberOfSingleParticle, MPI_DOUBLE, 0, 201, inter_comm,
-             &status);
-    MPI_Recv(newCreationTime, newNumberOfSingleParticle, MPI_DOUBLE, 0, 202,
-             inter_comm, &status);
-    MPI_Recv(newDynamicalTime, newNumberOfSingleParticle, MPI_DOUBLE, 0, 203,
-             inter_comm, &status);
-    MPI_Recv(newMetallicity, newNumberOfSingleParticle, MPI_DOUBLE, 0, 204,
-             inter_comm, &status);
-
-    for (int dim = 0; dim < Dim; dim++) {
-      newPosition[dim] = new double[newNumberOfSingleParticle];
-      newVelocity[dim] = new double[newNumberOfSingleParticle];
-      newBackgroundAcceleration[dim] = new double[newNumberOfSingleParticle];
-      MPI_Recv(newPosition[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 300,
-               inter_comm, &status);
-      MPI_Recv(newVelocity[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 400,
-               inter_comm, &status);
-      MPI_Recv(newBackgroundAcceleration[dim], newNumberOfSingleParticle,
-               MPI_DOUBLE, 0, 500, inter_comm, &status);
-    }
-  }
-
-  // Timestep
-  MPI_Recv(&TimeStep, 1, MPI_DOUBLE, 0, 600, inter_comm, &status);
-  double OldEnzoCurrentTime = EnzoCurrentTime;
-  MPI_Recv(&EnzoCurrentTime, 1, MPI_DOUBLE, 0, 700, inter_comm, &status);
-  // for cosmological runs, we need to update the units
-  double TimeUnits, LengthUnits, VelocityUnits, DensityUnits; // MassUnits;
-  MPI_Recv(&TimeUnits, 1, MPI_DOUBLE, 0, 701, inter_comm, &status);
-  MPI_Recv(&LengthUnits, 1, MPI_DOUBLE, 0, 800, inter_comm, &status);
-  MPI_Recv(&DensityUnits, 1, MPI_DOUBLE, 0, 900, inter_comm, &status);
-  MPI_Recv(&VelocityUnits, 1, MPI_DOUBLE, 0, 1000, inter_comm, &status);
-  CommunicationInterBarrier();
+  MPI_Recv(params_double, 6, MPI_DOUBLE, 0, 100, inter_comm, MPI_STATUS_IGNORE);
 
   // for cosmological runs
-  EnzoMass = DensityUnits * pow(LengthUnits, 3.) / Msun / mass_unit;
-  EnzoLength = LengthUnits / pc / position_unit;
-  EnzoVelocity = VelocityUnits / pc * yr / velocity_unit;
-  EnzoTime = TimeUnits / yr / time_unit;
-  // EnzoAcceleration =
-  // LengthUnits/TimeUnits/TimeUnits/pc*yr*yr/position_unit*time_unit*time_unit;
+  EnzoMass     = params_double[4] * pow(params_double[3], 3.) / Msun / mass_unit;
+  EnzoLength   = params_double[3] / pc / position_unit;
+  EnzoVelocity = params_double[5] / pc * yr / velocity_unit;
+  EnzoTime     = params_double[1] / yr / time_unit;
   EnzoAcceleration = EnzoLength / EnzoTime / EnzoTime;
 
-  // std::cout << "Enzo  Time    :" << EnzoCurrentTime << std::endl;
-  // std::cout << "Nbody Time    :" <<
-  // OldEnzoCurrentTime+particle[0]->CurrentTimeReg*EnzoTimeStep << std::endl;
   global_variable->OldEnzoTimeStep = global_variable->EnzoTimeStep;
-  global_variable->EnzoTimeStep = TimeStep * EnzoTime;
+  global_variable->EnzoCurrentTime = params_double[2] *EnzoTime * 1e4; // in Myr unit
+  global_variable->EnzoTimeStep = params_double[2] * EnzoTime;
 
   std::cout << "ABYSS: Data transferred!" << std::endl;
   fprintf(stdout, "ABYSS: Data transferred!\n");
-  EnzoCurrentTime = EnzoCurrentTime * EnzoTime;
-  global_variable->EnzoCurrentTime = EnzoCurrentTime * 1e4; // in Myr unit
+
 
   std::cout << "Enzo Time    :" << global_variable->EnzoCurrentTime << " Myr"
             << std::endl;
@@ -412,17 +438,130 @@ int ReceiveParticleFromEnzo() {
   // std::cout << "enzo Time :" << TimeStep << std::endl;
   // std::cout << "nbody Time:" << EnzoTimeStep << std::endl;
   //  FixNumNeighbor = std::min((int)
-  //  std::floor((NumberOfSingleParticle+newNumberOfSingleParticle-1)/2.0),
+  //  std::floor((NumberOfSingleParticle+NumberOfSingleParticleNew-1)/2.0),
   //  FixNumNeighbor0); // original by EW 2025.3.27
 
-  /*
-          if (NumberOfSingleParticle + newNumberOfSingleParticle < 1000)
-                  FixNumNeighbor = 30;
-          else
-                  FixNumNeighbor =
-     static_cast<int>(sqrt(NumberOfSingleParticle+newNumberOfSingleParticle));
-     // test by EW 2025.3.27
-  */
+
+
+
+  /*------------------===-------------------------*/
+  /********   Receive Particles to ABYSS  *********/
+  /*----------------===---------------------------*/
+  bool debug1 = true;
+
+  int LocalNumberOfParticlesNew=0;
+  int LocalNumberOfParticlesOld=0;
+
+  if (debug1) {
+    fprintf(nbpout, "NumberOfProcessors=%d\n",NumberOfProcessors);
+    fflush(nbpout);
+  }
+
+  /* Step 1: Gather sizes */
+  int size = NumberOfProcessors+1; // the number of inter_comm processors
+  int *recv_counts_new = NULL,  *recv_counts_old = NULL;
+  recv_counts_old = (int*) malloc(size * sizeof(int));
+  recv_counts_new = (int*) malloc(size * sizeof(int));
+  MPI_Gather(&LocalNumberOfParticlesOld, 1, MPI_INT, recv_counts_old, 1, MPI_INT,
+              NumberOfProcessors, inter_comm);
+  MPI_Gather(&LocalNumberOfParticlesNew, 1, MPI_INT, recv_counts_new, 1, MPI_INT,
+              NumberOfProcessors, inter_comm);
+
+
+  /* Step 2: Compute displacements */
+  int *displs_old,  *displs_new, NumberOfSingleParticleOld, NumberOfSingleParticleNew;
+  NumberOfSingleParticle = 0;
+  displs_old = (int*) malloc(size * sizeof(int));
+  displs_new = (int*) malloc(size * sizeof(int));
+  displs_old[0] = 0;
+  displs_new[0] = 0;
+  for (int i = 1; i < size; i++) {
+    displs_old[i] = displs_old[i - 1] + recv_counts_old[i - 1];
+    displs_new[i] = displs_new[i - 1] + recv_counts_new[i - 1];
+  }
+  NumberOfSingleParticleOld = displs_old[size - 1] + recv_counts_new[size - 1];
+  NumberOfSingleParticleNew = displs_new[size - 1] + recv_counts_new[size - 1];
+
+
+  if (debug1) {
+    fprintf(nbpout, "displs_old= ");
+    for (int i=0; i<size; i++) {
+      fprintf(nbpout, "%d, ", displs_old[i]);
+    }
+    fprintf(nbpout, "\n NumberOfSingleParticleOld=%d\n",NumberOfSingleParticleOld);
+    fflush(nbpout);
+    fprintf(nbpout, "displs_new= ");
+    for (int i=0; i<size; i++) {
+      fprintf(nbpout, "%d, ", displs_new[i]);
+    }
+    fprintf(nbpout, "\n NumberOfSingleParticleNew=%d\n",NumberOfSingleParticleNew);
+    fflush(nbpout);
+  }
+
+
+
+  /* Step 3: Allocate receive buffer on root */
+  ParticleSendDataType *recvbuf_old = (ParticleSendDataType *)malloc(
+      NumberOfSingleParticleOld * sizeof(ParticleSendDataType));
+  ParticleDataType *recvbuf_new = (ParticleDataType *)malloc(
+      NumberOfSingleParticleNew * sizeof(ParticleDataType));
+
+  if (debug1) {
+    fprintf(nbpout, "Receive Buffer Ready!\n");
+    fflush(nbpout);
+  }
+
+
+  /* Step 4: Gatherv */
+  MPI_Gatherv(NULL, LocalNumberOfParticlesOld, MPI_ENZO_PTCL, recvbuf_old, recv_counts_old, displs,
+              MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
+  MPI_Gatherv(NULL, LocalNumberOfParticlesNew, MPI_ENZO_PTCL, recvbuf_new, recv_counts_new, displs,
+              MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
+  if (debug1) {
+    fprintf(nbpout, "Date received!\n");
+    fflush(nbpout);
+  }
+
+
+
+  /* Prepare displs for all particles for sending out */
+  recv_counts_old[0] +=  recv_counts_new[0]; // now recv_counts_old contains all particles 
+  for (int i = 1; i < size; i++) {
+    displs[i] = displs[i - 1] + recv_counts_old[i - 1];
+    recv_counts_old[i] +=  recv_counts_new[i];
+  }
+  free(recv_counts_old);
+  free(recv_counts_new);
+  free(displs_old);
+  free(displs_new);
+
+
+
+
+  if (debug1) {
+    //fprintf(stderr, "ABYSS: ID = ");
+    fprintf(nbpout, "ABYSS: ID for OLD = ");
+    for (int i=0; i<NumberOfSingleParticle; i++) {
+      //fprintf(stderr, "(%d, ", recvbuf[i].ID);
+      //fprintf(stderr, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
+      fprintf(nbpout, "(%d,  ", recvbuf_old[i].ID);
+      //fprintf(nbpout, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
+    }
+    //fprintf(stderr, "\n");
+    fprintf(nbpout, ")\n");
+    fflush(nbpout);
+
+    fprintf(nbpout, "ABYSS: ID for NEW = ");
+    for (int i=0; i<NumberOfSingleParticle; i++) {
+      //fprintf(stderr, "(%d, ", recvbuf[i].ID);
+      //fprintf(stderr, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
+      fprintf(nbpout, "(%d,  ", recvbuf_new[i].ID);
+      //fprintf(nbpout, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
+    }
+    //fprintf(stderr, "\n");
+    fprintf(nbpout, ")\n");
+    fflush(nbpout);
+  }
 
   // COM conversion
   // later on we might need to take mass weight into account
@@ -456,13 +595,13 @@ int ReceiveParticleFromEnzo() {
               << std::setw(width) << ClusterVelocity[2] << std::endl;
   }
 
-  if (newNumberOfSingleParticle != 0) {
+  if (NumberOfSingleParticleNew != 0) {
     // we need to make adjustment to COM
     GetNewCenterOfMass(PID, newMass, newPosition, newVelocity,
-                       newNumberOfSingleParticle, ClusterPosition,
-                       ClusterVelocity);
+                        NumberOfSingleParticleNew, ClusterPosition,
+                        ClusterVelocity);
 
-    for (int i = 0; i < newNumberOfSingleParticle; i++) {
+    for (int i = 0; i < NumberOfSingleParticleNew; i++) {
       for (int dim = 0; dim < Dim; dim++) {
         ClusterAcceleration[dim] +=
             newMass[i] * newBackgroundAcceleration[dim][i];
@@ -477,37 +616,39 @@ int ReceiveParticleFromEnzo() {
   }
 #endif
 
+  /*-------------===-------------------------*/
+  /********   Update Old Particles   *********/
+  /*-----------===---------------------------*/
   // Update Existing Particles
-  // need to update if the ids match between Enzo and Nbody
-  if (NumberOfSingleParticle != 0) {
-    std::cerr << "In ReceiveFromEnzo, NumberOfSingleParticle = "
-              << NumberOfSingleParticle << std::endl;
-
 #ifdef FEWBODY
-    std::unordered_set<int> CMPtclsSet;
-    CMPtclsSet.reserve(CMPtclWorker.size());
+  std::unordered_set<int> CMPtclsSet;
+  CMPtclsSet.reserve(CMPtclWorker.size());
 #endif
-    Particle *ptcl;
+  Particle *ptcl;
+  int EnzoProcessorNumber = 0;
+  // loop for PID, going backwards to update the NextParticle
+  for (int i = 0; i < NumberOfSingleParticleOld; i++) {
+    int index = PIDtoIndexMap[recvbuf_old[i].ID];
+    ptcl = &particles[index];
 
-    // loop for PID, going backwards to update the NextParticle
-    for (int i = 0; i < NumberOfSingleParticle; i++) {
-
-      ptcl = &particles[PIDtoIndexMap[PID[i]]];
+    while (i >= displs_old[EnzoProcessorNumber+1])
+      EnzoProcessorNumber++;
 
 #ifdef FEWBODY
-      if (!ptcl->isActive && ptcl->CMPtclIndex != -1) {
-        CMPtclsSet.insert(ptcl->CMPtclIndex);
-      }
+    if (!ptcl->isActive && ptcl->CMPtclIndex != -1) {
+      CMPtclsSet.insert(ptcl->CMPtclIndex);
+    }
 #endif
 
 #ifdef COM_EVOLUTION
-      for (int dim = 0; dim < Dim; dim++) {
-        BackgroundAcceleration[dim][i] -= ClusterAcceleration[dim];
-      }
+    for (int dim = 0; dim < Dim; dim++) {
+      BackgroundAcceleration[dim][i] -= ClusterAcceleration[dim];
+    }
 #endif
-      EnzoPIDs[i] = PID[i];
-      ptcl->update(Mass, BackgroundAcceleration, i);
-    } // endfor i
+    ptcl->update(recvbuf_old[i], EnzoProcessorNumber);
+  } // endfor i
+  free(recvbuf_old);
+
 #ifdef FEWBODY
     for (int i :
          CMPtclsSet) { // Calculate background acceleration on the CM particles
@@ -526,42 +667,30 @@ int ReceiveParticleFromEnzo() {
             BackgroundAccelerationCM[dim] / ptcl->Mass;
     }
 #endif
-  } // endif nnb
+
 
 #define no_star_formation_location_test
 #ifdef star_formation_location_test
   std::vector<Particle *> new_particle;
 #endif
-  // Particle *newPtcl = new Particle[newNumberOfSingleParticle]; // we
-  // shouldn't delete it, maybe make it to vector
 
-  if (newNumberOfSingleParticle > 0) {
-    std::cerr << "In ReceiveFromEnzo, newNumberOfSingleParticle = "
-              << newNumberOfSingleParticle << std::endl;
-    /*
-    for (int i = 0; i < newNumberOfSingleParticle; i++) {
-            fprintf(stderr, "NBODY: Mass Of NewNbodyParticles=%.3e\n",
-    newMass[i]); fprintf(stderr, "NBODY: Vel  Of news=(%.3e, %.3e, %.3e)\n",
-                            newVelocity[0][i], newVelocity[1][i],
-    newVelocity[2][i]); fprintf(stderr, "NBODY: Pos  Of news=(%.3e, %.3e,
-    %.3e)\n", newPosition[0][i], newPosition[1][i], newPosition[2][i]);
-            fprintf(stderr, "NBODY: Acc  Of news=(%.3e, %.3e, %.3e)\n",
-                            newBackgroundAcceleration[0][i],
-    newBackgroundAcceleration[1][i], newBackgroundAcceleration[2][i]);
-    }
-    */
 
-    // Update New Particles
-    int index = -1;
-    for (int i = 0; i < newNumberOfSingleParticle; i++) {
-      for (int dim = 0; dim < Dim; dim++) {
+  /*-------------===-------------------------*/
+  /********   Update New Particles   *********/
+  /*-----------===---------------------------*/
+  int index = -1;
+  EnzoProcessorNumber = 0;
+  if (NumberOfSingleParticleNew > 0) {
+    for (int i = 0; i < NumberOfSingleParticleNew; i++) {
+
 #ifdef COM_EVOLUTION
-        newBackgroundAcceleration[dim][i] -= ClusterAcceleration[dim];
-        newVelocity[dim][i] -= ClusterVelocity[dim];
+      recvbuf_new[i].reposition(ClusterPosition, ClusterVelocity, ClusterAcceleration);
+#else
+      recvbuf_new[i].reposition(ClusterPosition);
 #endif
-        newPosition[dim][i] -= ClusterPosition[dim];
-      }
 
+      /* decide to where to put new particles in the particles array*/
+      // (Query) should it be better to have a function for it? if this is used in other routines as well
       if (NumberOfAvailableIndices != 0) {
         index = AvailableIndices[NumberOfAvailableIndices - 1];
         AvailableIndices[NumberOfAvailableIndices - 1] = -1;
@@ -571,48 +700,17 @@ int ReceiveParticleFromEnzo() {
         global_variable->LastParticleIndex++;
       }
 
-      particles[index].set(newPID, newMass, newCreationTime, newDynamicalTime,
-                           newMetallicity, newPosition, newVelocity,
-                           newBackgroundAcceleration, i);
-      particles[index].ParticleIndex = index;
-      PIDtoIndexMap.insert({newPID[i], index});
-      EnzoPIDs[NumberOfSingleParticle + i] = newPID[i];
-      fprintf(stderr, "PID: %d is newly added from Enzo!\n", newPID[i]);
-      fprintf(stderr, "PID: %d. Mass: %e Msun\n", newPID[i],
-              particles[index].Mass * mass_unit);
-      fprintf(stderr, "PID: %d. x: %e pc, y: %e pc, z: %e pc\n", newPID[i],
-              particles[index].Position[0] * position_unit,
-              particles[index].Position[1] * position_unit,
-              particles[index].Position[2] * position_unit);
-      fprintf(stderr, "PID: %d. vx: %e km/s, vy: %e km/s, vz: %e km/s\n",
-              newPID[i],
-              particles[index].Velocity[0] * velocity_unit / yr * pc / 1e5,
-              particles[index].Velocity[1] * velocity_unit / yr * pc / 1e5,
-              particles[index].Velocity[2] * velocity_unit / yr * pc / 1e5);
+      while (i >= displs_new[EnzoProcessorNumber+1])
+        EnzoProcessorNumber++;
 
-      // added for debugging in back acceleration
-      fprintf(nbpout, "PID: %d is newly added from Enzo!\n", newPID[i]);
-      fprintf(nbpout, "PID: %d. Mass: %e Msun\n", newPID[i],
-              particles[index].Mass * mass_unit);
-      fprintf(nbpout, "PID: %d. x: %e pc, y: %e pc, z: %e pc\n", newPID[i],
-              particles[index].Position[0] * position_unit,
-              particles[index].Position[1] * position_unit,
-              particles[index].Position[2] * position_unit);
-      fprintf(nbpout, "PID: %d. vx: %e km/s, vy: %e km/s, vz: %e km/s\n",
-              newPID[i],
-              particles[index].Velocity[0] * velocity_unit / yr * pc / 1e5,
-              particles[index].Velocity[1] * velocity_unit / yr * pc / 1e5,
-              particles[index].Velocity[2] * velocity_unit / yr * pc / 1e5);
-      fprintf(nbpout, "Reg ax: %e, ay: %e, az: %e\n",
-              particles[index].a_reg[0][0], particles[index].a_reg[1][0],
-              particles[index].a_reg[2][0]);
-      fprintf(nbpout, "Irr ax: %e, ay: %e, az: %e\n",
-              particles[index].a_irr[0][0], particles[index].a_irr[1][0],
-              particles[index].a_irr[2][0]);
-      fprintf(nbpout, "Bgd ax: %e, ay: %e, az: %e\n",
-              particles[index].BackgroundAcceleration[0],
-              particles[index].BackgroundAcceleration[1],
-              particles[index].BackgroundAcceleration[2]);
+      particles[index].set(recvbuf_new[i], EnzoProcessorNumber);
+      particles[index].ParticleIndex = index;
+      PIDtoIndexMap.insert({recvbuf_new[i].ID, index});
+
+      if (debug1) {
+        recvbuf_new[i].print(1, 1, 1);
+        particles[index].print(mass_unit, position_unit, velocity_unit);
+      }
 
 #ifdef star_formation_location_test
       new_particle.push_back(particles[NumberOfSingleParticle + i]);
@@ -628,34 +726,11 @@ int ReceiveParticleFromEnzo() {
     writeParticle(new_particle, EnzoCurrentTime, outNum++);
 #endif
 
-    /*
-    std::cout << "enzo Pos  :" << newPosition[0][0] << ", " << newPosition[0][1]
-    << std::endl; std::cout << "nbody Pos :" << newPosition[0][0]*EnzoLength <<
-    ", " << newPosition[0][1]*EnzoLength << std::endl; std::cout << "enzo Vel :"
-    << newVelocity[1][0] << ", " << newVelocity[1][1] << std::endl; std::cout <<
-    "nbody Vel :" << newVelocity[1][0]*EnzoVelocity << ", " <<
-    newVelocity[1][1]*EnzoVelocity << std::endl; std::cout << "km/s Vel  :" <<
-    newVelocity[1][0]*velocity_unit/1e5/yr*pc << ", " <<
-    newVelocity[1][1]*velocity_unit/1e5/yr*pc << std::endl; std::cout << "enzo
-    Mass:" << newMass[0] << std::endl; std::cout << "nbody Mass:" <<
-    newMass[0]*EnzoMass << std::endl;
-    */
-    std::cout << "ABYSS    : " << newNumberOfSingleParticle
-              << " new particles loaded!" << std::endl;
-
+    fprintf(nbpout,"ABYSS: %d new paritcles loaded!", NumberOfSingleParticleNew);
     // This includes modification of regular force and irregular force
-  } // endif newNumberOfSingleParticle != 0
+  } // end if NumberOfSingleParticleNew != 0
+  free(recvbuf_new);
 
-  /*
-  // update particle order
-  if (particle.size() > 1) {
-          i=0;
-          for (Particle* ptcl:particle) {
-                  ptcl->ParticleOrder = i;
-                  i++;
-          }
-  }
-  */
 
   // (SEVN Query) After processing, wind & SN feedback,
   // 1. dm should be set to 0 - in update function
@@ -663,29 +738,9 @@ int ReceiveParticleFromEnzo() {
   // update function
   // 3. For PISN case, SEVN memory should be free - not yet
 
-  if (NumberOfSingleParticle != 0) {
-    delete[] PID;
-    delete[] Mass;
-    for (int dim = 0; dim < Dim; dim++) {
-      delete[] BackgroundAcceleration[dim];
-    }
-  }
 
-  if (newNumberOfSingleParticle != 0) {
-    delete[] newPID;
-    delete[] newMass;
-    delete[] newCreationTime;
-    delete[] newDynamicalTime;
-    delete[] newMetallicity;
-    for (int dim = 0; dim < Dim; dim++) {
-      delete[] newBackgroundAcceleration[dim];
-      delete[] newPosition[dim];
-      delete[] newVelocity[dim];
-    }
-  }
-
-  NumberOfSingleParticle += newNumberOfSingleParticle;
-  NumberOfParticle += newNumberOfSingleParticle;
+  NumberOfSingleParticle += NumberOfSingleParticleNew;
+  NumberOfParticle += NumberOfSingleParticleNew;
 
   //  (Query) Do I need this?
   // fprintf(nbpout, "ABYSS    : Acceleration for particles on GPU.\n");
@@ -702,10 +757,10 @@ int ReceiveParticleFromEnzo() {
       "ABYSS    : In ReceiveFromEnzo (after new particle might be added): \n");
   fprintf(nbpout,
           "ABYSS    : original NumberOfSingleParticle      = %d (+%d)\n",
-          NumberOfSingleParticle - newNumberOfSingleParticle,
-          newNumberOfSingleParticle);
+          NumberOfSingleParticle - NumberOfSingleParticleNew,
+          NumberOfSingleParticleNew);
   fprintf(nbpout, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
-          NumberOfSingleParticle, newNumberOfSingleParticle);
+          NumberOfSingleParticleNew);
   // fprintf(nbpout, "ABYSS    : Particle size     = %d\n", particle.size());
   //  fprintf(nbpout, "ABYSS    : NextRegTimeStep   = %.3e\n",
   //  NextRegTimeBlock*global_variable->time_step); fprintf(nbpout, "ABYSS    :
@@ -719,10 +774,10 @@ int ReceiveParticleFromEnzo() {
       "ABYSS    : In ReceiveFromEnzo (after new particle might be added): \n");
   fprintf(stderr,
           "ABYSS    : original NumberOfSingleParticle      = %d (+%d)\n",
-          NumberOfSingleParticle - newNumberOfSingleParticle,
-          newNumberOfSingleParticle);
+          NumberOfSingleParticle - NumberOfSingleParticleNew,
+          NumberOfSingleParticleNew);
   fprintf(stderr, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
-          NumberOfSingleParticle, newNumberOfSingleParticle);
+          NumberOfSingleParticleNew);
   // fprintf(stderr, "ABYSS    : Particle size     = %d\n", particle.size());
   // fprintf(stderr, "ABYSS    : RegularList size = %d\n", RegularList.size());
   fflush(stderr);
@@ -733,6 +788,17 @@ int ReceiveParticleFromEnzo() {
   return true;
 }
 
+/*
+*
+*
+*
+*
+*
+*
+*
+*/
+
+
 // (Query) For binary mergers and SEVN, mass should be sent to Enzo as it was
 // changed in Abyss by EW 2025.3.13 (Query) For SEVN, not only mass but also dm
 // should be sent to Enzo, and it should be distributed into the grid by EW
@@ -740,68 +806,23 @@ int ReceiveParticleFromEnzo() {
 int SendParticleToEnzo(Worker *workers) {
 
   std::cout << "ABYSS: Entering SendToEnzo..." << std::endl;
-  if (NumberOfSingleParticle == 0 && newNumberOfSingleParticle == 0) {
+  if (NumberOfSingleParticle == 0) {
     std::cout << "ABYSS: Skipping SendToEnzo..." << std::endl;
     return 1; // SUCCESS -> 1 by EW 2025.3.11
   }
   MPI_Request request;
   MPI_Status status;
 
-  double *Position[Dim], *Velocity[Dim], *newPosition[Dim], *newVelocity[Dim];
-#ifdef SEVN
-  double *InitialMass, *WindEjectedMass, *SNEjectedMass,
-      *Temperature; // Msun & K unit
-  double *newInitialMass, *newWindEjectedMass, *newSNEjectedMass,
-      *newTemperature;    // Msun & K unit
-  double *Mass, *newMass; // We need to update mass here
-#endif
+  ParticleReceiveDataType *sendbuf; 
+
   int index;
   Particle *ptcl;
 
-  for (int dim = 0; dim < Dim; dim++) {
-    if (NumberOfSingleParticle - newNumberOfSingleParticle != 0) {
-      Position[dim] =
-          new double[NumberOfSingleParticle - newNumberOfSingleParticle];
-      Velocity[dim] =
-          new double[NumberOfSingleParticle - newNumberOfSingleParticle];
-    }
-
-    if (newNumberOfSingleParticle != 0) {
-      newPosition[dim] = new double[newNumberOfSingleParticle];
-      newVelocity[dim] = new double[newNumberOfSingleParticle];
-    }
-  }
-#ifdef SEVN
-  if (NumberOfSingleParticle - newNumberOfSingleParticle != 0) {
-    InitialMass =
-        new double[NumberOfSingleParticle - newNumberOfSingleParticle];
-    WindEjectedMass =
-        new double[NumberOfSingleParticle - newNumberOfSingleParticle];
-    SNEjectedMass =
-        new double[NumberOfSingleParticle - newNumberOfSingleParticle];
-    Temperature =
-        new double[NumberOfSingleParticle - newNumberOfSingleParticle];
-
-    Mass = new double[NumberOfSingleParticle - newNumberOfSingleParticle];
+  if (NumberOfSingleParticle != 0) {
+    sendbuf = new ParticleReceiveDataType[NumberOfSingleParticle];
   }
 
-  if (newNumberOfSingleParticle != 0) {
-    newInitialMass = new double[newNumberOfSingleParticle];
-    newWindEjectedMass = new double[newNumberOfSingleParticle];
-    newSNEjectedMass = new double[newNumberOfSingleParticle];
-    newTemperature = new double[newNumberOfSingleParticle];
 
-    newMass = new double[newNumberOfSingleParticle];
-  }
-#endif
-
-  /*
-  std::cout << "ABYSS: NumberOfSingleParticle=" << NumberOfSingleParticle << ",
-  newNumberOfSingleParticle=" << newNumberOfSingleParticle << std::endl;
-  std::cout << "ABYSS: size=" << particle.size() << std::endl;
-  std::cout << "ABYSS: FirstParticleInEnzo PID=" << \
-          FirstParticleInEnzo->PID << " in SendToEzno" << std::endl;
-  */
 
   int NumberOfEscapeParticle = 0;
   double r2;
@@ -816,19 +837,27 @@ int SendParticleToEnzo(Worker *workers) {
   }
 #else
 
-#define UPDATE_InitialNeighborRadius2
+#define noUPDATE_InitialNeighborRadius2
 #ifdef UPDATE_InitialNeighborRadius2
   std::vector<std::vector<double>> star(NumberOfSingleParticle,
                                         std::vector<double>(3, 0.0));
   std::vector<double> rarray(NumberOfSingleParticle);
   double NbodyCOM_nbodyunit[Dim] = {0, 0, 0};
 #endif
+
+
+  /* Get NbodyCOM */
   double NbodyCOM[Dim] = {0, 0, 0};
   double mass = 0;
-  for (int i = 0; i < NumberOfSingleParticle; i++) {
-    index = PIDtoIndexMap[EnzoPIDs[i]];
-    ptcl = &particles[index];
+  for (int i = 0; i <= LastParticleIndex; i++) {
+    //index = PIDtoIndexMap[i];
+    // maybe we can it more fancy.
+    if (particles[i].CMPtclIndex != -1)
+      continue;
 
+    ptcl = &particles[i];
+
+#pragma unroll Dim
     for (int dim = 0; dim < Dim; dim++) {
       NbodyCOM[dim] += ptcl->Mass * ptcl->Position[dim];
 #ifdef UPDATE_InitialNeighborRadius2
@@ -838,6 +867,7 @@ int SendParticleToEnzo(Worker *workers) {
     mass += ptcl->Mass;
   }
 
+#pragma unroll Dim
   for (int dim = 0; dim < Dim; dim++) {
     NbodyCOM[dim] /= mass;
 #ifdef UPDATE_InitialNeighborRadius2
@@ -854,14 +884,29 @@ int SendParticleToEnzo(Worker *workers) {
   Particle *ptclCM;
 #endif
 
-  if (NumberOfSingleParticle - newNumberOfSingleParticle > 0) {
-    // fprintf(stderr, "Sending PID order= ");
 
-    for (int i = 0; i < NumberOfSingleParticle - newNumberOfSingleParticle;
-         i++) {
-      // fprintf(stderr, "%d, ",ptcl->PID);
-      index = PIDtoIndexMap[EnzoPIDs[i]];
-      ptcl = &particles[index];
+  int offset;
+  int *sendcounts  = new int[NumberOfProcessors+1];
+  for (int i=0; i<NumberOfProcessors+1; i++) 
+    sendcounts[i] = 0;
+
+  /* Prepare Send Particle Buffer */
+  for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
+    //index = PIDtoIndexMap[i];
+    // maybe we can it more fancy.
+    if (particles[i].CMPtclIndex != -1)
+      continue;
+
+    ptcl = &particles[i];
+    offset = displs[ptcl->EnzoProcessorNumber]+sendcounts[ptcl->EnzoProcessorNumber];
+
+    fprintf(nbpout, "ID=%d, offset=%d, Processor=%d, sendcounts=%d, displs=%d\n",
+      ptcl->PID, offset, ptcl->EnzoProcessorNumber, sendcounts[ptcl->EnzoProcessorNumber], displs[ptcl->EnzoProcessorNumber]);
+    fflush(nbpout);
+
+    // I can put everything under into a method of sendbuf (ParticleReceiveDataType)
+    sendbuf[offset].ID = ptcl->PID;
+
 
 #ifdef UPDATE_InitialNeighborRadius2
       for (int dim = 0; dim < Dim; dim++)
@@ -873,9 +918,9 @@ int SendParticleToEnzo(Worker *workers) {
 #ifdef FEWBODY
       if (!ptcl->isActive) {
         for (int dim = 0; dim < Dim; dim++) {
-          Position[dim][i] =
+          sendbuf[offset].Position[dim] =
               ptcl->Position[dim] / EnzoLength + ClusterPosition[dim];
-          Velocity[dim][i] =
+          sendbuf[offset].Position[dim] =
               ptcl->Velocity[dim] / EnzoVelocity + ClusterVelocity[dim];
         }
 #ifdef SEVN
@@ -892,7 +937,6 @@ int SendParticleToEnzo(Worker *workers) {
                   ptcl->PID, InitialMass[i], WindEjectedMass[i],
                   SNEjectedMass[i], Temperature[i]);
         }
-
         Mass[i] = ptcl->Mass / EnzoMass;
 #endif
 
@@ -912,7 +956,6 @@ int SendParticleToEnzo(Worker *workers) {
                   ptcl->PID);
 
           // /* // This is temporarilly commented out by EW 2025.4.13
-          deleteParticle(EnzoPIDs[i], index); // delete this particle in Abyss
           NumberOfEscapeParticle++;
           // */
         } else {
@@ -921,12 +964,14 @@ int SendParticleToEnzo(Worker *workers) {
         }
         continue;
       }
-#endif
+#endif // FewBody end // (Query) can you make it a particle method? hide under particle routine?
+
 
       r2 = 0;
+      // this seems like repetitive
       for (int dim = 0; dim < Dim; dim++) {
-        Position[dim][i] = ptcl->Position[dim] / EnzoLength;
-        Velocity[dim][i] = ptcl->Velocity[dim] / EnzoVelocity;
+        sendbuf[offset].Position[dim] = ptcl->Position[dim] / EnzoLength;
+        sendbuf[offset].Velocity[dim] = ptcl->Velocity[dim] / EnzoVelocity;
 
 #ifdef COM_EVOLUTION
         if (IdentifyNbodyParticles && IdentifyOnTheFly)
@@ -937,22 +982,20 @@ int SendParticleToEnzo(Worker *workers) {
 #else
 
         // COM correction
-        Position[dim][i] += ClusterPosition[dim];
+        sendbuf[offset].Position[dim] += ClusterPosition[dim];
         if (IdentifyNbodyParticles && IdentifyOnTheFly)
-          r2 += (Position[dim][i] - NbodyCOM[dim]) *
-                (Position[dim][i] - NbodyCOM[dim]);
+          r2 += (sendbuf[offset].Position[dim] - NbodyCOM[dim]) *
+                (sendbuf[offset].Position[dim] - NbodyCOM[dim]);
 #endif
-
         if (IdentifyNbodyParticles && !IdentifyOnTheFly)
-          r2 += (Position[dim][i] - EnzoClusterPosition[dim]) *
-                (Position[dim][i] - EnzoClusterPosition[dim]);
-      }
+          r2 += (sendbuf[offset].Position[dim] - EnzoClusterPosition[dim]) *
+                (sendbuf[offset].Position[dim] - EnzoClusterPosition[dim]);
+      } // for dim
 
       if (IdentifyNbodyParticles && ClusterRadius2 > 0 &&
           r2 > ClusterRadius2) { // in Enzo Unit
-        Position[0][i] -= 20;    // original code
+        sendbuf[offset].Position[0] -= 20;    // original code
         // Position[0][i] -= 10*EnzoClusterPosition[0]; // 20; //fix this?
-        deleteParticle(EnzoPIDs[i], index);
         fprintf(stderr, "In SendToEnzo... PID: %d is escaping!\n", ptcl->PID);
 #ifdef FEWBODY
         NumberOfParticle--;
@@ -996,151 +1039,8 @@ int SendParticleToEnzo(Worker *workers) {
 
       Mass[i] = ptcl->Mass / EnzoMass;
 #endif
-    }
-  }
-
-  int offset = NumberOfSingleParticle;
-
-  if (newNumberOfSingleParticle > 0) {
-
-    offset = NumberOfSingleParticle - newNumberOfSingleParticle;
-    for (int i = 0; i < newNumberOfSingleParticle; i++) {
-      index = PIDtoIndexMap[EnzoPIDs[i + offset]];
-      ptcl = &particles[index];
-
-#ifdef UPDATE_InitialNeighborRadius2
-      for (int dim = 0; dim < Dim; dim++)
-        star[i + offset][dim] -= NbodyCOM_nbodyunit[dim];
-      rarray[i + offset] = sqrt(star[i + offset][0] * star[i + offset][0] +
-                                star[i + offset][1] * star[i + offset][1] +
-                                star[i + offset][2] * star[i + offset][2]);
-#endif
-
-#ifdef FEWBODY
-      if (!ptcl->isActive) {
-        for (int dim = 0; dim < Dim; dim++) {
-          newPosition[dim][i] =
-              ptcl->Position[dim] / EnzoLength + ClusterPosition[dim];
-          newVelocity[dim][i] =
-              ptcl->Velocity[dim] / EnzoVelocity + ClusterVelocity[dim];
-        }
-        // (SEVN Query) This particle should be deleted in Enzo too!!!
-#ifdef SEVN
-        newInitialMass[i] =
-            ptcl->InitialMass; // This is already in Msun unit!!!
-        newWindEjectedMass[i] = ptcl->dm * mass_unit;
-        newSNEjectedMass[i] = ptcl->SNEjectedMass * mass_unit;
-        newTemperature[i] = ptcl->T_eff;
-
-        if (newWindEjectedMass[i] > 0.0 || newSNEjectedMass[i] > 0.0) {
-          fprintf(stderr, "Feedback info send to Enzo...\n");
-          fprintf(stderr,
-                  "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, "
-                  "SNEjectedMass: %e Msun, T_eff: %e K\n",
-                  ptcl->PID, newInitialMass[i], newWindEjectedMass[i],
-                  newSNEjectedMass[i], newTemperature[i]);
-        }
-
-        newMass[i] = ptcl->Mass / EnzoMass;
-#endif
-        if (ptcl->CMPtclIndex != -1) {
-          ptclCM = &particles[ptcl->CMPtclIndex];
-          if (CMPtclsSet.find(ptcl->CMPtclIndex) == CMPtclsSet.end()) {
-
-            CMPtclsSet.insert(ptcl->CMPtclIndex);
-            ptclCM->NewNumberOfNeighbor = 0;
-          }
-          ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = i + offset;
-        } else if (ptcl->Mass <
-                   0.0) { // merger induced zero-mass particles, PISN case
-
-          fprintf(stdout,
-                  "In CommunicationToHydro... PID: %d should be removed!\n",
-                  ptcl->PID);
-          // /* // This is temporarilly commented out by EW 2025.4.13
-          deleteParticle(EnzoPIDs[i + offset],
-                         index); // delete this particle in Abyss
-          NumberOfEscapeParticle++;
-          // */
-        } else {
-          fprintf(stderr, "What's wrong? PID: %d\n", ptcl->PID);
-          throw std::runtime_error("Why inactive particle in EnzoPIDs?");
-        }
-        continue;
-      }
-#endif
-
-      r2 = 0;
-      for (int dim = 0; dim < Dim; dim++) {
-        newPosition[dim][i] = ptcl->Position[dim] / EnzoLength;
-        newVelocity[dim][i] = ptcl->Velocity[dim] / EnzoVelocity;
-
-#ifdef COM_EVOLUTION
-        if (IdentifyNbodyParticles && IdentifyOnTheFly)
-          r2 += newPosition[dim][i] * newPosition[dim][i];
-        // COM correction
-        newPosition[dim][i] += ClusterPosition[dim];
-        newVelocity[dim][i] += ClusterVelocity[dim];
-#else
-        // COM correction
-        newPosition[dim][i] += ClusterPosition[dim];
-        if (IdentifyNbodyParticles && IdentifyOnTheFly)
-          r2 += (newPosition[dim][i] - NbodyCOM[dim]) *
-                (newPosition[dim][i] - NbodyCOM[dim]);
-#endif
-
-        if (IdentifyNbodyParticles && !IdentifyOnTheFly)
-          r2 += (newPosition[dim][i] - EnzoClusterPosition[dim]) *
-                (newPosition[dim][i] - EnzoClusterPosition[dim]);
-      }
-      if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) {
-        newPosition[0][i] -= 20; // original code
-        // newPosition[0][i] -= 10*EnzoClusterPosition[0];
-        deleteParticle(EnzoPIDs[i + offset], index);
-#ifdef FEWBODY
-        NumberOfParticle--;
-#ifdef SEVN
-        if (ptcl->StellarEvolution != nullptr) {
-          delete ptcl->StellarEvolution;
-          ptcl->StellarEvolution = nullptr;
-          fprintf(stderr, "In SendToEnzo... PID: %d. SEVN memory is freed!\n",
-                  ptcl->PID);
-          auto it = SEVNList.begin();
-          while (it != SEVNList.end()) {
-            if (it->second == ptcl->ParticleIndex) {
-              it = SEVNList.erase(it);
-              fprintf(stderr, "In SendToEnzo... PID: %d. SEVNList is erased!\n",
-                      ptcl->PID);
-              break;
-            } else
-              it++;
-          }
-        }
-#endif
-#endif
-        NumberOfEscapeParticle++;
-        // (Query) binary termination?
-      }
-
-#ifdef SEVN
-      newInitialMass[i] = ptcl->InitialMass; // This is already in Msun unit!!!
-      newWindEjectedMass[i] = ptcl->dm * mass_unit;
-      newSNEjectedMass[i] = ptcl->SNEjectedMass * mass_unit;
-      newTemperature[i] = ptcl->T_eff;
-
-      if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
-        fprintf(stderr, "Feedback info send to Enzo...\n");
-        fprintf(stderr,
-                "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, "
-                "SNEjectedMass: %e Msun, T_eff: %e K\n",
-                ptcl->PID, InitialMass[i], WindEjectedMass[i], SNEjectedMass[i],
-                Temperature[i]);
-      }
-
-      newMass[i] = ptcl->Mass / EnzoMass;
-#endif
-    }
-  }
+    ++sendcounts[ptcl->EnzoProcessorNumber];
+  } //  loop over particles
 
 #ifdef FEWBODY
   for (int i : CMPtclsSet) {
@@ -1261,62 +1161,23 @@ int SendParticleToEnzo(Worker *workers) {
   fprintf(stderr, "Original InitialNeighborRadius2: %e\n",
           originalInitialNeighborRadius2);
   fprintf(stderr, "Newly calculated InitialNeighborRadius2: %e\n", RS0 * RS0);
-  if (NumberOfSingleParticle + newNumberOfSingleParticle > 1000)
+  if (NumberOfSingleParticle + NumberOfSingleParticleNew > 1000)
     InitialNeighborRadius2 =
         std::min(RS0 * RS0, originalInitialNeighborRadius2);
 #endif
 
-  // std::cerr << "ABYSS: Waiting for Enzo to send data..." << std::endl;
-  fprintf(nbpout, "ABYSS: Waiting for Enzo to send data...\n");
-  CommunicationInterBarrier();
-  if (NumberOfSingleParticle - newNumberOfSingleParticle != 0) {
-    for (int dim = 0; dim < Dim; dim++) {
-      MPI_Send(Position[dim],
-               NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE,
-               0, 300, inter_comm);
-      MPI_Send(Velocity[dim],
-               NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE,
-               0, 400, inter_comm);
-    }
-#ifdef SEVN
-    MPI_Send(InitialMass, NumberOfSingleParticle - newNumberOfSingleParticle,
-             MPI_DOUBLE, 0, 800, inter_comm);
-    MPI_Send(WindEjectedMass,
-             NumberOfSingleParticle - newNumberOfSingleParticle, MPI_DOUBLE, 0,
-             900, inter_comm);
-    MPI_Send(SNEjectedMass, NumberOfSingleParticle - newNumberOfSingleParticle,
-             MPI_DOUBLE, 0, 1000, inter_comm);
-    MPI_Send(Temperature, NumberOfSingleParticle - newNumberOfSingleParticle,
-             MPI_DOUBLE, 0, 1100, inter_comm);
+  std::cerr << "ABYSS: Sendbuf is ready!!" << std::endl;
+  //std::cerr << "ABYSS: Waiting for Enzo to send data..." << std::endl;
+  fprintf(nbpout, "ABYSS: Sendbuf is ready!!\n");
 
-    MPI_Send(Mass, NumberOfSingleParticle - newNumberOfSingleParticle,
-             MPI_DOUBLE, 0, 1600, inter_comm);
-#endif
-  }
-  // std::cerr << "ABYSS: Escape particles=" << EscapeParticleNum << std::endl;
 
-  // fprintf(stderr,"NewNumberOfSingleParticles=%d\n",NumberOfNewNbodyParticles);
-  if (newNumberOfSingleParticle != 0) {
-    for (int dim = 0; dim < Dim; dim++) {
-      MPI_Send(newPosition[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 500,
-               inter_comm);
-      MPI_Send(newVelocity[dim], newNumberOfSingleParticle, MPI_DOUBLE, 0, 600,
-               inter_comm);
-    }
-#ifdef SEVN
-    MPI_Send(newInitialMass, newNumberOfSingleParticle, MPI_DOUBLE, 0, 1200,
-             inter_comm);
-    MPI_Send(newWindEjectedMass, newNumberOfSingleParticle, MPI_DOUBLE, 0, 1300,
-             inter_comm);
-    MPI_Send(newSNEjectedMass, newNumberOfSingleParticle, MPI_DOUBLE, 0, 1400,
-             inter_comm);
-    MPI_Send(newTemperature, newNumberOfSingleParticle, MPI_DOUBLE, 0, 1500,
-             inter_comm);
-
-    MPI_Send(newMass, newNumberOfSingleParticle, MPI_DOUBLE, 0, 1700,
-             inter_comm);
-#endif
-  }
+  /*-------------------------------------------*/
+  /********   Send Particles to ENZO  *********/
+  /*-------------------------------------------*/
+  MPI_Scatterv(sendbuf, sendcounts, displs, MPI_ENZO_PTCL_RECV, NULL, 0,
+              MPI_ENZO_PTCL_RECV, NumberOfProcessors, inter_comm);
+  delete [] sendcounts;
+  delete [] sendbuf;
 
   if (NumberOfSingleParticle != 0 && IdentifyOnTheFly) {
     // fprintf(stderr, "NBODY: ClusterPosition =(%lf, %lf, %lf)\n",
@@ -1329,41 +1190,14 @@ int SendParticleToEnzo(Worker *workers) {
 #ifdef COM_EVOLUTION
     MPI_Send(ClusterPosition, 3, MPI_DOUBLE, 0, 700, inter_comm);
 #else
-    MPI_Send(NbodyCOM, 3, MPI_DOUBLE, 0, 700, inter_comm);
+    // Synchronize Cluster Posiition
+    MPI_Ibcast(NbodyCOM, 3, MPI_DOUBLE, NumberOfProcessors, inter_comm, &request);
+    fprintf(nbpout, "ABYSS: Cluster position broadcating.\n");
 #endif
   }
+  fprintf(stderr, "ABYSS: Data sent!\n");
 
-  CommunicationInterBarrier();
-  fprintf(stdout, "ABYSS: Data sent!\n");
 
-  for (int dim = 0; dim < Dim; dim++) {
-    if (NumberOfSingleParticle - newNumberOfSingleParticle != 0) {
-      delete[] Position[dim];
-      delete[] Velocity[dim];
-    }
-    if (newNumberOfSingleParticle != 0) {
-      delete[] newPosition[dim];
-      delete[] newVelocity[dim];
-    }
-  }
-#ifdef SEVN
-  if (NumberOfSingleParticle - newNumberOfSingleParticle != 0) {
-    delete[] InitialMass;
-    delete[] WindEjectedMass;
-    delete[] SNEjectedMass;
-    delete[] Temperature;
-
-    delete[] Mass;
-  }
-  if (newNumberOfSingleParticle != 0) {
-    delete[] newInitialMass;
-    delete[] newWindEjectedMass;
-    delete[] newSNEjectedMass;
-    delete[] newTemperature;
-
-    delete[] newMass;
-  }
-#endif
 
   NumberOfSingleParticle -= NumberOfEscapeParticle;
 #ifdef FEWBODY
@@ -1372,7 +1206,6 @@ int SendParticleToEnzo(Worker *workers) {
 #else
   NumberOfParticle -= NumberOfEscapeParticle;
 #endif
-  std::cout << "ABYSS: Sending data finished." << std::endl;
 
   fprintf(stderr,
           "ABYSS    : In SendToEnzo (after particle might be escaped): \n");
@@ -1393,11 +1226,28 @@ int SendParticleToEnzo(Worker *workers) {
           NumberOfSingleParticle);
 
   fflush(stderr);
-  fflush(nbpout);
+  if (NumberOfSingleParticle != 0 && IdentifyOnTheFly) {
+    MPI_Wait(&request, MPI_STATUS_IGNORE);
+  }
   // fflush(gpuout);
   //  fflush(binout);
+  fprintf(nbpout, "ABYSS: Sending data done!");
+  fflush(nbpout);
+  std::cout << "ABYSS: Sending data done!" << std::endl;
+  std::cerr << "ABYSS: Sending data done!" << std::endl;
   return true;
 }
+
+
+/*
+*
+*
+*
+*
+*
+*
+*
+*/
 
 /* Adjust COM according to new particles
 X = (a1+b1+c1)/M
@@ -1461,5 +1311,4 @@ void deleteParticle(int &PID, int &index) {
   NumberOfAvailableIndices++;
 }
 
-#endif
 #endif

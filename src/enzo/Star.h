@@ -94,12 +94,18 @@ public:
 
   // Routines
 #if defined (NBODY) && defined (INDIVIDUALSTAR)
-  float *ReturnBackgroundAcceleration(void) { return bg_acc; }
+  double *ReturnBackgroundAcceleration(void) { return bg_acc; }
   bool ReturnAbyssFlag(){return isABYSS;};        // in case we would like to exclude this particle from the ABYSS pool
   bool ReturnNewStarFlag(){return isNewlyFormed;};   
+  int ReturnGridParticleIndex(){return GridParticleIndex;};
+  void SetPosition(double *temp){pos[0]=temp[0];pos[1]=temp[1];pos[2]=temp[2];};
+  void SetVelocity(double *temp){vel[0]=temp[0];vel[1]=temp[1];vel[2]=temp[2];};
+
   void SetAbyssFlag(bool is){isABYSS=is;};        // in case we would like to exclude this particle from the ABYSS pool
   void SetNewStarFlag(bool is){isNewlyFormed=is;};   
   void MakeStarsUnorderedMap(std::unordered_map<int, Star*> &StarLookupMap); // makes lookup table to quickly find stars in grid during CopyToGrid
+	void GetBackgroundAcceleration();
+  void UpdateBackgroundAcceleration();
 #endif
   star_type ReturnType(void) { return type; };
   int   ReturnID(void) { return Identifier; };

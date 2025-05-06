@@ -24,7 +24,7 @@
    CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : no
    CONFIG_ECUDA  [cuda-{yes,no}]                             : no
    CONFIG_NBODY  [nbody-{yes,no}]                            : yes
-   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : yes
+   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : no
    CONFIG_SEVN  [sevn-{yes,no}]                              : no
    CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no
    CONFIG_ACCELERATION_BOUNDARY  [acceleration-boundary-{yes,no}] : yes

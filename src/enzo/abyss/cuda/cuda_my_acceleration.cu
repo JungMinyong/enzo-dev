@@ -15,7 +15,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define noDEBUG
+#define DEBUG
 
 
 
@@ -1199,7 +1199,7 @@ void _InitializeDevice(int irank){
 
 
 	if (AbyssProcessorNumber == ROOT) {
-	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
+	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname, deviceCount, devid, prop.name);
 	}
 
 	for (int deviceNum = 0; deviceNum < deviceCount; deviceNum++) {
@@ -1287,7 +1287,7 @@ void _InitializeDevice(int irank){
 void _InitializeDevice(int irank){
 
 	if (AbyssProcessorNumber == ROOT) {
-	std::cout << "Initializing CUDA ..." << std::endl;
+		std::cout << "Initializing CUDA ..." << std::endl;
 	}
 	// Select CUDA device (optional)
 	int deviceNum = 0; // Choose GPU device 0
@@ -1305,7 +1305,7 @@ void _InitializeDevice(int irank){
 
 
 	if (AbyssProcessorNumber == ROOT) {
-	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
+		fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
 	}
 
 

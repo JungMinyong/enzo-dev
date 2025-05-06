@@ -66,7 +66,8 @@ std::map<int, Star*> grid::MakeStarParticleMap() // makes lookup table to quickl
 
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-                        , std::unordered_map<int, Star*> &LocalStarLookupMap
+                        , std::unordered_map<int, Star*> &LocalStarLookupMap,
+                        int &ThisLevel
 #endif
 )
 {
@@ -345,11 +346,21 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
     if (cstar->ReturnMass() > 1e-9)
       minStarLifetime = enzo_min(minStarLifetime, cstar->ReturnLifetime());
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-		if (cstar->ReturnCurrentGrid() != NULL) {
-			LocalStarLookupMap.insert({cstar->ReturnID(), cstar});
+		if (cstar->ReturnCurrentGrid() != NULL && 
+		(ThisLevel == cstar->ReturnLevel() || LevelArray[ThisLevel+1] == NULL)) {
+			if (cstar->ReturnMass()>0) 
+				LocalStarLookupMap.insert({cstar->ReturnID(), cstar});
+			else
+				cstar->SetAbyssFlag(false);
 		}
+	//if I want i can optimize it by using level (e.g., if level==star->ReturnLevel()). Except the finest level, 
+	//all I need is the particles on this level, not all the level. But, then I have to pass level from Evolve Level
+	// and for the finest level, I have to add all the particles across levels.
 #endif
   }
+
+
+
 
   TIMER_STOP("StarParticleFindAll:MiniStellarLife");
 	/* Store in global variable */

@@ -31,6 +31,7 @@
 #include "macros_and_parameters.h"
 #endif
 
+#ifndef INDIVIDUALSTAR
 void GetCenterOfMass(double *mass, double *x[MAX_DIMENSION], double *v[MAX_DIMENSION], double x_com[], double v_com[], int N) {
 	double total_mass=0.;
 	for (int dim=0; dim<MAX_DIMENSION; dim++) {
@@ -51,7 +52,27 @@ void GetCenterOfMass(double *mass, double *x[MAX_DIMENSION], double *v[MAX_DIMEN
 		v_com[dim] /= total_mass;
 	}
 }
+#else
+#include "NbodyRoutines.h"
 
+void GetCenterOfMass(ParticleDataType *ptcl, const int &N, double x_com[], double v_com[]) {
+  double MassTotal = 0;
+  for (int i=0; i<N; i++) {
+    for (int dim=0; dim<MAX_DIMENSION; ++dim) {
+      x_com[dim] += ptcl[i].Mass*ptcl[i].Position[dim];
+      v_com[dim] += ptcl[i].Mass*ptcl[i].Velocity[dim];
+    }
+    MassTotal += ptcl[i].Mass;
+  }
+	#pragma unroll MAX_DIMENSION
+  for (int dim=0; dim<MAX_DIMENSION; ++dim) {
+    x_com[dim] /= MassTotal;
+    v_com[dim] /= MassTotal;
+  }
+}
+
+
+#endif
 
 #ifndef INDIVIDUALSTAR
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,

@@ -11,6 +11,7 @@
  ************************************************************************/
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
+#include <unordered_map>
 #include <vector>
 #include <map>
 #include "ProtoSubgrid.h"
@@ -132,7 +133,10 @@ class grid
 																									 //
 #ifdef NBODY
 		float *ParticleAccelerationNoStar[MAX_DIMENSION+1];  //  by YS
-#ifndef INDIVIDUALSTAR
+#ifdef INDIVIDUALSTAR
+		std::vector<double> BackgroundAcceleration[MAX_DIMENSION];
+		std::unordered_map<int, int> IDtoIndexforBG; // PID to Index convertor for background acceleration
+#else
 		int NumberOfNbodyParticlesInGrid;
 		int NumberOfNewNbodyParticlesInGrid;
 		int *IndicesOfNbodyParticlesInGrid;					// added by EW 2025.4.24
@@ -1916,9 +1920,10 @@ class grid
 		/* */
 
 		void GetNbodyCenterOfMass(double &TotalMass);
-
-#ifndef INDIVIDUALSTAR
-		void SetIndicesOfNbodyParticles(void) {
+#ifdef INDIVIDUALSTAR
+		void SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier);
+#else
+    void SetIndicesOfNbodyParticles(void) {
 			if (MyProcessorNumber != ProcessorNumber) return;
 			
 			if (IndicesOfNbodyParticlesInGrid != NULL)
