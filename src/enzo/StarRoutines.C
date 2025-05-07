@@ -767,6 +767,10 @@ void Star::CopyFromParticle(grid *_grid, int _id, int _level)
   BirthTime = _grid->ParticleAttribute[0][_id];
   LifeTime = _grid->ParticleAttribute[1][_id];
   Metallicity = _grid->ParticleAttribute[2][_id];
+
+  #ifdef NBODY
+    GridParticleIndex = _id;
+  #endif
   // below is removed because we want to keep Star->Mass as double
   // during the run - Ji-hoon Kim, Dec.2009
   //
@@ -831,6 +835,7 @@ void Star::CopyFromParticle(grid *_grid, int _id, int _level)
     wind_mass_ejected = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-2][_id]);
     sn_mass_ejected   = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-1][_id]);
   }
+
 
   return;
 }
@@ -1170,20 +1175,50 @@ void Star::UpdateBackgroundAcceleration() {
   }
 }
 
-
 void grid::SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier) {
 
   if (ParticleNumber[GridParticleIndex] == Identifier) {
     IDtoIndexforBG.insert({Identifier, BackgroundAcceleration[0].size()});
     for (int dim=0; dim<MAX_DIMENSION; dim++) {
-      BackgroundAcceleration[dim].emplace_back(ParticleAccelerationNoStar[dim][GridParticleIndex]);
+      BackgroundAcceleration[dim].push_back(ParticleAccelerationNoStar[dim][GridParticleIndex]);
     }
   }
   else{
+    fprintf(stderr, "(mismatch) Grid PID=%lld | Star PID=%d\n", ParticleNumber[GridParticleIndex], Identifier);
     fprintf(stderr, "Something went wrong in SaveBackgroundAcceleration!!!\n");
     exit(1);
   }
+}
 
+
+void Star::UpdateToGridParticle(const double *pos, const double *vel){
+  for (int dim=0; dim<MAX_DIMENSION; dim++) {
+    CurrentGrid->ParticlePosition[dim][GridParticleIndex] = pos[dim];
+    CurrentGrid->ParticleVelocity[dim][GridParticleIndex] = vel[dim];
+  }
+}
+
+void grid::UpdateToGridParticle(const double *pos, const double *vel) {
+}
+
+
+void Star::DeleteBackgroundAcceleration() {
+  if (CurrentGrid == NULL) {
+    fprintf(stderr, "Is this possible?\n");
+  }
+  else {
+    CurrentGrid->DeleteBackgroundAcceleration();
+  }
+}
+
+void grid::DeleteBackgroundAcceleration() {
+  if (IDtoIndexforBG.size() != 0)
+    IDtoIndexforBG.clear();
+  for (int dim=0; dim<MAX_DIMENSION; dim++) {
+    if (BackgroundAcceleration[dim].size() != 0)
+      BackgroundAcceleration[dim].clear();
+  }
+  // not sure if this is okay. Grid of not finest level might use it again?
 }
 #endif
 

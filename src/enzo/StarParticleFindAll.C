@@ -105,7 +105,6 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 
 #ifdef aeos_debug
 		std::cout << "star find all 0" << std::endl;
-		//CommunicationBarrier();
 #endif  
 	for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
 

@@ -395,8 +395,8 @@ int ReceiveParticleFromEnzo() {
 
   MPI_Request request;
   MPI_Status status;
-  fprintf(nbpout, "ABYSS: Waiting for Enzo, to receive data...\n");
-  fprintf(stderr, "ABYSS: Waiting for Enzo, to receive data...\n");
+  fprintf(nbpout, "ABYSS: Starting ReceiveParticle...\n");
+  fprintf(stderr, "ABYSS: Starting ReceiveParticle...\n");
 
 
   //(Query) is this for cosmology?
@@ -449,28 +449,20 @@ int ReceiveParticleFromEnzo() {
   /*----------------===---------------------------*/
   bool debug1 = true;
 
-  int LocalNumberOfParticlesNew=0;
-  int LocalNumberOfParticlesOld=0;
-
-  if (debug1) {
-    fprintf(nbpout, "NumberOfProcessors=%d\n",NumberOfProcessors);
-    fflush(nbpout);
-  }
-
   /* Step 1: Gather sizes */
   int size = NumberOfProcessors+1; // the number of inter_comm processors
   int *recv_counts_new = NULL,  *recv_counts_old = NULL;
+  int blank=0;
   recv_counts_old = (int*) malloc(size * sizeof(int));
   recv_counts_new = (int*) malloc(size * sizeof(int));
-  MPI_Gather(&LocalNumberOfParticlesOld, 1, MPI_INT, recv_counts_old, 1, MPI_INT,
+  MPI_Gather(&blank, 1, MPI_INT, recv_counts_old, 1, MPI_INT,
               NumberOfProcessors, inter_comm);
-  MPI_Gather(&LocalNumberOfParticlesNew, 1, MPI_INT, recv_counts_new, 1, MPI_INT,
+  MPI_Gather(&blank, 1, MPI_INT, recv_counts_new, 1, MPI_INT,
               NumberOfProcessors, inter_comm);
 
 
   /* Step 2: Compute displacements */
   int *displs_old,  *displs_new, NumberOfSingleParticleOld, NumberOfSingleParticleNew;
-  NumberOfSingleParticle = 0;
   displs_old = (int*) malloc(size * sizeof(int));
   displs_new = (int*) malloc(size * sizeof(int));
   displs_old[0] = 0;
@@ -513,9 +505,9 @@ int ReceiveParticleFromEnzo() {
 
 
   /* Step 4: Gatherv */
-  MPI_Gatherv(NULL, LocalNumberOfParticlesOld, MPI_ENZO_PTCL, recvbuf_old, recv_counts_old, displs,
-              MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
-  MPI_Gatherv(NULL, LocalNumberOfParticlesNew, MPI_ENZO_PTCL, recvbuf_new, recv_counts_new, displs,
+  MPI_Gatherv(NULL, 0, MPI_ENZO_PTCL_SEND, recvbuf_old, recv_counts_old, displs_old,
+              MPI_ENZO_PTCL_SEND, NumberOfProcessors, inter_comm);
+  MPI_Gatherv(NULL, 0, MPI_ENZO_PTCL, recvbuf_new, recv_counts_new, displs_new,
               MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
   if (debug1) {
     fprintf(nbpout, "Date received!\n");
@@ -526,9 +518,10 @@ int ReceiveParticleFromEnzo() {
 
   /* Prepare displs for all particles for sending out */
   recv_counts_old[0] +=  recv_counts_new[0]; // now recv_counts_old contains all particles 
+  displs[0] = 0; // this is a given tbh
   for (int i = 1; i < size; i++) {
     displs[i] = displs[i - 1] + recv_counts_old[i - 1];
-    recv_counts_old[i] +=  recv_counts_new[i];
+    recv_counts_old[i] += recv_counts_new[i];
   }
   free(recv_counts_old);
   free(recv_counts_new);
@@ -541,10 +534,10 @@ int ReceiveParticleFromEnzo() {
   if (debug1) {
     //fprintf(stderr, "ABYSS: ID = ");
     fprintf(nbpout, "ABYSS: ID for OLD = ");
-    for (int i=0; i<NumberOfSingleParticle; i++) {
+    for (int i=0; i<NumberOfSingleParticleOld; i++) {
       //fprintf(stderr, "(%d, ", recvbuf[i].ID);
       //fprintf(stderr, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
-      fprintf(nbpout, "(%d,  ", recvbuf_old[i].ID);
+      fprintf(nbpout, "%d,  ", recvbuf_old[i].ID);
       //fprintf(nbpout, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
     }
     //fprintf(stderr, "\n");
@@ -552,10 +545,10 @@ int ReceiveParticleFromEnzo() {
     fflush(nbpout);
 
     fprintf(nbpout, "ABYSS: ID for NEW = ");
-    for (int i=0; i<NumberOfSingleParticle; i++) {
+    for (int i=0; i<NumberOfSingleParticleNew; i++) {
       //fprintf(stderr, "(%d, ", recvbuf[i].ID);
       //fprintf(stderr, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
-      fprintf(nbpout, "(%d,  ", recvbuf_new[i].ID);
+      fprintf(nbpout, "%d,  ", recvbuf_new[i].ID);
       //fprintf(nbpout, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
     }
     //fprintf(stderr, "\n");
@@ -780,6 +773,7 @@ int ReceiveParticleFromEnzo() {
           NumberOfSingleParticleNew);
   // fprintf(stderr, "ABYSS    : Particle size     = %d\n", particle.size());
   // fprintf(stderr, "ABYSS    : RegularList size = %d\n", RegularList.size());
+  fprintf(nbpout, "ReceiveParticle Done!\n");
   fflush(stderr);
   fflush(nbpout);
   // fflush(gpuout);
@@ -803,24 +797,28 @@ int ReceiveParticleFromEnzo() {
 // changed in Abyss by EW 2025.3.13 (Query) For SEVN, not only mass but also dm
 // should be sent to Enzo, and it should be distributed into the grid by EW
 // 2025.3.13
+
 int SendParticleToEnzo(Worker *workers) {
 
-  std::cout << "ABYSS: Entering SendToEnzo..." << std::endl;
-  if (NumberOfSingleParticle == 0) {
-    std::cout << "ABYSS: Skipping SendToEnzo..." << std::endl;
+  std::cout << "ABYSS: Starting SendParticleToEnzo..." << std::endl;
+  std::cerr << "ABYSS: Starting SendParticleToEnzo..." << std::endl;
+  /*if (NumberOfSingleParticle == 0) {
+    std::cout << "ABYSS: Skipping SendParticleToEnzo..." << std::endl;
+    std::cerr << "ABYSS: Skipping SendParticleToEnzo..." << std::endl;
     return 1; // SUCCESS -> 1 by EW 2025.3.11
-  }
+  }*/
   MPI_Request request;
   MPI_Status status;
 
-  ParticleReceiveDataType *sendbuf; 
+  fprintf(nbpout,
+          "ABYSS: Starting SendParticleToEnzo...\n"
+          "NumberOfSingleParticle=%d\n",
+          NumberOfSingleParticle);
+
+  ParticleReceiveDataType *sendbuf = new ParticleReceiveDataType[NumberOfSingleParticle]; 
 
   int index;
   Particle *ptcl;
-
-  if (NumberOfSingleParticle != 0) {
-    sendbuf = new ParticleReceiveDataType[NumberOfSingleParticle];
-  }
 
 
 
@@ -901,7 +899,7 @@ int SendParticleToEnzo(Worker *workers) {
     offset = displs[ptcl->EnzoProcessorNumber]+sendcounts[ptcl->EnzoProcessorNumber];
 
     fprintf(nbpout, "ID=%d, offset=%d, Processor=%d, sendcounts=%d, displs=%d\n",
-      ptcl->PID, offset, ptcl->EnzoProcessorNumber, sendcounts[ptcl->EnzoProcessorNumber], displs[ptcl->EnzoProcessorNumber]);
+      ptcl->PID, offset, ptcl->EnzoProcessorNumber, sendcounts[ptcl->EnzoProcessorNumber], displs[ptcl->EnzoProcessorNumber+1]);
     fflush(nbpout);
 
     // I can put everything under into a method of sendbuf (ParticleReceiveDataType)
@@ -1018,7 +1016,7 @@ int SendParticleToEnzo(Worker *workers) {
         }
 #endif
 #endif
-        NumberOfEscapeParticle++;
+        //NumberOfEscapeParticle++;
       }
       // fprintf(stdout, "ABYSS: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
 
@@ -1231,7 +1229,7 @@ int SendParticleToEnzo(Worker *workers) {
   }
   // fflush(gpuout);
   //  fflush(binout);
-  fprintf(nbpout, "ABYSS: Sending data done!");
+  fprintf(nbpout, "ABYSS: Sending data done!\n");
   fflush(nbpout);
   std::cout << "ABYSS: Sending data done!" << std::endl;
   std::cerr << "ABYSS: Sending data done!" << std::endl;

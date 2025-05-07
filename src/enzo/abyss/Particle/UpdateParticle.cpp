@@ -235,8 +235,8 @@ void Particle::calculateTimeStepIrr() {
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
 	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
-		fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		//fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
+				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
 
 		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
 			TimeLevelIrr++;
@@ -244,6 +244,8 @@ void Particle::calculateTimeStepIrr() {
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 		}
 	}
+
+
 
 	if (TimeStepIrr > 1) {
 		fprintf(stderr, "TimeStepIrr=%e, TimeLevelIrr=%d, TimeLevelTmp0=%d\n",TimeStepIrr, TimeLevelIrr, TimeLevelTmp0);
@@ -314,16 +316,16 @@ void Particle::calculateTimeStepIrr2() {
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
 	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
-		fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		//fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
+				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
 		//exit(1);
 		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 		}
-		fprintf(stderr, "Adjusted TimeStepIrr! PID: %d, TimeStep = %e\n",
-				PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4);
+		//fprintf(stderr, "Adjusted TimeStepIrr! PID: %d, TimeStep = %e\n",
+				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4);
 	}
 
 	if (TimeStepIrr > 1) {
@@ -416,9 +418,9 @@ void Particle::calculateTimeStepReg() {
 	TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 
 	if (TimeStepReg*global_variable->EnzoTimeStep*1e4 < 1e-7) {
-		fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
-				PID, TimeStepReg * global_variable->EnzoTimeStep * 1e4, static_cast<double>(pow(2, TimeLevelTmp0)) * global_variable->EnzoTimeStep * 1e4);
-		fflush(stderr);
+		//fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
+				//PID, TimeStepReg * global_variable->EnzoTimeStep * 1e4, static_cast<double>(pow(2, TimeLevelTmp0)) * global_variable->EnzoTimeStep * 1e4);
+		//fflush(stderr);
 	}
 
 	if (CurrentTimeReg+TimeStepReg > 1 && CurrentTimeReg != 1.0) {
@@ -433,15 +435,15 @@ void Particle::calculateTimeStepReg() {
 	}
 	*/
 	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-7) {
-		fprintf(stderr, "Too small TimeStepReg! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				PID, TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		//fprintf(stderr, "Too small TimeStepReg! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
+				//PID, TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
 		while (TimeStepReg*global_variable->EnzoTimeStep*1e4>=1e-7) {
 			TimeLevelReg++;
 			TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
 			TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 		}
-		fprintf(stderr, "Adjusted TimeStepReg! PID: %d, TimeStep = %e\n",
-				PID, TimeStepReg*global_variable->EnzoTimeStep*1e4);
+		//fprintf(stderr, "Adjusted TimeStepReg! PID: %d, TimeStep = %e\n",
+				//PID, TimeStepReg*global_variable->EnzoTimeStep*1e4);
 	}
 	if (TimeStepReg > 1) {
 		fprintf(stderr, "TimeStepReg=%e, TimeLevelReg=%d, TimeLevelTmp0=%d\n",TimeStepReg, TimeLevelReg, TimeLevelTmp0);

@@ -106,6 +106,8 @@ public:
   void MakeStarsUnorderedMap(std::unordered_map<int, Star*> &StarLookupMap); // makes lookup table to quickly find stars in grid during CopyToGrid
 	void GetBackgroundAcceleration();
   void UpdateBackgroundAcceleration();
+	void DeleteBackgroundAcceleration();
+  void UpdateToGridParticle(const double *pos, const double *vel);
 #endif
   star_type ReturnType(void) { return type; };
   int   ReturnID(void) { return Identifier; };

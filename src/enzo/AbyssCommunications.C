@@ -253,6 +253,8 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 
   fprintf(stdout, "ENZO: CommunicationToAbyss ...\n");
   fprintf(stderr, "ENZO: CommunicationToAbyss ...\n");
+  fflush(stderr);
+
 
   /* Do direct calculation!*/
   double dt = 1e-3, scale_factor = 1.0;
@@ -378,8 +380,8 @@ int ReceiveParticleFromAbyss(
   /* Prepare Send Buffer */
   ParticleReceiveDataType *recvbuf = new ParticleReceiveDataType[LocalNumberOfParticles];
       
-  fprintf(stdout, "ENZO: Waiting for ABYSS to receive data \n");
-  fprintf(stderr, "ENZO: Waiting for ABYSS to receive data \n");
+  fprintf(stdout, "ENZO: Waiting for ABYSS, to receive data \n");
+  fprintf(stderr, "ENZO: Waiting for ABYSS, to receive data \n");
   fflush(stderr);
 
   MPI_Scatterv(NULL, NULL, NULL, MPI_ENZO_PTCL_RECV,

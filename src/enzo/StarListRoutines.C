@@ -54,7 +54,7 @@ void DeleteStarList(Star * &Node)
 {
   Star *tmp = Node;
   while (tmp)  // delete all linked stars
-    DeleteStar(tmp);
+    DeleteStar(tmp); 
   Node = NULL;
   return;
 }

@@ -97,14 +97,16 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
 	if (debug1) fprintf(stderr,"SPF1\n");  // by YS
   CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
-				       TotalStarParticleCountPrevious);
+                TotalStarParticleCountPrevious);
 
   /* Update position and velocity of star particles from the actual
      particles */
 
 	if (debug1) fprintf(stderr,"SPF2\n");  // by YS
+#ifndef NBODY
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
     ThisStar->UpdatePositionVelocity();
+#endif
 
   // Apply individual star feedback if it exists
   if(STARMAKE_METHOD(INDIVIDUAL_STAR) && STARFEED_METHOD(INDIVIDUAL_STAR)){
@@ -142,7 +144,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 #endif
     if (debug)
       fprintf(stdout, "SinkParticle: Time = %"GOUTSYM", TotalMass = %"GSYM"\n", 
-	      TimeNow, TotalMass);
+          TimeNow, TotalMass);
   }
 
   /* Subtract gas from the grids that has accreted on to the star particles */
@@ -154,12 +156,12 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   StarParticleDeath(LevelArray, level, AllStars);
 
   /* 
-     If the new particles are above a specified mass threshold,
-     "activate" them.  Then check for any stellar deaths.
+    If the new particles are above a specified mass threshold,
+    "activate" them.  Then check for any stellar deaths.
 
-     Sync all star and normal particles that are stored in the grids
-     to the global list (AllStars) so these changes are reflected
-     there. 
+    Sync all star and normal particles that are stored in the grids
+    to the global list (AllStars) so these changes are reflected
+    there. 
   */
 
   int count = 0;
@@ -211,15 +213,17 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   if (PopIIIOutputOnFeedback)
     OutputNow = CommunicationMaxValue(OutputNow);
-  
+
+#ifndef NBODY
   /* Merge star particles */
 
-  if (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) {  
+  if (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) {
     if (CommunicationMergeStarParticle(Grids, NumberOfGrids) == FAIL) {
       printf("CommunicationMergeStarParticle failed.\n");
       return FAIL;
     }
   }
+#endif
 
   /* Set minimum refinement level for metallicity if desired */
 
@@ -232,6 +236,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 #ifndef INDIVIDUALSTAR
   DeleteStarList(AllStars);
 #endif
+
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
   LocalStarLookupMap.clear();
 #endif

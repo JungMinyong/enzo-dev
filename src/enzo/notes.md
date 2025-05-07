@@ -71,3 +71,23 @@ this rountine can be improved by using StarMap.. why was it written like this in
 - ~~processor and ID matching within ABYSS I think? (done it was simple fix)~~
 
 
+
+- I can directly update positions and velocities to the gird using CurrentGrid and GridParticleIndex (star particle position needed for feedback)
+
+- background vector in grid might have room for improvement
+
+- mass should be mutual updated! in case of accretion.
+
+- Deleting (resetting) Background acceleration in grid might be modified.
+
+- NumberOfSingleParticle happens to be zero 
+- EscapeParticle should be properly treated!
+
+
+**There are three different stars! ( how stupid it is!!!) Grid->Particle (grid bound), Grid->StarParticle (grid bound), Independent processor-wdie StarParticle (AllStars and such)**
+
+## Grid Particle are the basic/ StarParticle only effective for feedback (AllStars) / Grid->StarParticle is just a mediator.
+## Update order: 1. Grid Particle -> Grid Star Particle -> Star Particles in StarParticleInitialize(SFA)
+## 2. Grid Particle -> AllStars in StarParticleFinalize for feedback
+## Our particles based in AllStars (however all connected).
+## this is stupidest system I've ever seen.

@@ -1922,6 +1922,8 @@ class grid
 		void GetNbodyCenterOfMass(double &TotalMass);
 #ifdef INDIVIDUALSTAR
 		void SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier);
+		void DeleteBackgroundAcceleration();
+		void UpdateToGridParticle(const double *pos, const double *vel);
 #else
     void SetIndicesOfNbodyParticles(void) {
 			if (MyProcessorNumber != ProcessorNumber) return;

@@ -152,6 +152,8 @@ struct ParticleReceiveDataType{
 	void copyTo(Star *ptcl) {
 		ptcl->SetPosition(this->Position);
 		ptcl->SetVelocity(this->Velocity);
+		ptcl->UpdateToGridParticle(this->Position, this->Velocity);
+		ptcl->DeleteBackgroundAcceleration();
 #ifdef SEVN
 		//ptcl->ID = this->identifier;
 		//this->Mass          = ptcl->Mass;
