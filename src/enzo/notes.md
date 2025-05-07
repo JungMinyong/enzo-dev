@@ -3,10 +3,10 @@
 
 Then, should I use AllStars for sending the entire array or processor-processor pair communication?
 
-pair communicatino will do
+pair communication will do
 
 
-- localstarlookupmap will be useful (done)
+~~- localstarlookupmap will be useful (done)~~
 
 
 - I gotta work on position update for Stars in StarParticleFinalize
@@ -19,8 +19,8 @@ pair communicatino will do
 - multi pair wise communication failed. (too bad)
 
 
--background acceleration update needed.
--each star particle should have a variable of the rank that they belong
+~~- background acceleration update needed.~~
+- each star particle should have a variable of the rank that they belong
 
 - UpdateParticlePositions should be edited.
 - Star particles are updated from particle in the grids.
@@ -34,7 +34,7 @@ this rountine can be improved by using StarMap.. why was it written like this in
 
 - In Grid_DepositMustRefineParticles, allstars is used to flag a cell for refinement, but not sure if they need all the stars from other processors as well.
 
-- in the current setup, all stars will be updated only for each processor. Brocast will be done later on only if needed.
+~~- in the current setup, all stars will be updated only for each processor. Brocast will be done later on only if needed.~~
 
 - background gravity history is only needed when polynomical approximation is applied. in that case, I can include them within star object. For now, I can just use background acceleration within grid.
 
@@ -45,7 +45,7 @@ this rountine can be improved by using StarMap.. why was it written like this in
 -  /* Set MetaData->NumberOfParticles and prepare TotalStarParticleCountPrevious
            these are to be used in CommunicationUpdateStarParticleCount
            in StarParticleFinalize */ in StarParticleInitialize
-           it seems like it's not good to delete particles right away.
+           **it seems like it's not good to delete particles right away.**
 
 
 
@@ -78,7 +78,7 @@ this rountine can be improved by using StarMap.. why was it written like this in
 
 - mass should be mutual updated! in case of accretion.
 
-- Deleting (resetting) Background acceleration in grid might be modified.
+- Deleting (resetting) Background acceleration in grid might need be modified.
 
 - NumberOfSingleParticle happens to be zero 
 - EscapeParticle should be properly treated!

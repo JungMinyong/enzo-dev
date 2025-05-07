@@ -662,8 +662,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 					if (PrepareNbodyComputation(LevelArray, level) == FAIL) {
 #else
 
+					/* Reset Background Acceleration from Grids to Star Before Update */
+					for (auto &kv : LocalStarLookupMap) {
+						Star *star = kv.second;
+						if (star->ReturnLevel() == level) {
+							//fprintf(stderr, "%d on %d,", level, star->ReturnID());
+							star->DeleteBackgroundAcceleration();
+						}
+					}
 					/* Update Background Acceleration from Grids to Star */
-					//fprintf(stderr, "ENZO: in EvolveLevel, ID (%d) = ", MyProcessorNumber);
 					for (auto &kv : LocalStarLookupMap) {
 						Star *star = kv.second;
 						if (star->ReturnLevel() == level) {

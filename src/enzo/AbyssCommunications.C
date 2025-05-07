@@ -11,9 +11,6 @@
  ************************************************************************/
 
 
-//#undef NormalStar
-//#include "abyss/global.h"
-
 #if defined (NBODY) && defined (INDIVIDUALSTAR)
 #include <unordered_map>
 #ifdef USE_MPI
@@ -254,6 +251,7 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   fprintf(stdout, "ENZO: CommunicationToAbyss ...\n");
   fprintf(stderr, "ENZO: CommunicationToAbyss ...\n");
   fflush(stderr);
+  MPI_Barrier(inter_comm); 
 
 
   /* Do direct calculation!*/
@@ -352,6 +350,8 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   delete [] sendbuf_new;
 #endif
 
+    
+  MPI_Barrier(inter_comm); 
   return SUCCESS;
 }
 
@@ -366,11 +366,14 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 int ReceiveParticleFromAbyss(
     Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
 
+  fprintf(stderr, "ENZO: Starting ReceiveParticleFromAbyss...\n");
+          
   /* Number of Star Particles */
   int LocalNumberOfParticles = LocalStarLookupMap.size();
   fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessorNumber,
           LocalNumberOfParticles);
 
+  MPI_Barrier(inter_comm); 
 
 #ifdef USE_MPI
   /*------------------------------------------*/
@@ -426,6 +429,7 @@ int ReceiveParticleFromAbyss(
   }
 #endif
 
+  MPI_Barrier(inter_comm); 
   std::cerr << "ENZO: Receiving data done!" << std::endl;
   return SUCCESS;
 }

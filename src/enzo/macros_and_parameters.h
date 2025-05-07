@@ -154,6 +154,11 @@
 
 /* Precision-related definitions. */
 
+#ifdef NBODY
+struct double3 {double x; double y; double z;};
+               //double3(double _x, double _y, double _z)
+                  //: x(_x), y(_y), z(_z) {}};
+#endif
 typedef long long long_int;
 typedef long double long_double;
 typedef unsigned int unsigned_int;

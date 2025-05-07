@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -108,6 +109,7 @@ void RootRoutines()
 	{
 
 
+#ifdef TEST
 		if (NumberOfParticle >= 2) {
 
 			start_point_routine = std::chrono::high_resolution_clock::now();
@@ -152,6 +154,10 @@ void RootRoutines()
 		else // NumberOfParticle < 2 case
 			global_time = 1;
 
+		fprintf(nbpout, "Still running...\n");
+		fflush(nbpout);
+		#endif
+		global_time = 1;
 		// Time to communicate with enzo
 		if (global_time >= 1)
 		{	

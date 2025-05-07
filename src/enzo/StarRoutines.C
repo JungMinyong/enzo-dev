@@ -1156,17 +1156,21 @@ void Star::GetBackgroundAcceleration() {
   }
   else {
     //fprintf(stderr, "PID=%lld\n", Identifier);
-    for (int dim = 0; dim < MAX_DIMENSION; dim++) {
-      bg_acc[dim] =
-          CurrentGrid->BackgroundAcceleration[dim][CurrentGrid->IDtoIndexforBG[GridParticleIndex]];
-      //fprintf(stderr, "bg_acc[%d]=%.3e\n", dim, bg_acc[dim]);
+    auto it = CurrentGrid->IDtoIndexforBG.find(Identifier);
+    if (it == CurrentGrid->IDtoIndexforBG.end()) {
+      fprintf(stderr, "Identifier=%lld, GridParticleIndex = %d / index = %d is not in IDtoIndexForBG!!\n",
+              Identifier, GridParticleIndex, it->second);
+      exit(1);
     }
+    bg_acc[0] = CurrentGrid->BackgroundAcceleration[it->second].x;
+    bg_acc[1] = CurrentGrid->BackgroundAcceleration[it->second].y;
+    bg_acc[2] = CurrentGrid->BackgroundAcceleration[it->second].z;
+      //fprintf(stderr, "bg_acc[%d]=%.3e\n", dim, bg_acc[dim]);
   }
 }
 
 
 void Star::UpdateBackgroundAcceleration() {
-
   if (CurrentGrid == NULL) {
     fprintf(stderr, "Is this possible?\n");
   }
@@ -1177,11 +1181,17 @@ void Star::UpdateBackgroundAcceleration() {
 
 void grid::SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier) {
 
+  if (IDtoIndexforBG.size() == 0) {
+    BackgroundAcceleration = new double3[NumberOfStars];
+    IDtoIndexforBG.reserve(NumberOfStars);
+  }
+
   if (ParticleNumber[GridParticleIndex] == Identifier) {
-    IDtoIndexforBG.insert({Identifier, BackgroundAcceleration[0].size()});
-    for (int dim=0; dim<MAX_DIMENSION; dim++) {
-      BackgroundAcceleration[dim].push_back(ParticleAccelerationNoStar[dim][GridParticleIndex]);
-    }
+    int index = IDtoIndexforBG.size();
+    BackgroundAcceleration[index].x =  ParticleAccelerationNoStar[0][GridParticleIndex],
+    BackgroundAcceleration[index].y =  ParticleAccelerationNoStar[1][GridParticleIndex],
+    BackgroundAcceleration[index].z =  ParticleAccelerationNoStar[2][GridParticleIndex],
+    IDtoIndexforBG.insert({Identifier, index});
   }
   else{
     fprintf(stderr, "(mismatch) Grid PID=%lld | Star PID=%d\n", ParticleNumber[GridParticleIndex], Identifier);
@@ -1214,9 +1224,9 @@ void Star::DeleteBackgroundAcceleration() {
 void grid::DeleteBackgroundAcceleration() {
   if (IDtoIndexforBG.size() != 0)
     IDtoIndexforBG.clear();
-  for (int dim=0; dim<MAX_DIMENSION; dim++) {
-    if (BackgroundAcceleration[dim].size() != 0)
-      BackgroundAcceleration[dim].clear();
+  if (BackgroundAcceleration != NULL) {
+    delete [] BackgroundAcceleration;
+    BackgroundAcceleration = NULL;
   }
   // not sure if this is okay. Grid of not finest level might use it again?
 }

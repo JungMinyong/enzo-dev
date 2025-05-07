@@ -99,6 +99,9 @@ grid::grid()
 
 #ifdef NBODY
 	ParticleAccelerationNoStar[MAX_DIMENSION]       = NULL;
+#ifdef INDIVIDUALSTAR
+  BackgroundAcceleration = NULL;
+#endif
 #endif
   ParticleAcceleration[MAX_DIMENSION]      = NULL;
   ActiveParticleAcceleration[MAX_DIMENSION] = NULL;	

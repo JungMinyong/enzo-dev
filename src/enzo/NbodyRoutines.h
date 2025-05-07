@@ -153,7 +153,7 @@ struct ParticleReceiveDataType{
 		ptcl->SetPosition(this->Position);
 		ptcl->SetVelocity(this->Velocity);
 		ptcl->UpdateToGridParticle(this->Position, this->Velocity);
-		ptcl->DeleteBackgroundAcceleration();
+		//ptcl->DeleteBackgroundAcceleration(); // this causes problems.
 #ifdef SEVN
 		//ptcl->ID = this->identifier;
 		//this->Mass          = ptcl->Mass;

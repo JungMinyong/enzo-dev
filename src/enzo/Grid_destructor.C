@@ -59,10 +59,7 @@ grid::~grid()
 		if (ParticleAccelerationNoStar[i] != NULL) {
 			delete [] ParticleAccelerationNoStar[i];
 		}
-#ifdef INDIVIDUALSTAR
-    BackgroundAcceleration[i].clear();
-    BackgroundAcceleration[i].shrink_to_fit();
-#endif
+
 #endif
     delete [] AccelerationField[i];
     delete [] RandomForcingField[i];
@@ -138,7 +135,18 @@ grid::~grid()
     }
   }
 #endif
- 
+
+#ifdef INDIVIDUALSTAR
+  if (BackgroundAcceleration != NULL) {
+    delete [] BackgroundAcceleration;
+    BackgroundAcceleration = NULL;
+  }
+  if (IDtoIndexforBG.size() != 0) {
+    IDtoIndexforBG.clear();
+    IDtoIndexforBG.rehash(0);
+  }
+#endif
+
   DeleteFluxes(BoundaryFluxes);
   delete BoundaryFluxes;
  

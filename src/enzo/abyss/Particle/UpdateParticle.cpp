@@ -59,6 +59,7 @@ void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[])
 			pos[dim] = Position[dim];
 			vel[dim] = Velocity[dim];
 		}
+
 	}
 	else {
 		for (int dim=0; dim<Dim; dim++) {
@@ -234,11 +235,11 @@ void Particle::calculateTimeStepIrr() {
 	TimeStepIrr = static_cast<double>(pow(2, TimeLevelIrr));
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
-	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
 		//fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
 				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
 
-		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
@@ -315,11 +316,11 @@ void Particle::calculateTimeStepIrr2() {
 	TimeStepIrr = static_cast<double>(pow(2, TimeLevelIrr));
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
-	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
 		//fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
 				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
 		//exit(1);
-		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
@@ -434,10 +435,10 @@ void Particle::calculateTimeStepReg() {
 		throw std::runtime_error("TimeStepReg is too small.");
 	}
 	*/
-	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-7) {
+	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-4) {
 		//fprintf(stderr, "Too small TimeStepReg! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
 				//PID, TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
-		while (TimeStepReg*global_variable->EnzoTimeStep*1e4>=1e-7) {
+		while (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-4) {
 			TimeLevelReg++;
 			TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
 			TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
