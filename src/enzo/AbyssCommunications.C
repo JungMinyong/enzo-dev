@@ -251,7 +251,7 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   fprintf(stdout, "ENZO: CommunicationToAbyss ...\n");
   fprintf(stderr, "ENZO: CommunicationToAbyss ...\n");
   fflush(stderr);
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
 
 
   /* Do direct calculation!*/
@@ -351,7 +351,7 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 #endif
 
     
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
   return SUCCESS;
 }
 
@@ -373,7 +373,7 @@ int ReceiveParticleFromAbyss(
   fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessorNumber,
           LocalNumberOfParticles);
 
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
 
 #ifdef USE_MPI
   /*------------------------------------------*/
@@ -429,7 +429,7 @@ int ReceiveParticleFromAbyss(
   }
 #endif
 
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
   std::cerr << "ENZO: Receiving data done!" << std::endl;
   return SUCCESS;
 }

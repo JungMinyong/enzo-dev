@@ -397,7 +397,7 @@ int ReceiveParticleFromEnzo() {
   MPI_Status status;
   fprintf(nbpout, "ABYSS: Starting ReceiveParticle...\n");
   fprintf(stderr, "ABYSS: Starting ReceiveParticle...\n");
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
 
 
   //(Query) is this for cosmology?
@@ -780,7 +780,7 @@ int ReceiveParticleFromEnzo() {
   // fflush(gpuout);
   // fflush(binout);
 
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
   return true;
 }
 
@@ -816,7 +816,7 @@ int SendParticleToEnzo(Worker *workers) {
           "ABYSS: Starting SendParticleToEnzo...\n"
           "NumberOfSingleParticle=%d\n",
           NumberOfSingleParticle);
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
 
   ParticleReceiveDataType *sendbuf = new ParticleReceiveDataType[NumberOfSingleParticle]; 
 
@@ -1236,7 +1236,7 @@ int SendParticleToEnzo(Worker *workers) {
   fflush(nbpout);
   std::cout << "ABYSS: Sending data done!" << std::endl;
   std::cerr << "ABYSS: Sending data done!" << std::endl;
-  MPI_Barrier(inter_comm); 
+  //MPI_Barrier(inter_comm); 
   return true;
 }
 
