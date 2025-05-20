@@ -63,7 +63,7 @@ int IndividualStarRadiationProperties_Initialize(void);
 int InitializeStellarYields(const float &time);
 
 int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr, 
-			  HierarchyEntry &TopGrid, TopGridData &MetaData, ExternalBoundary &Exterior)
+          HierarchyEntry &TopGrid, TopGridData &MetaData, ExternalBoundary &Exterior)
 {
   char *DensName    = "Density";
   char *TEName      = "TotalEnergy";
@@ -450,7 +450,7 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
     ret += sscanf(line, "GalaxySimulationInitialEuIFractionHalo = %"FSYM,
                         &TestProblemData.EuI_Fraction_2);
 
-   ret += sscanf(line, "GalaxySimulationInitialSpeciesFractionsDisk = %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
+    ret += sscanf(line, "GalaxySimulationInitialSpeciesFractionsDisk = %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
                         TestProblemData.ChemicalTracerSpecies_Fractions + 0,
                         TestProblemData.ChemicalTracerSpecies_Fractions + 1,
                         TestProblemData.ChemicalTracerSpecies_Fractions + 2,
@@ -469,7 +469,7 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
                         TestProblemData.ChemicalTracerSpecies_Fractions + 15,
                         TestProblemData.ChemicalTracerSpecies_Fractions + 16 );
 
-   ret += sscanf(line, "GalaxySimulationInitialSpeciesFractionsHalo = %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
+    ret += sscanf(line, "GalaxySimulationInitialSpeciesFractionsHalo = %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
                         TestProblemData.ChemicalTracerSpecies_Fractions_2 + 0,
                         TestProblemData.ChemicalTracerSpecies_Fractions_2 + 1,
                         TestProblemData.ChemicalTracerSpecies_Fractions_2 + 2,
@@ -521,7 +521,7 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, VelocityUnits;
   double MassUnits;
   if (GetUnits(&DensityUnits, &LengthUnits,&TemperatureUnits, &TimeUnits,
-               &VelocityUnits, &MassUnits, MetaData.Time) == FAIL){
+              &VelocityUnits, &MassUnits, MetaData.Time) == FAIL){
     fprintf(stderr, "Error in GetUnits.\n");
     return FAIL;
   }
@@ -829,9 +829,9 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
     InflowValue[0] = GalaxySimulationRPSWindDensity;
     InflowValue[1] = GalaxySimulationRPSWindPressure/(Gamma-1.0)/GalaxySimulationRPSWindDensity;
     if (HydroMethod != 2) {
-      InflowValue[1] = InflowValue[1] + 0.5*(   pow(GalaxySimulationRPSWindVelocity[0],2)
-	                                            + pow(GalaxySimulationRPSWindVelocity[1],2)
-	                                            + pow(GalaxySimulationRPSWindVelocity[2],2));
+      InflowValue[1] = InflowValue[1] + 0.5*(pow(GalaxySimulationRPSWindVelocity[0],2)
+	                                          + pow(GalaxySimulationRPSWindVelocity[1],2)
+	                                          + pow(GalaxySimulationRPSWindVelocity[2],2));
     }
     InflowValue[2] = GalaxySimulationRPSWindVelocity[0];
     InflowValue[3] = GalaxySimulationRPSWindVelocity[1];
