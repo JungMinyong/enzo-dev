@@ -83,7 +83,7 @@
 #ifdef WINDS 
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  7
 #else
-#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  4
+#define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  5
 #endif
 
 #define MAX_TIME_ACTIONS                   10
@@ -546,6 +546,9 @@ typedef long long int   HDF5_hid_t;
 #define SINGLE_SUPERNOVA 12
 #define DISTR_FEEDBACK 13
 #define MOM_STAR 14
+
+#define KRAVTSOV_STAR_AGORA 18
+#define KRAVTSOV_STAR_INDIVIDUAL 19
 
 #define STARMAKE_METHOD(A) (StarParticleCreation >> (A) & 1)
 #define STARFEED_METHOD(A) (StarParticleFeedback >> (A) & 1)

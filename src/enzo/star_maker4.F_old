@@ -319,6 +319,7 @@ c         on the first timestep)
 c
 
             if( (t-tcp(n)) .gt. dt ) goto 10
+
 c
 c          calculate fraction of mass from star particle put back
 c          into gas in this cell

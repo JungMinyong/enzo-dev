@@ -125,7 +125,8 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
        "particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
     char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction", "initial_mass"};
+    // add "initial_mass" by Minyong Jung
 #endif
 #ifdef IO_LOG
   int         io_log = 1;

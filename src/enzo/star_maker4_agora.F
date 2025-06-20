@@ -5,13 +5,13 @@
 c=======================================================================
 c////////////////////////  SUBROUTINE STAR_MAKER \\\\\\\\\\\\\\\\\\\\\\\
 c
-      subroutine star_maker4(nx, ny, nz,
+      subroutine star_maker4_agora(nx, ny, nz,
      &                      d, dm, temp, u, v, w,
      &                      dt, r, metal, dx, t, z, 
      &                      d1, x1, v1, t1,
      &                      nmax, xstart, ystart, zstart, ibuff, 
      &                      imetal, imethod, mintdyn,
-     &                      odthresh, smthresh, level, np,
+     &                      odthresh, masseff, smthresh, level, np,
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf,
      &                      imetalSNIa, metalSNIa, metalfSNIa)
@@ -81,7 +81,7 @@ c
       R_PREC    up(nmax), vp(nmax), wp(nmax)
       R_PREC    mp(nmax), tdp(nmax), tcp(nmax), metalf(nmax)
       R_PREC    metalSNIa(nx,ny,nz), metalfSNIa(nmax)
-      R_PREC    odthresh, smthresh, mintdyn
+      R_PREC    odthresh, masseff, smthresh, mintdyn
 c
       R_PREC   sformsum
       save   sformsum
@@ -110,7 +110,7 @@ c  calculate time constant for star formation.  This assumes that the
 c  user input is in units of years
 c
 
-      timeconstant = mintdyn * yr_s / t1
+c      timeconstant = mintdyn * yr_s / t1
 c
 c  for each zone, : "star" particle is created if the density exceeds
 c  some threshold and this is the highest level of refinement.  That's
@@ -131,7 +131,19 @@ c
 c            make sure that we never give put than 90% of the cell's mass
 c            into a star particle
 
-               gasfrac = min( 0.9_RKIND, dt / timeconstant )
+c           ##### CHANGED TO BELOW FOR 080112_AGORA-DISK-ENZO (t_ff INSTEAD OF mintdyn)
+c               gasfrac = min( 0.9_RKIND, dt / timeconstant )
+c
+c           ##### The line below is inserted to be within the loop (cut from a few lines above)
+               timeconstant = mintdyn * 3.156e7_RKIND / t1
+
+               dtot = ( d(i,j,k) )*d1              
+               tdyn = sqrt(3._RKIND*pi_val/32._RKIND/GravConst/dtot)/t1
+               timeconstant = max(tdyn, timeconstant)
+               gasfrac = min( 0.9_RKIND, masseff * dt / timeconstant )
+
+
+
 
 c            calculate star mass in solar masses.  If this is less than the
 c            user-defined threshold mass, do NOT make a star in this cell.
@@ -142,8 +154,36 @@ c            but we really don't want millions and millions of star particles.
                starmass = gasfrac*d(i,j,k)*dble(d1)*dble(x1*dx)**3
      &                   / SolarMass
 
-               if(starmass .lt. smthresh) goto 10
 
+c                 ##### STOCHASTIC STAR FORMATION ADDED FOR 080112_AGORA-DISK-ENZO (copied from star_maker2.F)
+#define STOCHASTIC_STAR_FORMATION  
+c
+#ifdef STOCHASTIC_STAR_FORMATION
+c
+c                 Keep global count of "unfullfilled" star formation
+c                 and when total is larger than threshold, then create
+c                 a star particle with the threshold mass or 1/2 the
+c                 gas in the cell, whichever is smaller.
+c
+               if (starmass .lt. smthresh) then
+                  sformsum = sformsum + starmass
+                  if (sformsum .lt. smthresh) goto 10
+                  bmass = d(i,j,k)*dble(d1)*dble(x1*dx)**3 / SolarMass
+                  gasfrac = min(smthresh/bmass, 0.5_RKIND)
+
+c                 below is inserted to remove stars less than threshold         
+                  if (gasfrac .lt. smthresh/bmass) goto 10
+
+                  sformsum = sformsum - gasfrac*bmass
+               endif
+#else
+               if(starmass .lt. smthresh) goto 10
+#endif
+
+
+c
+c              if(starmass .lt. smthresh) goto 10
+c
 c
 c              If both of these criteria are met, create a star particle
 c
@@ -207,10 +247,11 @@ c
 c=======================================================================
 c/////////////////////  SUBROUTINE STAR_FEEDBACK \\\\\\\\\\\\\\\\\\\\\\\
 c
-      subroutine star_feedback4(nx, ny, nz,
+      subroutine star_feedback4_agora(nx, ny, nz,
      &                      d, dm, te, ge, u, v, w, metal,
      &                      idual, imetal, imethod, dt, r, dx, t, z,
      &                      d1, x1, v1, t1, sn_param, m_eject, yield,
+     &                      tdelay,
      &                      npart, xstart, ystart, zstart, ibuff,
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf, type)
@@ -257,7 +298,8 @@ c    npart    - particle array size specified by calling routine
 c    sn_param - fraction of stellar rest mass that goes to feedback
 c    m_eject  - fraction of stellar mass ejected back to gas
 c    yield    - fraction of stellar mass that is converted to metals
-c
+c    tdelay   - time delay for feedback (in Myrs)
+c     
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
 c
@@ -286,10 +328,13 @@ c    (msolar_e51 is one solar rest mass energy divided by 10^51 erg)
 c
       INTG_PREC i, j, k, n
       R_PREC mform, tfactor, energy, sn_param, msolar_e51,
-     &     m_eject, yield, minitial, xv1, xv2, dratio
+     &     m_eject, yield, minitial, xv1, xv2, dratio,
+     &       tdelay
       parameter (msolar_e51 = 1800.0_RKIND)
 c
 c-----------------------------------------------------------------------
+c  SN delay time = 0 if tdelay < 0
+      if (tdelay .lt. 0) tdelay = 0
 c
 c     Loop over particles
 c
@@ -318,7 +363,11 @@ c         skip if we're past the first timestep (only feed back
 c         on the first timestep)
 c
 
-            if( (t-tcp(n)) .gt. dt ) goto 10
+c           if( (t-tcp(n)) .gt. dt ) goto 10   ##### CHANGED TO BELOW FOR 080112_AGORA-DISK-ENZO (5 Myr TIME DELAY INSTEAD OF IMMEDIATE INJECTION)
+            if( (t-tcp(n)) .lt. tdelay*(1e6*3.15e7_RKIND/t1) 
+     &         .or. (t-tcp(n)) .gt. dt + tdelay*(1e6*3.15e7_RKIND/t1) )
+     &         goto 10
+
 c
 c          calculate fraction of mass from star particle put back
 c          into gas in this cell
@@ -363,9 +412,13 @@ c                          from star) + (metal already in star that's ejected))
 c                          / ((old metal density)  + 
 c                             (gas density added from star))
 c
-               metal(i,j,k) = (metal(i,j,k)*d(i,j,k) + mform * 
-     &              (yield * (1._RKIND-metalf(n)) + metalf(n)))
-     &              / (d(i,j,k)+mform)  ! metal is a fraction
+c               metal(i,j,k) = (metal(i,j,k)*d(i,j,k) + mform *
+c     &              (yield * (1._RKIND-metalf(n)) + metalf(n)))
+c     &              / (d(i,j,k)+mform)  ! metal is a fraction  ##### CHANGED TO BELOW FOR 080112_AGORA-DISK-ENZO (MEANING OF mform IS DIFFERENT HERE FROM OTHER star_maker's)
+                metal(i,j,k) = (metal(i,j,k)*d(i,j,k) + mp(n) *
+     &              (yield * (1._RKIND-metalf(n)) + m_eject *
+     &              metalf(n))) / (d(i,j,k)+mform) ! metal is a fraction
+c
 c
             endif
 c

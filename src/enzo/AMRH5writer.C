@@ -65,7 +65,8 @@ void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
      "particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
   const char *ParticleAttributeLabel[] = 
-    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction", "initial_mass"};
+//add initial_mass by Minyong Jung
 #endif
 
   int i;

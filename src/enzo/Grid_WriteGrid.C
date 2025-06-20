@@ -96,7 +96,8 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
        "particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
     char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction", "initial_mass"};
+    // add "initial_mass" by Minyong Jung
 #endif
   char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
 			     "Particle_x-velocity", "Particle_y-velocity",

@@ -159,6 +159,32 @@ extern "C" void FORTRAN_NAME(star_maker4)(int *nx, int *ny, int *nz,
 	     float *mp, float *tdp, float *tcp, float *metalf,
  	     int *imetalSNIa, float *metalSNIa, float *metalfSNIa);
 
+extern "C" void FORTRAN_NAME(star_maker4_agora)(int *nx, int *ny, int *nz,
+            float *d, float *dm, float *temp, float *u, float *v, float *w,
+            float *dt, float *r, float *metal, float *dx, FLOAT *t, float *z, 
+            float *d1, float *x1, float *v1, float *t1,
+            int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart, 
+           int *ibuff, 
+            int *imetal, hydro_method *imethod, float *mintdyn,
+            float *odthresh, float *massff, float *smthrest, int *level,
+           int *np, 
+            FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
+       float *mp, float *tdp, float *tcp, float *metalf,
+        int *imetalSNIa, float *metalSNIa, float *metalfSNIa);
+
+extern "C" void FORTRAN_NAME(star_maker4_individual)(int *nx, int *ny, int *nz,
+         float *d, float *dm, float *temp, float *u, float *v, float *w,
+         float *dt, float *r, float *metal, float *dx, FLOAT *t, float *z, 
+         float *d1, float *x1, float *v1, float *t1,
+         int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart, 
+        int *ibuff, 
+         int *imetal, hydro_method *imethod, float *mintdyn,
+         float *odthresh, float *massff, float *smthrest, int *level,
+        int *np, 
+         FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
+    float *mp, float *tdp, float *tcp, float *metalf,
+     int *imetalSNIa, float *metalSNIa, float *metalfSNIa, float *initial_mass);
+
  extern "C" void FORTRAN_NAME(star_maker7)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *temp, float *u, float *v, float *w,
                 float *cooltime,
@@ -367,6 +393,31 @@ extern "C" void FORTRAN_NAME(star_feedback4)(int *nx, int *ny, int *nz,
 		       int *ibuff,
              FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
              float *mp, float *tdp, float *tcp, float *metalf, int *type);
+
+extern "C" void FORTRAN_NAME(star_feedback4_agora)(int *nx, int *ny, int *nz,
+               float *d, float *dm, float *te, float *ge, float *u, float *v, 
+               float *w, float *metal,
+               int *idual, int *imetal, hydro_method *imethod, float *dt, 
+               float *r, float *dx, FLOAT *t, float *z, 
+               float *d1, float *x1, float *v1, float *t1,
+               float *sn_param, float *m_eject, float *yield, float *tdelay,
+               int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart, 
+               int *ibuff,
+               FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
+               float *mp, float *tdp, float *tcp, float *metalf, int *type);
+
+extern "C" void FORTRAN_NAME(star_feedback4_individual)(int *nx, int *ny, int *nz,
+               float *d, float *dm, float *te, float *ge, float *u, float *v, 
+               float *w, float *metal,
+               int *idual, int *imetal, hydro_method *imethod, float *dt, 
+               float *r, float *dx, FLOAT *t, float *z, 
+               float *d1, float *x1, float *v1, float *t1,
+               float *sn_param, float *m_eject, float *yield, float *tdelay,
+               int *distrad, int *diststep, int *distcells,
+               int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart, 
+               int *ibuff,
+               FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
+               float *mp, float *tdp, float *tcp, float *metalf, int *type);
 
 extern "C" void FORTRAN_NAME(star_feedback_ssn)(
     int *nx, int *ny, int *nz,
@@ -949,6 +1000,72 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
       for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++)
           tg->ParticleType[i] = NormalStarType;
+    }
+
+    if (STARMAKE_METHOD(KRAVTSOV_STAR_AGORA)) {
+
+      //---- KRAVTSOV SF ALGORITHM
+
+      NumberOfNewParticlesSoFar = NumberOfNewParticles;
+
+      FORTRAN_NAME(star_maker4_agora)(
+         GridDimension, GridDimension+1, GridDimension+2,
+         BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
+            BaryonField[Vel2Num], BaryonField[Vel3Num],
+         &dtFixed, BaryonField[NumberOfBaryonFields], MetalPointer, 
+            &CellWidthTemp, &Time, &zred,
+         &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
+         &MaximumNumberOfNewParticles, CellLeftEdge[0], CellLeftEdge[1],
+            CellLeftEdge[2], &GhostZones, 
+         &MetallicityField, &HydroMethod, &StarMakerMinimumDynamicalTime, 
+         &StarMakerOverDensityThreshold, &StarMakerMassEfficiency,
+         &StarMakerMinimumMass, &level, &NumberOfNewParticles,
+         tg->ParticlePosition[0], tg->ParticlePosition[1], 
+            tg->ParticlePosition[2], 
+         tg->ParticleVelocity[0], tg->ParticleVelocity[1], 
+            tg->ParticleVelocity[2], 
+         tg->ParticleMass, tg->ParticleAttribute[1], tg->ParticleAttribute[0],
+         tg->ParticleAttribute[2],
+         &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3]);
+
+      float dv = CellWidthTemp*CellWidthTemp*CellWidthTemp;
+      float MassUnits = DensityUnits * LengthUnits*LengthUnits*LengthUnits;
+      for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++)
+          tg->ParticleType[i] = NormalStarType;
+          tg->ParticleAttribute[NumberOfParticleAttributes-1][i] = tg->ParticleMass[i] * dv * MassUnits / SolarMass; // in Msun unit
+    }
+
+    if (STARMAKE_METHOD(KRAVTSOV_STAR_INDIVIDUAL)) {
+
+      //---- KRAVTSOV SF ALGORITHM With Indivdual Star Sampling
+
+      NumberOfNewParticlesSoFar = NumberOfNewParticles;
+
+      FORTRAN_NAME(star_maker4_individual)(
+       GridDimension, GridDimension+1, GridDimension+2,
+       BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
+          BaryonField[Vel2Num], BaryonField[Vel3Num],
+       &dtFixed, BaryonField[NumberOfBaryonFields], MetalPointer, 
+          &CellWidthTemp, &Time, &zred,
+       &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
+       &MaximumNumberOfNewParticles, CellLeftEdge[0], CellLeftEdge[1],
+          CellLeftEdge[2], &GhostZones, 
+       &MetallicityField, &HydroMethod, &StarMakerMinimumDynamicalTime, 
+       &StarMakerOverDensityThreshold, &StarMakerMassEfficiency,
+       &StarMakerMinimumMass, &level, &NumberOfNewParticles,
+       tg->ParticlePosition[0], tg->ParticlePosition[1], 
+          tg->ParticlePosition[2], 
+       tg->ParticleVelocity[0], tg->ParticleVelocity[1], 
+          tg->ParticleVelocity[2], 
+       tg->ParticleMass, tg->ParticleAttribute[1], tg->ParticleAttribute[0],
+       tg->ParticleAttribute[2],
+       &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3], tg->ParticleAttribute[4]);
+
+       float dv = CellWidthTemp*CellWidthTemp*CellWidthTemp;
+       float MassUnits = DensityUnits * LengthUnits*LengthUnits*LengthUnits;
+      for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++)
+          tg->ParticleType[i] = NormalStarType;
+          // tg->ParticleAttribute[NumberOfParticleAttributes-1][i] = tg->ParticleMass[i] * dv * MassUnits / SolarMass; // in Msun unit
     }
 
     if (STARMAKE_METHOD(POP3_STAR)) {
@@ -1689,6 +1806,57 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           ParticleAttribute[2], ParticleType);
 
   } // end: if KRAVSTOV STAR
+
+  if (STARFEED_METHOD(KRAVTSOV_STAR_AGORA)) {  
+
+   //---- KRAVTSOV STAR FORMATION ALGORITHM
+
+     FORTRAN_NAME(star_feedback4_agora)(
+      GridDimension, GridDimension+1, GridDimension+2,
+         BaryonField[DensNum], dmfield, 
+         BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
+         BaryonField[Vel2Num], BaryonField[Vel3Num], MetalPointer,
+      &DualEnergyFormalism, &MetallicityField, &HydroMethod, 
+      &dtFixed, BaryonField[NumberOfBaryonFields], &CellWidthTemp, 
+         &Time, &zred,
+      &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
+         &StarEnergyToThermalFeedback, &StarMassEjectionFraction, 
+         &StarMetalYield, &StarMakerExplosionDelayTime,
+      &NumberOfParticles,
+         CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
+      ParticlePosition[0], ParticlePosition[1], 
+         ParticlePosition[2], 
+      ParticleVelocity[0], ParticleVelocity[1], 
+         ParticleVelocity[2], 
+      ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
+         ParticleAttribute[2], ParticleType);
+ } // end: if KRAVSTOV STAR AGORA
+
+  if (STARFEED_METHOD(KRAVTSOV_STAR_INDIVIDUAL)) {  
+
+   //---- KRAVTSOV STAR FORMATION ALGORITHM
+
+     FORTRAN_NAME(star_feedback4_individual)(
+      GridDimension, GridDimension+1, GridDimension+2,
+         BaryonField[DensNum], dmfield, 
+         BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
+         BaryonField[Vel2Num], BaryonField[Vel3Num], MetalPointer,
+      &DualEnergyFormalism, &MetallicityField, &HydroMethod, 
+      &dtFixed, BaryonField[NumberOfBaryonFields], &CellWidthTemp, 
+         &Time, &zred,
+      &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
+         &StarEnergyToThermalFeedback, &StarMassEjectionFraction, 
+         &StarMetalYield, &StarMakerExplosionDelayTime,
+         &StarFeedbackDistRadius, &StarFeedbackDistCellStep, &StarFeedbackDistTotalCells,
+      &NumberOfParticles,
+         CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
+      ParticlePosition[0], ParticlePosition[1], 
+         ParticlePosition[2], 
+      ParticleVelocity[0], ParticleVelocity[1], 
+         ParticleVelocity[2], 
+      ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
+         ParticleAttribute[2], ParticleType);
+ } // end: if KRAVSTOV STAR AGORA
 
   if (STARFEED_METHOD(SINGLE_SUPERNOVA) ) { // John Forbes - Dec. 2013
   //if (STARFEED_METHOD(SINGLE_SUPERNOVA) && level==MaximumRefinementLevel) { // John Forbes - Dec. 2013

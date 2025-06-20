@@ -34,8 +34,37 @@
 #include "hydro_rk/tools.h"
 #include "phys_constants.h"
  
+#include <float.h>   /* for DBL_MAX */
+
 /* function prototypes */
- 
+void find_min_dt_cell(
+  long long *rank,
+  long long *nx,  long long *ny,  long long *nz,
+  long long *i1,  long long *i2,
+  long long *j1,  long long *j2,
+  long long *k1,  long long *k2,
+  long long *hydroMethod,
+  double     C2,
+  double    *dx,
+  double    *dy,
+  double    *dz,
+  double    *vgx,
+  double    *vgy,
+  double    *vgz,
+  double     gamma,
+  long long *ipfree,
+  double     aye,
+  double    *dens,
+  double    *pres,
+  double    *u,
+  double    *v,
+  double    *w,
+  double    *out_temp,
+  double    *out_cs,
+  double    *out_dx,
+  double    *out_dt
+);
+
 int CosmologyComputeExpansionTimestep(FLOAT time, float *dtExpansion);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
@@ -173,6 +202,24 @@ float grid::ComputeTimeStep()
 			     BaryonField[Vel1Num], BaryonField[Vel2Num],
 			     BaryonField[Vel3Num], &dtBaryons, &dtViscous);
  
+    if ((HydroMethod != MHD_Li) & (dtBaryons*CourantSafetyNumber < 1e-5)){
+            double t_min, cs_min, dx_min, dt_min;
+            find_min_dt_cell(&GridRank, GridDimension, GridDimension+1,
+                              GridDimension+2,
+                              GridStartIndex, GridEndIndex,
+                              GridStartIndex+1, GridEndIndex+1,
+                              GridStartIndex+2, GridEndIndex+2,
+                              &HydroMethod, ZEUSQuadraticArtificialViscosity,
+                              CellWidth[0], CellWidth[1], CellWidth[2],
+                              GridVelocity, GridVelocity+1, GridVelocity+2,
+                              Gamma, &PressureFree, afloat,
+                              BaryonField[DensNum], pressure_field,
+                              BaryonField[Vel1Num], BaryonField[Vel2Num],
+                              BaryonField[Vel3Num], 
+                               &t_min, &cs_min, &dx_min, &dt_min);
+            printf("Cell with min(dt): dt = %e, T = %g, cs = %g, dx = %g\n",
+                   dt_min, t_min, cs_min, dx_min);
+          }
 
     if(HydroMethod == MHD_Li){
       /* 1.5) Calculate minimum dt due to MHD: Maximum Fast MagnetoSonic Shock Speed */
@@ -593,4 +640,115 @@ float grid::ComputeTimeStep()
   }
  
   return dt;
+}
+
+
+
+void find_min_dt_cell(
+  long long *rank,
+  long long *nx,  long long *ny,  long long *nz,
+  long long *i1,  long long *i2,
+  long long *j1,  long long *j2,
+  long long *k1,  long long *k2,
+  long long *hydroMethod,
+  double     C2,
+  double    *dx,
+  double    *dy,
+  double    *dz,
+  double    *vgx,
+  double    *vgy,
+  double    *vgz,
+  double     gamma,
+  long long *ipfree,
+  double     aye,
+  double    *dens,
+  double    *pres,
+  double    *u,
+  double    *v,
+  double    *w,
+  double    *out_temp,
+  double    *out_cs,
+  double    *out_dx,
+  double    *out_dt
+) {
+  const double tiny = 1e-20;
+  double best_dt = DBL_MAX;
+  long long best_i = *i1, best_j = *j1, best_k = *k1;
+
+  // Bulk‐velocity values (dereference pointers):
+  double vgx_val = (vgx != NULL ? *vgx : 0.0);
+  double vgy_val = (vgy != NULL ? *vgy : 0.0);
+  double vgz_val = (vgz != NULL ? *vgz : 0.0);
+
+  // Loop over active subregion [i1..i2] × [j1..j2] × [k1..k2]
+  for (long long kk = *k1;  kk <= *k2;  ++kk) {
+      for (long long jj = *j1;  jj <= *j2;  ++jj) {
+          for (long long ii = *i1;  ii <= *i2;  ++ii) {
+              // Compute flattened index
+              long long idx = ii
+                            + jj * (*nx)
+                            + kk * ((*nx) * (*ny));
+              double rho = dens[idx];
+              double P   = pres[idx];
+              // Skip cells with non-positive density or pressure
+              if (!(rho > 0.0) || !(P > 0.0)) {
+                  continue;
+              }
+              // Sound speed
+              double cs_local = sqrt(gamma * P / rho);
+              if (*ipfree == 1) {
+                  cs_local = tiny;
+              }
+              // Velocity differences
+              double du = fabs(u[idx] - vgx_val);
+              double dv = fabs(v[idx] - vgy_val);
+              double dw = 0.0;
+              if (*rank == 3 && w != NULL) {
+                  dw = fabs(w[idx] - vgz_val);
+              }
+              // Build the denominator = (cs+|du|)/dx[ii] + (cs+|dv|)/dy[jj] + (if 3D) (cs+|dw|)/dz[kk]
+              double denom = (cs_local + du) / dx[ii]
+                           + (cs_local + dv) / dy[jj];
+              if (*rank == 3 && w != NULL) {
+                  denom += (cs_local + dw) / dz[kk];
+              }
+              if (denom <= tiny) {
+                  continue;
+              }
+              double dt_cell = aye / denom;
+
+              // If you want the ZEUS‐viscous term when *hydroMethod == 2, you can insert it here.
+              // For pure Godunov‐style dt, we leave it out.
+
+              if (dt_cell < best_dt) {
+                  best_dt = dt_cell;
+                  best_i  = ii;
+                  best_j  = jj;
+                  best_k  = kk;
+              }
+          }
+      }
+  }
+
+  // If we found a valid “best” cell, fill outputs
+  if (best_dt < DBL_MAX) {
+      long long idxm = best_i
+                     + best_j * (*nx)
+                     + best_k * ((*nx) * (*ny));
+      double rho_m = dens[idxm];
+      double P_m   = pres[idxm];
+      double cs_m  = sqrt(gamma * P_m / rho_m);
+      double T_m   = P_m / rho_m;  // “temperature” proxy
+
+      *out_temp = T_m;
+      *out_cs   = cs_m;
+      *out_dx   = dx[best_i];
+      *out_dt   = best_dt;
+  } else {
+      // No valid cell → zero out results
+      *out_temp = 0.0;
+      *out_cs   = 0.0;
+      *out_dx   = 0.0;
+      *out_dt   = 0.0;
+  }
 }
