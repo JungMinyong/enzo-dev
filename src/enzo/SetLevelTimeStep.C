@@ -63,6 +63,8 @@ int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
  
     *dtThisLevel = huge_number;
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+      if (dtMinimumRegularizer > 0) 
+	Grids[grid1]->GridData->TimeStepRegularizer(dtMinimumRegularizer);
       dtGrid      = Grids[grid1]->GridData->ComputeTimeStep();
       *dtThisLevel = min(*dtThisLevel, dtGrid);
     }

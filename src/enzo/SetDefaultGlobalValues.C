@@ -183,6 +183,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.PPMDiffusionParameter  = 0;    // off
   MetaData.PPMSteepeningParameter = 0;    // off
 
+  dtMinimumRegularizer = 0; // off
+
   MetaData.FirstTimestepAfterRestart = TRUE;
  
   /* set the default global data. */
