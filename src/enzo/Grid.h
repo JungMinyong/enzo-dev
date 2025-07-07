@@ -421,6 +421,10 @@ public:
     }
   };
 
+  /* Apply TimeStep regularizer */
+
+  int TimeStepRegularizer(double dtMinimum);
+  
   /* Baryons: return field types. */
 
   int ReturnFieldType(int type[]) 

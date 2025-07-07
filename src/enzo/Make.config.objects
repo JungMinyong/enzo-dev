@@ -656,6 +656,7 @@ OBJS_CONFIG_LIB = \
         Grid_TestGravitySphereInitializeGrid.o \
         Grid_TestOrbitInitializeGrid.o \
 	Grid_TestStarParticleInitializeGrid.o \
+	Grid_TimeStepRegularizer.o \
         Grid_TracerParticleCreateParticles.o \
         Grid_TracerParticleOutputData.o \
         Grid_TracerParticleSetVelocity.o \

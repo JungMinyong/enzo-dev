@@ -359,6 +359,11 @@ EXTERN float DualEnergyFormalismEta2;
 
 EXTERN float ParticleCourantSafetyNumber;
 
+/* This is the minimum timestep that the TimeStepRegularizer attempts to
+   (ignored if set to 0). */
+
+EXTERN float dtMinimumRegularizer;
+
 /* This is a parameter to control root grid time steps, and is basically
    a hack to ensure that star particles don't get ejected out of grids. */
 

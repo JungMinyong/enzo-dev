@@ -312,6 +312,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "PPMSteepeningParameter = %"ISYM,
 		  &MetaData.PPMSteepeningParameter);
 
+    ret += sscanf(line, "dtMinimumRegularizer  = %"FSYM,
+		  &dtMinimumRegularizer);
+
+    
     /* read global Parameters */
 
     ret += sscanf(line, "ProblemType            = %"ISYM, &ProblemType);
