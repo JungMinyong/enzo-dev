@@ -384,7 +384,7 @@ __global__ void compute_forces(const CUDA_REAL* __restrict__ ptcl, const CUDA_RE
 // (EW to MY) please check diff part. Is that correct?
 __global__ void compute_forces_init01(const CUDA_REAL* __restrict__ ptcl, const CUDA_REAL* __restrict__ r2, CUDA_REAL* __restrict__ diff, CUDA_REAL* __restrict__ diffIrr,
 									int m, int n, const int* __restrict__ subset, int* __restrict__ neighbor, int* num_neighbor, 
-									int i_start, int j_start, int NNB){
+									int i_start, int j_start, int NNB, CUDA_REAL EPS2){
 	// define i and j. in this code, grid is 2D and block is 1D
     int i = threadIdx.x + blockIdx.x * blockDim.x; // Unique thread index across all blocks
 	int tid = threadIdx.x;
@@ -452,6 +452,10 @@ __global__ void compute_forces_init01(const CUDA_REAL* __restrict__ ptcl, const 
 					CUDA_REAL dy = sh_pos_y[jj] - pi_y;
 					CUDA_REAL dz = sh_pos_z[jj] - pi_z;
 					CUDA_REAL magnitude0 = dx*dx + dy*dy + dz*dz;
+
+					#ifndef FEWBODY
+					if (EPS2 < 0.0) magnitude0 += EPS2;
+					#endif
 					// int idx = i * n + (j + jj);
 					// neighbor[idx] = isNeighbor;
 					// Calculate velocity differences
@@ -515,7 +519,7 @@ __global__ void compute_forces_init01(const CUDA_REAL* __restrict__ ptcl, const 
 // (EW to MY) example code to calculate 2nd, 3rd order acceleration
 // (EW to MY) please check diff part. Is that correct?
 __global__ void compute_forces_init23(const CUDA_REAL* __restrict__ ptcl, const CUDA_REAL* __restrict__ r2, CUDA_REAL* __restrict__ atot, CUDA_REAL* __restrict__ diff,
-								CUDA_REAL* __restrict__ diffIrr, int m, int n, const int* __restrict__ subset, int i_start, int j_start, int NNB){
+								CUDA_REAL* __restrict__ diffIrr, int m, int n, const int* __restrict__ subset, int i_start, int j_start, int NNB, CUDA_REAL EPS2){
 	// define i and j. in this code, grid is 2D and block is 1D
     int i = threadIdx.x + blockIdx.x * blockDim.x; // Unique thread index across all blocks
 	int tid = threadIdx.x;
@@ -602,6 +606,9 @@ __global__ void compute_forces_init23(const CUDA_REAL* __restrict__ ptcl, const 
 					CUDA_REAL dy = sh_pos_y[jj] - pi_y;
 					CUDA_REAL dz = sh_pos_z[jj] - pi_z;
 					CUDA_REAL magnitude0 = dx*dx + dy*dy + dz*dz;
+					#ifndef FEWBODY
+					if (EPS2 < 0.0) magnitude0 += EPS2;
+					#endif
 					// int idx = i * n + (j + jj);
 					// neighbor[idx] = isNeighbor;
 					// (EW to MY) Notation: a1x = a_tot[0], a1dotx = a_tot[1]

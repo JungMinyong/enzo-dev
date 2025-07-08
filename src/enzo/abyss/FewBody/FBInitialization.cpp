@@ -57,11 +57,14 @@ void Group::initialManager() {
 	// 1000000 in PeTar & ar.cxx
 	manager.step.initialSymplecticCofficients(-6); // Symplectic integrator order, should be even number
 	// -6 in PeTar & ar.cxx
+	#ifdef SEVN
 	manager.interrupt_detection_option = 2; // modify orbit or check interruption using modifyAndInterruptIter function
 											// 0: turn off
 											// 1: modify the binary orbits based on detetion criterion
 											// 2. modify and also interrupt integrations
-
+	#else
+	manager.interrupt_detection_option = 0;
+	#endif
 	// Eunwoo: it is turned off now but I will turn it on later.
 	// Eunwoo: It can be used for merging star (dr < sum of radius) or destroy.
 }
@@ -166,6 +169,9 @@ void NewFBInitialization(Particle* ptclCM) {
 
 				for (int dim=0; dim<Dim; dim++) {
 					members_members->Position[dim] += pos[dim] - members->Position[dim];
+#ifdef COMOVE
+					members_members->Position[dim] *= global_variable->a_i; // convert to physical unit
+#endif
 					members_members->Velocity[dim] += vel[dim] - members->Velocity[dim];
 				}
 			}
@@ -173,6 +179,9 @@ void NewFBInitialization(Particle* ptclCM) {
 		else {
 			for (int dim=0; dim<Dim; dim++) {
 				members->Position[dim] = pos[dim];
+#ifdef COMOVE
+				members->Position[dim] *= global_variable->a_i; // convert to physical unit
+#endif
 				members->Velocity[dim] = vel[dim];
 			}
 		}
@@ -184,6 +193,9 @@ void NewFBInitialization(Particle* ptclCM) {
 	ptclCM->Mass = ptclGroup->sym_int.particles.cm.Mass;
 	for (int dim=0; dim<Dim; dim++) {
 		ptclCM->Position[dim] = ptclGroup->sym_int.particles.cm.Position[dim];
+#ifdef COMOVE
+		ptclCM->Position[dim] /= global_variable->a_i; // convert to comoving unit
+#endif
 		ptclCM->Velocity[dim] = ptclGroup->sym_int.particles.cm.Velocity[dim];
 		for (int i = 0; i < ptclCM->NumberOfMember; i++) {
 			Particle* members = &particles[ptclCM->Members[i]];
@@ -272,8 +284,9 @@ void NewFBInitialization(Particle* ptclCM) {
 
 	for (int dim=0; dim<Dim; dim++) {
         for (int j=0; j<HERMITE_ORDER; j++)
-            ptclGroup->sym_int.particles.cm.a_irr[dim][j] = ptclCM->a_irr[dim][j];
+            ptclGroup->sym_int.particles.cm.a_tot[dim][j] = ptclCM->a_tot[dim][j];
     }
+	ptclGroup->sym_int.particles.cm.PID = ptclCM->PID; // added for ar_interaction.hpp by EW 2025.7.1
     
     ptclGroup->sym_int.particles.cm.NumberOfNeighbor = ptclCM->NumberOfNeighbor;
     for (int i=0; i<ptclCM->NumberOfNeighbor; i++)
@@ -412,6 +425,12 @@ void NewFBInitialization3(Group* group) {
 
 	ptclGroup->initialManager();
 	ptclGroup->initialIntegrator(ptclCM->NewNumberOfNeighbor); // Binary tree is made and CM particle is made automatically.
+	ptclCM->NewNumberOfNeighbor = 0;
+	/*
+	After NewFBInitialization3, new binary forms and the same particles are detected as new binary members...
+	I suspect this error happens because NewNumberOfNeighbor was not set to 0.
+	Let's see what happens... by EW 2025.6.25
+	*/
 
 	delete group;
 	ptclCM->GroupInfo = ptclGroup;
@@ -444,8 +463,9 @@ void NewFBInitialization3(Group* group) {
 
 	for (int dim=0; dim<Dim; dim++) {
         for (int j=0; j<HERMITE_ORDER; j++)
-            ptclGroup->sym_int.particles.cm.a_irr[dim][j] = ptclCM->a_irr[dim][j];
+            ptclGroup->sym_int.particles.cm.a_tot[dim][j] = ptclCM->a_tot[dim][j];
     }
+	ptclGroup->sym_int.particles.cm.PID = ptclCM->PID; // added for ar_interaction.hpp by EW 2025.7.1
     
     ptclGroup->sym_int.particles.cm.NumberOfNeighbor = ptclCM->NumberOfNeighbor;
     for (int i=0; i<ptclCM->NumberOfNeighbor; i++)

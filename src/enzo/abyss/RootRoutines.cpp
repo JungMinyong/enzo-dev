@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -33,8 +32,7 @@ void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);
 bool updateSkipList(SkipList *skiplist, int ptcl_id);
 int writeParticle(double current_time, int outputNum);
-
-
+int updateParticleBackground();
 
 #ifdef INDIVIDUALSTAR
 int SendParticleToEnzo(Worker *workers);
@@ -56,10 +54,11 @@ Worker *workers;
 void RootRoutines()
 {
 	outNum = 0;
-	
+	int countSave = 0; // for StoreTimeStep
+	// int MinParticles = 5; // Minimum number of particles to start the nbody routine
+
 	std::cout << "Root processor is ready." << std::endl;
 	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
-	fflush(nbpout);
 
 	Particle *ptcl;
 	// int worker_rank;
@@ -99,9 +98,26 @@ void RootRoutines()
 	std::chrono::high_resolution_clock::time_point end_point;
 #endif
 
+	/* Particle loading Check */
+	/*
+	{
+		//, NextRegTime= %.3e Myr(%llu),
+		for (int i=0; i<=LastParticleIndex; i++) {
+			ptcl = &particles[i];
+			fprintf(stdout, "PID=%d, pos=(%lf, %lf, %lf), vel=(%lf, %lf, %lf)\n",
+					ptcl->PID,
+					ptcl->Position[0],
+					ptcl->Position[1],
+					ptcl->Position[2],
+					ptcl->Velocity[0],
+					ptcl->Velocity[1],
+					ptcl->Velocity[2]
+					);
+		}
+		fflush(stdout);
+	}*/
 
-
-	if (NumberOfParticle >= 2)
+	if (NumberOfParticle >= MinParticles)
 		InitializationRoutines(queue_scheduler, workers);
 
 	/* Main Loop */
@@ -109,8 +125,7 @@ void RootRoutines()
 	{
 
 
-#ifdef TEST
-		if (NumberOfParticle >= 2) {
+		if (NumberOfParticle >= MinParticles) {
 
 			start_point_routine = std::chrono::high_resolution_clock::now();
 
@@ -131,58 +146,99 @@ void RootRoutines()
 			std::cout << std::endl;
 			std::cout << "size of regularlist= " << RegularList.size() << std::endl;
 			*/	
-
+#ifdef DEBUG_ABYSS
+			fprintf(nbpout, "Before IrregularRoutines...\n");
+			fflush(nbpout);
+#endif
 			if (!IrregularRoutines(queue_scheduler, workers)) {
+#ifdef DEBUG_ABYSS
+				fprintf(nbpout, "return false in IrregularRoutines...\n");
+				fflush(nbpout);
+#endif
 				end_point_routine = std::chrono::high_resolution_clock::now();
 				nbody_durationtime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
 				continue;
 			}
+#ifdef DEBUG_ABYSS
+			fprintf(nbpout, "After IrregularRoutines...\n");
+			fflush(nbpout);
+#endif
 
+#ifdef DEBUG_ABYSS
+			fprintf(nbpout, "Before RegularRoutines...\n");
+			fflush(nbpout);
+#endif
 			RegularRoutines(queue_scheduler, workers);
+#ifdef DEBUG_ABYSS
+			fprintf(nbpout, "After RegularRoutines...\n");
+			fflush(nbpout);
+#endif
 
 			global_time = NextRegTimeBlock * global_variable->time_step;
 
 #ifdef SEVN // (Query) EW: PISN should be deleted in PIDtoIndexMap, EnzoPID, ...
+#ifdef DEBUG_ABYSS
+			fprintf(nbpout, "Before StellarEvolution...\n");
+			fflush(nbpout);
+#endif
 			if (!SEVNList.empty() && SEVNList.begin()->first <= global_time*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime)
 				StellarEvolution(); // Currently, evolving all the particles upto global_time
+#ifdef DEBUG_ABYSS
+			fprintf(nbpout, "After StellarEvolution...\n");
+			fflush(nbpout);
+#endif
 #endif
 
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			nbody_durationtime += std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
 
 		}
-		else // NumberOfParticle < 2 case
-			global_time = 1;
+		else  {		// NumberOfParticle < 2 case
+					// update position and velocity from background acceleration
+					// assume there is no CM particles
+#ifdef DEBUG_ABYSS
+				fprintf(nbpout, "Before updateParticleBackground...\n");
+				fflush(nbpout);
+#endif
+				updateParticleBackground();
+				global_time = 1;
+#ifdef DEBUG_ABYSS
+				fprintf(nbpout, "After updateParticleBackground...\n");
+				fflush(nbpout);
+#endif
+		}
 
-		fprintf(nbpout, "Still running...\n");
-		fflush(nbpout);
-		#endif
-		global_time = 1;
 		// Time to communicate with enzo
 		if (global_time >= 1)
 		{	
-			fprintf(stderr, "before writeParticle\n");
-			writeParticle(global_time, outNum++);
-			fprintf(stderr, "after writeParticle\n");
-		
+			if (StoreTimeStep > 0){
+				countSave++;
+				if (countSave >= StoreTimeStep) {
+					countSave = 0;
+					writeParticle(global_time, outNum++);
+				}
+			}
+
 			fprintf(stderr, "NbodyRoutine: %e (s)\n", nbody_durationtime*1e-9);
 			nbody_durationtime = 0;
 
 
 #ifdef INDIVIDUALSTAR
-			//start_point_routine = std::chrono::high_resolution_clock::now();
+			start_point_routine = std::chrono::high_resolution_clock::now();
 			SendParticleToEnzo(workers);
-			//end_point_routine = std::chrono::high_resolution_clock::now();
-			//fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
-			//start_point_routine = std::chrono::high_resolution_clock::now();
+			end_point_routine = std::chrono::high_resolution_clock::now();
+			fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+			
+			start_point_routine = std::chrono::high_resolution_clock::now();
 			ReceiveParticleFromEnzo();
-			//end_point_routine = std::chrono::high_resolution_clock::now();
-			//fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+			end_point_routine = std::chrono::high_resolution_clock::now();
+			fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
 #else
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			SendToEnzo(workers);
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			ReceiveFromEnzo();
 			end_point_routine = std::chrono::high_resolution_clock::now();
@@ -190,9 +246,16 @@ void RootRoutines()
 #endif
 
 			start_point_routine = std::chrono::high_resolution_clock::now();
-			InitializationAfterCommunication(queue_scheduler, workers);
+			// we don't need to initialize for N > MinParticles. similar routine has been already implemented for N < 2 within the funciton though
+			if (NumberOfParticle >= MinParticles) InitializationAfterCommunication(queue_scheduler, workers);
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "InitializationAfterCommunication: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+#ifdef DEBUG_ABYSS
+			fflush(nbpout);
+			fclose(nbpout);
+			nbpout = fopen("abyss_output.txt", "w");
+			fprintf(nbpout, "Abyss Output Starts!\n");
+#endif
 
 			NextRegTimeBlock = 0;
 			global_time = 0;

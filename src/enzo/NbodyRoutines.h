@@ -85,30 +85,29 @@ struct ParticleDataType{
 #ifdef ABYSS_ONLY
 #ifdef COM_EVOLUTION
 	void reposition(const double *pos, const double *vel, const double *acc) {
-      for (int dim = 0; dim < MAX_MAX_DIMENSION; dim++) {
-				Velocity[dim]	-= vel[dim];
-        Position[dim] -= pos[dim];
-        BackgroundAcceleration[dim] -= acc[dim];
-			}
+		for (int dim = 0; dim < MAX_MAX_DIMENSION; dim++) {
+			Velocity[dim]	-= vel[dim];
+			Position[dim] -= pos[dim];
+			BackgroundAcceleration[dim] -= acc[dim];
+		}
 	};
 #else
 	void reposition(const double *pos) {
-      for (int dim = 0; dim < MAX_DIMENSION; dim++) {
-        Position[dim] -= pos[dim];
-			}
+		for (int dim = 0; dim < MAX_DIMENSION; dim++) {
+			Position[dim] -= pos[dim];
+		}
 	};
 #endif
 #endif
 #define DEBUG
 #ifdef DEBUG
 	void print(const double &umass, const double &upos, const double &uvel){
-          fprintf(stderr,
-                  "PID: %d. Mass: %e Msun\n"
-									"x: %e pc, y: %e pc, z: %e\nvx: %e "
-                  "km/s, vy: %e km/s, vz: %e km/s\n",
-                  ID, Mass*umass, 
-									Position[0]*upos, Position[1]*upos,Position[2]*upos,
-									Velocity[0]*uvel, Velocity[1]*uvel,Velocity[2]*uvel);
+		fprintf(stderr,
+				"PID: %d. Mass: %e Msun\n"
+				"x: %e pc, y: %e pc, z: %e\nvx: %e km/s, vy: %e km/s, vz: %e km/s\n",
+				ID, Mass*umass, 
+				Position[0]*upos, Position[1]*upos,Position[2]*upos,
+				Velocity[0]*uvel, Velocity[1]*uvel,Velocity[2]*uvel);
 	};
 #endif
 };

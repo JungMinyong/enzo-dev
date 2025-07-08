@@ -224,10 +224,7 @@ void StellarEvolution_Enzo(double *Mass, double *Wind, double *SN, double *Tempe
                         adjustEnzoSEVNParticle(index, true);
                     }
                     else if (star_sevn->amiremnant()) {
-                        if (star_sevn->get_supernova()->get_fallback_frac() == 1.0) // direct collapse BH
-                            SN[i] = 0.0;
-                        else
-                            SN[i] = star_sevn->get_supernova()->get_Mejected();
+                        SN[i] = star_sevn->get_supernova()->get_Mejected();
                         Wind[i] = CurrentMass - star_sevn->getp(Mass::ID) - SN[i];
                     }
                     else {
@@ -282,10 +279,7 @@ void StellarEvolution_Enzo(double *Mass, double *Wind, double *SN, double *Tempe
                     adjustEnzoSEVNParticle(index, true);
                 }
                 else if (star_sevn->amiremnant()) {
-                    if (star_sevn->get_supernova()->get_fallback_frac() == 1.0) // direct collapse BH
-                        newSN[i] = 0.0;
-                    else
-                        newSN[i] = star_sevn->get_supernova()->get_Mejected();
+                    newSN[i] = star_sevn->get_supernova()->get_Mejected();
                     newWind[i] = CurrentMass - star_sevn->getp(Mass::ID) - newSN[i];
                 }
                 else {
@@ -362,22 +356,14 @@ void UpdateEvolution(Particle* ptcl) {
 
         setBHspin(ptcl);
 
-        // Direct collapse case! newly implemented by EW 2025.5.21
-        if (ptcl->StellarEvolution->get_supernova()->get_fallback_frac() == 1.0)
-            ptcl->SNEjectedMass = 0.0;
-        else // CCSN case!
-            ptcl->SNEjectedMass = ptcl->StellarEvolution->get_supernova()->get_Mejected()/mass_unit;
-
+        ptcl->SNEjectedMass = ptcl->StellarEvolution->get_supernova()->get_Mejected()/mass_unit;
         ptcl->dm += ptcl->Mass - (ptcl->StellarEvolution->getp(Mass::ID)/mass_unit + ptcl->SNEjectedMass);
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
-        if (ptcl->Mass*mass_unit > 200)
-            ptcl->ParticleType = MassiveBlackHole; // This particle does feedback & accretion in Enzo by EW 2025.6.25
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // this might be wrong!
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
-        fprintf(SEVNout, "BH. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, Fallback_frac: %e, Time: %e Myr, Worldtime: %e Myr\n", 
+        fprintf(SEVNout, "BH. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, Time: %e Myr, Worldtime: %e Myr\n", 
             ptcl->PID, ptcl->Mass*mass_unit, ptcl->StellarEvolution->get_zams(), ptcl->StellarEvolution->get_Z(),
-            ptcl->radius*position_unit, ptcl->StellarEvolution->get_supernova()->get_fallback_frac(),
-            ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
+            ptcl->radius*position_unit, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
         fprintf(SEVNout, "\tDimless spin. mag: %e, (%e, %e, %e)\n", ptcl->StellarEvolution->getp(Xspin::ID), ptcl->a_spin[0], ptcl->a_spin[1], ptcl->a_spin[2]);
         /* // (SEVN Query) This particle will be kicked after SN feedback in Enzo by EW 2025.4.1
         if (ptcl->StellarEvolution->vkick[3] > 0.0) {
@@ -585,15 +571,20 @@ void adjustEnzoSEVNParticle(int index, bool delete_sevn) {
     }
     star_sevn = nullptr;
         
-    if (index != SEVNList_Enzo.size() - 1) {
+    if (index != NumberOfEnzoSEVNParticle - 1) {
         std::swap(SEVNList_Enzo[index], SEVNList_Enzo.back());
         std::swap(creation_time_Enzo[index], creation_time_Enzo.back());
         std::swap(world_time_Enzo[index], world_time_Enzo.back());
+        SEVNList_Enzo.pop_back();
+        creation_time_Enzo.pop_back();
+        world_time_Enzo.pop_back();
         PIDtoIndexMap_SEVN[int(SEVNList_Enzo[index]->get_ID())] = index;
     }
-    SEVNList_Enzo.pop_back();
-    creation_time_Enzo.pop_back();
-    world_time_Enzo.pop_back();
+    else {
+        SEVNList_Enzo.pop_back();
+        creation_time_Enzo.pop_back();
+        world_time_Enzo.pop_back();
+    }
 }
 
 #endif

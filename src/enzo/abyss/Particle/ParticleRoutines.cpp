@@ -5,9 +5,49 @@
 #endif
 
 #ifndef INDIVIDUALSTAR
+
+void Particle::setFirst(int *PID, double *Mass, double *InitialMass, double *CreationTime, double *DynamicalTime, double *Metallicity,
+	double *Position[Dim], double *Velocity[Dim],
+	double *BackgroundAcceleration[Dim], int &i) {
+
+	__initialize__();
+	this->isActive 					 = true;
+	this->PID                        = PID[i];
+	this->Mass                       = Mass[i]*EnzoMass;
+	this->InitialMass                = InitialMass[i]; // [Msol unit] by EW 2025.4.3
+	this->CreationTime               = CreationTime[i]*EnzoTime*1e4; // [Myr unit] by EW 2025.4.3
+	this->DynamicalTime              = DynamicalTime[i]*EnzoTime;
+	this->InitialMetallicity		 = Metallicity[i]; // [Absolute unit] No unit conversion here! by EW 2025.4.3
+	this->Position[0]                = Position[0][i]*EnzoLength;
+	this->Position[1]                = Position[1][i]*EnzoLength;
+	this->Position[2]                = Position[2][i]*EnzoLength;
+	this->Velocity[0]                = Velocity[0][i]*EnzoVelocity;
+	this->Velocity[1]                = Velocity[1][i]*EnzoVelocity;
+	this->Velocity[2]                = Velocity[2][i]*EnzoVelocity;
+	this->BackgroundAcceleration[0]  = BackgroundAcceleration[0][i]*EnzoAcceleration;
+	this->BackgroundAcceleration[1]  = BackgroundAcceleration[1][i]*EnzoAcceleration;
+	this->BackgroundAcceleration[2]  = BackgroundAcceleration[2][i]*EnzoAcceleration;
+	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
+#ifndef SEVN
+	this->ParticleType = NoFeedbackStar;
+	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit
+	/*
+	if (this->Mass*1e9 > 8) {
+		this->ParticleType = Blackhole+SingleStar;
+		this->radius = 2*this->Mass*1e9/mass_unit/pow(299752.458/(velocity_unit/yr*pc/1e5), 2); // Schwartzshild radius in code unit
+		// initialBHspin(this);
+	}
+	else {
+		this->ParticleType = NormalStar+SingleStar;
+		this->radius = 2.25461e-8/position_unit*pow(this->Mass*1e9, 1./3); // stellar radius in code unit
+	}
+	*/
+#endif
+}
+
 void Particle::set(int *PID, double *Mass, double *CreationTime, double *DynamicalTime, double *Metallicity,
-			 	double *Position[Dim], double *Velocity[Dim],
-			 	double *BackgroundAcceleration[Dim], int &i) {
+	double *Position[Dim], double *Velocity[Dim],
+	double *BackgroundAcceleration[Dim], int &i) {
 
 	__initialize__();
 	this->isActive 					 = true;
@@ -71,15 +111,54 @@ void Particle::update(double *Mass, double *BackgroundAcceleration[Dim], int &i)
 #endif
 }
 #else
+
+void Particle::setFirst(const ParticleDataType &ptcl, const int& ProcessorNumber) {
+
+	__initialize__();
+	this->isActive 					 = true;
+	this->PID                        = ptcl.ID;
+	this->Mass                       = ptcl.Mass*EnzoMass;
+	this->InitialMass                = this->Mass*mass_unit; // [Msol unit] by EW 2025.4.3
+	this->CreationTime               = ptcl.CreationTime*EnzoTime*1e4; // [Myr unit] by EW 2025.4.3
+	this->DynamicalTime              = ptcl.DynamicalTime*EnzoTime;
+	this->InitialMetallicity		 = ptcl.Metallicity; // [Absolute unit] No unit conversion here! by EW 2025.4.3
+	this->Position[0]                = ptcl.Position[0]*EnzoLength;
+	this->Position[1]                = ptcl.Position[1]*EnzoLength;
+	this->Position[2]                = ptcl.Position[2]*EnzoLength;
+	this->Velocity[0]                = ptcl.Velocity[0]*EnzoVelocity;
+	this->Velocity[1]                = ptcl.Velocity[1]*EnzoVelocity;
+	this->Velocity[2]                = ptcl.Velocity[2]*EnzoVelocity;
+	this->BackgroundAcceleration[0]  = ptcl.BackgroundAcceleration[0]*EnzoAcceleration;
+	this->BackgroundAcceleration[1]  = ptcl.BackgroundAcceleration[1]*EnzoAcceleration;
+	this->BackgroundAcceleration[2]  = ptcl.BackgroundAcceleration[2]*EnzoAcceleration;
+	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
+	this->EnzoProcessorNumber        = ProcessorNumber;
+#ifndef SEVN
+	this->ParticleType = NoFeedbackStar;
+	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit
+	/*
+	if (this->Mass*1e9 > 8) {
+		this->ParticleType = Blackhole+SingleStar;
+		this->radius = 2*this->Mass*1e9/mass_unit/pow(299752.458/(velocity_unit/yr*pc/1e5), 2); // Schwartzshild radius in code unit
+		// initialBHspin(this);
+	}
+	else {
+		this->ParticleType = NormalStar+SingleStar;
+		this->radius = 2.25461e-8/position_unit*pow(this->Mass*1e9, 1./3); // stellar radius in code unit
+	}
+	*/
+#endif
+}
+
 void Particle::set(const ParticleDataType &ptcl, const int& ProcessorNumber) {
 	__initialize__();
 	this->isActive 					 = true;
 	this->PID                        = ptcl.ID;
 	this->Mass                       = ptcl.Mass*EnzoMass;
-	this->InitialMass                = ptcl.Mass*mass_unit; // [Msol unit] by EW 2025.4.3
+	this->InitialMass                = this->Mass*mass_unit; // [Msol unit] by EW 2025.4.3
 	this->CreationTime               = ptcl.CreationTime*EnzoTime*1e4; // [Myr unit] by EW 2025.4.3
 	this->DynamicalTime              = ptcl.DynamicalTime*EnzoTime;
-	this->InitialMetallicity		     = ptcl.Metallicity; // [Absolute unit] No unit conversion here! by EW 2025.4.3
+	this->InitialMetallicity		 = ptcl.Metallicity; // [Absolute unit] No unit conversion here! by EW 2025.4.3
 	this->Position[0]                = ptcl.Position[0]*EnzoLength;
 	this->Position[1]                = ptcl.Position[1]*EnzoLength;
 	this->Position[2]                = ptcl.Position[2]*EnzoLength;
@@ -112,7 +191,7 @@ void Particle::set(const ParticleDataType &ptcl, const int& ProcessorNumber) {
 void Particle::update(const ParticleSendDataType &ptcl, const int& ProcessorNumber)
 {
 #ifndef SEVN
-	//this->Mass                       = ptcl->Mass*EnzoMass;
+	// this->Mass                       = ptcl.Mass*EnzoMass;
 #endif
 	this->BackgroundAcceleration[0]  = ptcl.BackgroundAcceleration[0]*EnzoAcceleration;
 	this->BackgroundAcceleration[1]  = ptcl.BackgroundAcceleration[1]*EnzoAcceleration;
@@ -140,12 +219,12 @@ void Particle::update(const ParticleSendDataType &ptcl, const int& ProcessorNumb
 
 
 
-	void Particle::print(const double &umass, const double &upos, const double &uvel){
-          fprintf(nbpout,
-                  "PID: %d. Mass: %e Msun\n"
-									"x: %e pc, y: %e pc, z: %e\nvx: %e "
-                  "km/s, vy: %e km/s, vz: %e km/s\n",
-                  PID, Mass*umass, 
-									Position[0]*upos, Position[1]*upos,Position[2]*upos,
-									Velocity[0]*uvel, Velocity[1]*uvel,Velocity[2]*uvel);
-	};
+void Particle::print(const double &umass, const double &upos, const double &uvel){
+		fprintf(nbpout,
+				"PID: %d. Mass: %e Msun\n"
+				"x: %e pc, y: %e pc, z: %e\n"
+				"vx: %e km/s, vy: %e km/s, vz: %e km/s\n",
+				PID, Mass*umass, 
+				Position[0]*upos, Position[1]*upos,Position[2]*upos,
+				Velocity[0]*uvel, Velocity[1]*uvel,Velocity[2]*uvel);
+};

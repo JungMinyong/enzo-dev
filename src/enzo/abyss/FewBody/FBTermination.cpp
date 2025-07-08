@@ -51,6 +51,11 @@ void FBTermination(Particle* ptclCM) {
 		if (members->Mass < 0.0)
 			continue;
 
+#ifdef COMOVE
+		for (int dim=0; dim<Dim; dim++)
+			members->Position[dim] /= global_variable->a_i; // convert to comoving unit
+#endif
+
 		NumberOfParticle++; // by EW 2025.1.20
 
 		if (ptclCM->NumberOfMember == 2)

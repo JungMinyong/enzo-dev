@@ -44,6 +44,7 @@ int CommunicationToAbyssInitialize(
     LevelHierarchyEntry *LevelArray[], int level, 
     Star *&AllStars,
     std::unordered_map<int, Star *> &LocalStarLookupMap);
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 /*
 *
@@ -118,11 +119,12 @@ int CommunicationToAbyssInitialize(
   /*-------------------------------------------*/
   if (MyProcessorNumber == ROOT_PROCESSOR) {
     /* Prepare buffer array */
-    int double_size = 13;
-    int int_size = 6;
+    int double_size = 14;
+    int int_size = 7;
     if (ComovingCoordinates) {
-      double_size += 14;
+      double_size += 12;
       double_size += 2 * CosmologyTableNumberOfBins;
+      double_size += 4; // a_i, dadt_i, a_f, dadt_f by EW 2025.7.7
       int_size += 1;
     }
     double *params_double = new double[double_size];
@@ -148,6 +150,7 @@ int CommunicationToAbyssInitialize(
     params_int[3] = NbodyFixNumNeighbor;
     params_int[4] = NbodyMaxNumNeighbor;
     params_int[5] = NbodyBinaryRegularization;
+    params_int[6] = NbodyStoreTimeStep;
 
     if (ComovingCoordinates) {
       params_double[14] = HubbleConstantNow;
@@ -166,9 +169,16 @@ int CommunicationToAbyssInitialize(
         params_double[26 + i] = CosmologyTableLoga[i];
       }
       for (int i = 0; i < CosmologyTableNumberOfBins; i++) {
-        params_double[26 + CosmologyTableNumberOfBins + i] =
-            CosmologyTableLogt[i];
+        params_double[26 + CosmologyTableNumberOfBins + i] = CosmologyTableLogt[i];
       }
+
+      double a_i, dadt_i, a_f, dadt_f;
+      CosmologyComputeExpansionFactor(Time, &a_i, &dadt_i);
+      CosmologyComputeExpansionFactor(Time + TimeStep, &a_f, &dadt_f);
+      params_double[26 + 2 * CosmologyTableNumberOfBins] = a_i;
+      params_double[26 + 2 * CosmologyTableNumberOfBins + 1] = dadt_i;
+      params_double[26 + 2 * CosmologyTableNumberOfBins + 2] = a_f;
+      params_double[26 + 2 * CosmologyTableNumberOfBins + 3] = dadt_f;
 
       params_int[7] = CosmologyTableLogtIndex;
     }
@@ -178,9 +188,8 @@ int CommunicationToAbyssInitialize(
     MPI_Send(&ComovingCoordinates, 1, MPI_INT, NumberOfProcessors, 100, inter_comm);
     if (ComovingCoordinates)
       MPI_Send(&CosmologyTableNumberOfBins, 1, MPI_INT, NumberOfProcessors, 150, inter_comm);
-    MPI_Isend(params_double, double_size, MPI_DOUBLE, NumberOfProcessors, 200, inter_comm,
-              &requests[0]);
-    MPI_Isend(params_int, int_size, MPI_INT, NumberOfProcessors, 300, inter_comm, &requests[1]);
+    MPI_Isend(params_double,  double_size,  MPI_DOUBLE, NumberOfProcessors, 200, inter_comm, &requests[0]);
+    MPI_Isend(params_int,     int_size,     MPI_INT,    NumberOfProcessors, 300, inter_comm, &requests[1]);
     MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
     delete[] params_double;
     delete[] params_int;
@@ -288,16 +297,30 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   /********   Send Parameters to ABYSS  ********/
   /*-------------------------------------------*/
   if (MyProcessorNumber == ROOT_PROCESSOR) {
-    double *params_double = new double[6];
+    int double_size = 6;
+    if (ComovingCoordinates)
+      double_size += 4; // a_i, dadt_i, a_f, dadt_f by EW 2025.7.7
+
+    double *params_double = new double[double_size];
+
     params_double[0] = TimeStep;
     params_double[1] = TimeUnits;
     params_double[2] = Time;
     params_double[3] = LengthUnits;
     params_double[4] = DensityUnits;
     params_double[5] = VelocityUnits;
+    if (ComovingCoordinates) {
+      double a_i, dadt_i, a_f, dadt_f;
+      CosmologyComputeExpansionFactor(Time, &a_i, &dadt_i);
+      CosmologyComputeExpansionFactor(Time + TimeStep, &a_f, &dadt_f);
+      params_double[6] = a_i;
+      params_double[7] = dadt_i;
+      params_double[8] = a_f;
+      params_double[9] = dadt_f;
+    }
 
     /* Send Parameters First*/
-    MPI_Send(params_double, 6, MPI_DOUBLE, NumberOfProcessors, 100, inter_comm);
+    MPI_Send(params_double, double_size, MPI_DOUBLE, NumberOfProcessors, 100, inter_comm);
 
     delete[] params_double;
   }

@@ -1540,6 +1540,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		ret += sscanf(line, "NbodyBinaryRegularization = %"ISYM, &NbodyBinaryRegularization);
 		ret += sscanf(line, "NbodyBinaryDistance       = %"FSYM, &NbodyBinaryDistance);
 		ret += sscanf(line, "NbodyBinaryTimeStep       = %"FSYM, &NbodyBinaryTimeStep);
+    ret += sscanf(line, "NbodyStoreTimeStep = %"ISYM, &NbodyStoreTimeStep);
 		//ret += sscanf(line, "NbodyFilename             = %"FSYM, &NbodyFilename);
     if (sscanf(line, "NbodyDir           = %s", dummy) == 1)
       NbodyDir = dummy;

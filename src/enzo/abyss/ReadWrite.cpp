@@ -164,7 +164,6 @@ int writeParticle(double current_time, int outputNum) {
         // Handle the error if necessary
         return 1;
     }
-	// fprintf(stderr, "writeParticle 1\n");
 
     // Now let's save the outputs in a new directory
 
@@ -177,22 +176,28 @@ int writeParticle(double current_time, int outputNum) {
     std::ofstream outputFile(filename);
     //std::ofstream output_nn(nn_fname);
 
-	// fprintf(stderr, "writeParticle 1-2\n");
 
     // Check if the file is opened successfully
     if (!outputFile.is_open()) {
         std::cerr << "Error opening the file!" << std::endl;
         return 1;
     }
-
-	// fprintf(stderr, "writeParticle 2\n");
-
-	outputFile << current_time*EnzoTimeStep*1e10/1e6 << " Myr, "; //
+	int NumPart = 0;
+	Particle *ptcl;
+	LastParticleIndex = global_variable->LastParticleIndex; //temporary added by Minyong // (Query to MY) NumPart should be equal to NumberOfParticle, right? by EW 2025.7.1
+	for (int i=0; i<=LastParticleIndex; i++) {
+		ptcl = &particles[i];
+		if (!ptcl->isActive) continue;
+		NumPart++;
+	}
+	outputFile << EnzoCurrentTime*1e4 + current_time*EnzoTimeStep*1e10/1e6 << " Myr, "; //
 	//outputFile << global_time*EnzoTimeStep*1e10/1e6 << " Myr"; //
 	outputFile << "\n";
+	outputFile << NumPart << ", "; //
 	outputFile << outputTime << ", "; //
 	outputFile << outputTimeStep << ", "; //
-	outputFile << current_time << ""; //
+	outputFile << current_time << ", "; //
+	outputFile << AbyssCenter[0] << ", " << AbyssCenter[1] << ", " << AbyssCenter[2]; // AbyssCenter
 	outputFile << "\n";
     outputFile << std::left 
 			<< std::setw(width) << "PID"
@@ -210,10 +215,8 @@ int writeParticle(double current_time, int outputNum) {
 #endif 
 
 
-	// fprintf(stderr, "writeParticle 3\n");
 
     // Write particle data to the file
-	Particle *ptcl;
 	double pos[Dim], vel[Dim];
 
 	// for performance test by EW 2025.3.13
@@ -247,7 +250,6 @@ int writeParticle(double current_time, int outputNum) {
 		else
 			write_out(outputFile, ptcl, pos, vel);
 
-	// fprintf(stderr, "writeParticle 4\n");
 
 // write_neighbor(output_nn, ptcl);
 	}
@@ -363,9 +365,15 @@ void write_out(std::ofstream& outputFile, const Particle* ptcl, const double *po
         outputFile  << std::left << std::fixed << std::setprecision(8) // Eunwoo test
 					<< std::setw(width) << ptcl->PID
 					<< std::setw(width) << ptcl->Mass*mass_unit
+#ifdef COMOVE
+					<< std::setw(width) << pos[0]*position_unit * global_variable->a_i
+					<< std::setw(width) << pos[1]*position_unit * global_variable->a_i
+					<< std::setw(width) << pos[2]*position_unit * global_variable->a_i
+#else
                     << std::setw(width) << pos[0]*position_unit
                     << std::setw(width) << pos[1]*position_unit
                     << std::setw(width) << pos[2]*position_unit
+#endif
                     << std::setw(width) << vel[0]*velocity_unit/yr*pc/1e5
                     << std::setw(width) << vel[1]*velocity_unit/yr*pc/1e5;
 #ifdef SEVN
@@ -387,9 +395,15 @@ void write_out_group(std::ofstream& outputFile, const Particle* ptclCM, const Pa
 		outputFile  << std::left << std::fixed << std::setprecision(8) // Eunwoo test
 					<< std::setw(width) << ptcl->PID
 					<< std::setw(width) << ptcl->Mass*mass_unit
+#ifdef COMOVE
+					<< std::setw(width) << ((pos[0] - ptclCM->Position[0]) * global_variable->a_i + ptcl->Position[0]) * position_unit
+					<< std::setw(width) << ((pos[1] - ptclCM->Position[1]) * global_variable->a_i + ptcl->Position[1]) * position_unit
+					<< std::setw(width) << ((pos[2] - ptclCM->Position[2]) * global_variable->a_i + ptcl->Position[2]) * position_unit
+#else
                     << std::setw(width) << (pos[0] - ptclCM->Position[0] + ptcl->Position[0])*position_unit
                     << std::setw(width) << (pos[1] - ptclCM->Position[1] + ptcl->Position[1])*position_unit
                     << std::setw(width) << (pos[2] - ptclCM->Position[2] + ptcl->Position[2])*position_unit
+#endif
                     << std::setw(width) << (vel[0] - ptclCM->Velocity[0] + ptcl->Velocity[0])*velocity_unit/yr*pc/1e5
                     << std::setw(width) << (vel[1] - ptclCM->Velocity[1] + ptcl->Velocity[1])*velocity_unit/yr*pc/1e5;
 #ifdef SEVN

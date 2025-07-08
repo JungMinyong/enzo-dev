@@ -1025,6 +1025,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 	NbodyMaxNumNeighbor   = 200;
 	NbodyBinaryRegularization = 0;
 	NbodyBinaryDistance = 0.0002;
+  NbodyStoreTimeStep = 0;
 	NbodyBinaryTimeStep = 2e-5;
 	NbodyNewStarToNbody = 0;
 	NbodyRestartStarToNbody = 0;

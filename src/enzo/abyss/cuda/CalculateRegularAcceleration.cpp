@@ -111,7 +111,8 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 		}
 	}
 #ifdef DEBUG_ABYSS
-	std::cout << "sendAllParticlesToGPU starts" << std::endl;
+	fprintf(nbpout, "sendAllParticlesToGPU starts\n");
+	fflush(nbpout);
 #endif
 
 #ifdef NSIGHT
@@ -123,7 +124,8 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 #endif
 
 #ifdef DEBUG_ABYSS
-	std::cout << "sendAllParticlesToGPU ended" << std::endl;
+	fprintf(nbpout, "sendAllParticlesToGPU ended\n");
+	fflush(nbpout);
 #endif
 	
 	
@@ -155,7 +157,8 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 */
 
 #ifdef DEBUG_ABYSS
-	std::cout << "CalculateAccelerationOnDevice starts" << std::endl;
+	fprintf(nbpout, "CalculateAccelerationOnDevice starts\n");
+	fflush(nbpout);
 #endif
   
 #ifdef NSIGHT
@@ -173,36 +176,18 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 #endif
   
 #ifdef DEBUG_ABYSS
-	std::cout << "CalculateAccelerationOnDevice ended" << std::endl;
+	fprintf(nbpout, "CalculateAccelerationOnDevice ended\n");
+	fflush(nbpout);
 #endif
 
+#ifdef CUDA_FLOAT
 	for (int i=0; i<ListSize; i++) {
 		for (int dim=0; dim<Dim; dim++) {
 			AccRegReceive[i][dim]    = (CUDA_REAL) AccRegReceive_f[i][dim];
 			AccRegDotReceive[i][dim] = (CUDA_REAL) AccRegDotReceive_f[i][dim];
 		}
 	}
-	/*
-#ifdef time_trace
-	_time.reg_gpu.markEnd();
-	_time.reg_gpu.getDuration();
-
-	_time.reg_cpu1.markStart();
 #endif
-*/
-
-
-
-	/*
-#ifdef time_trace
-	_time.reg_cpu2.markEnd();
-	_time.reg_cpu2.getDuration();
-
-	_time.reg_cpu3.markStart();
-#endif
-*/
-
-
 
 /*
 	std::cout << "(REG_CUDA) RegularList, PID= ";
@@ -215,7 +200,8 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 	
 
 #ifdef DEBUG_ABYSS
-	std::cout << "Adjust Regular Gravity starts" << std::endl;
+	fprintf(nbpout, "Adjust Regular Gravity starts\n");
+	fflush(nbpout);
 #endif
 
 #ifdef NSIGHT
@@ -258,7 +244,8 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 			{
                 ++worker;
 #ifdef DEBUG_ABYSS
-				std::cout << "worker MyRank: " << (*worker)->MyRank << std::endl;
+				fprintf(nbpout, "worker MyRank: %d\n", (*worker)->MyRank);
+				fflush(nbpout);
 #endif
 			}
         }
@@ -276,7 +263,8 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 #endif
 
 #ifdef DEBUG_ABYSS
-	std::cout << "Adjust Regular Gravity ended" << std::endl;
+	fprintf(nbpout, "Adjust Regular Gravity ended\n");
+	fflush(nbpout);
 #endif
 
 
@@ -310,6 +298,9 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList, int *IndexList) {
 
 	
+	#ifdef COMOVE
+	double a = global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(new_time);
+	#endif
 
 #ifdef CUDA_FLOAT
 
@@ -356,17 +347,25 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 
 		Mass[size]    = (CUDA_REAL)ptcl->Mass;
 		Mdot[size]    = 0; //particle[i]->Mass;
+		#ifdef COMOVE
+		Radius2[size] = (CUDA_REAL)ptcl->RadiusOfNeighbor*a; // mass weight?
+		#else
 		Radius2[size] = (CUDA_REAL)ptcl->RadiusOfNeighbor; // mass weight?
+		#endif
 
 		if (ptcl->NumberOfNeighbor == 0)
 			ptcl->predictParticleSecondOrder(new_time-ptcl->CurrentTimeReg, Position[size], Velocity[size]);
 		else
 			ptcl->predictParticleSecondOrder(new_time-ptcl->CurrentTimeIrr, Position[size], Velocity[size]);
 
-
+		// fprintf(stderr, "PID=%d, dt = %e, Mass=%.3e, Vel=(%.3e, %.3e, %.3e), Pos=(%.3e, %.3e, %.3e)\n", ptcl->PID, new_time-ptcl->CurrentTimeReg, Mass[size], Velocity[size][0], Velocity[size][1], Velocity[size][2], Position[size][0], Position[size][1], Position[size][2]);
 		assert(Position[size][0] == Position[size][0]);
 		assert(Velocity[size][0] == Velocity[size][0]);
-
+		#ifdef COMOVE
+		Position[size][0] *= a;
+		Position[size][1] *= a;
+		Position[size][2] *= a;
+		#endif
 		ActiveIndexToOriginalIndex[size] = idx;
 		// std::cout << "(size , i) = "  << size << " " << i << std::endl;
 		size++;
@@ -409,7 +408,11 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 
 		Mass[size]    = ptcl->Mass;
 		Mdot[size]    = 0; //particle[i]->Mass;
+		#ifdef COMOVE
+		Radius2[size] = ptcl->RadiusOfNeighbor*a; // mass weight?
+		#else
 		Radius2[size] = ptcl->RadiusOfNeighbor; // mass weight?
+		#endif
 
 		if (ptcl->NumberOfNeighbor == 0)
 			ptcl->predictParticleSecondOrder(new_time-ptcl->CurrentTimeReg, Position[size], Velocity[size]);
@@ -418,6 +421,11 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 
 		assert(Position[size][0] == Position[size][0]);
 		assert(Velocity[size][0] == Velocity[size][0]);
+		#ifdef COMOVE
+		Position[size][0] *= a;
+		Position[size][1] *= a;
+		Position[size][2] *= a;
+		#endif
 		ActiveIndexToOriginalIndex[size] = i;
 		// std::cout << "(size , i) = "  << size << " " << i << std::endl;
 		size++;
@@ -520,7 +528,8 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	ACListReceive = new int[ListSize * NumNeighborMax];
 
 #ifdef DEBUG_ABYSS
-	std::cout << "sendAllParticlesToGPU starts" << std::endl;
+	fprintf(nbpout, "sendAllParticlesToGPU starts\n");
+	fflush(nbpout);
 #endif
 
 #ifdef NSIGHT
@@ -533,7 +542,8 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 #endif
 
 #ifdef DEBUG_ABYSS
-	std::cout << "sendAllParticlesToGPU ended" << std::endl;
+	fprintf(nbpout, "sendAllParticlesToGPU ended\n");
+	fflush(nbpout);
 #endif
 	
 	
@@ -547,25 +557,10 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	//std::cout <<  "Starting Calculation On Device ..." << std::endl;
 	// send information of all the particles to GPU
 	// includes prediction
-/*
-#ifdef time_trace
-	_time.reg_sendall.markStart();
-#endif
-
-	// Particles have been already at T_new through irregular time step
-
-#ifdef time_trace
-	_time.reg_sendall.markEnd();
-	_time.reg_sendall.getDuration();
-#endif
-
-#ifdef time_trace
-	_time.reg_gpu.markStart();
-#endif
-*/
 
 #ifdef DEBUG_ABYSS
-	std::cout << "CalculateAccelerationOnDevice starts" << std::endl;
+	fprintf(nbpout, "CalculateAccelerationOnDevice starts\n");
+	fflush(nbpout);
 #endif
   
 #ifdef NSIGHT
@@ -581,7 +576,7 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 	InitializationOnDevice(&ListSize, IndexList, 
 		AccRegReceive_f, AccRegDotReceive_f, AccIrrReceive_f, AccIrrDotReceive_f,
 		AccRegDotDotReceive_f, AccRegDotDotDotReceive_f, AccIrrDotDotReceive_f, AccIrrDotDotDotReceive_f,
-		NumNeighborReceive, ACListReceive);
+		NumNeighborReceive, ACListReceive, EPS2*global_variable->a_i*global_variable->a_i); // Change EPS2 to physical value
 #endif
   
 #ifdef NSIGHT
@@ -589,9 +584,11 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 #endif
   
 #ifdef DEBUG_ABYSS
-	std::cout << "CalculateAccelerationOnDevice ended" << std::endl;
+	fprintf(nbpout, "CalculateAccelerationOnDevice ended\n");
+	fflush(nbpout);
 #endif
 
+#ifdef CUDA_FLOAT
 	for (int i=0; i<ListSize; i++) {
 		for (int dim=0; dim<Dim; dim++) {
 			AccRegReceive[i][dim]    	= AccRegReceive_f[i][dim];
@@ -605,19 +602,12 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 			AccIrrDotDotDotReceive[i][dim]	= AccIrrDotDotDotReceive_f[i][dim];
 		}
 	}
-
-/*
-	std::cout << "(REG_CUDA) RegularList, PID= ";
-	for (int i=0; i<RegularList.size(); i++) {
-		std::cout << RegularList[i]<< ", ";
-	}
-	std::cout << std::endl;
-	*/
-
+#endif
 	
 
 #ifdef DEBUG_ABYSS
-	std::cout << "Adjust Regular Gravity starts" << std::endl;
+	fprintf(nbpout, "Adjust Regular Gravity starts\n");
+	fflush(nbpout);
 #endif
 
 #ifdef NSIGHT
@@ -668,7 +658,9 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 			{
                 ++worker;
 #ifdef DEBUG_ABYSS
-				std::cout << "worker MyRank: " << (*worker)->MyRank << std::endl;
+				fprintf(nbpout, "worker MyRank: %d\n", (*worker)->MyRank);
+				fflush(nbpout);
+				// std::cout << "worker MyRank: " << (*worker)->MyRank << std::endl;
 #endif
 			}
         }
@@ -686,7 +678,8 @@ void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers) {
 #endif
 
 #ifdef DEBUG_ABYSS
-	std::cout << "Adjust Regular Gravity ended" << std::endl;
+	fprintf(nbpout, "Adjust Regular Gravity ended\n");
+	fflush(nbpout);
 #endif
 
 
@@ -756,6 +749,11 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 	Velocity = new CUDA_REAL[NumberOfParticle][Dim];
 
 	Particle *ptcl;
+	#ifdef COMOVE
+	double a = global_variable->a_i;
+	#else
+	double a = 1.0;
+	#endif
 
 	// copy the data of particles to the arrays to be sent
 	for (int idx: indices) {
@@ -794,10 +792,10 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 
 		Mass[size]    = (CUDA_REAL)ptcl->Mass;
 		Mdot[size]    = 0; //particle[i]->Mass;
-		Radius2[size] = (CUDA_REAL)ptcl->RadiusOfNeighbor; // mass weight?
+		Radius2[size] = (CUDA_REAL)ptcl->RadiusOfNeighbor*a; // mass weight?
 
 		for (int dim = 0; dim < Dim; dim++) {
-			Position[size][dim] = ptcl->Position[dim];
+			Position[size][dim] = ptcl->Position[dim]*a;
 			Velocity[size][dim] = ptcl->Velocity[dim];
 		}
 
@@ -829,7 +827,7 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 	Particle *ptcl;
 
 	// copy the data of particles to the arrays to be sent
-		
+
 	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl = &particles[i];
 
@@ -844,10 +842,11 @@ void sendAllParticlesToGPU_init(Worker *workers, std::unordered_set<int>& Regula
 
 		Mass[size]    = ptcl->Mass;
 		Mdot[size]    = 0; //particle[i]->Mass;
-		Radius2[size] = ptcl->RadiusOfNeighbor; // mass weight?
+		Radius2[size] = ptcl->RadiusOfNeighbor*a; // mass weight?
+
 
 		for (int dim = 0; dim < Dim; dim++) {
-			Position[size][dim] = ptcl->Position[dim];
+			Position[size][dim] = ptcl->Position[dim]*a;
 			Velocity[size][dim] = ptcl->Velocity[dim];
 		}
 

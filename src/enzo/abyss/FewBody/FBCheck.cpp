@@ -25,7 +25,11 @@ Float calcDrDv(const double *pos1, const double *pos2, const double *vel1, const
 void Particle::checkNewGroup() {
 
     const Float kappa_org_crit = 1e-2; // kappa_org criterion for new group kappa_org>kappa_org_crit
+#ifdef COMOVE
+    const double r_crit = RSEARCH/position_unit/global_variable->a_i; // distance criterion in comoving unit
+#else
     const double r_crit = RSEARCH/position_unit; // distance criterion
+#endif
 
     double pos1[Dim], vel1[Dim];
 
@@ -64,9 +68,9 @@ void Particle::checkNewGroup() {
             // only inwards
             if(drdv<0.0) {
 // /* // test_1e4_2
-                Float fcm[3] = {this->Mass*this->a_irr[0][0] + ptcl2->Mass*ptcl2->a_irr[0][0], 
-                                this->Mass*this->a_irr[1][0] + ptcl2->Mass*ptcl2->a_irr[1][0], 
-                                this->Mass*this->a_irr[2][0] + ptcl2->Mass*ptcl2->a_irr[2][0]};
+                Float fcm[3] = {this->Mass*this->a_tot[0][0] + ptcl2->Mass*ptcl2->a_tot[0][0], 
+                                this->Mass*this->a_tot[1][0] + ptcl2->Mass*ptcl2->a_tot[1][0], 
+                                this->Mass*this->a_tot[2][0] + ptcl2->Mass*ptcl2->a_tot[2][0]};
 
                 AR::SlowDown sd;
                 Interaction interaction;
@@ -122,9 +126,9 @@ void Particle::checkNewGroup() {
             // only inwards
             if(drdv<0.0) {
 // /* // test_1e4_2
-                Float fcm[3] = {this->Mass*this->a_irr[0][0] + ptcl2->Mass*ptcl2->a_irr[0][0], 
-                                this->Mass*this->a_irr[1][0] + ptcl2->Mass*ptcl2->a_irr[1][0], 
-                                this->Mass*this->a_irr[2][0] + ptcl2->Mass*ptcl2->a_irr[2][0]};
+                Float fcm[3] = {this->Mass*this->a_tot[0][0] + ptcl2->Mass*ptcl2->a_tot[0][0], 
+                                this->Mass*this->a_tot[1][0] + ptcl2->Mass*ptcl2->a_tot[1][0], 
+                                this->Mass*this->a_tot[2][0] + ptcl2->Mass*ptcl2->a_tot[2][0]};
 
                 AR::SlowDown sd;
                 Interaction interaction;
@@ -155,7 +159,11 @@ void Particle::checkNewGroup() {
 void Particle::checkNewGroup2() {
     
     const Float kappa_org_crit = 1e-2; // kappa_org criterion for new group kappa_org>kappa_org_crit
+#ifdef COMOVE
+    const double r_crit = RSEARCH/position_unit/global_variable->a_i; // distance criterion in comoving unit
+#else
     const double r_crit = RSEARCH/position_unit; // distance criterion
+#endif
 
     double pos1[Dim], vel1[Dim];
 
@@ -247,9 +255,9 @@ void Particle::checkNewGroup3() {
 
         const Float dr = dist(pos1, pos2);
 
-        Float fcm[3] = {this->Mass*this->a_irr[0][0] + ptcl2->Mass*ptcl2->a_irr[0][0], 
-        this->Mass*this->a_irr[1][0] + ptcl2->Mass*ptcl2->a_irr[1][0], 
-        this->Mass*this->a_irr[2][0] + ptcl2->Mass*ptcl2->a_irr[2][0]};
+        Float fcm[3] = {this->Mass*this->a_tot[0][0] + ptcl2->Mass*ptcl2->a_tot[0][0], 
+        this->Mass*this->a_tot[1][0] + ptcl2->Mass*ptcl2->a_tot[1][0], 
+        this->Mass*this->a_tot[2][0] + ptcl2->Mass*ptcl2->a_tot[2][0]};
     
         AR::SlowDown sd;
         Interaction interaction;
@@ -275,7 +283,11 @@ void Particle::checkNewGroup3() {
 
 void Particle::checkNewGroup4() {
 
+#ifdef COMOVE
+    const double r_crit = RSEARCH/position_unit/global_variable->a_i; // distance criterion in comoving unit
+#else
     const double r_crit = RSEARCH/position_unit; // distance criterion
+#endif
 
     double pos1[Dim], vel1[Dim];
 
@@ -629,7 +641,7 @@ bool Group::CheckBreak() {
         sd.pert_in = manager.interaction.calcPertFromMR(bin_root.r, bin_root.m1, bin_root.m2);
         Float acc_cm[3];
         for (int i = 0; i < Dim; ++i) {
-            acc_cm[i] = sym_int.particles.cm.a_irr[i][0]; // a_irr or a_tot?
+            acc_cm[i] = sym_int.particles.cm.a_tot[i][0]; // a_irr or a_tot? // a_tot seems more reasonable by EW 2025.7.1
         }
         Float fcm[3] = {acc_cm[0]*bin_root.Mass, acc_cm[1]*bin_root.Mass, acc_cm[2]*bin_root.Mass};
         sd.pert_out= manager.interaction.calcPertFromForce(fcm, bin_root.Mass, bin_root.Mass);

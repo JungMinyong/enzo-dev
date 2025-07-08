@@ -2,10 +2,12 @@
 #include "../global.h"
 #include <random>
 #include <map>
+#include <cstring>
 
 #ifdef SEVN
-void Mix(Star* star1, Star* star2);
+// void Mix(Star* star1, Star* star2);
 void SetRadius(Particle* ptcl);
+#include "binstar.h"
 #endif
 
 
@@ -21,15 +23,17 @@ void Group::ARIntegration(double next_time){
 
     for (int dim=0; dim<Dim; dim++) {
         sym_int.particles.cm.Position[dim] = groupCM->Position[dim];
+#ifdef COMOVE
+        sym_int.particles.cm.Position[dim] *= global_variable->a_i; // convert to physical unit
+#endif
         sym_int.particles.cm.Velocity[dim] = groupCM->Velocity[dim];
         for (int j=0; j<HERMITE_ORDER; j++)
-            sym_int.particles.cm.a_irr[dim][j] = groupCM->a_irr[dim][j];
+            sym_int.particles.cm.a_tot[dim][j] = groupCM->a_tot[dim][j];
     }
 // /*
 if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were updated in regular routine
     sym_int.particles.cm.NumberOfNeighbor = groupCM->NumberOfNeighbor;
-    for (int i=0; i<groupCM->NumberOfNeighbor; i++)
-        sym_int.particles.cm.Neighbors[i] = groupCM->Neighbors[i];
+    std::memcpy(sym_int.particles.cm.Neighbors, groupCM->Neighbors, sizeof(int)*groupCM->NumberOfNeighbor);
 }
 // */
 #ifdef SEVN
@@ -90,6 +94,7 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
 // */
 
 // /* PN corrections
+#ifdef SEVN
     if (bin_interrupt.status == AR::InterruptStatus::none) { // Every bound orbit
         
         auto& bin_root = sym_int.info.getBinaryTreeRoot();
@@ -98,7 +103,8 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
 
         if (bin_interrupt.status == AR::InterruptStatus::none)
             sym_int.initialIntegration(next_time*global_variable->EnzoTimeStep); // Eunwoo: this should be fixed later // Eunwoo: I don't think so!
-    }    
+    }
+#endif    
 // */
 
     if (bin_interrupt.status != AR::InterruptStatus::none) {
@@ -126,7 +132,11 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
                 Particle* members = &sym_int.particles[i];
 
                 for (int dim=0; dim<Dim; dim++) {
+#ifdef COMOVE
+                    particles[members->ParticleIndex].Position[dim] = groupCM->Position[dim] * global_variable->a_i + members->Position[dim]; // convert to physical unit
+#else
                     particles[members->ParticleIndex].Position[dim] = groupCM->Position[dim] + members->Position[dim];
+#endif
                     particles[members->ParticleIndex].Velocity[dim] = groupCM->Velocity[dim] + members->Velocity[dim];
                 }
                 particles[members->ParticleIndex].Mass = members->Mass;
@@ -147,7 +157,11 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
                 Particle* members = &sym_int.particles[i];
 
                 for (int dim=0; dim<Dim; dim++) {
+#ifdef COMOVE
+                    particles[members->ParticleIndex].Position[dim] = groupCM->Position[dim] * global_variable->a_i + members->Position[dim]; // convert to physical unit
+#else
                     particles[members->ParticleIndex].Position[dim] = groupCM->Position[dim] + members->Position[dim];
+#endif
                     particles[members->ParticleIndex].Velocity[dim] = groupCM->Velocity[dim] + members->Velocity[dim];
                 }
                 particles[members->ParticleIndex].Mass = members->Mass;
@@ -165,7 +179,11 @@ if (groupCM->CurrentTimeReg >= groupCM->CurrentTimeIrr) { // Neighbors were upda
         Particle* members = &sym_int.particles[i];
 
         for (int dim=0; dim<Dim; dim++) {
+#ifdef COMOVE
+            particles[members->ParticleIndex].Position[dim] = groupCM->NewPosition[dim] * global_variable->a_i + members->Position[dim]; // convert to physical unit
+#else
             particles[members->ParticleIndex].Position[dim] = groupCM->NewPosition[dim] + members->Position[dim];
+#endif
             particles[members->ParticleIndex].Velocity[dim] = groupCM->NewVelocity[dim] + members->Velocity[dim];
         }
         particles[members->ParticleIndex].Mass = members->Mass;
@@ -333,6 +351,9 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         p1->radius = 2*p1->Mass/pow(299752.458/(velocity_unit/yr*pc/1e5), 2); // Schwartzschild radius
 
         p2->Mass = -1.0;
+        if (p1->Mass*mass_unit > 200)
+            p1->ParticleType = MassiveBlackHole; // This particle does feedback & accretion in Enzo by EW 2025.6.25
+
         fprintf(mergerout, "---------------Merger remnant properties---------------\n");
         fprintf(mergerout, "Position (pc) - x:%e, y:%e, z:%e, \n", p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
         fprintf(mergerout, "Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", p1->Velocity[0]*velocity_unit/yr*pc/1e5, p1->Velocity[1]*velocity_unit/yr*pc/1e5, p1->Velocity[2]*velocity_unit/yr*pc/1e5);
@@ -372,6 +393,8 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
         p1->dm += 0.5 * p2->Mass;
         p1->dm += p2->dm; // p2 will be deleted in Enzo; So we have to transfer the dm to p1 by EW 2025.4.18
         p1->Mass = mcm;
+        if (p1->Mass*mass_unit > 200)
+            p1->ParticleType = MassiveBlackHole; // This particle does feedback & accretion in Enzo by EW 2025.6.25
         p2->Mass = -1.0;
         fprintf(mergerout, "---------------Merger remnant properties---------------\n");
         fprintf(mergerout, "Position (pc) - x:%e, y:%e, z:%e, \n", p1->Position[0]*position_unit, p1->Position[1]*position_unit, p1->Position[2]*position_unit);
@@ -419,7 +442,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 std::vector<std::string> init_params{std::to_string(double(p1->Mass*mass_unit)), std::to_string(Metallicity), "0.0", "delayed", "zams", "end", "events"};
 
                 size_t id = p1->PID;
-                p1->StellarEvolution = new Star(sevnio, init_params, id, false);
+                p1->StellarEvolution = new StarSEVN(sevnio, init_params, id, false);
 
                 p1->CreationTime = p1->CurrentTimeIrr*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime;
                 p1->InitialMass = p1->Mass*mass_unit;
@@ -428,7 +451,7 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
                 SEVNList.insert({p1->WorldTime + p1->StellarEvolution->getp(Timestep::ID), p1->ParticleIndex});
 
                 SetRadius(p1);
-                fprintf(mergerout, "New Star class made!\n");
+                fprintf(mergerout, "New StarSEVN class made!\n");
                 fprintf(mergerout, "PID: %d. Mass: %e Msol, Z: %e, Radius: %e pc\n", p1->PID, p1->Mass*mass_unit, p1->InitialMetallicity, p1->radius*position_unit);
             }
             fprintf(mergerout, "---------------Merger remnant properties---------------\n");
@@ -442,7 +465,28 @@ void Merge(Particle* p1, Particle* p2) { // Stellar merger
 
             fprintf(mergerout, "Before Mix... p1 (PID: %d). Phase: %d, p2 (PID: %d). Phase: %d\n", p1->PID, int(p1->StellarEvolution->getp(Phase::ID)), p2->PID, int(p2->StellarEvolution->getp(Phase::ID)));
 
-            Mix(p1->StellarEvolution, p2->StellarEvolution);
+            std::stringstream p1_percent;
+            p1_percent << "%" << static_cast<int>(p1->StellarEvolution->plife() * 100)
+                          << ":" << static_cast<int>(p1->StellarEvolution->getp(Phase::ID));
+            std::stringstream p2_percent;
+            p2_percent << "%" << static_cast<int>(p2->StellarEvolution->plife() * 100)
+                          << ":" << static_cast<int>(p2->StellarEvolution->getp(Phase::ID));
+
+            std::vector<std::string> init_params_bin{std::to_string(p1->StellarEvolution->get_zams()), std::to_string(p1->StellarEvolution->get_Z()), "0.0", "delayed", p1_percent.str(), 
+                                                        std::to_string(p2->StellarEvolution->get_zams()), std::to_string(p2->StellarEvolution->get_Z()), "0.0", "delayed", p2_percent.str(), 
+                                                        "0.5", "0.5", "end", "events"};
+
+            size_t id = p1->PID;
+
+            Binstar* binstar = new Binstar(sevnio, init_params_bin, p1->StellarEvolution, p2->StellarEvolution, id, false);
+            binstar->mix = true;
+            auto* process_mix = binstar->getprocess(Mix::ID);
+            process_mix->special_evolve(binstar);
+
+            binstar->custom_destructor();
+            binstar = nullptr;
+
+            // Mix(p1->StellarEvolution, p2->StellarEvolution);
             fprintf(mergerout, "Mix done!\n");
 
             if (p1->StellarEvolution->amiempty() && !p2->StellarEvolution->amiempty()) {

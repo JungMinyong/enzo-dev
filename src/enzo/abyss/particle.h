@@ -84,9 +84,9 @@ struct Particle {
 #endif
 #ifdef SEVN
 	// For SEVN
-	// (SEVN Query) InitialMass == ZAMS mass? Can I change InitialMass if steller merger happenes?
-	Star* StellarEvolution;
-	double WorldTime; // Myr // CreationTime + EvolutionTime
+	// (SEVN Query) InitialMass == ZAMS mass? Can I change InitialMass if stellar merger happenes?
+	StarSEVN* StellarEvolution;
+	double WorldTime; // Myr // CreationTime + elapsed time in SEVN
 	double SNEjectedMass; // code unit
 	double T_eff; // [Kelvin] for wind feedback
 #endif
@@ -144,9 +144,6 @@ struct Particle {
 		WorldTime = 0.0; // Myr
 		SNEjectedMass = 0.0; // code unit
 		T_eff = 0.0; // [Kelvin] for wind feedback
-#endif
-#ifdef INDIVIDUALSTAR
-	int EnzoProcessorNumber;
 #endif
 	}
 
@@ -255,8 +252,9 @@ struct Particle {
 		}
 	}
 	*/
-
+#ifdef CUDA_FLOAT
 	void predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL vel[]);
+#endif
 	void predictParticleSecondOrder(double dt, double pos[], double vel[]);
 	void correctParticleFourthOrder(double dt, double pos[], double vel[], double a[3][4]);
 
@@ -361,18 +359,30 @@ struct Particle {
 			this->NewNeighbors[i] = ptcl->NewNeighbors[i];
 	}
 #ifndef INDIVIDUALSTAR
+		void setFirst(int *PID, double *Mass, double *InitialMass, double *CreationTime, double *DynamicalTime, double *Metallicity,
+					double *Position[Dim], double *Velocity[Dim],
+					double *BackgroundAcceleration[Dim], int &i);
         void set(int *PID, double *Mass, double *CreationTime,
-                 double *DynamicalTime, double *Metallicity,
-                 double *Position[Dim], double *Velocity[Dim],
-                 double *BackgroundAcceleration[Dim], int &i);
+					double *DynamicalTime, double *Metallicity,
+					double *Position[Dim], double *Velocity[Dim],
+					double *BackgroundAcceleration[Dim], int &i);
         void update(double *Mass, double *BackgroundAcceleration[Dim], int &i);
 #else
+		void setFirst(const ParticleDataType &ptcl, const int& ProcessorNumber);
         void set(const ParticleDataType &ptcl, const int& ProcessorNumber);
         void update(const ParticleSendDataType &ptcl, const int& ProcessorNumber);
 #endif
 
 	void print(const double &umass, const double &upos, const double &uvel);
 	void setNewTimeStepWithNewEnzoTimeStep(double &OldEnzoTimeStep, double &NewEnzoTimeStep) ;
+#ifdef COMOVE
+	double getScaleFactor(double dt, double a_i, double a_f){
+		return a_i + (a_f-a_i)*(CurrentTimeIrr+dt*0.5);
+	}
+	double getScaleFactorDot(double dt, double dadt_i, double dadt_f){
+		return dadt_i + (dadt_f-dadt_i)*(CurrentTimeIrr+dt*0.5);
+	}
+#endif
 };
 
 #endif

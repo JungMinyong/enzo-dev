@@ -112,8 +112,8 @@ void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls,
 		NewCM->PID = NewPID;
 		NewPID--;
 #ifdef DEBUG_ABYSS
-		std::cout << "New CM ParticleIndex: " << i << std::endl;
-		std::cout << "New CM PID: " << NewCM->PID << std::endl;
+		fprintf(nbpout, "New CM ParticleIndex, PID: %d, %d\n", i, NewCM->PID);
+		fflush(nbpout);
 #endif
 		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
 
@@ -194,8 +194,8 @@ void formBinariesAfterCommunication(std::vector<int>& newCMptcls,
 		NewCM->PID = NewPID;
 		NewPID--;
 #ifdef DEBUG_ABYSS
-		std::cout << "New CM ParticleIndex: " << i << std::endl;
-		std::cout << "New CM PID: " << NewCM->PID << std::endl;
+		fprintf(nbpout, "New CM ParticleIndex, PID: %d, %d\n", i, NewCM->PID);
+		fflush(nbpout);
 #endif
 		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
 

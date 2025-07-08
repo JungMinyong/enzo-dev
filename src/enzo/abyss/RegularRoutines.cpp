@@ -15,7 +15,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define DEBUG_ABYSS
+#define noDEBUG
 
 void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueScheduler &queue_scheduler);
 
@@ -40,14 +40,16 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
 #ifdef DEBUG_ABYSS
-    std::cout << "calculateRegAccelerationOnGPU starts" << std::endl;
-    std::cout << "RegularList size: " << RegularList.size() << std::endl;
+    fprintf(nbpout, "calculateRegAccelerationOnGPU starts\n");
+    fprintf(nbpout, "RegularList size: %d\n", RegularList.size());
+    fflush(nbpout);
 #endif
 
     calculateRegAccelerationOnGPU(RegularList, queue_scheduler);
 
 #ifdef DEBUG_ABYSS
-    std::cout << "calculateRegAccelerationOnGPU ended" << std::endl;
+    fprintf(nbpout, "calculateRegAccelerationOnGPU ended\n");
+    fflush(nbpout);
 #endif
 
 #ifdef NSIGHT
@@ -59,7 +61,8 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
 #ifdef DEBUG_ABYSS
-    std::cout << "update regular starts" << std::endl;
+    fprintf(nbpout, "update regular starts\n");
+    fflush(nbpout);
 #endif
 
     // Update Regular
@@ -72,7 +75,8 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
 #ifdef DEBUG_ABYSS
-    std::cout << "update regular ended" << std::endl;
+    fprintf(nbpout, "update regular ended\n");
+    fflush(nbpout);
 #endif
 
 #ifdef NSIGHT
@@ -86,6 +90,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
 #ifdef DEBUG_ABYSS
+    /*
     {
         Particle *ptcl;
         for (int index: RegularList)
@@ -146,105 +151,123 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         }
         // fflush(stdout);
     }
+    */
 #endif // endif debug
 }
 #else
-void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
+void RegularRoutines()
 {
-    double next_time = NextRegTimeBlock * global_variable->time_step;
+    // Regular Gravity
+    task = RegForce;
+    completed_tasks = 0;
+    total_tasks = RegularList.size();
+    next_time = NextRegTimeBlock * global_variable->time_step;
 
-#ifdef PERFORMANCETRACE
-				start_point_routine = std::chrono::high_resolution_clock::now();
-#endif
+    // std::cout << "TotalTask=" << total_tasks << std::endl;
 
-#ifdef NSIGHT
-				nvtxRangePushA("RegForce");
-#endif
+    /*
+    std::cout << "RegularList, PID= ";
+    for (int i=0; i<total_tasks; i++) {
+        std::cout << RegularList[i]<< ", ";
+    }*/
+    // std::cout << std::endl;
 
-#ifdef DEBUG
-				std::cout << "Regular force starts" << std::endl;
-#endif
-				// Regular force
-				queue_scheduler.initialize(RegForce);
-				queue_scheduler.takeQueueRegularList(RegularList);
-				do
-				{
-					queue_scheduler.assignQueueAutoRegularList();
-					queue_scheduler.runQueueAuto();
-					queue_scheduler.waitQueue(0); // blocking wait
-				} while (queue_scheduler.isComplete());
-#ifdef DEBUG
-				std::cout << "Regular force ended" << std::endl;
-#endif
+    InitialAssignmentOfTasks(task, total_tasks, TASK_TAG);
+    InitialAssignmentOfTasks(RegularList, next_time, total_tasks, PTCL_TAG);
+    MPI_Waitall(NumberOfCommunication, requests, statuses);
+    NumberOfCommunication = 0;
 
-#ifdef NSIGHT
-				nvtxRangePop();
-#endif
+    // further assignments
+    remaining_tasks = total_tasks - NumberOfWorker;
+    while (completed_tasks < total_tasks)
+    {
+        // Check which worker is done
+        MPI_Irecv(&ptcl_id_return, 1, MPI_INT, MPI_ANY_SOURCE, TERMINATE_TAG, abyss_comm, &request);
+        // Poll until send completes
+        /*
+             flag=0;
+             while (!flag) {
+             MPI_Test(&request, &flag, &status);
+        // Perform other work while waiting
+        }
+        */
+        MPI_Wait(&request, &status);
+        completed_rank = status.MPI_SOURCE;
+        // printf("Rank %d: Send operation completed (%d).\n",completed_rank, ptcl_id_return);
 
-#ifdef PERFORMANCETRACE
-                end_point_routine = std::chrono::high_resolution_clock::now();
-                performance.RegularForce +=
-                    std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
-#endif
+        if (remaining_tasks > 0)
+        {
+            ptcl_id = RegularList[NumberOfWorker + completed_tasks];
+            MPI_Send(&task, 1, MPI_INT, completed_rank, TASK_TAG, abyss_comm);
+            MPI_Send(&ptcl_id, 1, MPI_INT, completed_rank, PTCL_TAG, abyss_comm);
+            MPI_Send(&next_time, 1, MPI_DOUBLE, completed_rank, TIME_TAG, abyss_comm);
+            remaining_tasks--;
+        }
+        else
+        {
+            // printf("Rank %d: No more tasks to assign\n", completed_rank);
+        }
+        // updateSkipList(skiplist, ptcl_id_return);
+        completed_tasks++;
+    }
 
+    // ParticleSynchronization();
 
-#ifdef PERFORMANCETRACE
-                start_point_routine = std::chrono::high_resolution_clock::now();
-#endif
+    // Regular Update
+    // std::cout<< "Reg Acc Done." <<std::endl;
+    task = RegUpdate;
+    completed_tasks = 0;
 
-#ifdef NSIGHT
-				nvtxRangePushA("RegUpdate");
-#endif
+    InitialAssignmentOfTasks(task, total_tasks, TASK_TAG);
+    InitialAssignmentOfTasks(RegularList, total_tasks, PTCL_TAG);
+    MPI_Waitall(NumberOfCommunication, requests, statuses);
+    NumberOfCommunication = 0;
 
-#ifdef DEBUG
-				std::cout << "update regular starts" << std::endl;
-#endif
-				// Update Regular
-				queue_scheduler.initialize(RegUpdate);
-				queue_scheduler.takeQueueRegularList(RegularList);
-				do
-				{
-					queue_scheduler.assignQueueAutoRegularList();
-					queue_scheduler.runQueueAuto();
-					queue_scheduler.waitQueue(0); // blocking wait
-				} while (queue_scheduler.isComplete());
-#ifdef DEBUG
-				std::cout << "update regular ended" << std::endl;
-#endif
+    // further assignments
+    remaining_tasks = total_tasks - NumberOfWorker;
+    while (completed_tasks < total_tasks)
+    {
+        // Check which worker is done
+        MPI_Irecv(&ptcl_id_return, 1, MPI_INT, MPI_ANY_SOURCE, TERMINATE_TAG, abyss_comm, &request);
+        MPI_Wait(&request, &status);
+        completed_rank = status.MPI_SOURCE;
 
-#ifdef NSIGHT
-				nvtxRangePop();
-#endif
+        if (remaining_tasks > 0)
+        {
+            ptcl_id = RegularList[NumberOfWorker + completed_tasks];
+            // MPI_Isend(&task,      1, MPI_INT, completed_rank, TASK_TAG, abyss_comm, &request);
+            // MPI_Isend(&ptcl_id,   1, MPI_INT, completed_rank, PTCL_TAG, abyss_comm, &request);
+            MPI_Send(&task, 1, MPI_INT, completed_rank, TASK_TAG, abyss_comm);
+            MPI_Send(&ptcl_id, 1, MPI_INT, completed_rank, PTCL_TAG, abyss_comm);
+            remaining_tasks--;
+        }
+        else
+        {
+            // printf("Rank %d: No more tasks to assign\n", completed_rank);
+        }
+        completed_tasks++;
+    }
 
-#ifdef PERFORMANCETRACE
-                end_point_routine = std::chrono::high_resolution_clock::now();
-                performance.RegularUpdate +=
-                    std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count();
-#endif
-
-
-#ifdef DEBUG_ABYSS
     //, NextRegTime= %.3e Myr(%llu),
-    //for (int i=0; i<RegularList.size(); i++) {
-    for (int index: RegularList){
-        Particle *ptcl = &particles[index];
+    for (int i=0; i<total_tasks; i++) {
+        ptcl = &particles[RegularList[i]];
         fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr, NextReg = %.3e (%llu)\n"\
                 "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d), NextBlockIrr= %.3e(%llu)\n"\
                 "NumNeighbor= %d\n",
                 ptcl->PID,
-                ptcl->CurrentTimeIrr* global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->CurrentTimeIrr*EnzoTimeStep*1e10/1e6,
                 ptcl->CurrentBlockIrr,
-                ptcl->CurrentTimeReg* global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->CurrentTimeReg*EnzoTimeStep*1e10/1e6,
                 ptcl->CurrentBlockReg,
-                NextRegTimeBlock* global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
+                NextRegTimeBlock*time_step*EnzoTimeStep*1e10/1e6,
                 NextRegTimeBlock,
-                ptcl->TimeStepIrr* global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
-                ptcl->TimeStepReg* global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->TimeStepIrr*EnzoTimeStep*1e10/1e6,
+                ptcl->TimeStepReg*EnzoTimeStep*1e10/1e6,
                 ptcl->TimeBlockIrr,
                 ptcl->TimeLevelIrr,
                 ptcl->TimeBlockReg,
                 ptcl->TimeLevelReg,
-                ptcl->NextBlockIrr* global_variable->time_step*global_variable->EnzoTimeStep*1e10/1e6,
+                ptcl->NextBlockIrr*time_step*EnzoTimeStep*1e10/1e6,
                 ptcl->NextBlockIrr,
                 ptcl->NumberOfNeighbor
                 );
@@ -284,7 +307,6 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 ptcl->a_irr[2][3]
                     );
 */
-#endif
     }
 
     // current_time_irr = particles[ThisLevelNode->ParticleList[0]].CurrentBlockIrr;

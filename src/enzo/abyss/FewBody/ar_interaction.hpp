@@ -9,6 +9,7 @@ extern GlobalVariable *global_variable;
 
 #include "ar_perturber.hpp"
 #include <cassert>
+#include <unordered_set>
 
 #define ASSERT(x) assert(x)
 
@@ -185,12 +186,14 @@ public:
       @param[in] _perturber: pertuber container
       @param[in] _time: current time
     */
-    void calcAccPert(AR::Force* _force, const Particle* _particles, const int _n_particle, const Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
+    // void calcAccPert(AR::Force* _force, const Particle* _particles, const int _n_particle, const Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
+    void calcAccPert(AR::Force* _force, const Particle* _particles, const int _n_particle, Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
         static const Float inv3 = 1.0 / 3.0;
 
         // perturber force
         // const int n_pert = _perturber.neighbor_address.getSize();
         const int n_pert = _particle_cm.NumberOfNeighbor;
+        int n_pert_active = 0;
         // const int n_pert_single = _perturber.n_neighbor_single;
         // const int n_pert_group = _perturber.n_neighbor_group;
 
@@ -205,12 +208,20 @@ public:
             // ChangeOver* changeover[n_pert_single];
             // H4::NBAdr<Particle>::Group* ptclgroup[n_pert_group];
 
+            std::unordered_set<int> CMPtclsSet;
+
             // int n_single_count=0;
             // int n_group_count=0;
             for (int j=0; j<n_pert; j++) {
                 // H4::NBAdr<Particle>::Single* pertj;
                 Particle* pertj;
                 pertj = &particles[pert_adr[j]];
+                if (!pertj->isActive) {
+                    if (pertj->CMPtclIndex != -1) {
+                        CMPtclsSet.insert(pertj->CMPtclIndex);
+                    }
+                    continue;
+                }
                 // int k; // index of predicted data
                 // if (pert_adr[j].type==H4::NBType::group) {
                 //     pertj = &(((H4::NBAdr<Particle>::Group*)pert_adr[j].adr)->cm);
@@ -225,25 +236,88 @@ public:
                 //     n_single_count++;
                 // }
 
+                
+#ifdef COMOVE
+                Float dt = time / global_variable->EnzoTimeStep - pertj->CurrentTimeIrr;
+                // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
+                //ASSERT(dt>=-1e-7);
+                Float vp[3];
+                pertj->predictParticleSecondOrder(dt, xp[n_pert_active], vp);
+                for (int dim=0; dim<Dim; dim++) {
+                    xp[n_pert_active][dim] *= global_variable->a_i; // convert to physical frame
+                }
+#else
                 Float dt = time - pertj->CurrentTimeIrr*global_variable->EnzoTimeStep;
                 // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
                 //ASSERT(dt>=-1e-7);
-                xp[j][0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_irr[0][0] + inv3*dt*pertj->a_irr[0][1]));
-                xp[j][1] = pertj->Position[1] + dt*(pertj->Velocity[1] + 0.5*dt*(pertj->a_irr[1][0] + inv3*dt*pertj->a_irr[1][1]));
-                xp[j][2] = pertj->Position[2] + dt*(pertj->Velocity[2] + 0.5*dt*(pertj->a_irr[2][0] + inv3*dt*pertj->a_irr[2][1]));
+                xp[n_pert_active][0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_tot[0][0] + inv3*dt*pertj->a_tot[0][1]));
+                xp[n_pert_active][1] = pertj->Position[1] + dt*(pertj->Velocity[1] + 0.5*dt*(pertj->a_tot[1][0] + inv3*dt*pertj->a_tot[1][1]));
+                xp[n_pert_active][2] = pertj->Position[2] + dt*(pertj->Velocity[2] + 0.5*dt*(pertj->a_tot[2][0] + inv3*dt*pertj->a_tot[2][1]));
+#endif
 
 
-                m[j] = pertj->Mass;
+                m[n_pert_active] = pertj->Mass;
+                n_pert_active++;
+            }
+            for (int j: CMPtclsSet) {
+                Particle* pertj;
+                pertj = &particles[j];
+
+                if (_particle_cm.PID == pertj->PID) {
+                    continue;
+                }
+
+                if (!pertj->isActive) {
+                    fprintf(stderr, "Why inactive CM ptcl? this PID: %d, neighbor PID: %d\n", _particle_cm.PID, pertj->PID);
+                    assert(pertj->isActive);
+                }
+
+#ifdef COMOVE
+                Float dt = time / global_variable->EnzoTimeStep - pertj->CurrentTimeIrr;
+                // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
+                //ASSERT(dt>=-1e-7);
+                Float vp[3];
+                pertj->predictParticleSecondOrder(dt, xp[n_pert_active], vp);
+                for (int dim=0; dim<Dim; dim++) {
+                    xp[n_pert_active][dim] *= global_variable->a_i; // convert to physical frame
+                }
+#else
+                Float dt = time - pertj->CurrentTimeIrr*global_variable->EnzoTimeStep;
+                // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
+                //ASSERT(dt>=-1e-7);
+                xp[n_pert_active][0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_tot[0][0] + inv3*dt*pertj->a_tot[0][1]));
+                xp[n_pert_active][1] = pertj->Position[1] + dt*(pertj->Velocity[1] + 0.5*dt*(pertj->a_tot[1][0] + inv3*dt*pertj->a_tot[1][1]));
+                xp[n_pert_active][2] = pertj->Position[2] + dt*(pertj->Velocity[2] + 0.5*dt*(pertj->a_tot[2][0] + inv3*dt*pertj->a_tot[2][1]));
+#endif
+                m[n_pert_active] = pertj->Mass;
+                n_pert_active++;
+            }
+            if (n_pert_active != n_pert) {
+                m[n_pert_active] = 0.0;
+                n_pert_active++;
             }
             // ASSERT(n_single_count == n_pert_single);
             // ASSERT(n_group_count == n_pert_group);
-
+#ifdef COMOVE
+            Float dt = time / global_variable->EnzoTimeStep - _particle_cm.CurrentTimeIrr;
+            // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
+            Float vcm[3];
+            for (int dim=0; dim<Dim; dim++) {
+                _particle_cm.Position[dim] /= global_variable->a_i; // convert to comoving frame
+            }
+            _particle_cm.predictParticleSecondOrder(dt, xcm, vcm);
+            for (int dim=0; dim<Dim; dim++) {
+                xcm[dim]                    *= global_variable->a_i; // convert to physical frame
+                _particle_cm.Position[dim]  *= global_variable->a_i; // convert back to physical frame
+            }
+#else
             Float dt = time - _particle_cm.CurrentTimeIrr*global_variable->EnzoTimeStep;
             // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
 
-            xcm[0] = _particle_cm.Position[0] + dt*(_particle_cm.Velocity[0] + 0.5*dt*(_particle_cm.a_irr[0][0] + inv3*dt*_particle_cm.a_irr[0][1]));
-            xcm[1] = _particle_cm.Position[1] + dt*(_particle_cm.Velocity[1] + 0.5*dt*(_particle_cm.a_irr[1][0] + inv3*dt*_particle_cm.a_irr[1][1]));
-            xcm[2] = _particle_cm.Position[2] + dt*(_particle_cm.Velocity[2] + 0.5*dt*(_particle_cm.a_irr[2][0] + inv3*dt*_particle_cm.a_irr[2][1]));
+            xcm[0] = _particle_cm.Position[0] + dt*(_particle_cm.Velocity[0] + 0.5*dt*(_particle_cm.a_tot[0][0] + inv3*dt*_particle_cm.a_tot[0][1]));
+            xcm[1] = _particle_cm.Position[1] + dt*(_particle_cm.Velocity[1] + 0.5*dt*(_particle_cm.a_tot[1][0] + inv3*dt*_particle_cm.a_tot[1][1]));
+            xcm[2] = _particle_cm.Position[2] + dt*(_particle_cm.Velocity[2] + 0.5*dt*(_particle_cm.a_tot[2][0] + inv3*dt*_particle_cm.a_tot[2][1]));
+#endif
 
 
             Float acc_pert_cm[3]={0.0, 0.0, 0.0};
@@ -330,7 +404,8 @@ public:
       @param[in] _time: current time
       \return perturbation energy to calculate slowdown factor
     */
-    Float calcAccPotAndGTKickInv(AR::Force* _force, Float& _epot, const Particle* _particles, const int _n_particle, const Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
+    // Float calcAccPotAndGTKickInv(AR::Force* _force, Float& _epot, const Particle* _particles, const int _n_particle, const Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
+        Float calcAccPotAndGTKickInv(AR::Force* _force, Float& _epot, const Particle* _particles, const int _n_particle, Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
         // inner force
         Float gt_kick_inv;
         if (_n_particle==2) gt_kick_inv = calcInnerAccPotAndGTKickInvTwo(_force[0], _force[1], _epot, _particles[0], _particles[1]);
@@ -449,7 +524,8 @@ public:
       @param[in] _particle_cm: center-of-mass particle
       @param[in] _perturber: pertuber container
     */
-    void calcSlowDownPert(Float& _pert_out, Float& _t_min_sq, const Float& _time, const Particle& _particle_cm, const Perturber& _perturber) {
+    // void calcSlowDownPert(Float& _pert_out, Float& _t_min_sq, const Float& _time, const Particle& _particle_cm, const Perturber& _perturber) {
+    void calcSlowDownPert(Float& _pert_out, Float& _t_min_sq, const Float& _time, Particle& _particle_cm, const Perturber& _perturber) {
         static const Float inv3 = 1.0 / 3.0;
 
         // const int n_pert = _perturber.neighbor_address.getSize();
@@ -459,12 +535,29 @@ public:
 
             auto pert_adr = _particle_cm.Neighbors;
 
+            std::unordered_set<int> CMPtclsSet;
+
             Float xp[3], xcm[3];
+#ifdef COMOVE
+            Float dt = _time / global_variable->EnzoTimeStep - _particle_cm.CurrentTimeIrr;
+            // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
+            Float vcm2[3];
+            for (int dim=0; dim<Dim; dim++) {
+                _particle_cm.Position[dim] /= global_variable->a_i; // convert to comoving frame
+            }
+            _particle_cm.predictParticleSecondOrder(dt, xcm, vcm2);
+            for (int dim=0; dim<Dim; dim++) {
+                xcm[dim]                    *= global_variable->a_i; // convert to physical frame
+                _particle_cm.Position[dim]  *= global_variable->a_i; // convert back to physical frame
+            }
+
+#else
             Float dt = _time - _particle_cm.CurrentTimeIrr*global_variable->EnzoTimeStep;
             // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
-            xcm[0] = _particle_cm.Position[0] + dt*(_particle_cm.Velocity[0] + 0.5*dt*(_particle_cm.a_irr[0][0] + inv3*dt*_particle_cm.a_irr[0][1]));
-            xcm[1] = _particle_cm.Position[1] + dt*(_particle_cm.Velocity[1] + 0.5*dt*(_particle_cm.a_irr[1][0] + inv3*dt*_particle_cm.a_irr[1][1]));
-            xcm[2] = _particle_cm.Position[2] + dt*(_particle_cm.Velocity[2] + 0.5*dt*(_particle_cm.a_irr[2][0] + inv3*dt*_particle_cm.a_irr[2][1]));
+            xcm[0] = _particle_cm.Position[0] + dt*(_particle_cm.Velocity[0] + 0.5*dt*(_particle_cm.a_tot[0][0] + inv3*dt*_particle_cm.a_tot[0][1]));
+            xcm[1] = _particle_cm.Position[1] + dt*(_particle_cm.Velocity[1] + 0.5*dt*(_particle_cm.a_tot[1][0] + inv3*dt*_particle_cm.a_tot[1][1]));
+            xcm[2] = _particle_cm.Position[2] + dt*(_particle_cm.Velocity[2] + 0.5*dt*(_particle_cm.a_tot[2][0] + inv3*dt*_particle_cm.a_tot[2][1]));
+#endif
 
             Float mcm = _particle_cm.Mass;
             // auto& chi = _particle_cm.changeover;
@@ -472,21 +565,41 @@ public:
 #ifdef AR_SLOWDOWN_TIMESCALE
             // velocity dependent method 
             Float vp[3], vcm[3];
-
-            vcm[0] = _particle_cm.Velocity[0] + dt*(_particle_cm.a_irr[0][0] + 0.5*dt*_particle_cm.a_irr[0][1]);
-            vcm[1] = _particle_cm.Velocity[1] + dt*(_particle_cm.a_irr[1][0] + 0.5*dt*_particle_cm.a_irr[1][1]);
-            vcm[2] = _particle_cm.Velocity[2] + dt*(_particle_cm.a_irr[2][0] + 0.5*dt*_particle_cm.a_irr[2][1]);
+#ifdef COMOVE
+            vcm[0] = vcm2[0];
+            vcm[1] = vcm2[1];
+            vcm[2] = vcm2[2];
+#else
+            vcm[0] = _particle_cm.Velocity[0] + dt*(_particle_cm.a_tot[0][0] + 0.5*dt*_particle_cm.a_tot[0][1]);
+            vcm[1] = _particle_cm.Velocity[1] + dt*(_particle_cm.a_tot[1][0] + 0.5*dt*_particle_cm.a_tot[1][1]);
+            vcm[2] = _particle_cm.Velocity[2] + dt*(_particle_cm.a_tot[2][0] + 0.5*dt*_particle_cm.a_tot[2][1]);
+#endif
 #endif
 
             for (int j=0; j<n_pert; j++) {
                 Particle* pertj;
                 pertj = &particles[pert_adr[j]];
-
+                if (!pertj->isActive) {
+                    if (pertj->CMPtclIndex != -1) {
+                        CMPtclsSet.insert(pertj->CMPtclIndex);
+                    }
+                    continue;
+                }
+#ifdef COMOVE
+                Float dt = _time / global_variable->EnzoTimeStep - pertj->CurrentTimeIrr;
+                // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
+                Float vp2[3];
+                pertj->predictParticleSecondOrder(dt, xp, vp2);
+                for (int dim=0; dim<Dim; dim++) {
+                    xp[dim] *= global_variable->a_i; // convert to physical frame
+                }
+#else
                 Float dt = _time - pertj->CurrentTimeIrr*global_variable->EnzoTimeStep;
                 // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
-                xp[0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_irr[0][0] + inv3*dt*pertj->a_irr[0][1]));
-                xp[1] = pertj->Position[1] + dt*(pertj->Velocity[1] + 0.5*dt*(pertj->a_irr[1][0] + inv3*dt*pertj->a_irr[1][1]));
-                xp[2] = pertj->Position[2] + dt*(pertj->Velocity[2] + 0.5*dt*(pertj->a_irr[2][0] + inv3*dt*pertj->a_irr[2][1]));
+                xp[0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_tot[0][0] + inv3*dt*pertj->a_tot[0][1]));
+                xp[1] = pertj->Position[1] + dt*(pertj->Velocity[1] + 0.5*dt*(pertj->a_tot[1][0] + inv3*dt*pertj->a_tot[1][1]));
+                xp[2] = pertj->Position[2] + dt*(pertj->Velocity[2] + 0.5*dt*(pertj->a_tot[2][0] + inv3*dt*pertj->a_tot[2][1]));
+#endif
 
                 Float mj = pertj->Mass;
 
@@ -504,9 +617,79 @@ public:
 
 #ifdef AR_SLOWDOWN_TIMESCALE
                 // velocity dependent method 
-                vp[0] = pertj->Velocity[0] + dt*(pertj->a_irr[0][0] + 0.5*dt*pertj->a_irr[0][1]);
-                vp[1] = pertj->Velocity[1] + dt*(pertj->a_irr[1][0] + 0.5*dt*pertj->a_irr[1][1]);
-                vp[2] = pertj->Velocity[2] + dt*(pertj->a_irr[2][0] + 0.5*dt*pertj->a_irr[2][1]);
+#ifdef COMOVE
+                vp[0] = vp2[0];
+                vp[1] = vp2[1];
+                vp[2] = vp2[2];
+#else
+                vp[0] = pertj->Velocity[0] + dt*(pertj->a_tot[0][0] + 0.5*dt*pertj->a_tot[0][1]);
+                vp[1] = pertj->Velocity[1] + dt*(pertj->a_tot[1][0] + 0.5*dt*pertj->a_tot[1][1]);
+                vp[2] = pertj->Velocity[2] + dt*(pertj->a_tot[2][0] + 0.5*dt*pertj->a_tot[2][1]);
+#endif
+
+                Float dv[3] = {vp[0] - vcm[0],
+                               vp[1] - vcm[1],
+                               vp[2] - vcm[2]};
+
+                // identify whether hyperbolic or closed orbit
+                Float gm = gravitational_constant*(mcm+mj);
+
+                calcSlowDownTimeScale(_t_min_sq, dv, dr, r, gm);
+#endif
+            }
+            for (int j: CMPtclsSet) {
+                Particle* pertj;
+                pertj = &particles[j];
+
+                if (_particle_cm.PID == pertj->PID) {
+                    continue;
+                }
+
+                if (!pertj->isActive) {
+                    fprintf(stderr, "Why inactive CM ptcl? this PID: %d, neighbor PID: %d\n", _particle_cm.PID, pertj->PID);
+                    assert(pertj->isActive);
+                }
+#ifdef COMOVE
+                Float dt = _time / global_variable->EnzoTimeStep - pertj->CurrentTimeIrr;
+                // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
+                Float vp2[3];
+                pertj->predictParticleSecondOrder(dt, xp, vp2);
+                for (int dim=0; dim<Dim; dim++) {
+                    xp[dim] *= global_variable->a_i; // convert to physical frame
+                }
+#else
+                Float dt = _time - pertj->CurrentTimeIrr*global_variable->EnzoTimeStep;
+                // ASSERT(dt>=0.0); // Eunwoo debug // Is this necessary?
+                xp[0] = pertj->Position[0] + dt*(pertj->Velocity[0] + 0.5*dt*(pertj->a_tot[0][0] + inv3*dt*pertj->a_tot[0][1]));
+                xp[1] = pertj->Position[1] + dt*(pertj->Velocity[1] + 0.5*dt*(pertj->a_tot[1][0] + inv3*dt*pertj->a_tot[1][1]));
+                xp[2] = pertj->Position[2] + dt*(pertj->Velocity[2] + 0.5*dt*(pertj->a_tot[2][0] + inv3*dt*pertj->a_tot[2][1]));
+#endif
+
+                Float mj = pertj->Mass;
+
+                // auto& chj = pertj->changeover;
+
+                Float dr[3] = {xp[0] - xcm[0],
+                               xp[1] - xcm[1],
+                               xp[2] - xcm[2]};
+
+                Float r2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+                Float r = sqrt(r2);
+                // Float k  = ChangeOver::calcAcc0WTwo(chi, chj, r);
+                // _pert_out += calcPertFromMR(r, mcm, k*mj);
+                _pert_out += calcPertFromMR(r, mcm, mj);
+
+#ifdef AR_SLOWDOWN_TIMESCALE
+                // velocity dependent method 
+#ifdef COMOVE
+                vp[0] = vp2[0];
+                vp[1] = vp2[1];
+                vp[2] = vp2[2];
+#else
+                vp[0] = pertj->Velocity[0] + dt*(pertj->a_tot[0][0] + 0.5*dt*pertj->a_tot[0][1]);
+                vp[1] = pertj->Velocity[1] + dt*(pertj->a_tot[1][0] + 0.5*dt*pertj->a_tot[1][1]);
+                vp[2] = pertj->Velocity[2] + dt*(pertj->a_tot[2][0] + 0.5*dt*pertj->a_tot[2][1]);
+#endif
 
                 Float dv[3] = {vp[0] - vcm[0],
                                vp[1] - vcm[1],

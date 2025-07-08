@@ -1323,7 +1323,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	fprintf(fptr, "NbodyBinaryRegularization     = %d\n", NbodyBinaryRegularization); 
 	fprintf(fptr, "NbodyBinaryDistance           = %d\n", NbodyBinaryDistance); 
 	fprintf(fptr, "NbodyBinaryTimeStep           = %d\n\n", NbodyBinaryTimeStep); 
-
+  fprintf(fptr, "NbodyStoreTimeStep           = %d\n\n", NbodyStoreTimeStep);
 	//fprintf(fptr, "UseNbodyClusterIdentificationOnTheFly = %d\n", isNbodyParticleIdentification);
 
   /* Poisson Solver */

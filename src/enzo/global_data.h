@@ -78,6 +78,7 @@ EXTERN double NbodyNeighborRadius;
 EXTERN int NbodyFixNumNeighbor;
 EXTERN int NbodyMaxNumNeighbor;
 EXTERN int NbodyBinaryRegularization;
+EXTERN int NbodyStoreTimeStep;
 EXTERN double NbodyBinaryDistance;
 EXTERN double NbodyBinaryTimeStep;
 EXTERN int NbodyNewStarToNbody;

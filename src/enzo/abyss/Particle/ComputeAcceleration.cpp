@@ -9,6 +9,10 @@
 
 
 void calculateSingleAcceleration(Particle *ptcl2, double *pos, double *vel, double (&a)[3], double (&adot)[3], int sign);
+double FourthOrderCorrectionPos(double x, double a2, double a3, double dt4, double dt5);
+double FourthOrderCorrectionVel(double v, double a2, double a3, double dt3, double dt4);
+double FourthOrderCorrectionPos(double x, double a2, double a3, double dt4, double dt5, double a);
+double FourthOrderCorrectionVel(double v, double a2, double a3, double dt3, double dt4, double a);
 
 void Particle::computeAccelerationIrr() {
 
@@ -97,14 +101,23 @@ void Particle::computeAccelerationIrr() {
 			vx += v[dim]*x[dim];
 		}
 
+#ifdef COMOVE
+		if (sqrt(r2)*global_variable->a_i < RSEARCH/position_unit && vx < 0)
+			this->NewNeighbors[this->NewNumberOfNeighbor++] = this->Neighbors[i];
+#else
 		if (sqrt(r2) < RSEARCH/position_unit && vx < 0)
 			this->NewNeighbors[this->NewNumberOfNeighbor++] = this->Neighbors[i];
+#endif
 
 		//mdot = ptcl->evolveStarMass(CurrentTimeIrr,
-				//CurrentTimeIrr+TimeStepIrr*1.01)/TimeStepIrr*1e-2; // derivative can be improved
-																													 //
-																													 // add the contribution of jth particle to acceleration of current and predicted times
+		//CurrentTimeIrr+TimeStepIrr*1.01)/TimeStepIrr*1e-2; // derivative can be improved
+		//
+		// add the contribution of jth particle to acceleration of current and predicted times
 
+#ifndef FEWBODY
+		if (EPS2 > 0) r2 += EPS2;
+#endif
+		
 		m_r3 = ptcl->Mass/(r2*sqrt(r2));
 
 		for (int dim=0; dim<Dim; dim++){
@@ -141,13 +154,22 @@ void Particle::computeAccelerationIrr() {
 			vx += v[dim]*x[dim];
 		}
 
+#ifdef COMOVE
+		if (sqrt(r2)*global_variable->a_i < RSEARCH/position_unit && vx < 0)
+			this->NewNeighbors[this->NewNumberOfNeighbor++] = i;
+#else
 		if (sqrt(r2) < RSEARCH/position_unit && vx < 0)
 			this->NewNeighbors[this->NewNumberOfNeighbor++] = i;
+#endif
 
 		//mdot = ptcl->evolveStarMass(CurrentTimeIrr,
-				//CurrentTimeIrr+TimeStepIrr*1.01)/TimeStepIrr*1e-2; // derivative can be improved
-																													//
-																													// add the contribution of jth particle to acceleration of current and predicted times
+		//CurrentTimeIrr+TimeStepIrr*1.01)/TimeStepIrr*1e-2; // derivative can be improved
+		//
+		// add the contribution of jth particle to acceleration of current and predicted times
+
+#ifndef FEWBODY
+		if (EPS2 > 0) r2 += EPS2;
+#endif
 
 		m_r3 = ptcl->Mass/(r2*sqrt(r2));
 
@@ -156,7 +178,13 @@ void Particle::computeAccelerationIrr() {
 			adot_tmp[dim] += m_r3*(v[dim] - 3*x[dim]*vx/r2);
 		}
 	}
-
+#ifdef COMOVE
+	double a = global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(new_time);
+	for (int dim=0; dim<Dim; dim++){
+		a_tmp[dim]    /= a*a;
+		adot_tmp[dim] /= a*a*a;
+	}
+#endif
 
 	double a2, a3, da_dt2, adot_dt, dt2, dt3, dt4, dt5;
 	double dt_ex = (new_time - this->CurrentTimeReg)*global_variable->EnzoTimeStep;
@@ -192,7 +220,7 @@ void Particle::computeAccelerationIrr() {
 		// save the values in the temporary variables
 		this->NewPosition[dim] = pos[dim] + a2*dt + a3*dt;
 		this->NewVelocity[dim] = vel[dim] + 4*a2  + 5*a3;
-
+		// change this for ifdef COMOVE!
 
 		// note that these higher order terms and lowers have different neighbors
 		this->a_irr[dim][0] = a_tmp[dim];
@@ -208,8 +236,14 @@ void Particle::computeAccelerationIrr() {
 
 		// 4th order correction
 		// save the values in the temporary variables
-		this->NewPosition[dim] = pos[dim] + a2*dt4/24 + a3*dt5/120;
-		this->NewVelocity[dim] = vel[dim] + a2*dt3/6  + a3*dt4/24;
+#ifdef COMOVE
+		double a = global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(this->CurrentTimeIrr+this->TimeStepIrr*0.5);
+		this->NewPosition[dim] = FourthOrderCorrectionPos(pos[dim], a2, a3, dt4, dt5, a);
+		this->NewVelocity[dim] = FourthOrderCorrectionVel(vel[dim], a2, a3, dt3, dt4, a);
+#else
+		this->NewPosition[dim] = FourthOrderCorrectionPos(pos[dim], a2, a3, dt4, dt5);
+		this->NewVelocity[dim] = FourthOrderCorrectionVel(vel[dim], a2, a3, dt3, dt4);
+#endif
 
 		// note that these higher order terms and lowers have different neighbors
 		this->a_irr[dim][0] = a_tmp[dim];
@@ -341,6 +375,10 @@ void Particle::computeAccelerationReg() {
 
 
 		if (r2 < this->RadiusOfNeighbor) {
+#ifndef FEWBODY
+			if (EPS2 > 0) r2 += EPS2;
+			m_r3 = ptcl->Mass/r2/sqrt(r2);
+#endif
 			if (!ptcl->isCMptcl) {
 				this->NewNeighbors[this->NewNumberOfNeighbor] = ptcl->ParticleIndex;
 				this->NewNumberOfNeighbor++;
@@ -386,9 +424,14 @@ void Particle::computeAccelerationReg() {
 
 		// 4th order correction
 		// save the values in the temporary variables
-		this->NewPosition[dim] = pos[dim] + a2*dt4/24 + a3*dt5/120;
-		this->NewVelocity[dim] = vel[dim] + a2*dt3/6  + a3*dt4/24;
-
+#ifdef COMOVE
+		double a = global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(this->CurrentTimeIrr+this->TimeStepIrr*0.5);
+		this->NewPosition[dim] = FourthOrderCorrectionPos(pos[dim], a2, a3, dt4, dt5, a);
+		this->NewVelocity[dim] = FourthOrderCorrectionVel(vel[dim], a2, a3, dt3, dt4, a);
+#else
+		this->NewPosition[dim] = FourthOrderCorrectionPos(pos[dim], a2, a3, dt4, dt5);
+		this->NewVelocity[dim] = FourthOrderCorrectionVel(vel[dim], a2, a3, dt3, dt4);
+#endif
 
 		this->a_reg[dim][2] = a2;
 		this->a_reg[dim][3] = a3;
@@ -601,7 +644,6 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 					dr2    += dx[dim]*dx[dim];
 					dxdv   += dx[dim]*dv[dim];
 				}
-
 				m_r3 = ptcl->Mass/dr2/sqrt(dr2);
 
 				for (int dim=0; dim<Dim; dim++){
@@ -636,6 +678,9 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 				dxdv   += dx[dim]*dv[dim];
 			}
 
+#ifndef FEWBODY
+			if (EPS2 > 0) dr2 += EPS2;
+#endif
 			m_r3 = ptcl->Mass/dr2/sqrt(dr2);
 
 			for (int dim=0; dim<Dim; dim++){
@@ -656,6 +701,13 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 	}
 
 
+#ifdef COMOVE
+	double a = global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(new_time);
+	for (int dim=0; dim<Dim; dim++){
+		a_tmp[dim]    /= a*a;
+		adot_tmp[dim] /= a*a*a;
+	}
+#endif
 
 	/*******************************************************
 	 * Acceleartion correction according to past neighbor
@@ -703,8 +755,15 @@ void Particle::updateRegularParticleCuda(int *NewNeighborsGPU, int NewNumberOfNe
 
 		// 4th order correction
 		// save the values in the temporary variables
-		this->NewPosition[dim] = pos[dim] + a2*dt4/24 + a3*dt5/120;
-		this->NewVelocity[dim] = vel[dim] + a2*dt3/6  + a3*dt4/24;
+#ifdef COMOVE
+		double a = global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(this->CurrentTimeIrr+this->TimeStepIrr*0.5);
+		this->NewPosition[dim] = FourthOrderCorrectionPos(pos[dim], a2, a3, dt4, dt5, a);
+		this->NewVelocity[dim] = FourthOrderCorrectionVel(vel[dim], a2, a3, dt3, dt4, a);
+#else
+		this->NewPosition[dim] = FourthOrderCorrectionPos(pos[dim], a2, a3, dt4, dt5);
+		this->NewVelocity[dim] = FourthOrderCorrectionVel(vel[dim], a2, a3, dt3, dt4);
+#endif
+
 
 		this->a_reg[dim][2] = a2;
 		this->a_reg[dim][3] = a3;
@@ -805,9 +864,13 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 				vx += v[dim]*x[dim];
 			}
 	
-			// if (sqrt(r2) < RSEARCH/position_unit && vx < 0)
+#ifdef COMOVE
+			if (sqrt(r2)*global_variable->a_i < RSEARCH/position_unit) // not considering vx < 0 because this primordial binary search is for avoiding too small time step case
+				this->NewNeighbors[this->NewNumberOfNeighbor++] = ptcl_neighbor->ParticleIndex;
+#else
 			if (sqrt(r2) < RSEARCH/position_unit) // not considering vx < 0 because this primordial binary search is for avoiding too small time step case
 				this->NewNeighbors[this->NewNumberOfNeighbor++] = ptcl_neighbor->ParticleIndex;
+#endif
 		}
 	}
 	assert(this->NumberOfNeighbor >= NewNumberOfNeighborGPU);
@@ -856,4 +919,26 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 	}
 
 	this->NextBlockIrr = this->CurrentBlockIrr + this->TimeBlockIrr;
+}
+
+double FourthOrderCorrectionPos(double x, double a2, double a3, double dt4, double dt5){
+	double pos;
+	pos = x + a2*dt4/24 + a3*dt5/120;
+	return pos;
+}
+double FourthOrderCorrectionVel(double v, double a2, double a3, double dt3, double dt4){
+	double vel;
+	vel = v + a2*dt3/6  + a3*dt4/24;
+	return vel;
+}
+double FourthOrderCorrectionPos(double x, double a2, double a3, double dt4, double dt5, double a){
+	double pos;
+	pos = x + (a2*dt4/24 + a3*dt5/120)/a;
+	// pos = x + (a2*dt4/24 + a3*dt5/120)/a/a;
+	return pos;
+}
+double FourthOrderCorrectionVel(double v, double a2, double a3, double dt3, double dt4, double a){
+	double vel;
+	vel = v + (a2*dt3/6  + a3*dt4/24);
+	return vel;
 }

@@ -15,7 +15,7 @@
 #include <nvToolsExt.h>
 #endif
 
-#define DEBUG
+#define noDEBUG
 
 
 
@@ -370,7 +370,7 @@ void GetAcceleration(
 	int NumTargetTotal, int h_target_list[], 
 	CUDA_REAL areg[][3], CUDA_REAL areg_dot[][3], CUDA_REAL airr[][3], CUDA_REAL airr_dot[][3], 
 	CUDA_REAL areg_dotdot[][3], CUDA_REAL areg_dotdotdot[][3], CUDA_REAL airr_dotdot[][3], CUDA_REAL airr_dotdotdot[][3], 
-	int NumNeighbor[], int *NeighborList
+	int NumNeighbor[], int *NeighborList, CUDA_REAL EPS2
 ) {
     assert(is_open);
 	assert((NumTargetTotal > 0) && (NumTargetTotal <= NNB));
@@ -447,7 +447,8 @@ void GetAcceleration(
                 d_num_neighbor_block_array[i],
                 TargetStart,   // i_start
 				deviceJStart, // j_start
-				NNB
+				NNB,
+				EPS2
             );
 			//cudaStreamSynchronize(streams[i]);
 
@@ -642,7 +643,8 @@ void GetAcceleration(
                 d_target_array[i],
                 TargetStart,   // i_start
 				deviceJStart, // j_start
-				NNB
+				NNB,
+				EPS2
             );
 
 
@@ -1199,7 +1201,7 @@ void _InitializeDevice(int irank){
 
 
 	if (AbyssProcessorNumber == ROOT) {
-	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname, deviceCount, devid, prop.name);
+	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
 	}
 
 	for (int deviceNum = 0; deviceNum < deviceCount; deviceNum++) {
@@ -1287,7 +1289,7 @@ void _InitializeDevice(int irank){
 void _InitializeDevice(int irank){
 
 	if (AbyssProcessorNumber == ROOT) {
-		std::cout << "Initializing CUDA ..." << std::endl;
+	std::cout << "Initializing CUDA ..." << std::endl;
 	}
 	// Select CUDA device (optional)
 	int deviceNum = 0; // Choose GPU device 0
@@ -1305,7 +1307,7 @@ void _InitializeDevice(int irank){
 
 
 	if (AbyssProcessorNumber == ROOT) {
-		fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
+	fprintf(stderr, "# GPU initialization - rank: %d; HOST %s; NGPU %d; device: %d %s\n", irank, hostname,numGPU, devid, prop.name);
 	}
 
 
@@ -1509,11 +1511,11 @@ extern "C" {
 	void InitializationOnDevice(int *NumTargetTotal, int *h_target_list, 
 		CUDA_REAL areg[][3], CUDA_REAL areg_dot[][3], CUDA_REAL airr[][3], CUDA_REAL airr_dot[][3], 
 		CUDA_REAL areg_dotdot[][3], CUDA_REAL areg_dotdotdot[][3], CUDA_REAL airr_dotdot[][3], CUDA_REAL airr_dotdotdot[][3], 
-		int NumNeighbor[], int *NeighborList) {
+		int NumNeighbor[], int *NeighborList, CUDA_REAL EPS2){
 		GetAcceleration(*NumTargetTotal, h_target_list, 
 			areg, areg_dot, airr, airr_dot,
 			areg_dotdot, areg_dotdotdot, airr_dotdot, airr_dotdotdot,
-			NumNeighbor, NeighborList);
+			NumNeighbor, NeighborList, EPS2);
 	}
 }
 

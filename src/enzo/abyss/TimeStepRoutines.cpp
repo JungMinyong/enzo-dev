@@ -112,6 +112,13 @@ void getBlockTimeStep(double dt, int &TimeLevel, ULL &TimeBlock, double &TimeSte
 
 	TimeStep = static_cast<double>(pow(2, TimeLevel));
 	TimeBlock = static_cast<ULL>(pow(2, TimeLevel-global_variable->time_block));
+	if (TimeLevel > 100000) { // newly added for debugging by EW 2025.5.21
+		fprintf(stderr, "In getBlockTimeStep... dt: %e, global_variable->EnzoTimeStep: %e, TimeLevel: %d\n",
+				dt, global_variable->EnzoTimeStep, TimeLevel);
+		fprintf(stderr, "global_variable->time_block: %d, TimeStep: %e, TimeBlock: %llu\n",
+				global_variable->time_block, TimeStep, TimeBlock);
+		fflush(stderr);
+	}
 }
 
 

@@ -20,7 +20,6 @@ void WorkerRoutines() {
 
 	std::cout << "Processor " << AbyssProcessorNumber << " is ready." << std::endl;
 	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
-	fflush(nbpout);
 
 	TaskName task = Error;
 	MPI_Status status;
@@ -61,8 +60,16 @@ void WorkerRoutines() {
 				MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status); // (Query to myself) it seems like it's not needed.
 #ifdef PerformanceTrace
 				ptcl = &particles[ptcl_index];
+#ifdef DEBUG_ABYSS
+				// fprintf(nbpout, "In IrrForce... 1. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
+#endif
 				start_point = std::chrono::high_resolution_clock::now();
 				ptcl->computeAccelerationIrr();
+#ifdef DEBUG_ABYSS
+				// fprintf(nbpout, "In IrrForce... 2. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
+#endif
 				end_point = std::chrono::high_resolution_clock::now();
 				performance.IrregularForce +=
 					std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
@@ -72,6 +79,10 @@ void WorkerRoutines() {
 
 				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
 				ptcl->calculateTimeStepIrr();
+#ifdef DEBUG_ABYSS
+				// fprintf(nbpout, "In IrrForce... 3. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
+#endif
 				ptcl->NextBlockIrr = ptcl->NewCurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
 				ptcl->isUpdateToDate = true;
 				//std::cout << "IrrCal done " << AbyssProcessorNumber << std::endl;
@@ -176,7 +187,8 @@ void WorkerRoutines() {
 				//std::cout << "Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
 				ptcl = &particles[ptcl_index];
 				//std::cerr << ptcl_index+i << std::endl;
-				CalculateAcceleration01(ptcl);
+				if (ptcl->Mass > 0) // There might be initial PISN particles by EW 2025.5.1
+					CalculateAcceleration01(ptcl);
 				//std::cout << "Processor " << AbyssProcessorNumber<< " done." << std::endl;
 				break;
 
@@ -184,15 +196,16 @@ void WorkerRoutines() {
 				MPI_Recv(&ptcl_index, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, &status);
 				//std::cout << "Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
 				ptcl = &particles[ptcl_index];
-				CalculateAcceleration23(ptcl);
+				if (ptcl->Mass > 0) // There might be initial PISN particles by EW 2025.5.1
+					CalculateAcceleration23(ptcl);
 				break;
 
 			case InitTime: // Initialize Time Step
 				MPI_Recv(&ptcl_index, 1, MPI_INT, ROOT, PTCL_TAG, abyss_comm, &status);
 				//std::cout << "Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
 				ptcl = &particles[ptcl_index];
-				//if (ptcl->isActive)
-				ptcl->initializeTimeStep();
+				if (ptcl->Mass > 0) // There might be initial PISN particles by EW 2025.5.1
+					ptcl->initializeTimeStep();
 				break;
 
 			case TimeSync: // Initialize Timestep variables
@@ -214,7 +227,8 @@ void WorkerRoutines() {
 				ptcl = &particles[ptcl_index];
 
 				ptcl->NewNumberOfNeighbor = 0;
-				ptcl->checkNewGroup2();
+				if (ptcl->Mass > 0) // There might be initial PISN particles by EW 2025.5.1
+					ptcl->checkNewGroup2();
 
 				break;
 
@@ -265,8 +279,8 @@ void WorkerRoutines() {
 
 				NewFBInitialization(ptcl);
 #ifdef DEBUG_ABYSS
-				std::cout << "FewBody object of particle " << ptcl->PID
-						  << " is successfully initialized on rank " << AbyssProcessorNumber << "." <<std::endl;
+				// std::cout << "FewBody object of particle " << ptcl->PID
+				// 		  << " is successfully initialized on rank " << AbyssProcessorNumber << "." <<std::endl;
 #endif
 				break;
 
@@ -281,6 +295,10 @@ void WorkerRoutines() {
 				MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status);
 				
 				ptcl = &particles[ptcl_index];
+#ifdef DEBUG_ABYSS
+				// fprintf(nbpout, "In ARIntegration... 1. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
+#endif
 				// std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << std::endl;
 
 				/* (Query) this will be done already. 
@@ -296,22 +314,28 @@ void WorkerRoutines() {
 				}
 				
 				ptcl->GroupInfo->ARIntegration(next_time);
+#ifdef DEBUG_ABYSS
+				// fprintf(nbpout, "In ARIntegration... 2. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
+#endif
 				if (!ptcl->GroupInfo->isMerger && !ptcl->GroupInfo->isTerminate)
 					ptcl->GroupInfo->isTerminate = ptcl->GroupInfo->CheckBreak();
+#ifdef DEBUG_ABYSS
+				// fprintf(nbpout, "In ARIntegration... 3. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
+#endif
 
 				if (ptcl->GroupInfo->isTerminate) {
 					if (ptcl->getBinaryInterruptState() == BinaryInterruptState::none)
 						ptcl->setBinaryInterruptState(BinaryInterruptState::terminated);
 
 					delete ptcl->GroupInfo;
-#ifdef DEBUG_ABYSS
-					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " deleted!" <<std::endl;
-#endif
 				}
 #ifdef DEBUG_ABYSS
-				else
-					std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " done!" <<std::endl;
+				// fprintf(nbpout, "In ARIntegration... 4. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
 #endif
+
 				break;
 			
 			case MergeManyBody: // Merger insided many-body (>2) group

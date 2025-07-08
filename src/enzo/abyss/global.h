@@ -69,12 +69,14 @@ extern ULL binary_block;
 
 // Enzo to Abyss
 extern double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
+extern double EnzoCurrentTime;
 extern double ClusterRadius2;
 extern double ClusterAcceleration[Dim];
 extern double ClusterPosition[Dim];
 extern double ClusterVelocity[Dim];
 extern double EnzoClusterPosition[Dim+1];
 extern int BinaryRegularization;
+extern int StoreTimeStep;
 extern int IdentifyOnTheFly;
 #ifndef INDIVIDUALSTAR
 extern int *EnzoPIDs; // stores the order of pids from enzo.
@@ -104,6 +106,8 @@ extern double outputTime;
 extern int outNum;
 extern double outputTimeStep;
 
+extern double AbyssCenter[3];
+
 extern FILE* nbpout;
 extern FILE* binout;
 extern FILE* mergerout;
@@ -111,6 +115,15 @@ extern FILE* mergerout;
 extern FILE* SEVNout;
 extern IO* sevnio;
 extern std::multimap<double, int> SEVNList;
+
+extern int NumberOfEnzoSEVNParticle;		// This is the number of SEVN particles in Enzo, not in Abyss by EW 2025.4.27
+extern int newNumberOfEnzoSEVNParticle;	// This is the number of SEVN particles newly added in Enzo, not in Abyss by EW 2025.4.27
+extern std::unordered_map<int,int> PIDtoIndexMap_SEVN;
+extern int *EnzoPIDs_SEVN; // stores the order of pids from enzo.
+
+extern std::vector<StarSEVN*> SEVNList_Enzo;
+extern std::vector<double> creation_time_Enzo;
+extern std::vector<double> world_time_Enzo;
 #endif
 extern FILE* workerout;
 

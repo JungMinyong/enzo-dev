@@ -15,7 +15,6 @@
 #endif
 
 #define noDEBUG
-//#define DEBUG_ABYSS
 
 void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);
@@ -49,9 +48,21 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef NSIGHT
     nvtxRangePushA("createSkipList");
 #endif
+
+#ifdef DEBUG_ABYSS
+    fprintf(nbpout, "createSkipList starts\n");
+    fflush(nbpout);
+#endif
+
     skiplist = new SkipList(max_level, prob);
     if (createSkipList(skiplist) == FAIL)
         fprintf(stderr, "There are no irregular particles!\nBut is it really happening? check skiplist->display()\n");
+
+#ifdef DEBUG_ABYSS
+    fprintf(nbpout, "createSkipList ends\n");
+    fflush(nbpout);
+#endif
+
 #ifdef NSIGHT
     nvtxRangePop();
 #endif
@@ -61,19 +72,35 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     {
         // update_idx=0; // commented out by EW 2025.1.6
         ThisLevelNode = skiplist->getFirstNode();
+#ifdef DEBUG_ABYSS
+        fprintf(nbpout, "1. Irregular list size: %d\n", ThisLevelNode->ParticleList.size());
+        fflush(nbpout);
+#endif
         ThisLevelNode->ParticleList.erase(
             std::remove_if(ThisLevelNode->ParticleList.begin(), ThisLevelNode->ParticleList.end(),
                            [](int i)
                            {
                                return !particles[i].isActive;
                            }),
-            ThisLevelNode->ParticleList.end());
+            ThisLevelNode->ParticleList.end()
+        );
+#ifdef DEBUG_ABYSS
+        fprintf(nbpout, "2. Irregular list size: %d\n", ThisLevelNode->ParticleList.size());
+        fflush(nbpout);
+#endif
+        if (ThisLevelNode->ParticleList.size() == 0) {
+            skiplist->deleteFirstNode();
+            continue;
+        }
 
         next_time = particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr + particles[ThisLevelNode->ParticleList[0]].TimeStepIrr;
 
 #ifdef DEBUG_ABYSS
         // print out particlelist
-        fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time*global_variable->EnzoTimeStep*1e4);
+        // fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time*global_variable->EnzoTimeStep*1e4);
+        fprintf(nbpout, "(IRR_FORCE) next_time: %e Myr\n", next_time*global_variable->EnzoTimeStep*1e4);
+        fprintf(nbpout, "Irregular list size: %d\n", ThisLevelNode->ParticleList.size());
+        fflush(nbpout);
         /*
         fprintf(stdout, "PID: %d. CurrentTimeIrr: %e Myr, TimeStepIrr: %e Myr\n", 
                     particles[ThisLevelNode->ParticleList[0]].PID, 
@@ -100,7 +127,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         nvtxRangePushA("IrregularForce");
 #endif
 #ifdef DEBUG_ABYSS
-        std::cout << "Irr force starts" << std::endl;
+        fprintf(nbpout, "Irr force starts\n");
+        fflush(nbpout);
 #endif
         int cm_pid;
         Queue queue;
@@ -156,7 +184,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             // queue_scheduler.printStatus();
         } while (queue_scheduler.isComplete());
 #ifdef DEBUG_ABYSS
-        std::cout << "Irregular Force done" << std::endl;
+        fprintf(nbpout, "Irregular Force done\n");
+        fflush(nbpout);
 #endif
 #ifdef NSIGHT
         nvtxRangePop();
@@ -203,16 +232,20 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             ptcl->CurrentTimeIrr = ptcl->CurrentBlockIrr * global_variable->time_step;
         }
 #ifdef DEBUG_ABYSS
-        for (int i : ThisLevelNode->ParticleList)
-        {
-            ptcl = &particles[i];
-            if (ptcl->CurrentTimeIrr != next_time)
-            {
-                fprintf(stdout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
-                assert(ptcl->CurrentTimeIrr == next_time);
-            }
-        }
-        std::cout << "Irregular update done" << std::endl;
+        // for (int i : ThisLevelNode->ParticleList)
+        // {
+        //     ptcl = &particles[i];
+        //     if (ptcl->CurrentTimeIrr != next_time)
+        //     {
+        //         // fprintf(stdout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
+        //         fprintf(nbpout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
+        //         fflush(nbpout);
+        //         assert(ptcl->CurrentTimeIrr == next_time);
+        //     }
+        // }
+        // std::cout << "Irregular update done" << std::endl;
+        fprintf(nbpout, "Irregular update done\n");
+        fflush(nbpout);
 #endif
 #ifdef NSIGHT
         nvtxRangePop();
@@ -290,6 +323,28 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         workers[rank].runQueue();
                         workers[rank].callback();
 
+#ifdef SEVN // newly added by EW 2025.5.14 // not updated in Abyss code yet!!!
+                        Particle* ptcl_erased = donor->Mass < 0.0 ? donor : accretor;
+                        fprintf(nbpout, "ptcl_erased... PID: %d\n", ptcl_erased->PID);
+                        if (ptcl_erased->StellarEvolution != nullptr) {
+
+                            auto it = SEVNList.begin();
+                            while (it != SEVNList.end()) {
+                                if (it->second == ptcl_erased->ParticleIndex) {
+                                    it = SEVNList.erase(it);
+                                    fprintf(nbpout, "Merger induced zero mass particle (PID: %d) is deleted from SEVNList\n", ptcl_erased->PID);
+                                    break;
+                                }
+                                else
+                                    it++;
+                            }
+
+                            delete ptcl_erased->StellarEvolution;
+                            ptcl_erased->StellarEvolution = nullptr;
+                            fprintf(nbpout, "Merger induced zero mass particle (PID: %d) SEVN memory is free now\n", ptcl_erased->PID);
+                        }
+                        fflush(nbpout);
+#endif
                         continue;
                     }
                 }
@@ -381,7 +436,9 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
 #ifdef DEBUG_ABYSS
-        std::cout << "FB search starts" << std::endl;
+        // std::cout << "FB search starts" << std::endl;
+        fprintf(nbpout, "FB search starts\n");
+        fflush(nbpout);
 #endif
         /*
         // std::cerr << "FB search starts" << std::endl;
@@ -418,7 +475,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             }
         }
 #ifdef DEBUG_ABYSS
-        std::cout << "FB search ended" << std::endl;
+        fprintf(nbpout, "FB search ended\n");
+        fflush(nbpout);
 #endif
 
 #ifdef NSIGHT
@@ -431,17 +489,20 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         int OriginalParticleListSize = ThisLevelNode->ParticleList.size();
         int rank_delete, rank_new;
 #ifdef DEBUG_ABYSS
-        std::cout << "formBinaries starts" << std::endl;
+        fprintf(nbpout, "formBinaries starts\n");
+        fflush(nbpout);
 #endif
         LastParticleIndex = global_variable->LastParticleIndex; // for formBinareis function by EW 2025.3.11
         formBinaries(ThisLevelNode->ParticleList, newCMptcls, CMPtclWorker, PrevCMPtclWorker);
 #ifdef DEBUG_ABYSS
-        std::cout << "formBinaries ended" << std::endl;
+        fprintf(nbpout, "formBinaries ended\n");
+        fflush(nbpout);
 #endif
         if (OriginalParticleListSize != ThisLevelNode->ParticleList.size())
         {
 #ifdef DEBUG_ABYSS
-            std::cout << "New Binary!" << std::endl;
+            fprintf(nbpout, "New Binary!\n");
+            fflush(nbpout);
 #endif
             new_binaries = true;
 
@@ -474,7 +535,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
                 rank_new = CMPtclWorker[ptclCM->ParticleIndex];
 #ifdef DEBUG_ABYSS
-                fprintf(stdout, "Rank of CM ptcl %d: %d\n", ptclCM->PID, rank_new);
+                fprintf(nbpout, "Rank of CM ptcl %d: %d\n", ptclCM->PID, rank_new);
+                fflush(nbpout);
 #endif
                 queue.task = MakeGroup;
                 queue.pid = ptclCM->ParticleIndex;
@@ -487,7 +549,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 }
             }
 #ifdef DEBUG_ABYSS
-            std::cout << "All new fewbody objects are initialized." << std::endl;
+            fprintf(nbpout, "All new fewbody objects are initialized.\n");
+            fflush(nbpout);
 #endif
 
             ThisLevelNode->ParticleList.erase(
@@ -507,12 +570,14 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
 #endif
 #ifdef DEBUG_ABYSS
-        std::cout << "updateSkipList starts" << std::endl;
+        fprintf(nbpout, "updateSkipList starts\n");
+        fflush(nbpout);
 #endif
         for (int i = 0; i < ThisLevelNode->ParticleList.size(); i++)
             updateSkipList(skiplist, ThisLevelNode->ParticleList[i]);
 #ifdef DEBUG_ABYSS
-        std::cout << "updateSkipList ended" << std::endl;
+        fprintf(nbpout, "updateSkipList ended\n");
+        fflush(nbpout);
 #endif
 
         // std::cout << "update success" << std::endl;
@@ -582,11 +647,13 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         */
         current_time_irr = particles[ThisLevelNode->ParticleList[0]].CurrentBlockIrr * global_variable->time_step;
 #ifdef DEBUG_ABYSS
-        std::cout << "skiplist->deleteFirstNode() starts" << std::endl;
+        fprintf(nbpout, "skiplist->deleteFirstNode() starts\n");
+        fflush(nbpout);
 #endif
         skiplist->deleteFirstNode();
 #ifdef DEBUG_ABYSS
-        std::cout << "skiplist->deleteFirstNode() ended" << std::endl;
+        fprintf(nbpout, "skiplist->deleteFirstNode() ended\n");
+        fflush(nbpout);
 #endif
 
         // std::cout << "deleteFirstNode success" << std::endl;
@@ -625,7 +692,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     start_point = std::chrono::high_resolution_clock::now();
 #endif
 #ifdef DEBUG_ABYSS
-    std::cout << "delete skiplist" << std::endl;
+    fprintf(nbpout, "delete skiplist\n");
+    fflush(nbpout);
 #endif
     delete skiplist;
     skiplist = nullptr;

@@ -9,7 +9,7 @@
 
 
 
-
+#ifdef CUDA_FLOAT
 void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL vel[]) {
 	// Doubling check
 	// temporary variables for calculation
@@ -17,6 +17,15 @@ void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL 
 	// only predict the positions if necessary
 	// how about using polynomial correction here?
 	
+#ifdef COMOVE
+	// (Query) Should I use CurrentTimeReg instead of CurrentTimeIrr if NumNeighbor == 0?
+	double vel_mid;
+	double a = getScaleFactor(dt, global_variable->a_i, global_variable->a_f); //global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(CurrentTimeIrr+dt*0.5); //dt is range from 0 to 1
+	double dadt = getScaleFactorDot(dt, global_variable->a_i, global_variable->a_f); //global_variable->dadt_i + (global_variable->dadt_f-global_variable->dadt_i)*(CurrentTimeIrr+dt*0.5);
+	double H   = dadt / a;
+	double a2  = a*a;
+#endif
+
 	dt = dt*global_variable->EnzoTimeStep;
 
 	if (dt == 0) {
@@ -27,8 +36,24 @@ void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL 
 	}
 	else {
 		for (int dim=0; dim<Dim; dim++) {
+#ifdef COMOVE
+			// a_tot[dim] is obtained from comoving separation. So we have to devided it by a^2
+			// vel_mid = (a_tot[dim][1]*dt/2 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt*0.5 + Velocity[dim];
+			double acc = a_tot[dim][0] + BackgroundAcceleration[dim];// g/a^2
+			double jerk= a_tot[dim][1]; // - H * a_tot[dim][0]/a2;       // j/a^2
+			double dudt   = acc - H * Velocity[dim];   // total peculiar acceleration
+
+			// 2nd‑order velocity
+			vel[dim] = (CUDA_REAL) Velocity[dim] + (dudt + 0.5*jerk*dt)*dt;
+			double xdot  = Velocity[dim]/a;
+			double xddot = (dudt - H*Velocity[dim]) / a;   // from d(u/a)/dt
+			pos[dim] = (CUDA_REAL) Position[dim] + xdot*dt + 0.5*xddot*dt*dt + jerk*dt*dt*dt/(6.0*a);
+			// fprintf(stderr, "PID = %d, a_tot[dim][0] = %e, a_tot[dim][1] = %e, BackgroundAcceleration[dim] = %e, vel_mid = %e, dt = %e\n",  PID, a_tot[dim][0], a_tot[dim][1], BackgroundAcceleration[dim], vel_mid, dt);
+			// fprintf(stderr, "PID = %d, a = %e, dadt = %e, dt = %e\n", PID, a, dadt, dt);
+#else
 			pos[dim] = (CUDA_REAL) ((a_tot[dim][1]*dt/3 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt/2 + Velocity[dim])*dt + Position[dim];
 			vel[dim] = (CUDA_REAL)  (a_tot[dim][1]*dt/2 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt   + Velocity[dim];
+#endif
 		}
 	}
 
@@ -44,6 +69,7 @@ void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL 
 	*/
 	return;
 }
+#endif
 
 void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[]) {
 	// Doubling check
@@ -51,7 +77,15 @@ void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[])
 
 	// only predict the positions if necessary
 	// how about using polynomial correction here?
-	
+#ifdef COMOVE
+	// (Query) Should I use CurrentTimeReg instead of CurrentTimeIrr if NumNeighbor == 0?
+	double vel_mid;
+	double a = getScaleFactor(dt, global_variable->a_i, global_variable->a_f); //global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(CurrentTimeIrr+dt*0.5); //dt is range from 0 to 1
+	double dadt = getScaleFactorDot(dt, global_variable->a_i, global_variable->a_f); //global_variable->dadt_i + (global_variable->dadt_f-global_variable->dadt_i)*(CurrentTimeIrr+dt*0.5);
+	double H   = dadt / a;
+	double a2  = a*a;
+#endif
+
 	dt = dt*global_variable->EnzoTimeStep;
 
 	if (dt == 0) {
@@ -59,12 +93,27 @@ void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[])
 			pos[dim] = Position[dim];
 			vel[dim] = Velocity[dim];
 		}
-
 	}
 	else {
 		for (int dim=0; dim<Dim; dim++) {
+#ifdef COMOVE
+			// a_tot[dim] is obtained from comoving separation. So we have to devided it by a^2
+			// vel_mid = (a_tot[dim][1]*dt/2 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt*0.5 + Velocity[dim];
+			double acc = a_tot[dim][0] + BackgroundAcceleration[dim];// g/a^2
+			double jerk= a_tot[dim][1]; // - H * a_tot[dim][0]/a2;       // j/a^2
+			double dudt   = acc - H * Velocity[dim];   // total peculiar acceleration
+
+			// 2nd‑order velocity
+			vel[dim] = Velocity[dim] + (dudt + 0.5*jerk*dt)*dt;
+			double xdot  = Velocity[dim]/a;
+			double xddot = (dudt - H*Velocity[dim]) / a;   // from d(u/a)/dt
+			pos[dim] = Position[dim] + xdot*dt + 0.5*xddot*dt*dt + jerk*dt*dt*dt/(6.0*a);
+			// fprintf(stderr, "PID = %d, a_tot[dim][0] = %e, a_tot[dim][1] = %e, BackgroundAcceleration[dim] = %e, vel_mid = %e, dt = %e\n",  PID, a_tot[dim][0], a_tot[dim][1], BackgroundAcceleration[dim], vel_mid, dt);
+			// fprintf(stderr, "PID = %d, a = %e, dadt = %e, dt = %e\n", PID, a, dadt, dt);
+#else
 			pos[dim] = ((a_tot[dim][1] * dt / 3 + a_tot[dim][0] + BackgroundAcceleration[dim]) * dt / 2 + Velocity[dim]) * dt + Position[dim];
 			vel[dim] = (a_tot[dim][1] * dt / 2 + a_tot[dim][0] + BackgroundAcceleration[dim]) * dt + Velocity[dim];
+#endif
 		}
 	}
 	return;
@@ -235,20 +284,26 @@ void Particle::calculateTimeStepIrr() {
 	TimeStepIrr = static_cast<double>(pow(2, TimeLevelIrr));
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
-	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
-		//fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
-
-		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+		fprintf(stderr, "Too small TimeStepIrr! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
+				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit,
+				TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 		}
 	}
 
-
-
 	if (TimeStepIrr > 1) {
+		fprintf(stderr, "Why TimeStepIrr is too large? PID: %d, pos: (%e, %e, %e), vel: (%e, %e, %e)\n",
+				PID, Position[0], Position[1], Position[2], Velocity[0], Velocity[1], Velocity[2]);
+		fprintf(stderr, "airr0: (%e, %e, %e), airr1: (%e, %e, %e), airr2: (%e, %e, %e), airr3: (%e, %e, %e)\n",
+				a_irr[0][0], a_irr[1][0], a_irr[2][0], a_irr[0][1], a_irr[1][1], a_irr[2][1],
+				a_irr[0][2], a_irr[1][2], a_irr[2][2], a_irr[0][3], a_irr[1][3], a_irr[2][3]);
+		fprintf(stderr, "areg0: (%e, %e, %e), areg1: (%e, %e, %e), areg2: (%e, %e, %e), areg3: (%e, %e, %e)\n",
+				a_reg[0][0], a_reg[1][0], a_reg[2][0], a_reg[0][1], a_reg[1][1], a_reg[2][1],
+				a_reg[0][2], a_reg[1][2], a_reg[2][2], a_reg[0][3], a_reg[1][3], a_reg[2][3]);
 		fprintf(stderr, "TimeStepIrr=%e, TimeLevelIrr=%d, TimeLevelTmp0=%d\n",TimeStepIrr, TimeLevelIrr, TimeLevelTmp0);
 		fflush(stderr);
 		throw std::runtime_error("");
@@ -316,17 +371,15 @@ void Particle::calculateTimeStepIrr2() {
 	TimeStepIrr = static_cast<double>(pow(2, TimeLevelIrr));
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
-	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
-		//fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
-		//exit(1);
-		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-4) {
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+		fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
+				PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		exit(1);
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 		}
-		//fprintf(stderr, "Adjusted TimeStepIrr! PID: %d, TimeStep = %e\n",
-				//PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4);
 	}
 
 	if (TimeStepIrr > 1) {
@@ -419,9 +472,9 @@ void Particle::calculateTimeStepReg() {
 	TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 
 	if (TimeStepReg*global_variable->EnzoTimeStep*1e4 < 1e-7) {
-		//fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
-				//PID, TimeStepReg * global_variable->EnzoTimeStep * 1e4, static_cast<double>(pow(2, TimeLevelTmp0)) * global_variable->EnzoTimeStep * 1e4);
-		//fflush(stderr);
+		fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
+				PID, TimeStepReg * global_variable->EnzoTimeStep * 1e4, static_cast<double>(pow(2, TimeLevelTmp0)) * global_variable->EnzoTimeStep * 1e4);
+		fflush(stderr);
 	}
 
 	if (CurrentTimeReg+TimeStepReg > 1 && CurrentTimeReg != 1.0) {
@@ -435,23 +488,33 @@ void Particle::calculateTimeStepReg() {
 		throw std::runtime_error("TimeStepReg is too small.");
 	}
 	*/
-	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-4) {
-		//fprintf(stderr, "Too small TimeStepReg! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
-				//PID, TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
-		while (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-4) {
+	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-7) {
+		fprintf(stderr, "Too small TimeStepReg! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
+				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit, 
+				TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		while (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-7) {
 			TimeLevelReg++;
 			TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
 			TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 		}
-		//fprintf(stderr, "Adjusted TimeStepReg! PID: %d, TimeStep = %e\n",
-				//PID, TimeStepReg*global_variable->EnzoTimeStep*1e4);
 	}
+	/* // original code
 	if (TimeStepReg > 1) {
 		fprintf(stderr, "TimeStepReg=%e, TimeLevelReg=%d, TimeLevelTmp0=%d\n",TimeStepReg, TimeLevelReg, TimeLevelTmp0);
 		fprintf(stderr, "TimeStepIrr=%e, TimeLevelIrr=%d, TimeLevelTmp0=%d\n",TimeStepIrr, TimeLevelIrr, TimeLevelTmp0);
 		fflush(stderr);
 		throw std::runtime_error("");
 	}
+	*/
+	// /* // modified version by EW 2025.5.12
+	while (TimeStepReg > 1) {
+		fprintf(stderr, "Too large TimeStepReg! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
+				PID, TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		TimeLevelReg--;
+		TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
+		TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
+	}
+	// */
 
 	//std::cout << "NBODY+: TimeStepReg = " << TimeStepReg << std::endl;
 }

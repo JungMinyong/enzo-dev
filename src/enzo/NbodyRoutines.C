@@ -64,7 +64,7 @@ void GetCenterOfMass(ParticleDataType *ptcl, const int &N, double x_com[], doubl
     }
     MassTotal += ptcl[i].Mass;
   }
-	#pragma unroll MAX_DIMENSION
+#pragma unroll MAX_DIMENSION
   for (int dim=0; dim<MAX_DIMENSION; ++dim) {
     x_com[dim] /= MassTotal;
     v_com[dim] /= MassTotal;

@@ -59,33 +59,17 @@ int ABYSS() {
 
 #ifdef CUDA
 	int root_proc = 0;
-	if (AbyssProcessorNumber == ROOT) {
-		OpenDevice(&root_proc);
-		cudaDeviceSynchronize();
-	}
+	//if (AbyssProcessorNumber == ROOT)
+	OpenDevice(&root_proc);
+	cudaDeviceSynchronize(); 
 #endif
 
 
-	if (AbyssProcessorNumber == ROOT) {
+	if (AbyssProcessorNumber == ROOT)
 		InitialCommunication();
 
-		/* Particle loading Check */
-		{
-			//, NextRegTime= %.3e Myr(%llu),
-			for (int i = 0; i <= NumberOfSingleParticle; i++) {
-				Particle *ptcl = &particles[i];
-				fprintf(
-						nbpout,
-						"PID=%d, pos=(%lf, %lf, %lf), vel=(%lf, %lf, %lf)\n",
-						ptcl->PID, ptcl->Position[0], ptcl->Position[1],
-						ptcl->Position[2], ptcl->Velocity[0], ptcl->Velocity[1],
-						ptcl->Velocity[2]);
-			}
-			fflush(nbpout);
-		}
-	}
-
 	// things that should be synchronized. this can be moved to GlobalVariable
+	MPI_Barrier(abyss_comm);
 	broadcastFromRoot(EnzoMass);
 	broadcastFromRoot(EnzoLength);
 	broadcastFromRoot(EnzoVelocity);
@@ -116,7 +100,6 @@ int ABYSS() {
 	if (AbyssProcessorNumber == ROOT) {
 		RootRoutines();
 	} else {
-		/*
 		// /* // by EW 2025.1.27
 		std::string filename = "log/worker/worker_output_" + std::to_string(AbyssProcessorNumber) + ".txt";
 		std::string dir_name;
@@ -153,7 +136,6 @@ int ABYSS() {
 		workerout = fopen(filename.c_str(), "w");
 		fprintf(workerout, "Starting nbody - WORKER OUTPUT\n");
 		fflush(workerout);
-		*/
 		// */
 		WorkerRoutines();
 	}
@@ -182,7 +164,6 @@ int ABYSS() {
 	}
 #endif
 
-	free(displs);
 	// Finalize the window and MPI environment
 	//MPI_Win_free(&win);
 	//MPI_Finalize();

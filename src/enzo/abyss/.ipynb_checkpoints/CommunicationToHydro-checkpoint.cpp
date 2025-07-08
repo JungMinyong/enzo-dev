@@ -1,4 +1,3 @@
-#ifndef INDIVIDUALSTAR
 #include <mpi.h>
 #include <iomanip>
 #include <iostream>
@@ -17,6 +16,8 @@
 #include "Worker.h"
 
 #define NO_COM_EVOLUTION // (Query) eventaully I think this should adopt COM evolution due to bulk motion. 
+// #define NO_HUBBLE_FLOW
+#define HUBBLE_FLOW
 //Bulk motion in irregular force will cause some distorts since a fraction of particle will advance due to bulk motion
 // and that will cause artificial tidal force.
 
@@ -28,17 +29,21 @@ extern int ComovingCoordinates;
 double ClusterRadius2; //EnzoCurrentTime, 
 double ClusterAcceleration[Dim], ClusterPosition[Dim], ClusterVelocity[Dim], EnzoClusterPosition[Dim+1];
 double eta_tmp;
-double a_i, a_f, dadt_i, dadt_f; //RedshiftEnzoStart, RedshiftEnzoEnd;
+double RedshiftEnzoStart, RedshiftEnzoEnd;
 int FixNumNeighbor0, IdentifyNbodyParticles;
-int BinaryRegularization, IdentifyOnTheFly, StoreTimeStep;
+int BinaryRegularization, IdentifyOnTheFly;
 
 //double KSTime;
 //double KSDistance;
 
 
 void deleteParticle(int &PID, int &index);
+//int writeParticle(std::vector<Particle*> &particle, double MinRegTime, int outputNum);
+//void InitializeParticle(std::vector<Particle*> &particle);
+//void InitializeNewParticle(std::vector<Particle*> &particle, int offset, int newSize);
 void GetCenterOfMass(double *mass, double *x[Dim], double *v[Dim], double x_com[], double v_com[], int N);
 void GetNewCenterOfMass(int *PID, double *mass2, double *x2[Dim], double *v2[Dim], int n2, double x_X[], double v_X[]);
+//void UpdateNextRegTime(std::vector<Particle*> &particle);
 int CommunicationInterBarrier();
 void broadcastFromRoot(int &data);
 void broadcastFromRoot(double &data);
@@ -118,7 +123,6 @@ int InitialCommunication() {
 	MPI_Recv(&FixNumNeighbor          , 1, MPI_INT   , 0, 1800, inter_comm, &status);
 	MPI_Recv(&MaxNumNeighbor          , 1, MPI_INT   , 0, 1850, inter_comm, &status);
 	MPI_Recv(&BinaryRegularization    , 1, MPI_INT   , 0, 1900, inter_comm, &status); // (Query) EW: What is this?
-	MPI_Recv(&StoreTimeStep              , 1, MPI_INT, 0, 2000, inter_comm, &status);
 	//MPI_Recv(&KSDistance              , 1, MPI_DOUBLE, 0, 2000, inter_comm, &status);
 	//MPI_Recv(&KSTime                  , 1, MPI_DOUBLE, 0, 2100, inter_comm, &status);
 	//MPI_Recv(&HydroMethod         , 1, MPI_INT   , 0, 1200, inter_comm, &status);
@@ -147,10 +151,9 @@ int InitialCommunication() {
 		CosmologyTableLogt = new double[CosmologyTableNumberOfBins]; // (Query) EW: not deleted later?
 		MPI_Recv(CosmologyTableLoga, CosmologyTableNumberOfBins, MPI_DOUBLE, 0, 3150, inter_comm, &status);
 		MPI_Recv(CosmologyTableLogt, CosmologyTableNumberOfBins, MPI_DOUBLE, 0, 3160, inter_comm, &status);
-		MPI_Recv(&a_i, 1, MPI_DOUBLE, 0, 3170, inter_comm, &status);
-		MPI_Recv(&dadt_i, 1, MPI_DOUBLE, 0, 3171, inter_comm, &status);
-		MPI_Recv(&a_f, 1, MPI_DOUBLE, 0, 3172, inter_comm, &status);
-		MPI_Recv(&dadt_f, 1, MPI_DOUBLE, 0, 3173, inter_comm, &status);
+		MPI_Recv(&RedshiftEnzoStart          , 1, MPI_DOUBLE, 0, 3150, inter_comm, &status);
+		MPI_Recv(&RedshiftEnzoEnd            , 1, MPI_DOUBLE, 0, 3160, inter_comm, &status);
+
 	}
 #ifdef SEVN
 	MPI_Recv(&NumberOfEnzoSEVNParticle, 1, MPI_INT, 0, 4000, inter_comm, &status);
@@ -169,24 +172,8 @@ int InitialCommunication() {
 	CommunicationInterBarrier();
 	fprintf(stderr, "Data received!\n");
 
- 	//ClusterRadius2 is already squared. It is Enzo (comoving) units in both Enzo and Nbody.
-	ClusterRadius2 = EnzoClusterPosition[3];
 
-#ifdef COMOVE
-	if (ComovingCoordinates){
-		//in Enzo, a_i is defined as a = (1+InitialRedshift)/(1+z).
-		//So we have to divide a_i and dadt_i by (1+InitialRedshift) to convert it into natural definition.
-		a_i /= (1 + InitialRedshift); 
-		a_f /= (1 + InitialRedshift);
-		dadt_i /= (1 + InitialRedshift);
-		dadt_f /= (1 + InitialRedshift);
-		// convert units into comoving units
-		LengthUnits /= a_i;
-		DensityUnits *= pow(a_i,3.);
-		// VelocityUnits /= a_i; we should "not" change VelocityUnits as Enzo already use peculiar velocity
-		// TimeUnits?
-	}
-#endif
+	ClusterRadius2 = EnzoClusterPosition[3]; //it's already squared
 
 	// Enzo to Nbody unit convertors
 	//EnzoMass         = MassUnits/Msun/mass_unit;
@@ -195,9 +182,7 @@ int InitialCommunication() {
 	EnzoVelocity     = VelocityUnits/pc*yr/velocity_unit;
 	EnzoTime         = TimeUnits/yr/time_unit;
 	//EnzoAcceleration = LengthUnits/TimeUnits/TimeUnits/pc*yr*yr/position_unit*time_unit*time_unit;
-	//EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
-	// In Cosmological run, EnzoLength/EnzoTime is "not" VelocityUnits. It is a_i * VelocityUnits
-	EnzoAcceleration = EnzoVelocity/EnzoTime;
+	EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
 
 	// Unit conversion
 	global_variable->EnzoTimeStep       = TimeStep*EnzoTime;
@@ -209,22 +194,7 @@ int InitialCommunication() {
 		EPS2 *= EnzoLength;
 		EPS2 *= EPS2;
 	}
-#ifdef COMOVE
-	if (ComovingCoordinates){
-		dadt_i /= EnzoTime;
-		dadt_f /= EnzoTime;
-		global_variable->a_i = a_i;
-		global_variable->a_f = a_f;
-		global_variable->dadt_i = dadt_i;
-		global_variable->dadt_f = dadt_f;
-		fprintf(stderr, "a_i = %e, dadt_i = %e, a_f = %e, dadt_f = %e\n", a_i, dadt_i, a_f, dadt_f);
-		fprintf(stderr, "InitialRedshift = %e, FinalRedshift = %e\n", InitialRedshift, FinalRedshift);
-		EPS2 *= (a_i/a_f)*(a_i/a_f); // Fix EPS2 for physical coordinates 
-	}
-#endif
 
-
-	// InitialNeighborRadius2 is now in comoving unit with COMOVE. we may change this into physical unit
 	InitialNeighborRadius2 *= EnzoLength;
 	InitialNeighborRadius2 *= InitialNeighborRadius2;
 	FixNumNeighbor0    = FixNumNeighbor;
@@ -241,18 +211,12 @@ int InitialCommunication() {
 	fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
 	fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
 	fprintf(nbpout, "BinaryRegularization     = %d\n", BinaryRegularization); // (Query) EW: What is this?
-	fprintf(nbpout, "StoreTimeStep           = %d\n", StoreTimeStep);
 	//fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
 	//fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
 	fprintf(nbpout, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
 	fprintf(nbpout, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
 
-	// this is only a temporary solution
-	if (StarParticleFeedback == 4 | StarParticleFeedback == 262144) { // 2^18 = 262144 (star_maker4 with AGORA feedback)
-		for (int i=0; i<NumberOfSingleParticle; i++) {
-			Mass[i] *= (1.0 - StarMassEjectionFraction);
-		}
-	}
+
 
 	for (int dim=0; dim<Dim; dim++) {
 		ClusterAcceleration[dim] = 0;
@@ -308,10 +272,7 @@ int InitialCommunication() {
 		std::cerr << "CreationTime :" << CreationTime[0] << std::endl;
 		std::cerr << "DynamicalTime:" << DynamicalTime[0] << std::endl;
 
-		// Update Global variable AbyssCenter. This will be used in Nbody to Enzo conversion in readwrite 
-		AbyssCenter[0] = ClusterPosition[0];
-		AbyssCenter[1] = ClusterPosition[1];
-		AbyssCenter[2] = ClusterPosition[2];
+
 
 		delete [] PID;
 		delete [] Mass;
@@ -499,10 +460,8 @@ int ReceiveFromEnzo() {
 		MPI_Recv(&LengthUnits,              1, MPI_DOUBLE, 0,  800, inter_comm, &status);
 		MPI_Recv(&DensityUnits,             1, MPI_DOUBLE, 0,  900, inter_comm, &status);
 		MPI_Recv(&VelocityUnits,            1, MPI_DOUBLE, 0, 1000, inter_comm, &status);
-		MPI_Recv(&a_i, 1, MPI_DOUBLE, 0, 1010, inter_comm, &status);
-		MPI_Recv(&dadt_i, 1, MPI_DOUBLE, 0, 1011, inter_comm, &status);
-		MPI_Recv(&a_f, 1, MPI_DOUBLE, 0, 1012, inter_comm, &status);
-		MPI_Recv(&dadt_f, 1, MPI_DOUBLE, 0, 1013, inter_comm, &status);
+		MPI_Recv(&RedshiftEnzoStart          , 1, MPI_DOUBLE, 0, 1010, inter_comm, &status);
+		MPI_Recv(&RedshiftEnzoEnd            , 1, MPI_DOUBLE, 0, 1020, inter_comm, &status);
 	}
 #ifdef SEVN
 	MPI_Recv(&NumberOfEnzoSEVNParticle, 1, MPI_INT, 0, 2000, inter_comm, &status);
@@ -524,58 +483,14 @@ int ReceiveFromEnzo() {
 #endif
 	CommunicationInterBarrier();
 
-	#ifdef COMOVE
-	if (ComovingCoordinates){
-		//in Enzo, a_i is defined as a = (1+InitialRedshift)/(1+z).
-		//So we have to divide a_i and dadt_i by (1+InitialRedshift) to convert it into natural definition.
-		a_i /= (1 + InitialRedshift); 
-		a_f /= (1 + InitialRedshift);
-		dadt_i /= (1 + InitialRedshift);
-		dadt_f /= (1 + InitialRedshift);
-		fprintf(stderr, "a_i = %e, dadt_i = %e, a_f = %e, dadt_f = %e\n", a_i, dadt_i, a_f, dadt_f);
-		fprintf(stderr, "InitialRedshift = %e, FinalRedshift = %e\n", InitialRedshift, FinalRedshift);
-		// convert units into comoving units
-		LengthUnits /= a_i;
-		DensityUnits *= pow(a_i,3.);
-		// VelocityUnits /= a_i;
-		// TimeUnits?
-		fprintf(stderr, "ClusterPosition = %e, %e, %e\n", EnzoClusterPosition[0], EnzoClusterPosition[1], EnzoClusterPosition[2]);
-		EPS2 *= (a_i/a_f)*(a_i/a_f); // Fix EPS2 for physical coordinates 
-	}
-	#endif
-	
 	if (ComovingCoordinates) {
-		// with COMOVE, we don't actually need to update units
 		EnzoMass         = DensityUnits*pow(LengthUnits,3.)/Msun/mass_unit;
 		EnzoLength       = LengthUnits/pc/position_unit;
 		EnzoVelocity     = VelocityUnits/pc*yr/velocity_unit;
 		EnzoTime         = TimeUnits/yr/time_unit;
 		//EnzoAcceleration = LengthUnits/TimeUnits/TimeUnits/pc*yr*yr/position_unit*time_unit*time_unit;
-		EnzoAcceleration = EnzoVelocity/EnzoTime;
+		EnzoAcceleration = EnzoLength/EnzoTime/EnzoTime;
 	}
-
-	// this is only a temporary solution
-	/*
-	if (StarParticleFeedback == 4 | StarParticleFeedback == 262144){
-		for (int i=0; i<NumberOfSingleParticle; i++) {
-			Mass[i] *= (1.0 - StarMassEjectionFraction);
-		}
-		for (int i=0; i<newNumberOfSingleParticle; i++) {
-			newMass[i] *= (1.0 - StarMassEjectionFraction);
-		}
-	}
-	*/
-
-	#ifdef COMOVE
-	if (ComovingCoordinates){
-		dadt_i /= EnzoTime;
-		dadt_f /= EnzoTime;
-		global_variable->a_i = a_i;
-		global_variable->a_f = a_f;
-		global_variable->dadt_i = dadt_i;
-		global_variable->dadt_f = dadt_f;
-	}
-	#endif
 
 	// std::cout << "Enzo  Time    :" << EnzoCurrentTime << std::endl;
 	//std::cout << "Nbody Time    :" << OldEnzoCurrentTime+particle[0]->CurrentTimeReg*EnzoTimeStep << std::endl;
@@ -821,11 +736,6 @@ int ReceiveFromEnzo() {
 	}
 #endif
 
-	// Update in case we update ClusterPosition. Currently, only COMEvolution update the ClusterPosition
-	AbyssCenter[0] = ClusterPosition[0];
-	AbyssCenter[1] = ClusterPosition[1];
-	AbyssCenter[2] = ClusterPosition[2];
-
 	// (SEVN Query) After processing, wind & SN feedback, 
 	// 1. dm should be set to 0 - in update function
 	// 2. If the particle is kicked, kicked velocity should be accounted - in update function
@@ -1063,10 +973,6 @@ int SendToEnzo(Worker *workers) {
 				WindEjectedMass[i]	= ptcl->dm*mass_unit;
 				SNEjectedMass[i]	= ptcl->SNEjectedMass*mass_unit;
 				Temperature[i]		= ptcl->T_eff;
-				if (ptcl->ParticleType == MassiveBlackHole) {
-					fprintf(stderr, "In SendToEnzo... PID: %d is a MassiveBlackHole!\n", ptcl->PID);
-					Temperature[i] *= -1; // This particle will be set to BlackHole in Enzo by EW 2025.6.25
-				}
 
 				if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
 					fprintf(stderr, "Feedback info send to Enzo...\n");
@@ -1104,11 +1010,8 @@ int SendToEnzo(Worker *workers) {
 #endif
 			r2 = 0;
 			for (int dim=0; dim<Dim; dim++) {
-				if (i==0) fprintf(stderr, "Debug1 Pos[%d] = %e\n", dim, ptcl->Position[dim]);
 				Position[dim][i]  = ptcl->Position[dim]/EnzoLength;
 				Velocity[dim][i]  = ptcl->Velocity[dim]/EnzoVelocity;
-				if (i==0) fprintf(stderr, "Debug2 Pos[%d] = %e\n", dim, Position[dim][i]);
-
 #ifdef HUBBLE_FLOW
 				// update ptcl->Position
 				ptcl->Position[dim] -= NbodyCOM[dim] * EnzoLength;
@@ -1127,8 +1030,6 @@ int SendToEnzo(Worker *workers) {
 					r2 += (Position[dim][i]-NbodyCOM[dim])*(Position[dim][i]-NbodyCOM[dim]);
 				// COM correction
 				Position[dim][i] += ClusterPosition[dim];
-				if (i==0) fprintf(stderr, "Debug3 Pos[%d] = %e\n", dim, Position[dim][i]);
-				if (i==0) fprintf(stderr, "Debug4 EnzoClusterPosition[%d] = %e\n", dim, EnzoClusterPosition[dim]);
 #endif
 
 
@@ -1172,10 +1073,6 @@ int SendToEnzo(Worker *workers) {
 			WindEjectedMass[i]	= ptcl->dm*mass_unit;
 			SNEjectedMass[i]	= ptcl->SNEjectedMass*mass_unit;
 			Temperature[i]		= ptcl->T_eff;
-			if (ptcl->ParticleType == MassiveBlackHole) {
-				fprintf(stderr, "In SendToEnzo... PID: %d is a MassiveBlackHole!\n", ptcl->PID);
-				Temperature[i] *= -1; // This particle will be set to BlackHole in Enzo by EW 2025.6.25
-			}
 
 			if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
 				fprintf(stderr, "Feedback info send to Enzo...\n");
@@ -1215,8 +1112,6 @@ int SendToEnzo(Worker *workers) {
 				newWindEjectedMass[i]	= ptcl->dm*mass_unit;
 				newSNEjectedMass[i]		= ptcl->SNEjectedMass*mass_unit;
 				newTemperature[i]		= ptcl->T_eff;
-				// if (ptcl->ParticleType == MassiveBlackHole)
-				// 	newTemperature[i] *= -1; // This particle will be set to BlackHole in Enzo by EW 2025.6.25
 
 				if (newWindEjectedMass[i] > 0.0 || newSNEjectedMass[i] > 0.0) {
 					fprintf(stderr, "Feedback info send to Enzo...\n");
@@ -1255,7 +1150,6 @@ int SendToEnzo(Worker *workers) {
 			for (int dim=0; dim<Dim; dim++) {
 				newPosition[dim][i]  = ptcl->Position[dim]/EnzoLength;
 				newVelocity[dim][i]  = ptcl->Velocity[dim]/EnzoVelocity;
-
 #ifdef HUBBLE_FLOW
 				// update ptcl->Position
 				ptcl->Position[dim] -= NbodyCOM[dim] * EnzoLength;
@@ -1273,6 +1167,7 @@ int SendToEnzo(Worker *workers) {
 				// COM correction
 				newPosition[dim][i] += ClusterPosition[dim];
 #endif
+
 				if (IdentifyNbodyParticles && !IdentifyOnTheFly)
 					r2 += (newPosition[dim][i]-EnzoClusterPosition[dim])*(newPosition[dim][i]-EnzoClusterPosition[dim]);
 			}
@@ -1312,8 +1207,6 @@ int SendToEnzo(Worker *workers) {
 			newWindEjectedMass[i]	= ptcl->dm*mass_unit;
 			newSNEjectedMass[i]		= ptcl->SNEjectedMass*mass_unit;
 			newTemperature[i]		= ptcl->T_eff;
-			// if (ptcl->ParticleType == MassiveBlackHole)
-			// 	newTemperature[i] *= -1; // This particle will be set to BlackHole in Enzo by EW 2025.6.25
 
 			if (newWindEjectedMass[i] > 0.0 || newSNEjectedMass[i] > 0.0) {
 				fprintf(stderr, "Feedback info send to Enzo...\n");
@@ -1533,11 +1426,8 @@ int SendToEnzo(Worker *workers) {
 
 	CommunicationInterBarrier();
 	fprintf(stdout, "NBODY+: Data sent!\n");
+	
 
-	// Update AbyssCenter. We need to update this for Hubble_FLOW
-	AbyssCenter[0] = ClusterPosition[0];
-	AbyssCenter[1] = ClusterPosition[1];
-	AbyssCenter[2] = ClusterPosition[2];
 
 	for (int dim = 0; dim < Dim; dim++)
 	{
@@ -1668,5 +1558,3 @@ void deleteParticle(int &PID, int &index) {
 	NumberOfAvailableIndices++;
 }
 
-
-#endif

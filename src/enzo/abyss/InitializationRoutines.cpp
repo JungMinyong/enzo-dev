@@ -25,12 +25,10 @@ void broadcastFromRoot(ULL &data);
 void broadcastFromRoot(int &data);
 void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vector<int> ParticleIndices);
 
-void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
-
-#ifdef FEWBODY
 void formPrimordialBinaries(int beforeLastParticleIndex);
+
+void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
 void formBinariesAfterCommunication(std::vector<int>& newCMptcls, std::unordered_map<int,int>& existing, std::unordered_map<int,int>& terminated);
-#endif
 
 /* Initialization */
 void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
@@ -53,20 +51,17 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     }
 
     std::cout << "Initialization of particles starts." << std::endl;
+
     queue_scheduler.initialize(InitAcc1);
     queue_scheduler.takeQueue(ParticleIndices);
     do
     {
-        // queue_scheduler.printFreeWorker();
-        // queue_scheduler.printWorkerToGo();
         queue_scheduler.assignQueueAuto();
-        // queue_scheduler.printFreeWorker();
-        // queue_scheduler.printWorkerToGo();
         queue_scheduler.runQueueAuto();
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
-
     std::cout << "Init 01 done" << std::endl;
+
     queue_scheduler.initialize(InitAcc2);
     queue_scheduler.takeQueue(ParticleIndices);
     do
@@ -75,7 +70,6 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         queue_scheduler.runQueueAuto();
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
-
     std::cout << "Init 02 done" << std::endl;
 
 #ifdef FEWBODY
@@ -89,7 +83,6 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         queue_scheduler.runQueueAuto();
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
-
     std::cout << "Primordial binary search done" << std::endl;
 
     // example code by EW 2025.1.7
@@ -196,10 +189,6 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 ptcl->BackgroundAcceleration[1],
                 ptcl->BackgroundAcceleration[2]
                 );
-        fprintf(nbpout, "Neighbors=[");
-        for (int j=0; j<ptcl->NumberOfNeighbor; j++)
-            fprintf(nbpout, "%d, ", particles[ptcl->Neighbors[j]].PID);
-        fprintf(nbpout, "]\n\n");
     }
     fflush(nbpout);
     /* Particle Initialization Check */
@@ -418,10 +407,9 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
                     );
         }
         fflush(nbpout);
-        assert(NumberOfParticle == 0);
+        // assert(NumberOfParticle == 0); // to force the program to stop by EW 2025.5.6
         */
-        #ifdef FEWBODY
-// /* // forming new binaries after communication with Enzo by EW 2025.3.27
+#ifdef FEWBODY // forming new binaries after communication with Enzo by EW 2025.3.27
         std::vector<int> newCMptcls;
         LastParticleIndex = global_variable->LastParticleIndex;
         formBinariesAfterCommunication(newCMptcls, CMPtclWorker, PrevCMPtclWorker);
@@ -457,7 +445,8 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
 
             rank_new = CMPtclWorker[ptclCM->ParticleIndex];
 #ifdef DEBUG_ABYSS
-            fprintf(stdout, "Rank of CM ptcl %d: %d\n", ptclCM->PID, rank_new);
+            fprintf(nbpout, "Rank of CM ptcl %d: %d\n", ptclCM->PID, rank_new);
+            fflush(nbpout);
 #endif
             queue.task = MakeGroup;
             queue.pid = ptclCM->ParticleIndex;
@@ -466,7 +455,6 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
             workers[rank_new].callback();
         }
 #endif
-// */
         if (NumberOfParticle - NumberOfSingleParticle <= 2) {
 
             std::cout << "Time Step correction for InitializationOnGPU case" << std::endl;
@@ -476,10 +464,11 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
             {
                 ptcl = &particles[i];
 
+                if (!ptcl->isActive) // newly updated by EW 2025.5.21 // inactive particles should not be considered here!!!
+                    continue;
+
                 if (ptcl->TimeLevelIrr < min_time_level)
-                {
                     min_time_level = ptcl->TimeLevelIrr;
-                }
             }
 
             // setting time_block based on the system
@@ -527,12 +516,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
 #endif
         }
     }
-
-    
-
     //initializeTime(queue_scheduler, workers, ParticleIndices);
-    // ParticleIndices.clear(); // commented out by EW 2025.3.11
-    // ParticleIndices.shrink_to_fit(); // commented out by EW 2025.3.11
     /*
     if (newNumberOfSingleParticle > 0) {
         for (int i = 0; i <= global_variable->LastParticleIndex; i++)
