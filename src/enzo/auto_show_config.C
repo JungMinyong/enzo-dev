@@ -5,17 +5,17 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   MACHINE-NAME: linux-mpich-EW\n");
    fprintf (fp,"\n");
    fprintf (fp,"   PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000\n");
-   fprintf (fp,"   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 30\n");
-   fprintf (fp,"   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 4\n");
-   fprintf (fp,"   PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 36\n");
+   fprintf (fp,"   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 70\n");
+   fprintf (fp,"   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 60\n");
+   fprintf (fp,"   PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 64\n");
    fprintf (fp,"   PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : 100000\n");
    fprintf (fp,"\n");
    fprintf (fp,"   CONFIG_PRECISION  [precision-{32,64}]                     : 64\n");
    fprintf (fp,"   CONFIG_PARTICLES  [particles-{32,64,128}]                 : 64\n");
    fprintf (fp,"   CONFIG_INTEGERS  [integers-{32,64}]                       : 32\n");
-   fprintf (fp,"   CONFIG_PARTICLE_IDS  [particle-id-{32,64}]                : 32\n");
+   fprintf (fp,"   CONFIG_PARTICLE_IDS  [particle-id-{32,64}]                : 64\n");
    fprintf (fp,"   CONFIG_INITS  [inits-{32,64}]                             : 64\n");
-   fprintf (fp,"   CONFIG_IO  [io-{32,64}]                                   : 32\n");
+   fprintf (fp,"   CONFIG_IO  [io-{32,64}]                                   : 64\n");
    fprintf (fp,"   CONFIG_USE_MPI  [use-mpi-{yes,no}]                        : yes\n");
    fprintf (fp,"   CONFIG_TASKMAP  [taskmap-{yes,no}]                        : no\n");
    fprintf (fp,"   CONFIG_PACKED_AMR  [packed-amr-{yes,no}]                  : yes\n");
@@ -23,7 +23,7 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_LCAPERF  [lcaperf-{yes,no}]                        : no\n");
    fprintf (fp,"   CONFIG_PAPI  [papi-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_PYTHON  [python-{yes,no}]                          : no\n");
-   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : yes\n");
+   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : no\n");
    fprintf (fp,"   CONFIG_ECUDA  [cuda-{yes,no}]                             : no\n");
    fprintf (fp,"   CONFIG_NBODY  [nbody-{yes,no}]                            : yes\n");
    fprintf (fp,"   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : yes\n");
@@ -46,6 +46,6 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_UUID  [uuid-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_INDIVIDUALSTAR [individualstar-{yes,no}]           : yes\n");
    fprintf (fp,"   CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : yes\n");
-   fprintf (fp,"   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : no\n");
+   fprintf (fp,"   CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : yes\n");
    fprintf (fp,"\n");
 }

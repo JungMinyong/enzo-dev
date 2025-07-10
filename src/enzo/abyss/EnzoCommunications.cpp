@@ -985,7 +985,7 @@ int SendParticleToEnzo(Worker *workers) {
     /* Get NbodyCOM */
     double NbodyCOM[Dim] = {0, 0, 0};
     double mass = 0;
-    for (int i = 0; i <= LastParticleIndex; i++) {
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
         //index = PIDtoIndexMap[i];
         // maybe we can it more fancy.
         ptcl = &particles[i];
@@ -1020,7 +1020,7 @@ int SendParticleToEnzo(Worker *workers) {
         sendcounts[i] = 0;
 
     /* Prepare Send Particle Buffer */
-    for (int i = 0; i <= LastParticleIndex; i++) {
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
         //index = PIDtoIndexMap[i];
         // maybe we can it more fancy.
         ptcl = &particles[i];
