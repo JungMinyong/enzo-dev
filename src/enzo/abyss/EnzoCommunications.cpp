@@ -1299,7 +1299,7 @@ int SendParticleToEnzo(Worker *workers) {
     delete [] sendcounts;
     delete [] sendbuf;
 
-    if (NumberOfSingleParticle != 0 && IdentifyOnTheFly) {
+    if (IdentifyOnTheFly) { // (Query AEOS) EW changed the previous condition since enzo processors cannot know the total number of nbody particles 2025.7.20
         // fprintf(stderr, "NBODY: ClusterPosition =(%lf, %lf, %lf)\n",
         // ClusterPosition[0]-0.5, ClusterPosition[1]-0.5, ClusterPosition[2]-0.5);
         /*
