@@ -33,7 +33,7 @@
 #include "hydro_rk/EOS.h"
 #include "hydro_rk/tools.h"
 #include "phys_constants.h"
- 
+
 #include <float.h>   /* for DBL_MAX */
 
 /* function prototypes */
@@ -59,7 +59,7 @@ void find_min_dt_cell(
   double    *u,
   double    *v,
   double    *w,
-  double    *out_temp,
+  double    *out_rho,
   double    *out_cs,
   double    *out_dx,
   double    *out_dt
@@ -202,8 +202,8 @@ float grid::ComputeTimeStep()
 			     BaryonField[Vel1Num], BaryonField[Vel2Num],
 			     BaryonField[Vel3Num], &dtBaryons, &dtViscous);
  
-    if ((HydroMethod != MHD_Li) & (dtBaryons*CourantSafetyNumber < 1e-5)){
-            double t_min, cs_min, dx_min, dt_min;
+    if ((HydroMethod != MHD_Li) & (dtBaryons*CourantSafetyNumber*TimeUnits/yr_s < 100)){
+            double rho_min, cs_min, dx_min, dt_min;
             find_min_dt_cell(&GridRank, GridDimension, GridDimension+1,
                               GridDimension+2,
                               GridStartIndex, GridEndIndex,
@@ -216,9 +216,9 @@ float grid::ComputeTimeStep()
                               BaryonField[DensNum], pressure_field,
                               BaryonField[Vel1Num], BaryonField[Vel2Num],
                               BaryonField[Vel3Num], 
-                               &t_min, &cs_min, &dx_min, &dt_min);
-            printf("Cell with min(dt): dt = %e, T = %g, cs = %g, dx = %g\n",
-                   dt_min, t_min, cs_min, dx_min);
+                               &rho_min, &cs_min, &dx_min, &dt_min);
+            printf("Cell with min(dt): dt = %e, rho = %g, cs = %g, dx = %g\n",
+                   dt_min, rho_min, cs_min, dx_min);
           }
 
     if(HydroMethod == MHD_Li){
@@ -666,7 +666,7 @@ void find_min_dt_cell(
   double    *u,
   double    *v,
   double    *w,
-  double    *out_temp,
+  double    *out_rho,
   double    *out_cs,
   double    *out_dx,
   double    *out_dt
@@ -740,13 +740,13 @@ void find_min_dt_cell(
       double cs_m  = sqrt(gamma * P_m / rho_m);
       double T_m   = P_m / rho_m;  // “temperature” proxy
 
-      *out_temp = T_m;
+      *out_rho = rho_m;
       *out_cs   = cs_m;
       *out_dx   = dx[best_i];
       *out_dt   = best_dt;
   } else {
       // No valid cell → zero out results
-      *out_temp = 0.0;
+      *out_rho = 0.0;
       *out_cs   = 0.0;
       *out_dx   = 0.0;
       *out_dt   = 0.0;

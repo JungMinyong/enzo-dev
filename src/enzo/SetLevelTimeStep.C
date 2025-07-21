@@ -58,7 +58,6 @@ int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
     if (dynamic_hierarchy_rebuild) {
       IsotropicConduction = AnisotropicConduction = FALSE;      
     }
-
     /* Compute the mininum timestep for all grids. */
  
     *dtThisLevel = huge_number;

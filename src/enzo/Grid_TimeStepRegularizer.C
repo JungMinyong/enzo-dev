@@ -45,10 +45,9 @@ int grid::TimeStepRegularizer(double dtMinimum)
 {
  
   /* Return if this doesn't concern us. */
- 
+
   if (ProcessorNumber != MyProcessorNumber || NumberOfBaryonFields == 0)
     return SUCCESS;
- 
   this->DebugCheck("RegularizeTimeStep");
  
   /* initialize */
@@ -81,7 +80,8 @@ int grid::TimeStepRegularizer(double dtMinimum)
     exit(FAIL);
   }
 
-  FLOAT dx = 1.0/CellWidth[0][0]/a;
+  // FLOAT dx = 1.0/CellWidth[0][0]/a;
+  FLOAT dx = CellWidth[0][0]*a;
   double rho, vx, vy, vz, v2, eint, etot, cs, dt_cs, dt_vel, rho_new;
   double rho_max, vx_max, vy_max, vz_max, v2_max, eint_max, etot_max;
   double delta_rho, eint_new, vel_new, vel, vel_max;
@@ -96,7 +96,8 @@ int grid::TimeStepRegularizer(double dtMinimum)
 	vy  = BaryonField[Vel2Num][n];
 	vz  = BaryonField[Vel3Num][n];
 	v2 = vx*vx + vy*vy + vz*vz;
-	
+	vel = sqrt(v2);
+
 	if (DualEnergyFormalism) {
 	  eint = BaryonField[GENum][n];
 	}
@@ -110,8 +111,7 @@ int grid::TimeStepRegularizer(double dtMinimum)
 	
 	cs = sqrt(max(eint, tiny_number));
 	dt_cs = dx/cs;
-	dt_vel = dx/max(sqrt(v2), tiny_number);
-	
+	dt_vel = dx/max(vel, tiny_number);
 	/* Check for sound speed failure. */
 
 	  if (min(dt_cs, dt_vel) < dtMinimum) {
@@ -132,6 +132,7 @@ int grid::TimeStepRegularizer(double dtMinimum)
 	  vy_max  = BaryonField[Vel2Num][n+imax];
 	  vz_max  = BaryonField[Vel3Num][n+imax];
 	  v2_max = vx_max*vx_max + vy_max*vy_max + vz_max*vz_max;
+	  vel_max = sqrt(v2_max);
 	  if (DualEnergyFormalism) {
 	    eint_max = BaryonField[GENum][n+imax];
 	  }
@@ -149,7 +150,7 @@ int grid::TimeStepRegularizer(double dtMinimum)
 	    if (eint_new > eint_max) {
 	      delta_rho = rho * (eint - eint_new)/(eint_new - eint_max);
 	    }
-	  }	    
+	  }
 
 	  if (dt_vel < dtMinimum) {
 	    vel_new = vel * (dt_vel/dtMinimum);
@@ -157,16 +158,19 @@ int grid::TimeStepRegularizer(double dtMinimum)
 	      delta_rho = max(rho * (vel - vel_new)/(vel_new - vel_max), delta_rho);
 	    } 
 	  }
+	  rho_new = rho + delta_rho;
 
 	  /* Check that we are moving at most a fixed fraction of the mass. */
-	  const double REGULARIZER_MAX_FACTOR = 0.5;
+	  const double REGULARIZER_MAX_FACTOR = 0.5; // it was 0.5
 	  
 	  if (delta_rho/rho_max > REGULARIZER_MAX_FACTOR || delta_rho == 0.0) {
-	    fprintf(stderr, "DT regularizer failure, rho = %g, rho_new = %g, delta_rho = %g, imax = %d\n", rho, rho_new, delta_rho, imax);
+	    fprintf(stderr, "DT regularizer failure, rho = %g, rho_new = %g, delta_rho = %g, imax = %d ratio = %g\n", rho, rho_new, delta_rho, imax, delta_rho/rho_max);
+		// fprintf(stderr, "dt_cs = %g, dt_vel = %g, dtMinimum = %g\n", dt_cs, dt_vel, dtMinimum);
+		// fprintf(stderr, "vel_new = %g, vel_max = %g, vel = %g\n", vel_new, vel_max, vel);
+		// This is usually when dt_vel < dtMinimum, but vel_new < vel_max so delta_rho is zero.
 	  } else {
 
 	    fprintf(stderr, "DT regularizer success, rho = %g, rho_new = %g, delta_rho = %g, imax = %d ratio = %g\n", rho, rho_new, delta_rho, imax, delta_rho/rho_max);
-
 	    /* Set conserved quantities for the two cells */
 
 	    BaryonField[Vel1Num][n] *= rho;

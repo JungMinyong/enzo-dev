@@ -301,7 +301,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "PPMSteepeningParameter = %"ISYM"\n\n",
 	  MetaData.PPMSteepeningParameter);
 
-  fprintf(fptr, "dtMinimumRegularizer = %"FSYM"\n",
+  fprintf(fptr, "dtMinimumRegularizer = %e\n",
 	  dtMinimumRegularizer);
  
   /* write global Parameters */
