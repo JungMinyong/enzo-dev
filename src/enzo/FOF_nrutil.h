@@ -51,7 +51,7 @@ static int iminarg1,iminarg2;
 #endif /* UNUSED */
 
 void nrerror(char error_text[]);
-float *vector(long nl, long nh);
+float *fvector(long nl, long nh);
 int *ivector(long nl, long nh);
 unsigned char *cvector(long nl, long nh);
 unsigned long *lvector(long nl, long nh);
@@ -63,7 +63,7 @@ float **submatrix(float **a, long oldrl, long oldrh, long oldcl, long oldch,
 	long newrl, long newcl);
 float **convert_matrix(float *a, long nrl, long nrh, long ncl, long nch);
 float ***f3tensor(long nrl, long nrh, long ncl, long nch, long ndl, long ndh);
-void free_vector(float *v, long nl, long nh);
+void free_fvector(float *v, long nl, long nh);
 void free_ivector(int *v, long nl, long nh);
 void free_cvector(unsigned char *v, long nl, long nh);
 void free_lvector(unsigned long *v, long nl, long nh);

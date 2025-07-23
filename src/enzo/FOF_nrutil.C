@@ -26,7 +26,7 @@ void nrerror(char error_text[])
 	exit(1);
 }
 
-float *vector(long nl, long nh)
+float *fvector(long nl, long nh)
 /* allocate a float vector with subscript range v[nl..nh] */
 {
 	float *v;
@@ -226,7 +226,7 @@ float ***f3tensor(long nrl, long nrh, long ncl, long nch, long ndl, long ndh)
 	return t;
 }
 
-void free_vector(float *v, long nl, long nh)
+void free_fvector(float *v, long nl, long nh)
 /* free a float vector allocated with vector() */
 {
 	free((FREE_ARG) (v+nl-NR_END));

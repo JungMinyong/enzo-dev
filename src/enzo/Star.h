@@ -108,6 +108,13 @@ public:
   void UpdateBackgroundAcceleration();
 	void DeleteBackgroundAcceleration();
   void UpdateToGridParticle(const double *pos, const double *vel);
+#ifdef SEVN
+  void SetMass(double &mass){ Mass = mass; };
+  void SetBirthMass(double &mzams){ BirthMass = mzams; };
+  void SetWindMassEjected(double &m_wind){ wind_mass_ejected = m_wind; };
+  void SetSNMassEjected(double &m_sn){ sn_mass_ejected = m_sn; };
+  void SetTeff(double &teff){ Teff = teff; };
+#endif
 #endif
   star_type ReturnType(void) { return type; };
   int   ReturnID(void) { return Identifier; };

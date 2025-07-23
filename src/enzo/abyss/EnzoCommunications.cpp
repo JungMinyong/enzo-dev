@@ -394,59 +394,7 @@ int InitialCommunication() {
     global_variable->LastParticleIndex = NumberOfSingleParticle - 1;
 
 #ifdef SEVN
-
 	initializeStellarEvolution();
-
-	assert(PIDtoIndexMap_SEVN.empty());
-	assert(SEVNList_Enzo.empty());
-	assert(creation_time_Enzo.empty());
-	assert(world_time_Enzo.empty());
-
-	newNumberOfEnzoSEVNParticle = 0;
-
-	double metal_sevn;
-	double mass_sevn;
-	double creationtime_sevn;
-	double worldtime_sevn;
-	size_t id;
-	std::vector<std::string> init_params;
-	StarSEVN* star_sevn;
-
-	if (NumberOfEnzoSEVNParticle != 0) {
-		assert(NumberOfEnzoSEVNParticle > 0);
-		for (int i=0; i<NumberOfEnzoSEVNParticle; i++) {
-			EnzoPIDs_SEVN[i] = PID_SEVN[i];
-			PIDtoIndexMap_SEVN[PID_SEVN[i]] = SEVNList_Enzo.size();
-
-			metal_sevn = Metallicity_SEVN[i] > 0.04 ? 0.04 : Metallicity_SEVN[i];
-			mass_sevn = InitialMass_SEVN[i];
-			creationtime_sevn = CreationTime_SEVN[i]*EnzoTime*1e4; // in Myr unit
-			worldtime_sevn = creationtime_sevn;
-			id = PID_SEVN[i];
-			init_params = {std::to_string(mass_sevn), std::to_string(metal_sevn), "0.0", "delayed", "zams", "end", "events"};
-
-			star_sevn = new StarSEVN(sevnio, init_params, id, false);
-			fprintf(stderr, "New star in Enzo! PID: %d, Initial mass: %e Msun, Z: %e\n", id, mass_sevn, metal_sevn);
-			SEVNList_Enzo.push_back(star_sevn);
-			creation_time_Enzo.push_back(creationtime_sevn);
-
-			while (worldtime_sevn + star_sevn->getp(Timestep::ID) <= global_variable->EnzoCurrentTime) {
-				worldtime_sevn += star_sevn->getp(Timestep::ID);
-				star_sevn->evolve();
-				if (star_sevn->amiremnant())
-					break;
-			}
-			world_time_Enzo.push_back(worldtime_sevn);
-		}
-		assert(SEVNList_Enzo.size() 		== NumberOfEnzoSEVNParticle);
-		assert(creation_time_Enzo.size()	== NumberOfEnzoSEVNParticle);
-		assert(world_time_Enzo.size() 		== NumberOfEnzoSEVNParticle);
-
-		delete [] PID_SEVN;
-		delete [] InitialMass_SEVN;
-		delete [] CreationTime_SEVN;
-		delete [] Metallicity_SEVN;
-	}
 #endif
 
     delete[] recv_counts;
@@ -815,7 +763,7 @@ int ReceiveParticleFromEnzo() {
             }
 
 #ifdef SEVN
-            if (newCreationTime[i] > 0.0 && newMass[i] * EnzoMass * mass_unit > 2.2)
+            if (recvbuf_new[i].CreationTime > 0.0 && recvbuf_new[i].Mass * EnzoMass * mass_unit > 2.2)
                 initializeStellarEvolution(index);
 #endif
         }
@@ -834,42 +782,6 @@ int ReceiveParticleFromEnzo() {
     // update function
     // 3. For PISN case, SEVN memory should be free - not yet
 
-#ifdef SEVN
-	if (NumberOfEnzoSEVNParticle != 0) {
-		std::cerr << "In ReceiveFromEnzo, NumberOfEnzoSEVNParticle = "<< NumberOfEnzoSEVNParticle<< std::endl;
-		for (int i=0; i<NumberOfEnzoSEVNParticle; i++) {
-			EnzoPIDs_SEVN[i] = PID_SEVN[i];
-			assert(SEVNList_Enzo[PIDtoIndexMap_SEVN[PID_SEVN[i]]] != nullptr);
-		}
-	}
-	if (newNumberOfEnzoSEVNParticle != 0) {
-		std::cerr << "In ReceiveFromEnzo, newNumberOfEnzoSEVNParticle = "<< newNumberOfEnzoSEVNParticle<< std::endl;
-
-		double metal;
-		double mass;
-		size_t id;
-		std::vector<std::string> init_params;
-		int index;
-		StarSEVN* star_sevn;
-
-		for (int i=0; i<newNumberOfEnzoSEVNParticle; i++) {
-			EnzoPIDs_SEVN[NumberOfEnzoSEVNParticle+i] = newPID_SEVN[i];
-			PIDtoIndexMap_SEVN[newPID_SEVN[i]] =  SEVNList_Enzo.size();
-
-			metal = newMetallicity_SEVN[i] > 0.04 ? 0.04 : newMetallicity_SEVN[i];
-			mass = newMass_SEVN[i]*EnzoMass*mass_unit;
-			id = newPID_SEVN[i];
-			init_params = {std::to_string(mass), std::to_string(metal), "0.0", "delayed", "zams", "end", "events"};
-			star_sevn = new StarSEVN(sevnio, init_params, id, false);
-
-			SEVNList_Enzo.push_back(star_sevn);
-			creation_time_Enzo.push_back(global_variable->EnzoCurrentTime);
-			world_time_Enzo.push_back(global_variable->EnzoCurrentTime);
-
-			fprintf(stderr, "New star in Enzo! PID: %d, Initial mass: %e Msun, Z: %e\n", id, mass, metal);
-		}
-	}
-#endif
 
     // Update in case we update ClusterPosition. Currently, only COMEvolution update the ClusterPosition
 	AbyssCenter[0] = ClusterPosition[0];
@@ -965,10 +877,6 @@ int SendParticleToEnzo(Worker *workers) {
     int index;
     Particle *ptcl;
 
-#ifdef SEVN
-    StellarEvolution_Enzo(); // Let's work on this later by EW 2025.7.8
-#endif
-
     int NumberOfEscapeParticle = 0;
     double r2;
     double TimeStep = global_variable->EnzoTimeStep / EnzoTime;
@@ -1048,20 +956,20 @@ int SendParticleToEnzo(Worker *workers) {
 #endif
             }
 #ifdef SEVN
-            InitialMass[i] = ptcl->InitialMass; // This is already in Msun unit!!!
-            WindEjectedMass[i] = ptcl->dm * mass_unit;
-            SNEjectedMass[i] = ptcl->SNEjectedMass * mass_unit;
-            Temperature[i] = ptcl->T_eff;
+            sendbuf[offset].InitialMass = ptcl->InitialMass; // This is already in Msun unit!!!
+            sendbuf[offset].Mass = ptcl->Mass / EnzoMass;
+            sendbuf[offset].WindEjectedMass = ptcl->dm * mass_unit;
+            sendbuf[offset].SNEjectedMass = ptcl->SNEjectedMass * mass_unit;
+            sendbuf[offset].Temperature = ptcl->T_eff;
 
-            if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
+            if (ptcl->dm > 0.0 || ptcl->SNEjectedMass > 0.0) {
                 fprintf(stderr, "Feedback info send to Enzo...\n");
                 fprintf(stderr,
                         "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, "
                         "SNEjectedMass: %e Msun, T_eff: %e K\n",
-                        ptcl->PID, InitialMass[i], WindEjectedMass[i],
-                        SNEjectedMass[i], Temperature[i]);
+                        ptcl->PID, sendbuf[offset].InitialMass, sendbuf[offset].WindEjectedMass,
+                        sendbuf[offset].SNEjectedMass, sendbuf[offset].Temperature);
             }
-            Mass[i] = ptcl->Mass / EnzoMass;
 #endif
 
             if (ptcl->CMPtclIndex != -1) {
@@ -1141,11 +1049,6 @@ int SendParticleToEnzo(Worker *workers) {
                     } else
                     it++;
                 }
-                PIDtoIndexMap_SEVN[ptcl->PID] = SEVNList_Enzo.size();
-                SEVNList_Enzo.push_back(ptcl->StellarEvolution);
-                creation_time_Enzo.push_back(ptcl->CreationTime);
-                world_time_Enzo.push_back(ptcl->WorldTime);
-                ptcl->StellarEvolution = nullptr;
             }
 #endif // SEVN
 #endif // FEWBODY
@@ -1154,21 +1057,20 @@ int SendParticleToEnzo(Worker *workers) {
         // fprintf(stdout, "ABYSS: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
 
 #ifdef SEVN
-        InitialMass[i] = ptcl->InitialMass; // This is already in Msun unit!!!
-        WindEjectedMass[i] = ptcl->dm * mass_unit;
-        SNEjectedMass[i] = ptcl->SNEjectedMass * mass_unit;
-        Temperature[i] = ptcl->T_eff;
+        sendbuf[offset].InitialMass = ptcl->InitialMass; // This is already in Msun unit!!!
+        sendbuf[offset].Mass = ptcl->Mass / EnzoMass;
+        sendbuf[offset].WindEjectedMass = ptcl->dm * mass_unit;
+        sendbuf[offset].SNEjectedMass = ptcl->SNEjectedMass * mass_unit;
+        sendbuf[offset].Temperature = ptcl->T_eff;
 
-        if (WindEjectedMass[i] > 0.0 || SNEjectedMass[i] > 0.0) {
+        if (ptcl->dm > 0.0 || ptcl->SNEjectedMass > 0.0) {
             fprintf(stderr, "Feedback info send to Enzo...\n");
             fprintf(stderr,
                     "\tPID: %d. InitialMass: %e Msun, WindEjectedMass: %e Msun, "
                     "SNEjectedMass: %e Msun, T_eff: %e K\n",
-                    ptcl->PID, InitialMass[i], WindEjectedMass[i], SNEjectedMass[i],
-                    Temperature[i]);
+                    ptcl->PID, sendbuf[offset].InitialMass, sendbuf[offset].WindEjectedMass,
+                    sendbuf[offset].SNEjectedMass, sendbuf[offset].Temperature);
         }
-
-        Mass[i] = ptcl->Mass / EnzoMass;
 #endif
         ++sendcounts[ptcl->EnzoProcessorNumber];
     } //  loop over particles
@@ -1258,11 +1160,6 @@ int SendParticleToEnzo(Worker *workers) {
                         } else
                         it++;
                     }
-                    PIDtoIndexMap_SEVN[members->PID] = SEVNList_Enzo.size();
-                    SEVNList_Enzo.push_back(members->StellarEvolution);
-                    creation_time_Enzo.push_back(members->CreationTime);
-                    world_time_Enzo.push_back(members->WorldTime);
-                    members->StellarEvolution = nullptr;
                 }
 #endif
             }
