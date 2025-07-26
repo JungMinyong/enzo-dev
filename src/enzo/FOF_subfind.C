@@ -510,9 +510,9 @@ int do_subfind_in_group(FOFData &D, FOF_particle_data *pbuf, int grlen,
   D.P	       = pbuf-1;
   D.NumInGroup = grlen;
 
-  D.Energy    = vector(1,  D.NumInGroup);
-  D.Density   = vector(1,  D.NumInGroup);
-  D.Potential = vector(1,  D.NumInGroup);
+  D.Energy    = fvector(1,  D.NumInGroup);
+  D.Density   = fvector(1,  D.NumInGroup);
+  D.Potential = fvector(1,  D.NumInGroup);
   D.Next      = ivector(1, D.NumInGroup);
   D.Head      = ivector(1, D.NumInGroup);
   D.NewHead   = ivector(1, D.NumInGroup);
@@ -630,9 +630,9 @@ int do_subfind_in_group(FOFData &D, FOF_particle_data *pbuf, int grlen,
   free_ivector(D.NewHead, 1, D.NumInGroup);
   free_ivector(D.Head, 1, D.NumInGroup);
   free_ivector(D.Next, 1, D.NumInGroup);
-  free_vector(D.Potential, 1,D.NumInGroup);
-  free_vector(D.Density, 1, D.NumInGroup);
-  free_vector(D.Energy, 1, D.NumInGroup);
+  free_fvector(D.Potential, 1,D.NumInGroup);
+  free_fvector(D.Density, 1, D.NumInGroup);
+  free_fvector(D.Energy, 1, D.NumInGroup);
   
   D.Len	 = Len_bak;
   D.Head = Head_bak;

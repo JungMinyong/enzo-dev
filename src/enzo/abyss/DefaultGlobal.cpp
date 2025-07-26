@@ -63,15 +63,6 @@ FILE* mergerout;
 FILE* SEVNout;
 IO* sevnio = nullptr;
 std::multimap<double, int> SEVNList; // This constains the time of next SEVN evolution time and the particle index by EW 2025.3.27
-
-int NumberOfEnzoSEVNParticle;		// This is the number of SEVN particles in Enzo, not in Abyss by EW 2025.4.27
-int newNumberOfEnzoSEVNParticle;	// This is the number of SEVN particles newly added in Enzo, not in Abyss by EW 2025.4.27
-std::unordered_map<int,int> PIDtoIndexMap_SEVN;
-int *EnzoPIDs_SEVN;
-
-std::vector<StarSEVN*> SEVNList_Enzo;
-std::vector<double> creation_time_Enzo;
-std::vector<double> world_time_Enzo;
 #endif
 FILE* workerout;
 
@@ -123,9 +114,6 @@ void DefaultGlobal() {
 		for (int i=0; i<MaxNumberOfParticle; i++) {
 			AvailableIndices[i] = -1;
 		}
-#ifdef SEVN
-		EnzoPIDs_SEVN    = new int[MaxNumberOfParticle];
-#endif
 	}
 
 	NumberOfWorker = NumberOfAbyssProcessors-1;

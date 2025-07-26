@@ -42,7 +42,6 @@ MACH_CPP       = cpp # C preprocessor command
 
 # With MPI
 
-#node 14
 MACH_CC_MPI    =  $(LOCAL_MPI)/bin/mpicc
 MACH_CXX_MPI   =  $(LOCAL_MPI)/bin/mpicxx
 MACH_FC_MPI    =  $(LOCAL_MPI)/bin/mpifort

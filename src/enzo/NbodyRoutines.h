@@ -133,10 +133,6 @@ struct ParticleReceiveDataType{
 	int	ID;
 	double Position[MAX_DIMENSION];
 	double Velocity[MAX_DIMENSION];
-	//double Mass;
-	//double CreationTime;
-	//double DynamicalTime;
-	//double Metallicity;
 
 #ifdef SEVN
 	double InitialMass;
@@ -154,11 +150,11 @@ struct ParticleReceiveDataType{
 		ptcl->UpdateToGridParticle(this->Position, this->Velocity);
 		//ptcl->DeleteBackgroundAcceleration(); // this causes problems.
 #ifdef SEVN
-		//ptcl->ID = this->identifier;
-		//this->Mass          = ptcl->Mass;
-		//this->CreationTime  = ptcl->BirthTime;
-		//this->DynamicalTime = ptcl->LifeTime;
-		//this->Metallicity   = ptcl->Metallicity;
+		ptcl->SetMass(this->Mass);
+		ptcl->SetBirthMass(this->InitialMass);
+		ptcl->SetWindMassEjected(this->WindEjectedMass);
+		ptcl->SetSNMassEjected(this->SNEjectedMass);
+		ptcl->SetTeff(this->Temperature);
 #endif
 	};
 #endif

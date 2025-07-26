@@ -98,10 +98,10 @@ int CommunicationToAbyssInitialize(
     ENZO_FAIL("Error in GetUnits.");
   }
 
-  fprintf(stderr, "LengthUnit                = %lf\n", LengthUnits);
-  fprintf(stderr, "DensityUnit               = %lf\n", DensityUnits);
-  fprintf(stderr, "TimeUnit                  = %lf\n", TimeUnits);
-  fprintf(stderr, "VelocityUnit              = %lf\n", VelocityUnits);
+  fprintf(stderr, "LengthUnit                = %e\n", LengthUnits);
+  fprintf(stderr, "DensityUnit               = %e\n", DensityUnits);
+  fprintf(stderr, "TimeUnit                  = %e\n", TimeUnits);
+  fprintf(stderr, "VelocityUnit              = %e\n", VelocityUnits);
 
 
   /* Number of Star Particles */
