@@ -1167,8 +1167,12 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     if (STARMAKE_METHOD(MBH_PARTICLE)) {
       
-      #ifdef NBODY
+#ifdef NBODY
+#ifdef INDIVIDUALSTAR
+      int NbodyStarType = -PARTICLE_TYPE_INDIVIDUAL_STAR;
+#else
       int NbodyStarType = NbodyStar; // ?? by YS (Query)
+#endif
       NumberOfNewParticlesSoFar = NumberOfNewParticles;
 
       if (mbh_maker(GridDimension, GridDimension+1, GridDimension+2, &size, 
@@ -1189,7 +1193,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
 
 
-      #else
+#else
       //---- MASSIVE BLACK HOLE PARTICLE 
       //     (particles are put by hand; location picked at MBHInsertLocationFilename, 
       //      once MBH particles are inserted throughout the whole grid hierarchy,
@@ -1212,7 +1216,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 		    tg->ParticleType, &MBHParticleType) == FAIL) {
 	ENZO_FAIL("Error in mbh_maker.");
       }
-      #endif
+#endif
     }
 
 #ifdef INDIVIDUALSTAR

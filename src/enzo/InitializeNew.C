@@ -332,12 +332,6 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 		  if (NumberOfParticleAttributes > MAX_NUMBER_OF_PARTICLE_ATTRIBUTES){
     ENZO_VFAIL("Number of necessary particle attributes (%"ISYM") greater than"
               " MAX_NUMBER_OF_PARTICLE_ATTRIBUTES. Change and re-compile.\n",NumberOfParticleAttributes);
-			  
-#ifdef NBODY
-		fprintf(stderr,"NumOfAtt=%d\n",NumberOfParticleAttributes);
-		NumberOfParticleAttributes = NumberOfParticleAttributes + 4; // for Acceleration
-		fprintf(stderr,"NumOfAtt=%d\n",NumberOfParticleAttributes);
-#endif
 	}
 
   // Give unset parameters their default values

@@ -962,3 +962,49 @@ float SampleIMF(float * data, const float & lower_mass, const float & upper_mass
 
   return m;
 }
+
+#ifdef NBODY
+#define nouse
+#ifdef use
+float SampleKroupaIMF() {
+
+  const float mlow = IndividualStarIMFLowerMassCutoff;
+  const float mup = IndividualStarIMFUpperMassCutoff;
+
+  const float alpha1 = 1.3;
+  const float apha2 = 2.3;
+
+  float c1, c2, k1, k2, xx;
+  float mass;
+
+  c1 = 1.0 - alpha1;
+  c2 = 1.0 - alpha2;
+
+  k1 = 2.0/c1 * (POW(0.5, c1) - POW(mlow, c1));
+  if (mlow > 0.5) {
+    k1 = 0.0;
+    k2 = 1.0/c2 * (POW(mup, c2) - POW(mlow, c2));
+  } else {
+    k2 = k1 + 1.0/c2 * (POW(mup, c2) - POW(0.5, c2));
+  }
+  if (mup < 0.5) {
+    k1 = 2.0/c1 * (POW(mup, c1) - POW(mlow, c1));
+    k2 = k1;
+  }
+
+  unsigned_long_int random_int = mt_random();
+  const int max_random = (1<<16);
+  float xx = (float) (random_int%max_random) / (float) (max_random);
+
+  if (xx < k1/k2) {
+    mass = POW(0.5*c1*xx*k2 + POW(mlow, c1), 1.0/c1);
+  } else {
+    mass = POW(c2*(xx*k2 - k1) + enzo_max(0.5, mlow)**c2, 1.0/c2);
+  }
+
+  IndividualStarIMFCalls++;
+
+  return mass;
+}
+#endif
+#endif

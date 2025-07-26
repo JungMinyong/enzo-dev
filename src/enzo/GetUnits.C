@@ -50,7 +50,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
       *TimeUnits        = GlobalTimeUnits;
       *VelocityUnits    = GlobalLengthUnits/GlobalTimeUnits; //cms-1
   
-    }
+  }
   return SUCCESS;
 }
 

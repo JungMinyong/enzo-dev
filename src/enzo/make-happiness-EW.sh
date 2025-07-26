@@ -30,7 +30,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/grackle15/lib
 
 make machine-linux-mpich-EW
 #make precision-64 integers-32 particle-id-32 max-baryons-30 opt-aggressive lcaperf-no max-tasks-per-node-36 grackle-yes individualstar-yes nbody-yes photon-no cuda-no uuid-no fewbody-yes sevn-no
-make io-64 precision-64 integers-32 particle-id-128 max-baryons-70 max-particle-attr-60 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no uuid-no individualstar-yes new-yield-tables-yes sevn-yes memorypool-yes nbody-yes fewbody-yes
+make io-64 precision-64 integers-32 particle-id-128 max-baryons-70 max-particle-attr-30 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no uuid-no individualstar-yes new-yield-tables-yes sevn-no memorypool-yes nbody-yes fewbody-yes
 make show-config
 make show-flags
 make -j8

@@ -239,20 +239,21 @@ int InitialCommunication() {
 
     // need to fix units
     // fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
-    fprintf(nbpout, "LengthUnit                = %lf\n", LengthUnits);
-    fprintf(nbpout, "DensityUnit               = %lf\n", DensityUnits);
-    fprintf(nbpout, "TimeUnit                  = %lf\n", TimeUnits);
-    fprintf(nbpout, "VelocityUnit              = %lf\n", VelocityUnits);
+    fprintf(nbpout, "LengthUnit                = %e\n", LengthUnits);
+    fprintf(nbpout, "DensityUnit               = %e\n", DensityUnits);
+    fprintf(nbpout, "TimeUnit                  = %e\n", TimeUnits);
+    fprintf(nbpout, "VelocityUnit              = %e\n", VelocityUnits);
 
 
 
-    fprintf(nbpout, "Nbody Time               = %lf Myr\n", EnzoCurrentTime*1e4);
-    fprintf(nbpout, "Nbody TimeStep           = %lf\n", global_variable->EnzoTimeStep);
-    fprintf(nbpout, "EPS2                     = %lf pc**2\n", EPS2 * position_unit * position_unit);
-    fprintf(nbpout, "InitialNeighborRadius2        = %.2e pc**2\n", InitialNeighborRadius2 * position_unit * position_unit);
-    fprintf(nbpout, "eta                      = %lf\n", eta);
+    fprintf(nbpout, "Nbody Time               = %e Myr\n", EnzoCurrentTime*1e4);
+    fprintf(nbpout, "Nbody TimeStep           = %e\n", global_variable->EnzoTimeStep);
+    fprintf(nbpout, "EPS2                     = %e pc**2\n", EPS2 * position_unit * position_unit);
+    fprintf(nbpout, "InitialNeighborRadius2   = %.2e pc**2\n", InitialNeighborRadius2 * position_unit * position_unit);
+    fprintf(nbpout, "eta                      = %e\n", eta);
+    fprintf(nbpout, "EnzoClusterPosition      = (%e, %e, %e)\n", EnzoClusterPosition[0], EnzoClusterPosition[1], EnzoClusterPosition[2]);
     fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n", ClusterRadius2 * position_unit * position_unit);
-    fprintf(nbpout, "StarMassEjectionFraction = %lf\n", StarMassEjectionFraction);
+    fprintf(nbpout, "StarMassEjectionFraction = %e\n", StarMassEjectionFraction);
     fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
     fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
     fprintf(nbpout, "BinaryRegularization     = %d\n", BinaryRegularization); // (Query) EW: What is this?
@@ -909,7 +910,8 @@ int SendParticleToEnzo(Worker *workers) {
 
 #pragma unroll Dim
     for (int dim = 0; dim < Dim; dim++) {
-        NbodyCOM[dim] /= mass;
+        if (mass != 0.0)
+            NbodyCOM[dim] /= mass;
         NbodyCOM[dim] /= EnzoLength;
         // NbodyCOM[dim] += ClusterPosition[dim];
     }

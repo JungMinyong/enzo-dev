@@ -93,21 +93,12 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
     } // endif multimetals
 
     if (IndividualStarSaveTablePositions){
-#ifdef NBODY
-      for(int ii = ParticleAttributeTableStartIndex; ii < NumberOfParticleAttributes-4; ii++){
-        ParticleAttributeLabel[ii] = IndividualStarTableIDLabel(ii - ParticleAttributeTableStartIndex);
-      }
-    }
-    ParticleAttributeLabel[NumberOfParticleAttributes-6] = "wind_mass_ejected";
-    ParticleAttributeLabel[NumberOfParticleAttributes-5] = "sn_mass_ejected";
-#else
       for(int ii = ParticleAttributeTableStartIndex; ii < NumberOfParticleAttributes; ii++){
         ParticleAttributeLabel[ii] = IndividualStarTableIDLabel(ii - ParticleAttributeTableStartIndex);
       }
     }
     ParticleAttributeLabel[NumberOfParticleAttributes-2] = "wind_mass_ejected";
     ParticleAttributeLabel[NumberOfParticleAttributes-1] = "sn_mass_ejected";
-#endif
 
   } else { // not using individual star model
 
@@ -119,12 +110,5 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
 
 #endif
 
-#ifdef NBODY
-    ParticleAttributeLabel[NumberOfParticleAttributes-4] = "acc_x";
-    ParticleAttributeLabel[NumberOfParticleAttributes-3] = "acc_y";
-    ParticleAttributeLabel[NumberOfParticleAttributes-2] = "acc_z";
-    ParticleAttributeLabel[NumberOfParticleAttributes-1] = "empty_for_abyss";
-#endif
-
-  return ;
+  return;
 }
