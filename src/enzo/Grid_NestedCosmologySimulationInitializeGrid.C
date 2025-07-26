@@ -108,6 +108,9 @@ int grid::NestedCosmologySimulationInitializeGrid(
                           float CosmologySimulationInitialFractionH2II,
 			  float CosmologySimulationInitialFractionMetal,
 			  float CosmologySimulationInitialFractionMetalIa,
+#ifdef TRANSFER
+			  float RadHydroRadiation,
+#endif
                           int   UseMetallicityField,
                           PINT &CurrentParticleNumber,
                           int CosmologySimulationManuallySetParticleMassRatio,
@@ -127,11 +130,17 @@ int grid::NestedCosmologySimulationInitializeGrid(
   int idim, ndim, dim, i, j, vel, OneComponentPerFile, level;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum, MetalNum, MetalIaNum, PeHeatingNum;
-
+#ifdef TRANSFER
+  int EgNum;
+#endif
+#ifdef EMISSIVITY
+  int EtaNum;
+#endif
   int iTE = ietot;
   int ExtraField[11];
   int ForbidNum;
   int MachNum, PSTempNum, PSDenNum;
+  int kphHINum, kphHeINum, kphHeIINum, kdissH2INum, PhotoGammaNum;
 
   int RePsiNum, ImPsiNum, FDMDensNum;
 
@@ -380,6 +389,21 @@ int grid::NestedCosmologySimulationInitializeGrid(
       FieldType[NumberOfBaryonFields++] = Phi_pField;
     }
   }
+#ifdef TRANSFER
+    if (RadiativeTransferFLD > 1) {
+      FieldType[EgNum = NumberOfBaryonFields++] = RadiationFreq0;
+      if (RadiativeCooling) {
+	FieldType[ kphHINum = NumberOfBaryonFields++] = kphHI;
+	FieldType[ PhotoGammaNum = NumberOfBaryonFields++] = PhotoGamma;
+	if (RadiativeTransferHydrogenOnly == FALSE) {
+	  FieldType[ kphHeINum = NumberOfBaryonFields++] = kphHeI;
+	  FieldType[ kphHeIINum = NumberOfBaryonFields++] = kphHeII;
+	}
+	if (MultiSpecies > 1)
+	  FieldType[ kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
+      }
+    }
+#endif
     if (MultiSpecies) {
       FieldType[DeNum    = NumberOfBaryonFields++] = ElectronDensity;
       FieldType[HINum    = NumberOfBaryonFields++] = HIDensity;
@@ -459,12 +483,12 @@ int grid::NestedCosmologySimulationInitializeGrid(
 #endif
    }
 
-    if (WritePotential)
-      FieldType[NumberOfBaryonFields++] = GravPotential;
     if(STARMAKE_METHOD(COLORED_POP3_STAR)){
       fprintf(stderr, "Initializing Forbidden Refinement color field\n");
       FieldType[ForbidNum = NumberOfBaryonFields++] = ForbiddenRefinement;
     }
+    if (WritePotential)
+      FieldType[NumberOfBaryonFields++] = GravPotential;
     if(ShockMethod){
       FieldType[MachNum   = NumberOfBaryonFields++] = Mach;
       if(StorePreShockFields){
@@ -610,6 +634,14 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	} // ENDFOR dim
       } // ENDIF grid velocities
 
+#ifdef TRANSFER
+  // if using FLD-based radiation energy density, set the field
+  if ((RadiativeTransferFLD > 1) && ReadData) {
+    float RadScaled = RadHydroRadiation/DensityUnits/VelocityUnits/VelocityUnits;
+    for (i=0; i<size; i++)
+      BaryonField[EgNum][i] = RadScaled;
+  }
+#endif
       // If using multi-species, set the fields
 
       if (MultiSpecies && ReadData) {
@@ -665,6 +697,14 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	      BaryonField[H2INum][i];
 	  }
 
+      //Shock/Cosmic Ray Model
+      if (ShockMethod && ReadData) {
+		BaryonField[MachNum][i] = tiny_number;
+		if (StorePreShockFields) {
+		  BaryonField[PSTempNum][i] = tiny_number;
+		  BaryonField[PSDenNum][i] = tiny_number;
+		}
+		  }
 	} // end: loop over i
       } // end: if (MultiSpecies && ReadData)
 
@@ -781,11 +821,20 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	  }
    } // ENDIF UseMetallicityField
 
+   /* //removed because it is removed in Grid_CosmologySimulationInitializeGrid.C
+   // This line has a bug. PeHeatingNum is not defined in this file.
+   fprintf(stderr, "PeHeatingNum = %"ISYM"\n", PeHeatingNum);
    if(IndividualStarFUVHeating && ReadData){
      for (i = 0; i < size; i++){
        BaryonField[PeHeatingNum][i] = 0.0;
      }
    }
+	*/
+#ifdef EMISSIVITY
+    // If using an emissivity field, initialize to zero
+    if ((StarMakerEmissivityField > 0) && ReadData)
+      for (i=0; i<size; i++)  BaryonField[EtaNum][i] = 0.0;
+#endif
 
       // If they were not read in above, set the total & gas energy fields now
 
@@ -819,27 +868,42 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	  for (i = 0; i < size; i++)
 	    BaryonField[iTE+1][i] = BaryonField[iTE][i];
 
-	if (CosmologySimulationTotalEnergyName == NULL &&
-	    HydroMethod != Zeus_Hydro) {
-	  for (dim = 0; dim < GridRank; dim++)
-	    for (i = 0; i < size; i++) {
-	      BaryonField[iTE][i] +=
-		0.5 * BaryonField[vel+dim][i] * BaryonField[vel+dim][i];
 
-	      if (HydroMethod == MHD_RK) {
-		BaryonField[iBx  ][i] = CosmologySimulationInitialUniformBField[0];
-		BaryonField[iBy  ][i] = CosmologySimulationInitialUniformBField[1];
-		BaryonField[iBz  ][i] = CosmologySimulationInitialUniformBField[2];
-		BaryonField[iPhi ][i] = 0.0;
-		BaryonField[iTE][i] += 0.5*(BaryonField[iBx][i] * BaryonField[iBx][i]+
-					    BaryonField[iBy][i] * BaryonField[iBy][i]+
-					    BaryonField[iBz][i] * BaryonField[iBz][i])/
-		  BaryonField[iden][i];
-	      }
-	    }
-	}
+    if (CosmologySimulationTotalEnergyName == NULL &&
+        HydroMethod != Zeus_Hydro) {
+    for (i = 0; i < size; i++) {
+      for (dim = 0; dim < GridRank; dim++) {
+          BaryonField[iTE][i] +=
+              0.5 * BaryonField[vel+dim][i] * BaryonField[vel+dim][i];
+      }
+          if (UseMHD) {
+            BaryonField[iBx  ][i] = CosmologySimulationInitialUniformBField[0];
+            BaryonField[iBy  ][i] = CosmologySimulationInitialUniformBField[1];
+            BaryonField[iBz  ][i] = CosmologySimulationInitialUniformBField[2];
+            BaryonField[iTE][i] += 0.5*(BaryonField[iBx][i] * BaryonField[iBx][i]+
+                                        BaryonField[iBy][i] * BaryonField[iBy][i]+
+                                        BaryonField[iBz][i] * BaryonField[iBz][i])/
+                BaryonField[iden][i];
+          }
+          if( HydroMethod == MHD_RK ){
+            BaryonField[iPhi ][i] = 0.0;
+          }
+      }
+
+      if(UseMHDCT){
+        for(int field=0;field<3;field++)
+          for(int k=0; k<MagneticDims[field][2]; k++)
+            for(int j=0; j<MagneticDims[field][1]; j++)
+              for(int i=0; i<MagneticDims[field][0];i++){
+                int index = i+MagneticDims[field][0]*(j+MagneticDims[field][1]*k);
+                MagneticField[field][index] = 
+                    CosmologySimulationInitialUniformBField[field];
+              }                               
+      }  // if(UseMHDCT == TRUE)              
+    }
       } // end: if (CosmologySimulationDensityName != NULL)
 
+	  // This lines does not present in the Grid_CosmologySimulationInitializeGrid.C
       // Shock/Cosmic Ray Model
       if (ShockMethod && ReadData) {
 	for (i = 0; i < size; i++) {

@@ -1,6 +1,7 @@
+make[1]: Warning: File `DEPEND' has modification time 150 s in the future
 
    MACHINE: Generic Ubuntu 8.04
-   MACHINE-NAME: linux-mpich-EW
+   MACHINE-NAME: linux-mpich
 
    PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000
    PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 70
@@ -46,3 +47,4 @@
    CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : yes
    CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : yes
 
+make[1]: warning:  Clock skew detected.  Your build may be incomplete.

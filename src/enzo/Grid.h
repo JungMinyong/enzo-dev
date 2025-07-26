@@ -3006,6 +3006,9 @@ class grid
 						float CosmologySimulationInitialFractionH2II,
 						float CosmologySimulationInitialFractionMetal,
 						float CosmologySimulationInitialFractionMetalIa,
+#ifdef TRANSFER
+						float RadHydroInitialRadiationEnergy,
+#endif
 						int   CosmologySimulationUseMetallicityField,
 						PINT &CurrentNumberOfParticles,
 						int CosmologySimulationManuallySetParticleMassRatio,

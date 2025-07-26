@@ -48,6 +48,7 @@ void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
 int CommunicationBroadcastValue(PINT *Value, int BroadcastProcessor);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
+int InitializeRateData(FLOAT Time);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
@@ -94,6 +95,10 @@ static float CosmologySimulationManualParticleMassRatio = 1.0;
 static int   CosmologySimulationCalculatePositions   = FALSE; 
 
 static float CosmologySimulationInitialUniformBField[MAX_DIMENSION];  // in proper Gauss
+
+#ifdef TRANSFER
+static float RadHydroInitialRadiationEnergy = 1.0e-32;
+#endif
 
 #ifdef INDIVIDUALSTAR
 static float CosmologySimulationInitialChemicalSpeciesFractions[MAX_STELLAR_YIELDS];
@@ -149,6 +154,19 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *BzName = "Bz";
   char *PhiName = "Phi";
   char *Phi_pName = "Phip";
+
+  #ifdef TRANSFER
+  char *RadName = "Grey_Radiation_Energy";
+  char *kphHIName = "kphHI";
+  char *kphHeIName = "kphHeI";
+  char *kphHeIIName = "kphHeII";
+  char *kdissH2IName = "kdissH2I";
+  char *PhotoGammaName = "PhotoGamma";
+#endif
+#ifdef EMISSIVITY
+  char *EtaName    = "Emissivity";
+#endif
+
   char *RePsiName = "Re_Psi"; 
   char *ImPsiName = "Im_Psi"; 
   char *FDMDensityName = "FDMDensity"; 
@@ -357,6 +375,34 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
   }
  
+  #ifdef TRANSFER
+  // if using FLD-based solver for radiation, initialize the relevant fields
+  if (RadiativeTransferFLD > 1) {
+    // Read RadHydro input from secondary input file
+    if (MetaData.RadHydroParameterFname != NULL) {
+      FILE *RHfptr;
+      if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
+	while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
+	  ret = 0;
+	  // read relevant problem parameters
+	  ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
+			&RadHydroInitialRadiationEnergy);
+	} // end input from parameter file
+	fclose(RHfptr);
+      }
+    }
+    
+    // set up CoolData object if not already set up
+    if (CoolData.ceHI == NULL) 
+      if (InitializeRateData(MetaData.Time) == FAIL) {
+	fprintf(stderr,"Error in InitializeRateData.\n");
+	return FAIL;
+      }
+  }
+
+#endif
+
+
   // More error checking
 #ifdef INDIVIDUALSTAR
   for (i = 0; i < MAX_STELLAR_YIELDS; i ++){
@@ -683,6 +729,9 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 			     CosmologySimulationInitialFractionH2II,
 			     CosmologySimulationInitialFractionMetal,
 			     CosmologySimulationInitialFractionMetalIa,
+#ifdef TRANSFER
+			     RadHydroInitialRadiationEnergy,
+#endif
 			     CosmologySimulationUseMetallicityField,
 			     MetaData.NumberOfParticles,
 			     CosmologySimulationManuallySetParticleMassRatio,
@@ -768,6 +817,22 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       DataLabel[i++] = Phi_pName;
     }
   }
+
+#ifdef TRANSFER
+  if (RadiativeTransferFLD > 1) {
+    DataLabel[i++] = RadName;
+    if (RadiativeCooling) {
+      DataLabel[i++] = kphHIName;
+      DataLabel[i++] = PhotoGammaName;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	DataLabel[i++] = kphHeIName;
+	DataLabel[i++] = kphHeIIName;
+      }
+      if (MultiSpecies > 1)
+	DataLabel[i++] = kdissH2IName;
+    }
+  }
+#endif
    if (MultiSpecies) {
     DataLabel[i++] = ElectronName;
     DataLabel[i++] = HIName;
@@ -1126,6 +1191,9 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 	   CosmologySimulationInitialFractionH2II,
 	   CosmologySimulationInitialFractionMetal,
 	   CosmologySimulationInitialFractionMetalIa,
+#ifdef TRANSFER
+			     RadHydroInitialRadiationEnergy,
+#endif
 	   CosmologySimulationUseMetallicityField,
 	   ParticleCount,
 	   CosmologySimulationManuallySetParticleMassRatio,
