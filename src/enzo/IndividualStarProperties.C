@@ -1625,6 +1625,211 @@ void IndividualStarSetStellarWindProperties(Star *cstar, const float &Time,
   return;
 }
 
+#ifdef SEVN
+void IndividualStarSetStellarWindPropertiesSEVN(Star *cstar, const float &Time,
+                                                const float &dtFixed, const float &TimeUnits,
+                                                const float &m_eject,
+                                                float &E_thermal, float *metal_mass){
+
+  float wind_dt;
+
+  /* New variables to make code slightly cleaner + handle units */
+  float mproj        = cstar->ReturnBirthMass();
+  float lifetime     = cstar->ReturnLifetime() * TimeUnits;
+  float metallicity  = cstar->ReturnMetallicity();
+  float particle_age = (Time - cstar->ReturnBirthTime())*TimeUnits;
+  float dt           = dtFixed * TimeUnits;
+
+  int *yield_table_position = cstar->ReturnYieldTablePosition();
+  int *se_table_position    = cstar->ReturnSETablePosition();
+
+  float m_eject_total = 0.0;
+
+  if( IndividualStarFollowStellarYields && MultiMetals == 2){
+
+    // 1 = wind, -1 = return total mass
+    m_eject_total = StellarYieldsInterpolateYield(1, yield_table_position[0], yield_table_position[1],
+                                                  mproj, metallicity, -1); // total ejecta mass in SolarMass
+
+  // end yields methods
+  } else {
+
+    // use model to compute mass loss rate instead
+
+    ComputeStellarWindMassLossRate(mproj, metallicity, &m_eject_total);
+
+    wind_dt = fmin( fmax(lifetime - particle_age, 0.0), dt);
+    if (wind_dt < 0.0){
+      wind_dt = dt - (particle_age - lifetime);
+
+      if(abs(wind_dt) > dt){
+        printf("DEBUG WARNING: Something very wrong is happending at stellar wind end of life\n");
+        wind_dt = 0.001*dt;
+      }
+    }
+
+    wind_dt = dt;
+
+  } // end  checking for yields
+
+
+  float v_wind;
+
+  if(mproj < IndividualStarAGBThreshold){
+    /* no good model for AGB wind - use constant user velocity */
+    v_wind = IndividualStarAGBWindVelocity;
+
+  } else  if (IndividualStarStellarWindVelocity < 0){
+    ComputeStellarWindVelocity(cstar, &v_wind); // v in km /s
+
+  } else{
+    v_wind = IndividualStarStellarWindVelocity; // user chosen, in km/s
+  }
+
+  if (v_wind > IndividualStarMaximumStellarWindVelocity && IndividualStarMaximumStellarWindVelocity > 0)
+    v_wind = IndividualStarMaximumStellarWindVelocity;
+
+  v_wind *= km_cm; // now in cgs
+
+  /* Now that we have wind lifetime and ejected mass, compute properties of wind*/
+
+  float wind_fraction = m_eject / m_eject_total; // this is newly added by EW 2025.7.28
+
+
+
+  float Teff = cstar->ReturnTeff();
+
+  E_thermal = 1.5 * Teff * (m_eject*SolarMass / (mh)) * kboltz; // current T of wind
+
+  if( v_wind > IndividualStarMaximumStellarWindVelocity * km_cm){ // so we don't waste CPU
+    v_wind = IndividualStarMaximumStellarWindVelocity * km_cm;
+  }
+
+  E_thermal = E_thermal + 0.5 * (m_eject * SolarMass) * v_wind * v_wind; // assume 100% KE thermalization
+
+  /* finally, compute metal masses if needed */
+
+  if(IndividualStarFollowStellarYields && MultiMetals==2){
+
+    metal_mass[0] = StellarYieldsInterpolateYield(1, yield_table_position[0], yield_table_position[1],
+                                                  mproj, metallicity, 0); // total metal in SolarMass
+
+    for (int i = 0; i < StellarYieldsNumberOfSpecies; i++){
+      metal_mass[1 + i] = StellarYieldsInterpolateYield(1, yield_table_position[0], yield_table_position[1],
+                                                        mproj, metallicity,
+                                                        StellarYieldsAtomicNumbers[i]);
+    }
+
+    /* scale for wind dt and lifetime */
+    for(int i = 0; i < StellarYieldsNumberOfSpecies+1; i ++){
+      metal_mass[i] *= wind_fraction;
+    }
+
+  }
+
+
+  for(int i = 0; i < StellarYieldsNumberOfSpecies+1; i++){
+    if(metal_mass[i] < 0.0){
+      printf("particle age = %"ESYM" lifetim - age = %"ESYM" dt %"ESYM"\n", particle_age, lifetime-particle_age, dt);
+      printf("metal mass = %"ESYM" wind_dt = %"ESYM" eject = %"ESYM"\n",metal_mass[i], wind_dt, m_eject);
+      if(i>0){
+        printf("i = %"ISYM" anum = %"ISYM"\n", i, StellarYieldsAtomicNumbers[i-1]);
+      } else{
+        printf("i = %"ISYM"\n",i);
+      }
+      cstar->PrintInfo();
+
+      ENZO_FAIL("Negative metal mass in wind setup");
+    }
+  }
+
+
+  // done computing stellar wind properties
+  return;
+}
+
+void IndividualStarSetCoreCollapseSupernovaPropertiesSEVN(Star *cstar,
+                                                          const float &m_eject, float &E_thermal, float *metal_mass){
+  /* -------------------------------------------------------
+   * IndividualStarCoreCollapseSupernovaProperties
+   * -------------------------------------------------------
+   * A. Emerick - Sep 2016
+   *
+   * Set the ejected mass, energy, and metal masses for a
+   * core collapse supernova, given star's birth mass and
+   * metallicity.
+   * -------------------------------------------------------
+   */
+
+  int *yield_table_position = cstar->ReturnYieldTablePosition();
+
+  /* set thermal energy of explosion */
+  if( IndividualStarSupernovaEnergy < 0){
+    E_thermal = m_eject * StarEnergyToThermalFeedback * (clight * clight);
+  } else{
+    E_thermal = IndividualStarSupernovaEnergy * 1.0E51;
+  }
+
+  /* metal masses for tracer species */
+  if(IndividualStarFollowStellarYields && MultiMetals == 2){
+    metal_mass[0] = StellarYieldsInterpolateYield(0, yield_table_position[0], yield_table_position[1],
+                                                  cstar->ReturnBirthMass(), cstar->ReturnMetallicity(), 0);
+
+    for(int i = 0; i < StellarYieldsNumberOfSpecies; i++){
+      metal_mass[1+i] = StellarYieldsInterpolateYield(0, yield_table_position[0], yield_table_position[1],
+                                                      cstar->ReturnBirthMass(), cstar->ReturnMetallicity(), 
+                                                      StellarYieldsAtomicNumbers[i]);
+    }
+  }
+
+  return;
+}
+
+void IndividualStarSetPopIIISupernovaPropertiesSEVN(Star *cstar, const float &m_eject, float &E_thermal, float *metal_mass){
+
+  /* -------------------------------------------------------
+   * IndividualStarSetPopIIISupernovaProperties
+   * -------------------------------------------------------
+   * A. Emerick - Oct 2018
+   *
+   * Set the ejected mass, energy, and metal masses for a
+   * PopIII supernova explosion.
+   * -------------------------------------------------------
+   */
+  
+  int *yield_table_position = cstar->ReturnYieldTablePosition();
+  float birth_mass = cstar->ReturnBirthMass();
+  /* compute total ejected yield */
+
+  /* metal masses for tracer species */
+  if(IndividualStarFollowStellarYields && MultiMetals == 2){
+    metal_mass[0] = StellarYieldsInterpolatePopIIIYield(yield_table_position[0],
+                                                        cstar->ReturnBirthMass(),
+                                                        0);
+    for(int i = 0; i < StellarYieldsNumberOfSpecies; i++){
+      metal_mass[1+i] = StellarYieldsInterpolatePopIIIYield(yield_table_position[0],
+                                                            cstar->ReturnBirthMass(),
+                                                            StellarYieldsAtomicNumbers[i]);
+    }
+  }
+
+  /* Set energy for normal SN */
+  E_thermal = IndividualStarSupernovaEnergy * 1.0E51;
+  if (cstar->ReturnMass() < 0.0) { // PISN happens in SEVN
+    if (PopIIIPISNEnergy < 0.0){
+      // taken from pop3_maker.F (heger and woosley??)
+      float he_core    = (13.0 / 24.0) * (birth_mass - 20.0);
+      float sne_factor = 5.0 + 1.304 * (he_core - 64.0);
+      E_thermal = sne_factor * 1.0E51;
+    } else {
+      E_thermal = PopIIIPISNEnergy * 1.0E51;
+    }
+  }
+
+  return;
+}
+#endif
+
 
 void IndividualStarSetPopIIISupernovaProperties(Star *cstar, float &m_eject, float &E_thermal, float *metal_mass){
 /* -------------------------------------------------------

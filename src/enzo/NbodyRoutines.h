@@ -152,8 +152,10 @@ struct ParticleReceiveDataType{
 #ifdef SEVN
 		ptcl->SetMass(this->Mass);
 		ptcl->SetBirthMass(this->InitialMass);
-		ptcl->SetWindMassEjected(this->WindEjectedMass);
-		ptcl->SetSNMassEjected(this->SNEjectedMass);
+		// ptcl->SetWindMassEjected(this->WindEjectedMass);
+		// ptcl->SetSNMassEjected(this->SNEjectedMass);
+		ptcl->AddToWindMassEjected(this->WindEjectedMass);
+		ptcl->AddToSNMassEjected(this->SNEjectedMass);
 		ptcl->SetTeff(this->Temperature);
 #endif
 	};

@@ -56,6 +56,11 @@ int StarParticleDeath(LevelHierarchyEntry *LevelArray[], int level,
 int IndividualStarParticleAddFeedback(HierarchyEntry *Grids[], TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                                       int level, Star* &AllStars, bool* &AddedFeedback);
 
+#ifdef SEVN
+int IndividualStarParticleAddFeedbackSEVN(HierarchyEntry *Grids[], TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
+                                          int level, Star* &AllStars, bool* &AddedFeedback);
+#endif
+
 int UpdateAveragedAbundances(TopGridData *MetaData,
                              LevelHierarchyEntry *LevelArray[],
                              int level, Star* &AllStars);
@@ -96,14 +101,13 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Update the star particle counters. */
 
 	if (debug1) fprintf(stderr,"SPF1\n");  // by YS
-  CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
-                TotalStarParticleCountPrevious);
+  CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids, TotalStarParticleCountPrevious);
 
   /* Update position and velocity of star particles from the actual
      particles */
 
 	if (debug1) fprintf(stderr,"SPF2\n");  // by YS
-#ifndef NBODY
+#ifndef NBODY // (Query AEOS) I think we should change this if a star is not ABYSS star by EW 2025.7.28
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
     ThisStar->UpdatePositionVelocity();
 #endif
@@ -119,17 +123,21 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     }
 
     UpdateAveragedAbundances(MetaData, LevelArray, level, AllStars);
+#ifdef SEVN
+    IndividualStarParticleAddFeedbackSEVN(Grids, MetaData, LevelArray, level, AllStars, AddedFeedback);
+#else
     IndividualStarParticleAddFeedback(Grids, MetaData, LevelArray, level, AllStars, AddedFeedback);
+#endif
   } else{
 
-  /* Apply any stellar feedback onto the grids and add any gas to the
-     accretion rates of the star particles */
+    /* Apply any stellar feedback onto the grids and add any gas to the
+      accretion rates of the star particles */
 
-  StarParticleAddFeedback(MetaData, LevelArray, level, AllStars, AddedFeedback);
+    StarParticleAddFeedback(MetaData, LevelArray, level, AllStars, AddedFeedback);
 
-  /* Update star particles for any accretion */
+    /* Update star particles for any accretion */
 
-  StarParticleAccretion(MetaData, LevelArray, level, AllStars);
+    StarParticleAccretion(MetaData, LevelArray, level, AllStars);
   }
 
   /* Collect all sink particles and report the total mass to STDOUT */
@@ -138,13 +146,11 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     TotalMass = 0.0;
     for (l = 0; l <= MaximumRefinementLevel; l++)
       for (Temp = LevelArray[l]; Temp; Temp = Temp->NextGridThisLevel)
-	TotalMass += Temp->GridData->ReturnTotalSinkMass();
+        TotalMass += Temp->GridData->ReturnTotalSinkMass();
 #ifdef USE_MPI
     CommunicationReduceValues(&TotalMass, 1, MPI_SUM);
 #endif
-    if (debug)
-      fprintf(stdout, "SinkParticle: Time = %"GOUTSYM", TotalMass = %"GSYM"\n", 
-          TimeNow, TotalMass);
+    if (debug) fprintf(stdout, "SinkParticle: Time = %"GOUTSYM", TotalMass = %"GSYM"\n", TimeNow, TotalMass);
   }
 
   /* Subtract gas from the grids that has accreted on to the star particles */
@@ -180,7 +186,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     if (AddedFeedback[count]) {
       ThisStar->ActivateNewStar(TimeNow, Timestep);
       if (ThisStar->ReturnType() == PopIII && PopIIIOutputOnFeedback == TRUE)
-	OutputNow = TRUE;
+        OutputNow = TRUE;
       if (ThisStar->ReturnType() == IndividualStarRemnant && PopIIIOutputOnFeedback == 2)
         OutputNow = TRUE;
     }
@@ -204,7 +210,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
       MBHParticleIOTemp[mbh_particle_io_count][0] = (double)(ThisStar->ReturnID());
       MBHParticleIOTemp[mbh_particle_io_count][1] = ThisStar->ReturnMass();      
       for (int dim = 0; dim < MAX_DIMENSION; dim++) 
-	MBHParticleIOTemp[mbh_particle_io_count][2+dim] = (double)(ThisStar->ReturnAccretedAngularMomentum()[dim]);
+        MBHParticleIOTemp[mbh_particle_io_count][2+dim] = (double)(ThisStar->ReturnAccretedAngularMomentum()[dim]);
       MBHParticleIOTemp[mbh_particle_io_count][5] = ThisStar->ReturnNotEjectedMass();      
       mbh_particle_io_count++;
     }

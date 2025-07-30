@@ -39,6 +39,11 @@ int grid::FindNewStarParticles(int level, std::map<int, Star*>* const &StarParti
 	Star *NewStar, *cstar;
 	bool exists;
 
+	// for (i = 0; i < NumberOfParticles; i++)
+	// 	if (ParticleType[i] != PARTICLE_TYPE_DARK_MATTER)
+	// 		fprintf(stdout, "FindNewStarParticles... ParticleType: %d, ParticleNumber: %d\n", ParticleType[i], ParticleNumber[i]);
+	fprintf(stdout, "FindNewStarParticles... NumberOfParticles: %d\n", NumberOfParticles);
+
 	for (i = 0; i < NumberOfParticles; i++)
 		if (ParticleType[i] == -PARTICLE_TYPE_SINGLE_STAR ||
 				ParticleType[i] == -PARTICLE_TYPE_BLACK_HOLE ||
@@ -74,6 +79,7 @@ int grid::FindNewStarParticles(int level, std::map<int, Star*>* const &StarParti
 				}*/
 
 			if (!exists) {
+				fprintf(stdout, "Creating new star particle with ID: %d\n", ParticleNumber[i]);
 				NewStar = new Star(this, i, level);
 
 				/* If using an IMF for Pop III stars, assign the mass after

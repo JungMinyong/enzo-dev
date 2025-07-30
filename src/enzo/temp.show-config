@@ -1,10 +1,9 @@
-make[1]: Warning: File `DEPEND' has modification time 150 s in the future
 
    MACHINE: Generic Ubuntu 8.04
-   MACHINE-NAME: linux-mpich
+   MACHINE-NAME: linux-mpich-EW
 
    PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000
-   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 70
+   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 50
    PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 30
    PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 64
    PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : 100000
@@ -26,7 +25,7 @@ make[1]: Warning: File `DEPEND' has modification time 150 s in the future
    CONFIG_ECUDA  [cuda-{yes,no}]                             : no
    CONFIG_NBODY  [nbody-{yes,no}]                            : yes
    CONFIG_FEWBOY  [fewbody-{yes,no}]                         : yes
-   CONFIG_SEVN  [sevn-{yes,no}]                              : no
+   CONFIG_SEVN  [sevn-{yes,no}]                              : yes
    CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no
    CONFIG_ACCELERATION_BOUNDARY  [acceleration-boundary-{yes,no}] : yes
    CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : aggressive
@@ -47,4 +46,3 @@ make[1]: Warning: File `DEPEND' has modification time 150 s in the future
    CONFIG_NEWYIELDTABLES [new-yield-tables-{yes,no}]         : yes
    CONFIG_MEMORYPOOL [memorypool-{yes,no}]                   : yes
 
-make[1]: warning:  Clock skew detected.  Your build may be incomplete.

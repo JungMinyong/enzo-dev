@@ -562,7 +562,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
                 ParticleAttribute[2][istar]    = metal_mass / bmass ; //BaryonField[MetalNum][index]; // metal fraction (conv from density in Grid_StarParti$
 
                 if (ParticleType[istar] == -PARTICLE_TYPE_INDIVIDUAL_STAR){
-
+                  // (Query AEOS) Do we need this interpolation in SEVN? by EW 2025.7.28
                   if(IndividualStarInterpolateLifetime(ParticleAttribute[1][istar], ParticleMass[istar],
                                                                                     ParticleAttribute[2][istar], 1) == FAIL){
                     printf(" %" ESYM "  %" ESYM "  %" ESYM "\n",ParticleAttribute[1][istar], ParticleMass[istar], ParticleAttribute[2][istar]);
@@ -579,7 +579,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
                   temp_mass = 1.0 * ParticleMass[istar];
 
                   FORTRAN_NAME(pop3_properties)(&temp_mass, &temp_luminosity, &temp_lifetime);
-
+                  // (Query AEOS) Do we need this interpolation in SEVN? by EW 2025.7.28
                   ParticleAttribute[1][istar] = temp_lifetime * yr_s; // in seconds
 
                 } // end check for particle type for assigning lifetimes

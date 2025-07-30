@@ -3059,6 +3059,11 @@ class grid
   int IndividualStarAddFeedbackSphere(HierarchyEntry* SubgridPointer,
                                       Star *cstar, float *mp, const int mode);
 
+#ifdef SEVN
+  int IndividualStarAddFeedbackSphereSEVN(HierarchyEntry* SubgridPointer, 
+										  Star *cstar, const int mode);
+#endif
+
   int IndividualStarInjectSphericalFeedback(Star *cstar,
                                             const FLOAT xp, const FLOAT yp, const FLOAT zp,
                                             const float m_eject, const float E_thermal,
