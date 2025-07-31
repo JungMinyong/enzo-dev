@@ -108,6 +108,11 @@ void DefaultGlobal() {
 	if (AbyssProcessorNumber == 0)  {
 #ifndef INDIVIDUALSTAR
 		EnzoPIDs         = new int[MaxNumberOfParticle];
+#else
+		displs           = new int[NumberOfAbyssProcessors+1];
+		for (int i=0; i<NumberOfAbyssProcessors+1; i++) {
+			displs[i] = 0;
+		}
 #endif
 		AvailableIndices = new int[MaxNumberOfParticle];
 		NumberOfAvailableIndices = 0;

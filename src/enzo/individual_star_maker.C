@@ -889,6 +889,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
     // Done forming stars!!! Output and exit
     if (ii > 0){
       printf("P(%" ISYM "): individual_star_maker[add]: %" ISYM " new star particles. PopIII = %" ISYM " Unresolved = %" ISYM " UnresolvedInc = %" ISYM " Individual(PopII/PopI) = %" ISYM " - Total Mass (Msun) = %" ESYM " Unresolved Mass = %" ESYM "\n", MyProcessorNumber, ii, popiii_counter, unresolved_counter, unresolved_increment, individualstar_counter, total_mass_sf, total_unresolved_mass);
+      fprintf(stderr, "individual_star_maker... cell size: %e pc, IndividualStarVelocityDispersion: %e km/s\n", dx * LengthUnits / pc_cm, IndividualStarVelocityDispersion);
     }
     if (ii >= *nmax){
       fprintf(stdout, "individual_star_maker: reached max new particle count!! Available: %" ISYM ". Made: %" ISYM "\n", *nmax, ii);
@@ -899,6 +900,14 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
   // set progenitor masses in solar
   for (int counter = 0; counter < ii; counter++){
     ParticleMass[counter]   = ParticleMass[counter] / (dx*dx*dx); // code units / cell volume
+    fprintf(stderr, "individual_star_maker... position: %e %e %e [pc]\n", 
+            ParticlePosition[0][counter] * LengthUnits / pc_cm,
+            ParticlePosition[1][counter] * LengthUnits / pc_cm,
+            ParticlePosition[2][counter] * LengthUnits / pc_cm);
+    fprintf(stderr, "individual_star_maker... velocity: %e %e %e [km/s]\n",
+            ParticleVelocity[0][counter] * VelocityUnits / km_cm,
+            ParticleVelocity[1][counter] * VelocityUnits / km_cm,
+            ParticleVelocity[2][counter] * VelocityUnits / km_cm);
   }
 
   *np = ii; // number of stars formed : AJE 2/29 check if this is a bug with the -1

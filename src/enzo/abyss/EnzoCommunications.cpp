@@ -280,12 +280,12 @@ int InitialCommunication() {
     int size = NumberOfProcessors+1; // the number of inter_comm processors
     int *recv_counts = new int[size];
     MPI_Gather(&LocalNumberOfParticles, 1, MPI_INT, recv_counts, 1, MPI_INT,
-                NumberOfProcessors, inter_comm);
+               NumberOfProcessors, inter_comm);
 
 
     /* Step 2: Compute displacements */
     NumberOfSingleParticle = 0;
-    displs = new int[size]; // (Query by EW) Why is this parameter a global variable?
+    // displs = new int[size]; // (Query by EW) Why is this parameter a global variable?
     displs[0] = 0;
     for (int i = 1; i < size; i++) {
         displs[i] = displs[i - 1] + recv_counts[i - 1];
@@ -399,7 +399,7 @@ int InitialCommunication() {
 #endif
 
     delete[] recv_counts;
-    delete[] displs;
+    // delete[] displs;
     delete[] recvbuf;
 
     fprintf(nbpout, "ABYSS: %d particles loaded!\n", NumberOfSingleParticle);
@@ -508,7 +508,7 @@ int ReceiveParticleFromEnzo() {
     // std::cout << "enzo Time :" << TimeStep << std::endl;
     // std::cout << "nbody Time:" << EnzoTimeStep << std::endl;
     //  FixNumNeighbor = std::min((int)
-    //  std::floor((NumberOfSingleParticle+NumberOfSingleParticleNew-1)/2.0),
+    //  std::floor((NumberOfSingleParticle+newNumberOfSingleParticle-1)/2.0),
     //  FixNumNeighbor0); // original by EW 2025.3.27
 
 
@@ -528,9 +528,7 @@ int ReceiveParticleFromEnzo() {
     MPI_Gather(&blank, 1, MPI_INT, recv_counts_old, 1, MPI_INT, NumberOfProcessors, inter_comm);
     MPI_Gather(&blank, 1, MPI_INT, recv_counts_new, 1, MPI_INT, NumberOfProcessors, inter_comm);
 
-
     /* Step 2: Compute displacements */
-    int NumberOfSingleParticleOld, NumberOfSingleParticleNew;
     int* displs_old = new int[size];
     int* displs_new = new int[size];
 
@@ -540,8 +538,14 @@ int ReceiveParticleFromEnzo() {
         displs_old[i] = displs_old[i - 1] + recv_counts_old[i - 1];
         displs_new[i] = displs_new[i - 1] + recv_counts_new[i - 1];
     }
-    NumberOfSingleParticleOld = displs_old[size - 1] + recv_counts_new[size - 1];
-    NumberOfSingleParticleNew = displs_new[size - 1] + recv_counts_new[size - 1];
+    int NumberOfSingleParticleOld = displs_old[size - 1] + recv_counts_new[size - 1];
+    newNumberOfSingleParticle = displs_new[size - 1] + recv_counts_new[size - 1];
+
+    if (NumberOfSingleParticleOld != NumberOfSingleParticle) {
+        fprintf(stderr, "ABYSS: NumberOfSingleParticle in Abyss: %d, NumberOfSingleParticle in Enzo: %d, newNumberOfSingleParticle: %d\n",
+                NumberOfSingleParticle, NumberOfSingleParticleOld, newNumberOfSingleParticle);
+        assert(NumberOfSingleParticleOld == NumberOfSingleParticle);
+    }
 
 
     if (debug1) {
@@ -549,21 +553,21 @@ int ReceiveParticleFromEnzo() {
         for (int i=0; i<size; i++) {
             fprintf(nbpout, "%d, ", displs_old[i]);
         }
-        fprintf(nbpout, "\n NumberOfSingleParticleOld=%d\n",NumberOfSingleParticleOld);
+        fprintf(nbpout, "\n NumberOfSingleParticle=%d\n",NumberOfSingleParticle);
         fflush(nbpout);
         fprintf(nbpout, "displs_new= ");
         for (int i=0; i<size; i++) {
             fprintf(nbpout, "%d, ", displs_new[i]);
         }
-        fprintf(nbpout, "\n NumberOfSingleParticleNew=%d\n",NumberOfSingleParticleNew);
+        fprintf(nbpout, "\n newNumberOfSingleParticle=%d\n",newNumberOfSingleParticle);
         fflush(nbpout);
     }
 
 
 
     /* Step 3: Allocate receive buffer on root */
-    ParticleSendDataType    *recvbuf_old = new ParticleSendDataType[NumberOfSingleParticleOld];
-    ParticleDataType        *recvbuf_new = new ParticleDataType[NumberOfSingleParticleNew];
+    ParticleSendDataType    *recvbuf_old = new ParticleSendDataType[NumberOfSingleParticle];
+    ParticleDataType        *recvbuf_new = new ParticleDataType[newNumberOfSingleParticle];
 
     if (debug1) {
         fprintf(nbpout, "Receive Buffer Ready!\n");
@@ -599,7 +603,7 @@ int ReceiveParticleFromEnzo() {
     if (debug1) {
         //fprintf(stderr, "ABYSS: ID = ");
         fprintf(nbpout, "ABYSS: ID for OLD = ");
-        for (int i=0; i<NumberOfSingleParticleOld; i++) {
+        for (int i=0; i<NumberOfSingleParticle; i++) {
             //fprintf(stderr, "(%d, ", recvbuf[i].ID);
             //fprintf(stderr, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
             fprintf(nbpout, "%d,  ", recvbuf_old[i].ID);
@@ -610,7 +614,7 @@ int ReceiveParticleFromEnzo() {
         fflush(nbpout);
 
         fprintf(nbpout, "ABYSS: ID for NEW = ");
-        for (int i=0; i<NumberOfSingleParticleNew; i++) {
+        for (int i=0; i<newNumberOfSingleParticle; i++) {
             //fprintf(stderr, "(%d, ", recvbuf[i].ID);
             //fprintf(stderr, "%.4e, %.4e), ", recvbuf[i].Position[0], recvbuf[i].BackgroundAcceleration[0]);
             fprintf(nbpout, "%d,  ", recvbuf_new[i].ID);
@@ -653,13 +657,13 @@ int ReceiveParticleFromEnzo() {
                 << std::setw(width) << ClusterVelocity[2] << std::endl;
     }
 
-    if (NumberOfSingleParticleNew != 0) {
+    if (newNumberOfSingleParticle != 0) {
         // we need to make adjustment to COM
         GetNewCenterOfMass(PID, newMass, newPosition, newVelocity,
-                            NumberOfSingleParticleNew, ClusterPosition,
+                            newNumberOfSingleParticle, ClusterPosition,
                             ClusterVelocity);
 
-        for (int i = 0; i < NumberOfSingleParticleNew; i++) {
+        for (int i = 0; i < newNumberOfSingleParticle; i++) {
             for (int dim = 0; dim < Dim; dim++) {
                 ClusterAcceleration[dim] +=
                     newMass[i] * newBackgroundAcceleration[dim][i];
@@ -685,7 +689,7 @@ int ReceiveParticleFromEnzo() {
     Particle *ptcl;
     int EnzoProcessorNumber = 0;
     // loop for PID, going backwards to update the NextParticle
-    for (int i = 0; i < NumberOfSingleParticleOld; i++) {
+    for (int i = 0; i < NumberOfSingleParticle; i++) {
         int index = PIDtoIndexMap[recvbuf_old[i].ID];
         ptcl = &particles[index];
 
@@ -731,8 +735,8 @@ int ReceiveParticleFromEnzo() {
     /*-----------===---------------------------*/
     int index = -1;
     EnzoProcessorNumber = 0;
-    if (NumberOfSingleParticleNew > 0) {
-        for (int i = 0; i < NumberOfSingleParticleNew; i++) {
+    if (newNumberOfSingleParticle > 0) {
+        for (int i = 0; i < newNumberOfSingleParticle; i++) {
 
 #ifdef COM_EVOLUTION
             recvbuf_new[i].reposition(ClusterPosition, ClusterVelocity, ClusterAcceleration);
@@ -759,19 +763,19 @@ int ReceiveParticleFromEnzo() {
             PIDtoIndexMap.insert({recvbuf_new[i].ID, index});
 
             if (debug1) {
-                recvbuf_new[i].print(1, 1, 1);
+                // recvbuf_new[i].print(1, 1, 1);
                 particles[index].print(mass_unit, position_unit, velocity_unit);
             }
 
 #ifdef SEVN
-            if (recvbuf_new[i].CreationTime > 0.0 && recvbuf_new[i].Mass * EnzoMass * mass_unit > 2.2)
+            if (recvbuf_new[i].CreationTime > 0.0 && recvbuf_new[i].Mass > 2.2)
                 initializeStellarEvolution(index);
 #endif
         }
 
-        fprintf(nbpout,"ABYSS: %d new paritcles loaded!", NumberOfSingleParticleNew);
+        fprintf(nbpout,"ABYSS: %d new paritcles loaded!\n", newNumberOfSingleParticle);
         // This includes modification of regular force and irregular force
-    } // end if NumberOfSingleParticleNew != 0
+    } // end if newNumberOfSingleParticle != 0
     delete[] recvbuf_new;
 
     delete[] displs_new;
@@ -790,8 +794,8 @@ int ReceiveParticleFromEnzo() {
 	AbyssCenter[2] = ClusterPosition[2];
 
 
-    NumberOfSingleParticle  += NumberOfSingleParticleNew;
-    NumberOfParticle        += NumberOfSingleParticleNew;
+    NumberOfSingleParticle  += newNumberOfSingleParticle;
+    NumberOfParticle        += newNumberOfSingleParticle;
 
     //  (Query) Do I need this?
     // fprintf(nbpout, "ABYSS    : Acceleration for particles on GPU.\n");
@@ -807,10 +811,10 @@ int ReceiveParticleFromEnzo() {
             "ABYSS    : In ReceiveFromEnzo (after new particle might be added): \n");
     fprintf(nbpout,
             "ABYSS    : original NumberOfSingleParticle      = %d (+%d)\n",
-            NumberOfSingleParticle - NumberOfSingleParticleNew,
-            NumberOfSingleParticleNew);
+            NumberOfSingleParticle - newNumberOfSingleParticle,
+            newNumberOfSingleParticle);
     fprintf(nbpout, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
-            NumberOfSingleParticleNew);
+            newNumberOfSingleParticle);
     // fprintf(nbpout, "ABYSS    : Particle size     = %d\n", particle.size());
     // fprintf(nbpout, "ABYSS    : NextRegTimeStep   = %.3e\n",
     // NextRegTimeBlock*global_variable->time_step); fprintf(nbpout, "ABYSS    :
@@ -823,10 +827,10 @@ int ReceiveParticleFromEnzo() {
             "ABYSS    : In ReceiveFromEnzo (after new particle might be added): \n");
     fprintf(stderr,
             "ABYSS    : original NumberOfSingleParticle      = %d (+%d)\n",
-            NumberOfSingleParticle - NumberOfSingleParticleNew,
-            NumberOfSingleParticleNew);
+            NumberOfSingleParticle - newNumberOfSingleParticle,
+            newNumberOfSingleParticle);
     fprintf(stderr, "ABYSS    : newly updated NumberOfSingleParticle = %d\n",
-            NumberOfSingleParticleNew);
+            newNumberOfSingleParticle);
     // fprintf(stderr, "ABYSS    : Particle size     = %d\n", particle.size());
     // fprintf(stderr, "ABYSS    : RegularList size = %d\n", RegularList.size());
     fprintf(nbpout, "ReceiveParticle Done!\n");
@@ -939,12 +943,16 @@ int SendParticleToEnzo(Worker *workers) {
 
         offset = displs[ptcl->EnzoProcessorNumber] + sendcounts[ptcl->EnzoProcessorNumber];
 
-        fprintf(nbpout, "ID=%d, offset=%d, Processor=%d, sendcounts=%d, displs=%d\n",
-                ptcl->PID, offset, ptcl->EnzoProcessorNumber, sendcounts[ptcl->EnzoProcessorNumber], displs[ptcl->EnzoProcessorNumber+1]);
+        fprintf(nbpout, "ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
         fflush(nbpout);
 
         // I can put everything under into a method of sendbuf (ParticleReceiveDataType)
         sendbuf[offset].ID = ptcl->PID;
+
+        fprintf(nbpout, "1. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+            ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        fflush(nbpout);
 
 
 #ifdef FEWBODY
@@ -959,7 +967,7 @@ int SendParticleToEnzo(Worker *workers) {
             }
 #ifdef SEVN
             sendbuf[offset].InitialMass = ptcl->InitialMass; // This is already in Msun unit!!!
-            sendbuf[offset].Mass = ptcl->Mass / EnzoMass;
+            sendbuf[offset].Mass = ptcl->Mass * mass_unit;
             sendbuf[offset].WindEjectedMass = ptcl->dm * mass_unit;
             sendbuf[offset].SNEjectedMass = ptcl->SNEjectedMass * mass_unit;
             sendbuf[offset].Temperature = ptcl->T_eff;
@@ -996,9 +1004,13 @@ int SendParticleToEnzo(Worker *workers) {
                 fprintf(stderr, "What's wrong? PID: %d\n", ptcl->PID);
                 throw std::runtime_error("Why inactive particle in EnzoPIDs?");
             }
+            ++sendcounts[ptcl->EnzoProcessorNumber];
             continue;
         }
 #endif // FewBody end // (Query) can you make it a particle method? hide under particle routine?
+        fprintf(nbpout, "2. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        fflush(nbpout);
         r2 = 0;
         // this seems like repetitive
         for (int dim = 0; dim < Dim; dim++) {
@@ -1029,6 +1041,10 @@ int SendParticleToEnzo(Worker *workers) {
                         (sendbuf[offset].Position[dim] - EnzoClusterPosition[dim]);
         } // for dim
 
+        fprintf(nbpout, "3. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        fflush(nbpout);
+
         if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
             sendbuf[offset].Position[0] -= 20;
             deleteParticle(ptcl->PID, i);
@@ -1057,10 +1073,13 @@ int SendParticleToEnzo(Worker *workers) {
             NumberOfEscapeParticle++;
         }
         // fprintf(stdout, "ABYSS: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
+        fprintf(nbpout, "4. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        fflush(nbpout);
 
 #ifdef SEVN
         sendbuf[offset].InitialMass = ptcl->InitialMass; // This is already in Msun unit!!!
-        sendbuf[offset].Mass = ptcl->Mass / EnzoMass;
+        sendbuf[offset].Mass = ptcl->Mass * mass_unit;
         sendbuf[offset].WindEjectedMass = ptcl->dm * mass_unit;
         sendbuf[offset].SNEjectedMass = ptcl->SNEjectedMass * mass_unit;
         sendbuf[offset].Temperature = ptcl->T_eff;
@@ -1074,7 +1093,16 @@ int SendParticleToEnzo(Worker *workers) {
                     sendbuf[offset].SNEjectedMass, sendbuf[offset].Temperature);
         }
 #endif
-        ++sendcounts[ptcl->EnzoProcessorNumber];
+        fprintf(nbpout, "5. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        fflush(nbpout);
+
+        int newCount = sendcounts[ptcl->EnzoProcessorNumber] + 1;
+        sendcounts[ptcl->EnzoProcessorNumber] = newCount;
+
+        fprintf(nbpout, "6. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        fflush(nbpout);
     } //  loop over particles
 
 #ifdef FEWBODY

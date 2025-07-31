@@ -20,7 +20,7 @@ cd src/enzo/
 export PATH=$PATH:/home/vinicius/install/mpich-3.3.2/mpich3_15/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/sevn_enzo/build_n15/lib64/sevn
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/hdf5-1.12.1/hdf5_n15/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/grackle15/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/grackle-mainrepo/lib
 
 
 # module add icc/latest
@@ -30,7 +30,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/grackle15/lib
 
 make machine-linux-mpich-EW
 #make precision-64 integers-32 particle-id-32 max-baryons-30 opt-aggressive lcaperf-no max-tasks-per-node-36 grackle-yes individualstar-yes nbody-yes photon-no cuda-no uuid-no fewbody-yes sevn-no
-make io-64 precision-64 integers-32 particle-id-128 max-baryons-50 max-particle-attr-30 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no uuid-no individualstar-yes new-yield-tables-yes memorypool-yes nbody-yes fewbody-yes sevn-yes
+make io-64 precision-64 integers-32 particle-id-128 max-baryons-60 max-particle-attr-30 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no uuid-no individualstar-yes new-yield-tables-yes memorypool-yes nbody-yes fewbody-yes sevn-no
 make show-config
 make show-flags
 make -j8

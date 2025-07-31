@@ -86,6 +86,11 @@ Star::Star(void)
     abundances[i] = 0.0;
 
   wind_mass_ejected = sn_mass_ejected = 0.0;
+#ifdef NBODY
+  GridParticleIndex = -1;
+  isABYSS = true;
+  isNewlyFormed = false;
+#endif
 }
 
 Star::Star(grid *_grid, int _id, int _level)
@@ -182,8 +187,8 @@ Star::Star(StarBuffer *buffer, int n)
   CurrentGrid = NULL;
 #ifdef NBODY
   GridParticleIndex = buffer[n].GridParticleIndex;
-  isABYSS = true;
-  isNewlyFormed = false;
+  isABYSS = buffer[n].isABYSS;
+  isNewlyFormed = buffer[n].isNewlyFormed;
 #endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer[n].pos[i];
@@ -249,9 +254,11 @@ Star::Star(StarBuffer buffer)
 {
   int i;
   CurrentGrid = NULL;
-  #ifdef NBODY
+#ifdef NBODY
   GridParticleIndex = buffer.GridParticleIndex;
-  #endif
+  isNewlyFormed = buffer.isNewlyFormed;
+  isABYSS = buffer.isABYSS;
+#endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer.pos[i];
     vel[i] = buffer.vel[i];

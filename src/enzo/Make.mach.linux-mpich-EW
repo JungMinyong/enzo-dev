@@ -30,7 +30,7 @@ MACH_FILE  = Make.mach.ubuntu-hardy
 # node 15
 LOCAL_HDF5_INSTALL = /home/vinicius/install/hdf5-1.12.1/hdf5_n15
 LOCAL_MPI = /home/vinicius/install/mpich-3.3.2/mpich3_15
-LOCAL_GRACKLE_INSTALL = /home/vinicius/install/grackle15
+LOCAL_GRACKLE_INSTALL = /home/vinicius/install/grackle-mainrepo
 LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.5
 
 #-----------------------------------------------------------------------

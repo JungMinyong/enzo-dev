@@ -158,6 +158,7 @@ struct ParticleReceiveDataType{
 		ptcl->AddToSNMassEjected(this->SNEjectedMass);
 		ptcl->SetTeff(this->Temperature);
 #endif
+		ptcl->SetNewStarFlag(false);
 	};
 #endif
 };

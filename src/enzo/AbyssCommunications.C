@@ -333,9 +333,9 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 
   // Step 1: Gather sizes //I can make this MPI_Igather for a slight speep-up.
   MPI_Gather(&LocalNumberOfParticlesOld, 1, MPI_INT, NULL, 1, MPI_INT,
-            NumberOfProcessors, inter_comm);
+             NumberOfProcessors, inter_comm);
   MPI_Gather(&LocalNumberOfParticlesNew, 1, MPI_INT, NULL, 1, MPI_INT,
-            NumberOfProcessors, inter_comm);
+             NumberOfProcessors, inter_comm);
 
 
   /* Step 2: Prepare Send Buffer sendbuf */
@@ -343,22 +343,22 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   ParticleDataType *sendbuf_new = new ParticleDataType[LocalNumberOfParticlesNew];
 
   /* Step 3: Copy  Data to Send Buffer */
-  int count = 0;
+  int count_old = 0;
+  int count_new = 0;
   fprintf(stderr, "ENZO: ID (%d) = ", MyProcessorNumber);
   //fprintf(stderr, "ENZO: Pos of x (%d) = ", MyProcessorNumber);
   for (auto &kv : LocalStarLookupMap) {
     Star *star = kv.second;
     if (star->ReturnNewStarFlag())
-      sendbuf_new[count].copyFrom(star);
+      sendbuf_new[count_new++].copyFrom(star);
     else
-      sendbuf_old[count].copyFrom(star);
+      sendbuf_old[count_old++].copyFrom(star);
     //fprintf(stderr, "(%d, %d, %e)", star->ReturnID(), star->ReturnType(), star->ReturnMass());
-    fprintf(stderr, "(%d, ", star->ReturnID());
+    fprintf(stderr, "%d ", star->ReturnID());
     //fprintf(stderr, "(%.5e,", star->ReturnPosition()[0]);
     //fprintf(stderr, "%.5e, ),", sendbuf[count].Position[0]);
-    count++;
   }
-  fprintf(stderr, ")\n");
+  fprintf(stderr, "\n");
   fprintf(stderr, "ENZO: Buffer Ready!\n");
 
   /* Step 4: Gatherv  */

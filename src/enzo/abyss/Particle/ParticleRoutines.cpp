@@ -117,8 +117,8 @@ void Particle::setFirst(const ParticleDataType &ptcl, const int& ProcessorNumber
 	__initialize__();
 	this->isActive 					 = true;
 	this->PID                        = ptcl.ID;
-	this->Mass                       = ptcl.Mass*EnzoMass;
-	this->InitialMass                = this->Mass*mass_unit; // [Msol unit] by EW 2025.4.3
+	this->InitialMass                = ptcl.Mass; // [Msol unit] by EW 2025.4.3
+	this->Mass                       = ptcl.Mass / mass_unit;
 	this->CreationTime               = ptcl.CreationTime*EnzoTime*1e4; // [Myr unit] by EW 2025.4.3
 	this->DynamicalTime              = ptcl.DynamicalTime*EnzoTime;
 	this->InitialMetallicity		 = ptcl.Metallicity; // [Absolute unit] No unit conversion here! by EW 2025.4.3
@@ -154,8 +154,8 @@ void Particle::set(const ParticleDataType &ptcl, const int& ProcessorNumber) {
 	__initialize__();
 	this->isActive 					 = true;
 	this->PID                        = ptcl.ID;
-	this->Mass                       = ptcl.Mass*EnzoMass;
-	this->InitialMass                = this->Mass*mass_unit; // [Msol unit] by EW 2025.4.3
+	this->InitialMass                = ptcl.Mass; // [Msol unit] by EW 2025.4.3
+	this->Mass                       = ptcl.Mass / mass_unit;
 	this->CreationTime               = ptcl.CreationTime*EnzoTime*1e4; // [Myr unit] by EW 2025.4.3
 	this->DynamicalTime              = ptcl.DynamicalTime*EnzoTime;
 	this->InitialMetallicity		 = ptcl.Metallicity; // [Absolute unit] No unit conversion here! by EW 2025.4.3
@@ -220,11 +220,15 @@ void Particle::update(const ParticleSendDataType &ptcl, const int& ProcessorNumb
 
 
 void Particle::print(const double &umass, const double &upos, const double &uvel){
-		fprintf(nbpout,
+		fprintf(stderr,
 				"PID: %d. Mass: %e Msun\n"
-				"x: %e pc, y: %e pc, z: %e\n"
+				"x: %e pc, y: %e pc, z: %e pc\n"
 				"vx: %e km/s, vy: %e km/s, vz: %e km/s\n",
 				PID, Mass*umass, 
-				Position[0]*upos, Position[1]*upos,Position[2]*upos,
-				Velocity[0]*uvel, Velocity[1]*uvel,Velocity[2]*uvel);
+				Position[0]*upos*global_variable->a_i, 
+				Position[1]*upos*global_variable->a_i, 
+				Position[2]*upos*global_variable->a_i,
+				Velocity[0]*uvel/yr*pc/1e5, 
+				Velocity[1]*uvel/yr*pc/1e5,
+				Velocity[2]*uvel/yr*pc/1e5);
 };

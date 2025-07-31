@@ -86,7 +86,7 @@ typedef unsigned long long ULL;
 //#define BatchSize 32 // each thread calculates BatchSize particles
 //#define GridDimY 16 // each block calcuates NNB/GridDimY particles
 //#define NNB_per_block 128
-#define MinParticles 2
+#define MinParticles 50
 //#define HUBBLE_FLOW
 #define COMOVE
 #define NO_HUBBLE_FLOW

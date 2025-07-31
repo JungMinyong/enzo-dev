@@ -57,8 +57,7 @@ std::map<int, Star*> grid::MakeStarParticleMap() // makes lookup table to quickl
   	Star *cstar;
 
 	for (cstar = Stars; cstar; cstar = cstar->NextStar) {
-		StarParticleLookupMap[cstar->Identifier] =
-        cstar; // adding Identifiers as keys, stars as values
+		StarParticleLookupMap[cstar->Identifier] = cstar; // adding Identifiers as keys, stars as values
 	}
 
 	return StarParticleLookupMap;

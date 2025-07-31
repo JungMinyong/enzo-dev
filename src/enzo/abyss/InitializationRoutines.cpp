@@ -336,7 +336,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
 
     // Example code by EW 2025.3.18
     if (newNumberOfSingleParticle > 0 && NumberOfParticle > 1) {
-        /*
+        // /*
         fprintf(nbpout, "Before GPU Initialization...\n");
         for (int i=0; i<=global_variable->LastParticleIndex; i++) {
             ptcl = &particles[i];
@@ -370,9 +370,9 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
                     ptcl->BackgroundAcceleration[2]
                     );
         }
-        */
+        // */
         InitializationOnGPU(queue_scheduler, workers); // GPU Initialization code
-        /*
+        // /*
         fprintf(nbpout, "After GPU Initialization...\n");
         for (int i=0; i<=global_variable->LastParticleIndex; i++) {
             ptcl = &particles[i];
@@ -408,7 +408,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
         }
         fflush(nbpout);
         // assert(NumberOfParticle == 0); // to force the program to stop by EW 2025.5.6
-        */
+        // */
 #ifdef FEWBODY // forming new binaries after communication with Enzo by EW 2025.3.27
         std::vector<int> newCMptcls;
         LastParticleIndex = global_variable->LastParticleIndex;
