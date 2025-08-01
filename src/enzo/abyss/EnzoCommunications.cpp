@@ -34,8 +34,6 @@
 
 //
 
-extern int StarParticleFeedback;
-extern double StarMassEjectionFraction;
 extern int ComovingCoordinates;
 extern MPI_Datatype MPI_ENZO_PTCL;
 extern MPI_Datatype MPI_ENZO_PTCL_SEND;
@@ -239,29 +237,29 @@ int InitialCommunication() {
 
     // need to fix units
     // fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
-    fprintf(nbpout, "LengthUnit                = %e\n", LengthUnits);
-    fprintf(nbpout, "DensityUnit               = %e\n", DensityUnits);
-    fprintf(nbpout, "TimeUnit                  = %e\n", TimeUnits);
-    fprintf(nbpout, "VelocityUnit              = %e\n", VelocityUnits);
+    fprintf(stderr, "LengthUnit                = %e\n", LengthUnits);
+    fprintf(stderr, "DensityUnit               = %e\n", DensityUnits);
+    fprintf(stderr, "TimeUnit                  = %e\n", TimeUnits);
+    fprintf(stderr, "VelocityUnit              = %e\n", VelocityUnits);
 
 
 
-    fprintf(nbpout, "Nbody Time               = %e Myr\n", EnzoCurrentTime*1e4);
-    fprintf(nbpout, "Nbody TimeStep           = %e\n", global_variable->EnzoTimeStep);
-    fprintf(nbpout, "EPS2                     = %e pc**2\n", EPS2 * position_unit * position_unit);
-    fprintf(nbpout, "InitialNeighborRadius2   = %.2e pc**2\n", InitialNeighborRadius2 * position_unit * position_unit);
-    fprintf(nbpout, "eta                      = %e\n", eta);
-    fprintf(nbpout, "EnzoClusterPosition      = (%e, %e, %e)\n", EnzoClusterPosition[0], EnzoClusterPosition[1], EnzoClusterPosition[2]);
-    fprintf(nbpout, "ClusterRadius2           = %.2e pc**2\n", ClusterRadius2 * position_unit * position_unit);
-    fprintf(nbpout, "StarMassEjectionFraction = %e\n", StarMassEjectionFraction);
-    fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
-    fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
-    fprintf(nbpout, "BinaryRegularization     = %d\n", BinaryRegularization); // (Query) EW: What is this?
-    // fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
-    // fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
-    fprintf(nbpout, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
-    fprintf(nbpout, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
-    fflush(nbpout);
+    fprintf(stderr, "Nbody Time               = %e Myr\n", EnzoCurrentTime*1e4);
+    fprintf(stderr, "Nbody TimeStep           = %e\n", global_variable->EnzoTimeStep);
+    fprintf(stderr, "EPS2                     = %e pc**2\n", EPS2 * position_unit * position_unit);
+    fprintf(stderr, "InitialNeighborRadius2   = %e pc**2\n", InitialNeighborRadius2 * position_unit * position_unit);
+    fprintf(stderr, "eta                      = %e\n", eta);
+    fprintf(stderr, "EnzoClusterPosition      = (%e, %e, %e)\n", EnzoClusterPosition[0], EnzoClusterPosition[1], EnzoClusterPosition[2]);
+    fprintf(stderr, "ClusterRadius2           = %e pc**2\n", ClusterRadius2 * position_unit * position_unit);
+    fprintf(stderr, "StarMassEjectionFraction = %e\n", StarMassEjectionFraction);
+    fprintf(stderr, "StarParticleFeedback     = %d\n", StarParticleFeedback);
+    fprintf(stderr, "FixNumNeighbor           = %d\n", FixNumNeighbor);
+    fprintf(stderr, "BinaryRegularization     = %d\n", BinaryRegularization); // (Query) EW: What is this?
+    // fprintf(stderr, "KSTime                   = %lf\n", KSTime);
+    // fprintf(stderr, "KSDistance               = %lf\n", KSDistance);
+    fprintf(stderr, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
+    fprintf(stderr, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
+    fflush(stderr);
 
     /*------------------===-------------------------*/
     /********   Receive Particles to ABYSS  *********/
@@ -950,9 +948,9 @@ int SendParticleToEnzo(Worker *workers) {
         // I can put everything under into a method of sendbuf (ParticleReceiveDataType)
         sendbuf[offset].ID = ptcl->PID;
 
-        fprintf(nbpout, "1. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-            ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        fflush(nbpout);
+        // fprintf(nbpout, "1. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+        //     ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        // fflush(nbpout);
 
 
 #ifdef FEWBODY
@@ -1008,9 +1006,9 @@ int SendParticleToEnzo(Worker *workers) {
             continue;
         }
 #endif // FewBody end // (Query) can you make it a particle method? hide under particle routine?
-        fprintf(nbpout, "2. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        fflush(nbpout);
+        // fprintf(nbpout, "2. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        // fflush(nbpout);
         r2 = 0;
         // this seems like repetitive
         for (int dim = 0; dim < Dim; dim++) {
@@ -1041,14 +1039,16 @@ int SendParticleToEnzo(Worker *workers) {
                         (sendbuf[offset].Position[dim] - EnzoClusterPosition[dim]);
         } // for dim
 
-        fprintf(nbpout, "3. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        fflush(nbpout);
+        // fprintf(nbpout, "3. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        // fflush(nbpout);
 
         if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
             sendbuf[offset].Position[0] -= 20;
             deleteParticle(ptcl->PID, i);
             fprintf(stderr, "In SendToEnzo... PID: %d is escaping!\n", ptcl->PID);
+            fprintf(stderr, "ClusterRadius2: %e pc**2, r2: %e pc**2\n",
+                    ClusterRadius2 *  position_unit * position_unit, r2 * position_unit * position_unit);
 #ifdef FEWBODY
             NumberOfParticle--;
 #ifdef SEVN
@@ -1073,9 +1073,9 @@ int SendParticleToEnzo(Worker *workers) {
             NumberOfEscapeParticle++;
         }
         // fprintf(stdout, "ABYSS: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
-        fprintf(nbpout, "4. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        fflush(nbpout);
+        // fprintf(nbpout, "4. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        // fflush(nbpout);
 
 #ifdef SEVN
         sendbuf[offset].InitialMass = ptcl->InitialMass; // This is already in Msun unit!!!
@@ -1093,16 +1093,16 @@ int SendParticleToEnzo(Worker *workers) {
                     sendbuf[offset].SNEjectedMass, sendbuf[offset].Temperature);
         }
 #endif
-        fprintf(nbpout, "5. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        fflush(nbpout);
+        // fprintf(nbpout, "5. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        // fflush(nbpout);
 
         int newCount = sendcounts[ptcl->EnzoProcessorNumber] + 1;
         sendcounts[ptcl->EnzoProcessorNumber] = newCount;
 
-        fprintf(nbpout, "6. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-                ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        fflush(nbpout);
+        // fprintf(nbpout, "6. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
+        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
+        // fflush(nbpout);
     } //  loop over particles
 
 #ifdef FEWBODY
