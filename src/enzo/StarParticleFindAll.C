@@ -346,8 +346,22 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
 		if (cstar->ReturnCurrentGrid() != NULL && 
 		(ThisLevel == cstar->ReturnLevel() || LevelArray[ThisLevel+1] == NULL)) {
-			if (cstar->ReturnMass()>0) 
-				LocalStarLookupMap.insert({cstar->ReturnID(), cstar});
+			if (cstar->ReturnMass()>0) {
+				assert(cstar != nullptr);
+				fprintf(stderr, "Before LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
+						cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
+				fflush(stderr);
+				try {
+					LocalStarLookupMap.emplace(cstar->ReturnID(), cstar);
+					fprintf(stderr, "After LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
+							cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
+					fflush(stderr);
+				} catch (const std::bad_alloc& e) {
+					fprintf(stderr, "Caught bad_alloc during insert! what(): %s\n", e.what());
+				} catch (...) {
+					fprintf(stderr, "Caught unknown exception during insert!\n");
+				}
+			}
 			else
 				cstar->SetAbyssFlag(false);
 		}

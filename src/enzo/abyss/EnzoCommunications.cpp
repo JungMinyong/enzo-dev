@@ -948,11 +948,6 @@ int SendParticleToEnzo(Worker *workers) {
         // I can put everything under into a method of sendbuf (ParticleReceiveDataType)
         sendbuf[offset].ID = ptcl->PID;
 
-        // fprintf(nbpout, "1. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-        //     ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        // fflush(nbpout);
-
-
 #ifdef FEWBODY
         if (!ptcl->isActive) {
             for (int dim = 0; dim < Dim; dim++) {
@@ -1006,9 +1001,7 @@ int SendParticleToEnzo(Worker *workers) {
             continue;
         }
 #endif // FewBody end // (Query) can you make it a particle method? hide under particle routine?
-        // fprintf(nbpout, "2. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        // fflush(nbpout);
+
         r2 = 0;
         // this seems like repetitive
         for (int dim = 0; dim < Dim; dim++) {
@@ -1038,10 +1031,6 @@ int SendParticleToEnzo(Worker *workers) {
                 r2 += (sendbuf[offset].Position[dim] - EnzoClusterPosition[dim]) *
                         (sendbuf[offset].Position[dim] - EnzoClusterPosition[dim]);
         } // for dim
-
-        // fprintf(nbpout, "3. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        // fflush(nbpout);
 
         if (IdentifyNbodyParticles && ClusterRadius2 > 0 && r2 > ClusterRadius2) { // in Enzo Unit
             sendbuf[offset].Position[0] -= 20;
@@ -1073,9 +1062,6 @@ int SendParticleToEnzo(Worker *workers) {
             NumberOfEscapeParticle++;
         }
         // fprintf(stdout, "ABYSS: pid= %d, x=%e\n",ptcl->PID,Position[0][i]);
-        // fprintf(nbpout, "4. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        // fflush(nbpout);
 
 #ifdef SEVN
         sendbuf[offset].InitialMass = ptcl->InitialMass; // This is already in Msun unit!!!
@@ -1093,16 +1079,9 @@ int SendParticleToEnzo(Worker *workers) {
                     sendbuf[offset].SNEjectedMass, sendbuf[offset].Temperature);
         }
 #endif
-        // fprintf(nbpout, "5. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        // fflush(nbpout);
 
         int newCount = sendcounts[ptcl->EnzoProcessorNumber] + 1;
         sendcounts[ptcl->EnzoProcessorNumber] = newCount;
-
-        // fprintf(nbpout, "6. ID=%d, Processor=%d, displs=%d, sendcounts=%d, offset=%d\n",
-        //         ptcl->PID, ptcl->EnzoProcessorNumber, displs[ptcl->EnzoProcessorNumber], sendcounts[ptcl->EnzoProcessorNumber], offset);
-        // fflush(nbpout);
     } //  loop over particles
 
 #ifdef FEWBODY
