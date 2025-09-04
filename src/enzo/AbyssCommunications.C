@@ -13,6 +13,7 @@
 
 #if defined (NBODY) && defined (INDIVIDUALSTAR)
 #include <unordered_map>
+#include <map>
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -39,11 +40,13 @@ int GetUnits(double *DensityUnits, double *LengthUnits,
              double *MassUnits, double Time);
 int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level,
                          Star *&AllStar,
-                         std::unordered_map<int, Star *> &LocalStarLookupMap);
+                         //std::unordered_map<int, Star *> &LocalStarLookupMap);
+                         std::map<int, Star *> &LocalStarLookupMap);
 int CommunicationToAbyssInitialize(
     LevelHierarchyEntry *LevelArray[], int level, 
     Star *&AllStars,
-    std::unordered_map<int, Star *> &LocalStarLookupMap);
+    //std::unordered_map<int, Star *> &LocalStarLookupMap);
+    std::map<int, Star *> &LocalStarLookupMap);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 /*
@@ -56,7 +59,8 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level,
                         Star *&AllStars,
-                        std::unordered_map<int, Star *> &LocalStarLookupMap) {
+                        //std::unordered_map<int, Star *> &LocalStarLookupMap) {
+                        std::map<int, Star *> &LocalStarLookupMap) {
 
     if (NbodyFirst) {
       if (CommunicationToAbyssInitialize(LevelArray, level, AllStars, LocalStarLookupMap))
@@ -78,7 +82,8 @@ int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level,
 
 int CommunicationToAbyssInitialize(
     LevelHierarchyEntry *LevelArray[], int level,
-    Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
+    //Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
+    Star *&AllStars, std::map<int, Star *> &LocalStarLookupMap) {
 
 
 
@@ -255,7 +260,8 @@ int CommunicationToAbyssInitialize(
 */
 
 int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&AllStars,
-                         std::unordered_map<int, Star *> &LocalStarLookupMap) {
+                         //std::unordered_map<int, Star *> &LocalStarLookupMap) {
+                         std::map<int, Star *> &LocalStarLookupMap) {
 
   fprintf(stdout, "ENZO: CommunicationToAbyss ...\n");
   fprintf(stderr, "ENZO: CommunicationToAbyss ...\n");
@@ -387,7 +393,8 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
 */
 
 int ReceiveParticleFromAbyss(
-    Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
+    //Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap) {
+    Star *&AllStars, std::map<int, Star *> &LocalStarLookupMap) {
 
   fprintf(stderr, "ENZO: Starting ReceiveParticleFromAbyss...\n");
           

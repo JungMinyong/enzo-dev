@@ -31,6 +31,7 @@
 #include "CommunicationUtilities.h"
 
 #include <unordered_map>
+#include <map>
 
 #define NO_DEATH 0
 #define KILL_STAR 1
@@ -73,7 +74,8 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
                          int level, Star *&AllStars,
                          int TotalStarParticleCountPrevious[], int &OutputNow
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-                         , std::unordered_map<int, Star *> &LocalStarLookupMap
+                         //, std::unordered_map<int, Star *> &LocalStarLookupMap
+                         , std::map<int, Star *> &LocalStarLookupMap
 #endif
 ) {
 

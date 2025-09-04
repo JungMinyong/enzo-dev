@@ -17,6 +17,7 @@
 #include "mpi.h"
 #endif /* USE_MPI */
 #include <unordered_map>
+#include <map>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -37,6 +38,12 @@
 #ifdef USE_MPI
 static int FirstTimeCalled = TRUE;
 static MPI_Datatype MPI_STAR;
+#endif
+
+#define MEMORY_DEBUG
+#ifdef MEMORY_DEBUG
+#include <sys/resource.h>
+struct rusage usage;
 #endif
 
 /* Global communication buffers to avoid reallocations and 
@@ -65,7 +72,8 @@ std::map<int, Star*> grid::MakeStarParticleMap() // makes lookup table to quickl
 
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-                        , std::unordered_map<int, Star*> &LocalStarLookupMap,
+                        //, std::unordered_map<int, Star*> &LocalStarLookupMap,
+                        , std::map<int, Star*> &LocalStarLookupMap,
                         int &ThisLevel
 #endif
 )
@@ -97,8 +105,9 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 		DeleteStarList(AllStars);
 
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-	if (!LocalStarLookupMap.empty())
-		LocalStarLookupMap.clear();
+	//if (!LocalStarLookupMap.empty())
+	LocalStarLookupMap.clear();
+	//LocalStarLookupMap.reserve(1000);
 #endif
 
 
@@ -351,8 +360,50 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 				fprintf(stderr, "Before LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
 						cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
 				fflush(stderr);
+				for (const auto& [id, starPtr] : LocalStarLookupMap) {
+					std::cerr << "ID: " << id;
+					if (starPtr) {
+						std::cerr << " | Name: " << starPtr->ReturnID();
+												//<< " | Mass: " << starPtr->mass;
+					} else {
+						std::cerr << " | [null Star pointer]";
+					}
+					std::cerr << '\n';
+				}
+				if (!cstar) {
+						fprintf(stderr, "cstar has a problem!\n");
+						fflush(stderr);
+				} else {
+
+				}
 				try {
-					LocalStarLookupMap.emplace(cstar->ReturnID(), cstar);
+
+#ifdef MEMORY_DEBUG
+					getrusage(RUSAGE_SELF, &usage);
+					std::cerr << "RSS before insert: " << usage.ru_maxrss << " KB" << std::endl;
+#endif
+
+
+					if (LocalStarLookupMap.find(cstar->ReturnID()) != LocalStarLookupMap.end()) {
+				    std::cerr << "Warning: duplicate star ID " << cstar->ReturnID() << std::endl;
+					} else {
+						LocalStarLookupMap.insert(std::make_pair(cstar->ReturnID(), cstar));
+						//.emplace(cstar->ReturnID(), cstar);
+					}
+#ifdef MEMORY_DEBUG
+					getrusage(RUSAGE_SELF, &usage);
+					std::cerr << "RSS before insert: " << usage.ru_maxrss << " KB" << std::endl;
+#endif
+					for (const auto& [id, starPtr] : LocalStarLookupMap) {
+						std::cout << "ID: " << id;
+						if (starPtr) {
+							std::cout << " | Name: " << starPtr->ReturnID();
+													//<< " | Mass: " << starPtr->mass;
+						} else {
+							std::cout << " | [null Star pointer]";
+						}
+						std::cout << '\n';
+					}
 					fprintf(stderr, "After LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
 							cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
 					fflush(stderr);

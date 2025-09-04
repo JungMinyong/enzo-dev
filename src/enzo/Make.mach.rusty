@@ -87,7 +87,7 @@ MACH_CFLAGS   =
 MACH_CXXFLAGS = -lcudart
 MACH_FFLAGS   = -lmpi -lrt -ldl -Wall # -W -Wconversion -Werror=compare-reals -Wall
 MACH_F90FLAGS = #-Wconversion -Werror -Werror=compare-reals -Wall
-MACH_LDFLAGS  =  -fsanitize=address -fno-omit-frame-pointer   
+MACH_LDFLAGS  =  #-fsanitize=address -fno-omit-frame-pointer   
 
 
 #-----------------------------------------------------------------------
@@ -104,8 +104,8 @@ MACH_FFLAGS_REAL_64    =
 #-----------------------------------------------------------------------
 
 MACH_OPT_WARN        = -Wall -g
-MACH_OPT_DEBUG       = -g
-MACH_OPT_HIGH        = -O2
+MACH_OPT_DEBUG       = -O1 -g
+MACH_OPT_HIGH        = -O2 -g
 MACH_OPT_AGGRESSIVE  = -O3 -g
 
 #-----------------------------------------------------------------------

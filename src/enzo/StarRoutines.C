@@ -1186,6 +1186,39 @@ void Star::UpdateBackgroundAcceleration() {
   }
 }
 
+
+
+void grid::SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier) {
+
+  if (IDtoIndexforBG.size() == 0) {
+    BackgroundAcceleration = new double3[NumberOfStars];
+    //IDtoIndexforBG.reserve(NumberOfStars);
+    fprintf(stderr, "Initialized BackgroundAcceleration array for %d stars\n", NumberOfStars);
+  }
+
+  if (ParticleNumber[GridParticleIndex] == Identifier) {
+    if (background_acc_counter >= NumberOfStars) {
+      fprintf(stderr, "BackgroundAcceleration overflow! More entries than NumberOfStars!\n");
+      exit(1);
+    }
+
+    if (IDtoIndexforBG.find(Identifier) == IDtoIndexforBG.end()) {
+      BackgroundAcceleration[background_acc_counter].x = ParticleAccelerationNoStar[0][GridParticleIndex];
+      BackgroundAcceleration[background_acc_counter].y = ParticleAccelerationNoStar[1][GridParticleIndex];
+      BackgroundAcceleration[background_acc_counter].z = ParticleAccelerationNoStar[2][GridParticleIndex];
+
+      IDtoIndexforBG.insert({Identifier, background_acc_counter});
+      background_acc_counter++;
+    }
+  }
+  else {
+    fprintf(stderr, "(mismatch) Grid PID=%lld | Star PID=%d\n", ParticleNumber[GridParticleIndex], Identifier);
+    fprintf(stderr, "Something went wrong in SaveBackgroundAcceleration!!!\n");
+    exit(1);
+  }
+}
+
+/*
 void grid::SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier) {
 
   if (IDtoIndexforBG.size() == 0) {
@@ -1205,7 +1238,7 @@ void grid::SaveBackgroundAcceleration(const int &GridParticleIndex, const int &I
     fprintf(stderr, "Something went wrong in SaveBackgroundAcceleration!!!\n");
     exit(1);
   }
-}
+}*/
 
 
 void Star::UpdateToGridParticle(const double *pos, const double *vel){
@@ -1235,6 +1268,7 @@ void grid::DeleteBackgroundAcceleration() {
     delete [] BackgroundAcceleration;
     BackgroundAcceleration = NULL;
   }
+  background_acc_counter = 0;  // reset counter
   // not sure if this is okay. Grid of not finest level might use it again?
 }
 #endif

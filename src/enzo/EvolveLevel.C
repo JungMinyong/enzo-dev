@@ -124,9 +124,11 @@ int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
 void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int level);
 #else
 int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level,
-    Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap);
+    //Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap);
+    Star *&AllStars, std::map<int, Star *> &LocalStarLookupMap);
 int ReceiveParticleFromAbyss(
-    Star *&AllStar, std::unordered_map<int, Star *> &LocalStarLookupMap);
+    //Star *&AllStar, std::unordered_map<int, Star *> &LocalStarLookupMap);
+    Star *&AllStar, std::map<int, Star *> &LocalStarLookupMap);
 #endif
 #endif
 
@@ -260,7 +262,8 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
                            int TotalStarParticleCountPrevious[]
 #ifdef INDIVIDUALSTAR
 #ifdef NBODY
-                           , std::unordered_map<int, Star *> &LocalStarLookupMap
+                           //, std::unordered_map<int, Star *> &LocalStarLookupMap
+                           , std::map<int, Star *> &LocalStarLookupMap
 #endif
                            , int SkipFeedbackFlag = 0
 #endif
@@ -270,7 +273,8 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 		int level, Star *&AllStars,
 		int TotalStarParticleCountPrevious[], int &OutputNow
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
-                         , std::unordered_map<int, Star *> &LocalStarLookupMap
+                         //, std::unordered_map<int, Star *> &LocalStarLookupMap
+                         , std::map<int, Star *> &LocalStarLookupMap
 #endif
 		);
 int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[], 
@@ -437,7 +441,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #ifdef INDIVIDUALSTAR
   Star *AllStars = NULL;
 #ifdef NBODY
-  std::unordered_map<int, Star *> LocalStarLookupMap;
+  //std::unordered_map<int, Star *> LocalStarLookupMap;
+  std::map<int, Star *> LocalStarLookupMap;
 #endif
 #endif
   while ((CheckpointRestart == TRUE) ||

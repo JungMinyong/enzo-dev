@@ -143,7 +143,7 @@ grid::~grid()
   }
   if (IDtoIndexforBG.size() != 0) {
     IDtoIndexforBG.clear();
-    IDtoIndexforBG.rehash(0);
+    //IDtoIndexforBG.rehash(0);
   }
 #endif
 

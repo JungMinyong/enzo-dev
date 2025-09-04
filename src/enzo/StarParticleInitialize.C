@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <unordered_map>
+#include <map>
 
 #include "ErrorExceptions.h"
 #include "EnzoTiming.h"
@@ -36,7 +37,8 @@ int StarParticlePopIII_IMFInitialize(void);
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
                         ,
-                        std::unordered_map<int, Star *> &LocalStarLookupMap,
+                        //std::unordered_map<int, Star *> &LocalStarLookupMap,
+                        std::map<int, Star *> &LocalStarLookupMap,
                         int &ThisLevel
 #endif
 );
@@ -58,7 +60,8 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 #ifdef INDIVIDUALSTAR
 #ifdef NBODY
                            ,
-                           std::unordered_map<int, Star *> &LocalStarLookupMap
+                           //std::unordered_map<int, Star *> &LocalStarLookupMap
+                           std::map<int, Star *> &LocalStarLookupMap
 #endif
                            ,
                            int SkipFeedbackFlag = 0

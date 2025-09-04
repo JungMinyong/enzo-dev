@@ -220,7 +220,7 @@ void Particle::update(const ParticleSendDataType &ptcl, const int& ProcessorNumb
 
 
 void Particle::print(const double &umass, const double &upos, const double &uvel){
-		fprintf(stderr,
+		fprintf(nbpout,
 				"PID: %d. Mass: %e Msun\n"
 				"x: %e pc, y: %e pc, z: %e pc\n"
 				"vx: %e km/s, vy: %e km/s, vz: %e km/s\n",

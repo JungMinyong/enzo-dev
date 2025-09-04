@@ -1,5 +1,6 @@
 // #include "FewBody/ar_interaction.hpp"
 #include <cstdio>
+#include <assert.h>
 #ifdef INDIVIDUALSTAR
 #include <algorithm>
 #include <cmath>
@@ -804,6 +805,11 @@ int ReceiveParticleFromEnzo() {
 
     // UpdateNextRegTime(particle);
     //  fprintf(nbpout, "ABYSS    : Acceleration and neighbors are updated.\n");
+
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
+        fprintf(nbpout, "Particle %d: ", i);
+        particles[i].print(mass_unit, position_unit, velocity_unit);
+    }
 
     fprintf(nbpout,
             "ABYSS    : In ReceiveFromEnzo (after new particle might be added): \n");

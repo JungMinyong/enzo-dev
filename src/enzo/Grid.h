@@ -135,7 +135,8 @@ class grid
 		float *ParticleAccelerationNoStar[MAX_DIMENSION+1];  //  by YS
 #ifdef INDIVIDUALSTAR
 		double3 *BackgroundAcceleration;
-		std::unordered_map<int, int> IDtoIndexforBG; // PID to Index convertor for background acceleration
+		//std::unordered_map<int, int> IDtoIndexforBG; // PID to Index convertor for background acceleration
+		std::map<int, int> IDtoIndexforBG; // PID to Index convertor for background acceleration
 		// this is a winner over various combinations such as <int, *double>, <int, vector>
 		// due to memeory management and cache-friendly/memory locality by YS
 #else
@@ -184,6 +185,7 @@ class grid
 		// 
 
 #ifdef NBODY
+		int background_acc_counter = 0;
 		float *PotentialFieldNoStar;
 		float *AccelerationFieldNoStar[MAX_DIMENSION]; // cell cntr acceleration at n+1/2
 		float *GravitatingMassFieldNoStar; 

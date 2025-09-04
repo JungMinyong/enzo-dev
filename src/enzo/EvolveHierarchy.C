@@ -32,6 +32,7 @@
 #include "preincludes.h"
 #include <cstddef>
 #include <unordered_map>
+#include <map>
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -167,7 +168,8 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
                            int ThisLevel, Star *&AllStars,
                            int TotalStarParticleCountPrevious[],
 #ifdef NBODY
-                           std::unordered_map<int, Star *> &LocalStarLookupMap,
+                           //std::unordered_map<int, Star *> &LocalStarLookupMap,
+                           std::map<int, Star *> &LocalStarLookupMap,
 #endif
                            int SkipFeedbackFlag = 0);
 
@@ -654,7 +656,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     int NumberOfGrids = GenerateGridArray(LevelArray, 0, &Grids);
     int *TotalStarParticleCountPrevious = new int[NumberOfGrids];
 
-		std::unordered_map<int, Star*> empty;
+		//std::unordered_map<int, Star*> empty;
+		std::map<int, Star*> empty;
                 StarParticleInitialize(Grids, &MetaData, NumberOfGrids,
                                        LevelArray, 0, AllStars,
                                        TotalStarParticleCountPrevious,
