@@ -1,4 +1,5 @@
 
+#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -10,6 +11,7 @@
 #include "SkipList.h"
 #include "Worker.h"
 #include "QueueScheduler.h"
+#include "particle.h"
 
 #ifdef NSIGHT
 #include <nvToolsExt.h>
@@ -22,6 +24,7 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 #ifdef CUDA
 void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
+
 #ifdef PerformanceTrace
     std::chrono::high_resolution_clock::time_point start_point;
     std::chrono::high_resolution_clock::time_point end_point;
@@ -44,6 +47,17 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     fprintf(nbpout, "RegularList size: %d\n", RegularList.size());
     fflush(nbpout);
 #endif
+
+    for (int i = 0; i < NumberOfSingleParticle; i++) {
+      fprintf(stderr, "PID= %d, pos = (%.3e,%.3e,%.3e), mass = %.3e, acc=%.3e \n",
+              particles[i].PID, particles[i].Position[0],
+              particles[i].Position[1], particles[i].Position[2],
+              particles[i].Mass, particles[i].a_tot[0][0]);
+      fprintf(nbpout, "PID= %d, pos = (%.3e,%.3e,%.3e), mass = %.3e, acc=%.3e \n",
+              particles[i].PID, particles[i].Position[0],
+              particles[i].Position[1], particles[i].Position[2],
+              particles[i].Mass, particles[i].a_tot[0][0]);
+    }
 
     calculateRegAccelerationOnGPU(RegularList, queue_scheduler);
 
@@ -90,13 +104,12 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
 #ifdef DEBUG_ABYSS
-    /*
     {
         Particle *ptcl;
         for (int index: RegularList)
         {
             ptcl = &particles[index];
-            fprintf(stdout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr, NextReg = %.3e (%llu)\n"
+            fprintf(nbpout, "PID=%d, CurrentTime (Irr, Reg) = (%.3e(%llu), %.3e(%llu)) Myr, NextReg = %.3e (%llu)\n"
                             "dtIrr = %.4e Myr, dtReg = %.4e Myr, blockIrr=%llu (%d), blockReg=%llu (%d), NextBlockIrr= %.3e(%llu)\n"
                             "NumNeighbor= %d\n",
                     ptcl->PID,
@@ -116,7 +129,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     ptcl->NextBlockIrr,
                     ptcl->NumberOfNeighbor);
 
-            fprintf(stdout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
+            fprintf(nbpout, " a_tot = (%.4e,%.4e,%.4e), a_reg = (%.4e,%.4e,%.4e), a_irr = (%.4e,%.4e,%.4e), n_n=%d, R=%.3e\n\
 								a1_reg = (%.4e,%.4e,%.4e), a2_reg = (%.4e,%.4e,%.4e), a3_reg = (%.4e,%.4e,%.4e)\n\
 								a1_irr = (%.4e,%.4e,%.4e), a2_irr = (%.4e,%.4e,%.4e), a3_irr = (%.4e,%.4e,%.4e)\n",
                     ptcl->a_tot[0][0],
@@ -149,9 +162,8 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     ptcl->a_irr[1][3],
                     ptcl->a_irr[2][3]);
         }
-        // fflush(stdout);
+        fflush(nbpout);
     }
-    */
 #endif // endif debug
 }
 #else

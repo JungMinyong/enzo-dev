@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -358,7 +359,10 @@ void sendAllParticlesToGPU(double new_time, std::unordered_set<int> RegularList,
 		else
 			ptcl->predictParticleSecondOrder(new_time-ptcl->CurrentTimeIrr, Position[size], Velocity[size]);
 
-		// fprintf(stderr, "PID=%d, dt = %e, Mass=%.3e, Vel=(%.3e, %.3e, %.3e), Pos=(%.3e, %.3e, %.3e)\n", ptcl->PID, new_time-ptcl->CurrentTimeReg, Mass[size], Velocity[size][0], Velocity[size][1], Velocity[size][2], Position[size][0], Position[size][1], Position[size][2]);
+		fprintf(nbpout, "PID=%d, dt = %e, Mass=%.3e, Vel=(%.3e, %.3e, %.3e), Pos=(%.3e, %.3e, %.3e) Acc=(%.3e,%.3e,%.3e)\n",
+			 ptcl->PID, new_time-ptcl->CurrentTimeReg, Mass[size], Velocity[size][0], Velocity[size][1], Velocity[size][2],
+			  Position[size][0], Position[size][1], Position[size][2], ptcl->a_tot[0][0], ptcl->a_tot[0][1], ptcl->a_tot[0][2]);
+		fflush(nbpout);
 		assert(Position[size][0] == Position[size][0]);
 		assert(Velocity[size][0] == Velocity[size][0]);
 		#ifdef COMOVE

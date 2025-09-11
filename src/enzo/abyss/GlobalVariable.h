@@ -2,6 +2,7 @@
 #define GLOBAL_VARIABLE_H
 
 struct GlobalVariable {
+	int NumberOfSingleParticle;
 	int LastParticleIndex;
 	ULL NextRegTimeBlock;
 	int time_block;

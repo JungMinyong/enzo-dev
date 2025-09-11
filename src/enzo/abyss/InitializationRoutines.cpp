@@ -331,7 +331,18 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
     /* Since we're not doing full-initialization, we have to do more work on time steps
     e.g., if enzo time can be smaller than regualr time steps. we gotta re-normalize it.
     but this part is not complete yet. */
-    
+
+    for (int i = 0; i < NumberOfSingleParticle; i++) {
+      fprintf(stderr, "PID= %d, pos = (%.3e,%.3e,%.3e), mass = %.3e, acc=%.3e \n",
+              particles[i].PID, particles[i].Position[0],
+              particles[i].Position[1], particles[i].Position[2],
+              particles[i].Mass, particles[i].a_tot[0][0]);
+      fprintf(nbpout, "PID= %d, pos = (%.3e,%.3e,%.3e), mass = %.3e, acc=%.3e \n",
+              particles[i].PID, particles[i].Position[0],
+              particles[i].Position[1], particles[i].Position[2],
+              particles[i].Mass, particles[i].a_tot[0][0]);
+    }
+
     Particle* ptcl;
 
     // Example code by EW 2025.3.18
@@ -370,6 +381,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
                     ptcl->BackgroundAcceleration[2]
                     );
         }
+        fflush(nbpout);
         // */
         InitializationOnGPU(queue_scheduler, workers); // GPU Initialization code
         // /*

@@ -403,6 +403,14 @@ int ReceiveParticleFromAbyss(
   fprintf(stderr, "ENZO: (%d) NumberOfParticles=%d\n", MyProcessorNumber,
           LocalNumberOfParticles);
 
+  int TotalNumberOfParticles = 0;
+  MPI_Allreduce(&LocalNumberOfParticles, &TotalNumberOfParticles, 
+    1, MPI_INT, MPI_SUM, enzo_comm);
+  
+  if (TotalNumberOfParticles == 0) {
+    fprintf(stderr, "ENZO: No particles in the simulation. Skip receiving from ABYSS.\n");
+    return SUCCESS;
+  }
   //MPI_Barrier(inter_comm); 
 
 #ifdef USE_MPI
@@ -447,6 +455,7 @@ int ReceiveParticleFromAbyss(
       exit(0);
     }
 	}
+
   fprintf(stdout, "ENZO: Copy-to-Star DONE!\n");
   fprintf(stderr, "ENZO: Copy-to-Star DONE %d!\n", MyProcessorNumber);
   delete[] recvbuf;

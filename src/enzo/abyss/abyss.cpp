@@ -39,17 +39,26 @@ int ABYSS() {
 	/*********************************************************************
 	 *  Configuration for outputing log files
 	 *********************************************************************/
-	nbpout = fopen("abyss_output.txt", "w");
-	//gpuout = fopen("cuda_output.txt", "w");
-	fprintf(nbpout, "Abyss Output Starts!\n");
-	//fprintf(gpuout, "CUDA Output Starts!\n");
+	//if (AbyssProcessorNumber == 0) remove("abyss_output.txt");
+	//MPI_Barrier(abyss_comm);
 
-	binout = fopen("binary_output.txt", "w"); // (Query) EW: how to open output files?
-	fprintf(binout, "Starting nbody - Binary OUTPUT\n");
-	fflush(binout);
-	mergerout = fopen("merger_output.txt", "w");
-	fprintf(mergerout, "Starting nbody - Merger OUTPUT\n");
-	fflush(mergerout);
+	std::string filename = "log/output_" + std::to_string(AbyssProcessorNumber) + ".txt";
+  //nbpout = fopen("abyss_output_.txt", "a+");
+  nbpout = fopen(filename.c_str(), "w");
+
+  // gpuout = fopen("cuda_output.txt", "w");
+  fprintf(nbpout, "Abyss Output Starts!\n");
+  fflush(nbpout);
+  // fprintf(gpuout, "CUDA Output Starts!\n");
+
+  binout = fopen("binary_output.txt",
+                 "w"); // (Query) EW: how to open output files?
+  fprintf(binout, "Starting nbody - Binary OUTPUT\n");
+  fflush(binout);
+  mergerout = fopen("merger_output.txt", "w");
+  fprintf(mergerout, "Starting nbody - Merger OUTPUT\n");
+  fflush(mergerout);
+
 #ifdef SEVN
 	SEVNout = fopen("SEVN_output.txt", "w");
 	fprintf(SEVNout, "Starting nbody - SEVN OUTPUT\n");
@@ -65,8 +74,11 @@ int ABYSS() {
 #endif
 
 
-	if (AbyssProcessorNumber == ROOT)
-		InitialCommunication();
+	if (AbyssProcessorNumber == ROOT) {
+    fprintf(nbpout, "ABYSS: Entering IC...\n");
+    fflush(nbpout);
+    InitialCommunication();
+  }
 
 	// things that should be synchronized. this can be moved to GlobalVariable
 	MPI_Barrier(abyss_comm);

@@ -93,6 +93,7 @@ int InitialCommunication() {
 
     fprintf(nbpout, "ABYSS: First Waiting for Enzo to receive data...\n");
     fprintf(stderr, "ABYSS: First Waiting for Enzo to receive data...\n");
+    fflush(nbpout);
 
     /*-------------------------------------------*/
     /****   Receive Parameters from ENZO  ********/
@@ -125,6 +126,7 @@ int InitialCommunication() {
     MPI_Irecv(params_int,       int_size,       MPI_INT,    0, 300, inter_comm, &requests[1]);
     MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
     fprintf(nbpout, "Data received!\n");
+    fflush(nbpout);
 
     TimeStep                    = params_double[0];
     TimeUnits                   = params_double[1];
@@ -225,8 +227,8 @@ int InitialCommunication() {
         global_variable->a_f = a_f;
         global_variable->dadt_i = dadt_i;
         global_variable->dadt_f = dadt_f;
-        fprintf(stderr, "a_i = %e, dadt_i = %e, a_f = %e, dadt_f = %e\n", a_i, dadt_i, a_f, dadt_f);
-        fprintf(stderr, "InitialRedshift = %e, FinalRedshift = %e\n", InitialRedshift, FinalRedshift);
+        fprintf(nbpout, "a_i = %e, dadt_i = %e, a_f = %e, dadt_f = %e\n", a_i, dadt_i, a_f, dadt_f);
+        fprintf(nbpout, "InitialRedshift = %e, FinalRedshift = %e\n", InitialRedshift, FinalRedshift);
         EPS2 *= (a_i/a_f)*(a_i/a_f); // Fix EPS2 for physical coordinates 
     }
 #endif
@@ -238,29 +240,29 @@ int InitialCommunication() {
 
     // need to fix units
     // fprintf(nbpout, "Enzo Time                = %lf\n", TimeStep);
-    fprintf(stderr, "LengthUnit                = %e\n", LengthUnits);
-    fprintf(stderr, "DensityUnit               = %e\n", DensityUnits);
-    fprintf(stderr, "TimeUnit                  = %e\n", TimeUnits);
-    fprintf(stderr, "VelocityUnit              = %e\n", VelocityUnits);
+    fprintf(nbpout, "LengthUnit                = %e\n", LengthUnits);
+    fprintf(nbpout, "DensityUnit               = %e\n", DensityUnits);
+    fprintf(nbpout, "TimeUnit                  = %e\n", TimeUnits);
+    fprintf(nbpout, "VelocityUnit              = %e\n", VelocityUnits);
 
 
 
-    fprintf(stderr, "Nbody Time               = %e Myr\n", EnzoCurrentTime*1e4);
-    fprintf(stderr, "Nbody TimeStep           = %e\n", global_variable->EnzoTimeStep);
-    fprintf(stderr, "EPS2                     = %e pc**2\n", EPS2 * position_unit * position_unit);
-    fprintf(stderr, "InitialNeighborRadius2   = %e pc**2\n", InitialNeighborRadius2 * position_unit * position_unit);
-    fprintf(stderr, "eta                      = %e\n", eta);
-    fprintf(stderr, "EnzoClusterPosition      = (%e, %e, %e)\n", EnzoClusterPosition[0], EnzoClusterPosition[1], EnzoClusterPosition[2]);
-    fprintf(stderr, "ClusterRadius2           = %e pc**2\n", ClusterRadius2 * position_unit * position_unit);
-    fprintf(stderr, "StarMassEjectionFraction = %e\n", StarMassEjectionFraction);
-    fprintf(stderr, "StarParticleFeedback     = %d\n", StarParticleFeedback);
-    fprintf(stderr, "FixNumNeighbor           = %d\n", FixNumNeighbor);
-    fprintf(stderr, "BinaryRegularization     = %d\n", BinaryRegularization); // (Query) EW: What is this?
-    // fprintf(stderr, "KSTime                   = %lf\n", KSTime);
-    // fprintf(stderr, "KSDistance               = %lf\n", KSDistance);
-    fprintf(stderr, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
-    fprintf(stderr, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
-    fflush(stderr);
+    fprintf(nbpout, "Nbody Time               = %e Myr\n", EnzoCurrentTime*1e4);
+    fprintf(nbpout, "Nbody TimeStep           = %e\n", global_variable->EnzoTimeStep);
+    fprintf(nbpout, "EPS2                     = %e pc**2\n", EPS2 * position_unit * position_unit);
+    fprintf(nbpout, "InitialNeighborRadius2   = %e pc**2\n", InitialNeighborRadius2 * position_unit * position_unit);
+    fprintf(nbpout, "eta                      = %e\n", eta);
+    fprintf(nbpout, "EnzoClusterPosition      = (%e, %e, %e)\n", EnzoClusterPosition[0], EnzoClusterPosition[1], EnzoClusterPosition[2]);
+    fprintf(nbpout, "ClusterRadius2           = %e pc**2\n", ClusterRadius2 * position_unit * position_unit);
+    fprintf(nbpout, "StarMassEjectionFraction = %e\n", StarMassEjectionFraction);
+    fprintf(nbpout, "StarParticleFeedback     = %d\n", StarParticleFeedback);
+    fprintf(nbpout, "FixNumNeighbor           = %d\n", FixNumNeighbor);
+    fprintf(nbpout, "BinaryRegularization     = %d\n", BinaryRegularization); // (Query) EW: What is this?
+    // fprintf(nbpout, "KSTime                   = %lf\n", KSTime);
+    // fprintf(nbpout, "KSDistance               = %lf\n", KSDistance);
+    fprintf(nbpout, "IdentifyNbodyParticles   = %d\n", IdentifyNbodyParticles);
+    fprintf(nbpout, "IdentifyOnTheFly         = %d\n\n", IdentifyOnTheFly);
+    fflush(nbpout);
 
     /*------------------===-------------------------*/
     /********   Receive Particles to ABYSS  *********/
@@ -294,8 +296,8 @@ int InitialCommunication() {
 
     if (debug1) {
         fprintf(nbpout, "displs= ");
-        for (int i=0; i<size; i++)
-        fprintf(nbpout, "%d, ", displs[i]);
+        for (int i = 0; i < size; i++)
+          fprintf(nbpout, "%d, ", displs[i]);
         fprintf(nbpout, "\n NumberOfSingleParticle=%d\n",NumberOfSingleParticle);
         fflush(nbpout);
     }
@@ -392,6 +394,7 @@ int InitialCommunication() {
 
     NumberOfParticle = NumberOfSingleParticle;
     global_variable->LastParticleIndex = NumberOfSingleParticle - 1;
+    global_variable->NumberOfSingleParticle = NumberOfSingleParticle;
 
 #ifdef SEVN
 	initializeStellarEvolution();
@@ -402,6 +405,7 @@ int InitialCommunication() {
     delete[] recvbuf;
 
     fprintf(nbpout, "ABYSS: %d particles loaded!\n", NumberOfSingleParticle);
+    fflush(nbpout);
     fflush(nbpout);
     return true;
 }
@@ -426,6 +430,8 @@ int ReceiveParticleFromEnzo() {
     double TimeStep;
     fprintf(nbpout, "ABYSS: Starting ReceiveParticle...\n");
     fprintf(stderr, "ABYSS: Starting ReceiveParticle...\n");
+    fflush(nbpout);
+    fflush(stderr);
     //MPI_Barrier(inter_comm); 
 
 
@@ -492,12 +498,18 @@ int ReceiveParticleFromEnzo() {
 
     std::cout << "ABYSS: Data transferred!" << std::endl;
     fprintf(stdout, "ABYSS: Data transferred!\n");
+    fprintf(nbpout, "ABYSS: Data transferred!\n");
+    fflush(nbpout);
+
     EnzoCurrentTime = EnzoCurrentTime*EnzoTime;
     global_variable->EnzoCurrentTime = EnzoCurrentTime * 1e4; // in Myr unit
 
 
     std::cout << "Enzo Time    :" << global_variable->EnzoCurrentTime << " Myr" << std::endl;
     std::cerr << "Enzo Time    :" << global_variable->EnzoCurrentTime << " Myr" << std::endl;
+    fprintf(nbpout, "Enzo Time: %lf Myr",  global_variable->EnzoCurrentTime);
+    fflush(nbpout);
+    std::cout << "Enzo Time    :" << global_variable->EnzoCurrentTime << " Myr" << std::endl;
 
     std::cout << "EnzoTimeStep :" << global_variable->EnzoTimeStep * 1e4 << " Myr" << std::endl;
     std::cerr << "EnzoTimeStep :" << global_variable->EnzoTimeStep * 1e4 << " Myr" << std::endl;
@@ -795,6 +807,7 @@ int ReceiveParticleFromEnzo() {
 
     NumberOfSingleParticle  += newNumberOfSingleParticle;
     NumberOfParticle        += newNumberOfSingleParticle;
+    global_variable->NumberOfSingleParticle = NumberOfSingleParticle;
 
     //  (Query) Do I need this?
     // fprintf(nbpout, "ABYSS    : Acceleration for particles on GPU.\n");
@@ -867,6 +880,17 @@ int SendParticleToEnzo(Worker *workers) {
 
     std::cout << "ABYSS: Starting SendParticleToEnzo..." << std::endl;
     std::cerr << "ABYSS: Starting SendParticleToEnzo..." << std::endl;
+    fprintf(nbpout,
+            "ABYSS: Starting SendParticleToEnzo...\n");
+    fflush(nbpout);
+    if (NumberOfSingleParticle == 0) {
+      fprintf(stderr,
+              "ABYSS: No particles in the simulation. Skip sending to Enzo.\n");
+      fprintf(nbpout,
+              "ABYSS: No particles in the simulation. Skip sending to Enzo.\n");
+      return 1;
+    }
+
     /*if (NumberOfSingleParticle == 0) {
         std::cout << "ABYSS: Skipping SendParticleToEnzo..." << std::endl;
         std::cerr << "ABYSS: Skipping SendParticleToEnzo..." << std::endl;
@@ -1271,6 +1295,7 @@ int SendParticleToEnzo(Worker *workers) {
             NumberOfSingleParticle);
 
     fflush(stderr);
+    fflush(nbpout);
     if (NumberOfSingleParticle != 0 && IdentifyOnTheFly) {
         MPI_Wait(&request, MPI_STATUS_IGNORE);
     }

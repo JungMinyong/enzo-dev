@@ -19,7 +19,7 @@ void NewFBInitialization3(Group* group);
 void WorkerRoutines() {
 
 	std::cout << "Processor " << AbyssProcessorNumber << " is ready." << std::endl;
-	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
+	//fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
 
 	TaskName task = Error;
 	MPI_Status status;
@@ -176,6 +176,11 @@ void WorkerRoutines() {
 					*/
 					ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
 					ptcl->CurrentTimeIrr = ptcl->CurrentBlockReg*global_variable->time_step;
+				}
+				if (ptcl->NumberOfNeighbor == global_variable->NumberOfSingleParticle - 1) {
+					ptcl->TimeStepReg = 4*ptcl->TimeStepIrr;
+					ptcl->TimeLevelReg = ptcl->TimeLevelIrr-2;
+					ptcl->TimeBlockReg = 4*ptcl->TimeBlockIrr;
 				}
 				ptcl->updateRadius();
 				ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of ptcl particle

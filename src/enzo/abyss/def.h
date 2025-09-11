@@ -8,6 +8,7 @@
 #define NumberOfTask 20
 #define MaxNumberOfParticle 200000
 #define MaxNumberOfNeighbor 1000 // 10000 -> 2000 modified by EW 2025.1.11
+//#define MaxNumberOfNeighbor 1 
 
 
 
@@ -18,6 +19,7 @@
 //#define FixNumNeighbor 100 // 500 -> 100 modified by EW 2025.1.11
 //#define NumNeighborMax 100
 #define NumNeighborMax 1000 // 5000 -> 1000 modified by EW 2025.1.11
+//#define NumNeighborMax 1 // 5000 -> 1000 modified by EW 2025.1.11
 #define ACRadius 0.05 // 0.11 -> 0.05 modified by EW 2025.1.11
 
 
@@ -87,6 +89,8 @@ typedef unsigned long long ULL;
 //#define GridDimY 16 // each block calcuates NNB/GridDimY particles
 //#define NNB_per_block 128
 #define MinParticles 50
+//#define MinParticles 40
+//#define MinParticles 1
 //#define HUBBLE_FLOW
 #define COMOVE
 #define NO_HUBBLE_FLOW

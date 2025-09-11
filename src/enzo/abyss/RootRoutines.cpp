@@ -228,11 +228,13 @@ void RootRoutines()
 			SendParticleToEnzo(workers);
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+			fprintf(nbpout, "SendToEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
 			
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			ReceiveParticleFromEnzo();
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
+			fprintf(nbpout, "ReceiveFromEnzo: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
 #else
 			start_point_routine = std::chrono::high_resolution_clock::now();
 			SendToEnzo(workers);
@@ -251,10 +253,10 @@ void RootRoutines()
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "InitializationAfterCommunication: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
 #ifdef DEBUG_ABYSS
-			fflush(nbpout);
-			fclose(nbpout);
-			nbpout = fopen("abyss_output.txt", "w");
-			fprintf(nbpout, "Abyss Output Starts!\n");
+			//fflush(nbpout);
+			//fclose(nbpout);
+			//nbpout = fopen("abyss_output.txt", "w");
+			//fprintf(nbpout, "Abyss Output Starts!\n");
 #endif
 
 			NextRegTimeBlock = 0;

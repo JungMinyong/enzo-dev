@@ -27,8 +27,9 @@ void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL 
 #endif
 
 	dt = dt*global_variable->EnzoTimeStep;
+	fprintf(nbpout, "dt = %e, a, dadt, H = %e, %e, %e\n", dt, a, dadt, H);
 
-	if (dt == 0) {
+	if (dt == 0 || std::isnan(a_tot[0][0])) {
 		for (int dim=0; dim<Dim; dim++) {
 			pos[dim] = (CUDA_REAL)Position[dim];
 			vel[dim] = (CUDA_REAL)Velocity[dim];
@@ -42,6 +43,8 @@ void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL 
 			double acc = a_tot[dim][0] + BackgroundAcceleration[dim];// g/a^2
 			double jerk= a_tot[dim][1]; // - H * a_tot[dim][0]/a2;       // j/a^2
 			double dudt   = acc - H * Velocity[dim];   // total peculiar acceleration
+
+			fprintf(nbpout, "acc = %e, jerk = %e, dudt = %e\n", acc, jerk, dudt);
 
 			// 2nd‑order velocity
 			vel[dim] = (CUDA_REAL) Velocity[dim] + (dudt + 0.5*jerk*dt)*dt;
