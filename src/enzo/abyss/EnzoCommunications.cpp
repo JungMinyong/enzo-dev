@@ -49,6 +49,8 @@ double a_i, a_f, dadt_i, dadt_f; // RedshiftEnzoStart, RedshiftEnzoEnd;
 int FixNumNeighbor0, IdentifyNbodyParticles;
 int BinaryRegularization, IdentifyOnTheFly, StoreTimeStep;
 
+bool OnlyIrregularRoutine = true;
+
 // double KSTime;
 // double KSDistance;
 
@@ -395,6 +397,9 @@ int InitialCommunication() {
     NumberOfParticle = NumberOfSingleParticle;
     global_variable->LastParticleIndex = NumberOfSingleParticle - 1;
     global_variable->NumberOfSingleParticle = NumberOfSingleParticle;
+
+    if (NumberOfParticle >= IrregularRoutineThreshold)
+        OnlyIrregularRoutine = false;
 
 #ifdef SEVN
 	initializeStellarEvolution();
@@ -808,6 +813,9 @@ int ReceiveParticleFromEnzo() {
     NumberOfSingleParticle  += newNumberOfSingleParticle;
     NumberOfParticle        += newNumberOfSingleParticle;
     global_variable->NumberOfSingleParticle = NumberOfSingleParticle;
+
+    if (OnlyIrregularRoutine && NumberOfParticle >= IrregularRoutineThreshold)
+        OnlyIrregularRoutine = false;
 
     //  (Query) Do I need this?
     // fprintf(nbpout, "ABYSS    : Acceleration for particles on GPU.\n");

@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <cassert>
 #include "../global.h"
 #include "../def.h"
 
@@ -523,8 +524,58 @@ void Particle::calculateTimeStepReg() {
 }
 
 
+// Use this function when OnlyIrregularRoutines is true (RadiusOfNeighbor == 1e20)
+void Particle::calculateTimeStepOnlyIrr() {
 
+	assert(this->NumberOfNeighbor > 0);
+	assert(this->RadiusOfNeighbor == 1e20);
 
+	double TimeStepTmp;
+	ULL TimeBlockTmp;
+	int TimeLevelTmp, TimeLevelTmp0;
+
+	getBlockTimeStep(getNewTimeStepReg(Velocity, a_irr), TimeLevelTmp, TimeBlockTmp, TimeStepTmp);
+	TimeLevelTmp0 = TimeLevelTmp;
+
+	if (TimeLevelTmp > TimeLevelIrr+1) {
+		if (fmod(NewCurrentBlockIrr, 2*TimeBlockIrr)==0) {
+			TimeLevelTmp = TimeLevelIrr+1;
+			TimeBlockTmp = 2*TimeBlockIrr;
+		}
+		else {
+			TimeLevelTmp = TimeLevelIrr;
+			TimeBlockTmp = TimeBlockIrr;
+		}
+	}
+	else if (TimeLevelTmp < TimeLevelIrr) {
+		if (TimeLevelTmp < TimeLevelIrr-1) {
+			TimeLevelTmp = TimeLevelIrr - 2;
+			TimeBlockTmp = TimeBlockIrr/4;
+		}
+		else {
+			TimeLevelTmp = TimeLevelIrr - 1;
+			TimeBlockTmp = TimeBlockIrr/2;
+		}
+	} else {
+		TimeLevelTmp = TimeLevelIrr;
+		TimeBlockTmp = TimeBlockIrr;
+	}
+
+	TimeLevelIrr = std::max(global_variable->time_block,TimeLevelTmp);
+	TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
+	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
+
+	if (CurrentTimeIrr+TimeStepIrr > 1 && CurrentTimeIrr != 1.0) {
+		TimeStepIrr = 1 - CurrentTimeIrr;
+		TimeBlockIrr = global_variable->block_max-CurrentBlockIrr;
+	}
+
+	while (TimeStepIrr > 1) {
+		TimeLevelIrr--;
+		TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
+		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
+	}
+}
 
 
 

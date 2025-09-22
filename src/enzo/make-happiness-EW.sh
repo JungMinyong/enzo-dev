@@ -10,18 +10,10 @@ cd ../../
 ./configure
 cd src/enzo/
 
-# node 14
-# export PATH=$PATH:/home/vinicius/install/openmpi-4.0.5/bin
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/sevn_enzo/build_n14/lib64/sevn
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sykim/local/hdf5-1.12.1/lib
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sykim/local/grackle/lib
-
-# node 15
-export PATH=$PATH:/home/vinicius/install/mpich-3.3.2/mpich3_15/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/sevn_enzo/build_n15/lib64/sevn
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/hdf5-1.12.1/hdf5_n15/lib
+module load intel21/hdf5-1.10.5
+module load intel21/intelmpi-21
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/sevn/build/lib64/sevn
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/grackle-mainrepo/lib
-
 
 # module add icc/latest
 # module add mpi/latest

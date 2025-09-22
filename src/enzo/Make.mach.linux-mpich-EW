@@ -21,17 +21,10 @@ MACH_FILE  = Make.mach.ubuntu-hardy
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-# node 14
-#LOCAL_HDF5_INSTALL = /home/sykim/local/hdf5-1.12.1
-#LOCAL_MPI = /home/vinicius/install/openmpi-4.0.5
-#LOCAL_GRACKLE_INSTALL = /home/sykim/local/grackle
-#LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.8
-
-# node 15
-LOCAL_HDF5_INSTALL = /home/vinicius/install/hdf5-1.12.1/hdf5_n15
-LOCAL_MPI = /home/vinicius/install/mpich-3.3.2/mpich3_15
-LOCAL_GRACKLE_INSTALL = /home/vinicius/install/grackle-mainrepo
-LOCAL_CUDA_INSTALL    = /usr/local/cuda-11.5
+LOCAL_HDF5_INSTALL	= /usr/local/hdf5/1.10.5_intel21
+LOCAL_MPI		= /usr/local/intel/oneapi/mpi/2021.5.0
+LOCAL_GRACKLE_INSTALL	= /home/vinicius/install/grackle-mainrepo
+LOCAL_CUDA_INSTALL	= /usr/local/cuda-12.8
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -42,11 +35,11 @@ MACH_CPP       = cpp # C preprocessor command
 
 # With MPI
 
-MACH_CC_MPI    =  $(LOCAL_MPI)/bin/mpicc
-MACH_CXX_MPI   =  $(LOCAL_MPI)/bin/mpicxx
-MACH_FC_MPI    =  $(LOCAL_MPI)/bin/mpifort
-MACH_F90_MPI   =  $(LOCAL_MPI)/bin/mpifort
-MACH_LD_MPI    =  $(LOCAL_MPI)/bin/mpicxx
+MACH_CC_MPI    =  $(LOCAL_MPI)/bin/mpiicc
+MACH_CXX_MPI   =  $(LOCAL_MPI)/bin/mpiicpc
+MACH_FC_MPI    =  $(LOCAL_MPI)/bin/mpiifort
+MACH_F90_MPI   =  $(LOCAL_MPI)/bin/mpiifort
+MACH_LD_MPI    =  $(LOCAL_MPI)/bin/mpiicpc
 
 MACH_CUDACOMPILER = $(LOCAL_CUDA_INSTALL)/bin/nvcc
 
@@ -74,12 +67,12 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 #-----------------------------------------------------------------------
 
 
-MACH_CPPFLAGS = -P -traditional -std=c++11
+MACH_CPPFLAGS = -P -traditional -std=c++17
 MACH_CFLAGS   =
-MACH_CXXFLAGS = -std=c++11
+MACH_CXXFLAGS = -std=c++17
 MACH_FFLAGS   = -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi
 MACH_F90FLAGS = 
-MACH_LDFLAGS  = 
+MACH_LDFLAGS  = -lifcore -limf
 
 
 #-----------------------------------------------------------------------
@@ -117,7 +110,7 @@ MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
 MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
 MACH_INCLUDES_PAPI    = $(LOCAL_INCLUDES_PAPI)
 MACH_INCLUDES_GRACKLE  = $(LOCAL_INCLUDES_GRACKLE)
-MACH_INCLUDES_SEVN     = -I/home/vinicius/install/sevn_enzo/build_n15/include/sevn
+MACH_INCLUDES_SEVN     = -I/home/vinicius/install/sevn/build/include/sevn
 #MACH_INCLUDES_SEVN     = -I/home/vinicius/install/sevn_enzo/build_n15/include/sevn
 
 #-----------------------------------------------------------------------
@@ -142,4 +135,4 @@ MACH_LIBS_NBODY = -L$(LOCAL_CUDA_INSTALL)/lib64 -lcuda -lcudart -lcublas -lnvToo
 # node 14
 #MACH_LIBS_SEVN     = -L/home/vinicius/install/sevn_enzo/build_n14/lib64/sevn -lsevn_lib_shared
 # node 15
-MACH_LIBS_SEVN     = -L/home/vinicius/install/sevn_enzo/build_n15/lib64/sevn -lsevn_lib_shared
+MACH_LIBS_SEVN     = -L/home/vinicius/install/sevn/build/lib64/sevn -lsevn_lib_shared

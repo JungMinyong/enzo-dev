@@ -88,9 +88,10 @@ typedef unsigned long long ULL;
 //#define BatchSize 32 // each thread calculates BatchSize particles
 //#define GridDimY 16 // each block calcuates NNB/GridDimY particles
 //#define NNB_per_block 128
-#define MinParticles 50
+// #define MinParticles 50
 //#define MinParticles 40
-//#define MinParticles 1
+#define MinParticles 2
+#define IrregularRoutineThreshold 100 // If nuber of particle is less than this value, only irregular routine is performed by EW 2025.9.17
 //#define HUBBLE_FLOW
 #define COMOVE
 #define NO_HUBBLE_FLOW

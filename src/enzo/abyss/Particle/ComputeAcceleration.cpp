@@ -875,32 +875,46 @@ void Particle::initializeAfterCommunication(int *NewNeighborsGPU, int NewNumberO
 	}
 	assert(this->NumberOfNeighbor >= NewNumberOfNeighborGPU);
 
-	this->updateRadius();
+	if (this->RadiusOfNeighbor != 1e20)
+		this->updateRadius();
 
 	if (this->TimeStepIrr != 0) { // originally existing nbody particles
 
-		this->calculateTimeStepReg();
-		this->calculateTimeStepIrr();
-
+		if (this->RadiusOfNeighbor == 1e20)
+			this->calculateTimeStepOnlyIrr();
+		else {
+			this->calculateTimeStepReg();
+			this->calculateTimeStepIrr();
+		}
 	} else { // newly detected nbody particles
 
-		this->initializeTimeStep();
+		if (this->RadiusOfNeighbor == 1e20) {
+			fprintf(stderr, "All particles are neighbors to each other (PID: %d)\n", this->PID);
+			this->calculateTimeStepOnlyIrr();
+
+			this->CurrentTimeIrr  = 0;
+			this->CurrentTimeReg  = 0;
+			this->CurrentBlockIrr = 0;
+			this->CurrentBlockReg = 0;
+		} else {
+			this->initializeTimeStep();
 		
-		// Timestep correction
-		if (this->NumberOfNeighbor != 0) {
-			while (this->TimeLevelIrr >= this->TimeLevelReg)
-			{
-				this->TimeStepIrr *= 0.5;
-				this->TimeBlockIrr *= 0.5;
-				this->TimeLevelIrr--;
+			// Timestep correction
+			if (this->NumberOfNeighbor != 0) {
+				while (this->TimeLevelIrr >= this->TimeLevelReg)
+				{
+					this->TimeStepIrr *= 0.5;
+					this->TimeBlockIrr *= 0.5;
+					this->TimeLevelIrr--;
+				}
 			}
+			while (this->TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-7 && this->TimeLevelIrr <= this->TimeLevelReg) {
+				this->TimeLevelIrr++;
+				this->TimeStepIrr  = static_cast<double>(pow(2, this->TimeLevelIrr));
+			}
+			this->TimeBlockIrr = static_cast<ULL>(pow(2, this->TimeLevelIrr - global_variable->time_block));
+			this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg - global_variable->time_block));
 		}
-		while (this->TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-7 && this->TimeLevelIrr <= this->TimeLevelReg) {
-			this->TimeLevelIrr++;
-			this->TimeStepIrr  = static_cast<double>(pow(2, this->TimeLevelIrr));
-		}
-		this->TimeBlockIrr = static_cast<ULL>(pow(2, this->TimeLevelIrr - global_variable->time_block));
-		this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg - global_variable->time_block));
 		fprintf(stderr, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", this->PID, this->TimeStepIrr*global_variable->EnzoTimeStep*1e4, this->TimeStepReg*global_variable->EnzoTimeStep*1e4);
 		fprintf(stderr, "\tCreationTime: %e Myr, M_ini: %e Msol, Z_ini: %e \n", this->CreationTime, this->InitialMass, this->InitialMetallicity);
 		fprintf(stdout, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", this->PID, this->TimeStepIrr*global_variable->EnzoTimeStep*1e4, this->TimeStepReg*global_variable->EnzoTimeStep*1e4);

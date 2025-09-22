@@ -25,6 +25,11 @@ void calculateRegAccelerationOnGPU(std::unordered_set<int> RegularList, QueueSch
 void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
 
+    if (OnlyIrregularRoutine) {
+        fprintf(stderr, "Skip Regular routines!!! NumberOfParticle: %d\n", NumberOfParticle);
+        return;
+    }
+
 #ifdef PerformanceTrace
     std::chrono::high_resolution_clock::time_point start_point;
     std::chrono::high_resolution_clock::time_point end_point;

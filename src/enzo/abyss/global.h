@@ -90,6 +90,7 @@ extern int ComovingCoordinates;
 extern double eta_tmp;
 extern double InitialNeighborRadius2;
 extern double EPS2;
+extern bool OnlyIrregularRoutine;
 
 // Few-Body
 extern std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11

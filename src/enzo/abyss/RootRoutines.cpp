@@ -168,7 +168,7 @@ void RootRoutines()
 			fprintf(nbpout, "Before RegularRoutines...\n");
 			fflush(nbpout);
 #endif
-			RegularRoutines(queue_scheduler, workers);
+			RegularRoutines(queue_scheduler, workers); // If OnlyIrregularRoutine is true, this function returns immediately by EW 2025.9.17
 #ifdef DEBUG_ABYSS
 			fprintf(nbpout, "After RegularRoutines...\n");
 			fflush(nbpout);
@@ -281,7 +281,10 @@ void updateNextRegTime(std::unordered_set<int> &RegularList)
 		if (!ptcl->isActive)
 			continue;
 		// Next regular time step
-		time_tmp = ptcl->CurrentBlockReg + ptcl->TimeBlockReg;
+		if (OnlyIrregularRoutine)
+			time_tmp = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr;
+		else
+			time_tmp = ptcl->CurrentBlockReg + ptcl->TimeBlockReg;
 
 		// Find the minum regular time step
 		if (time_tmp <= time)

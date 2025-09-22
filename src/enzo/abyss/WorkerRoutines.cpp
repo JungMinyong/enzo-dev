@@ -78,7 +78,10 @@ void WorkerRoutines() {
 #endif
 
 				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
-				ptcl->calculateTimeStepIrr();
+				if (ptcl->RadiusOfNeighbor == 1e20)
+					ptcl->calculateTimeStepOnlyIrr();
+				else
+					ptcl->calculateTimeStepIrr();
 #ifdef DEBUG_ABYSS
 				// fprintf(nbpout, "In IrrForce... 3. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
 				// fflush(nbpout);

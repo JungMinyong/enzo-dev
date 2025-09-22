@@ -131,7 +131,10 @@ void Particle::setFirst(const ParticleDataType &ptcl, const int& ProcessorNumber
 	this->BackgroundAcceleration[0]  = ptcl.BackgroundAcceleration[0]*EnzoAcceleration;
 	this->BackgroundAcceleration[1]  = ptcl.BackgroundAcceleration[1]*EnzoAcceleration;
 	this->BackgroundAcceleration[2]  = ptcl.BackgroundAcceleration[2]*EnzoAcceleration;
-	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
+	if (NumberOfSingleParticle < IrregularRoutineThreshold)
+		this->RadiusOfNeighbor			 = 1e20; // all particles are neighbors if OnlyIrregularRoutine == true by EW 2025.9.17
+	else
+		this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
 	this->EnzoProcessorNumber        = ProcessorNumber;
 #ifndef SEVN
 	this->ParticleType = NoFeedbackStar;
@@ -168,7 +171,10 @@ void Particle::set(const ParticleDataType &ptcl, const int& ProcessorNumber) {
 	this->BackgroundAcceleration[0]  = ptcl.BackgroundAcceleration[0]*EnzoAcceleration;
 	this->BackgroundAcceleration[1]  = ptcl.BackgroundAcceleration[1]*EnzoAcceleration;
 	this->BackgroundAcceleration[2]  = ptcl.BackgroundAcceleration[2]*EnzoAcceleration;
-	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
+	if (NumberOfSingleParticle + newNumberOfSingleParticle < IrregularRoutineThreshold)
+		this->RadiusOfNeighbor			 = 1e20; // all particles are neighbors if OnlyIrregularRoutine == true by EW 2025.9.17
+	else
+		this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
 	this->EnzoProcessorNumber        = ProcessorNumber;
 #ifndef SEVN
 	this->ParticleType = NoFeedbackStar;
@@ -199,6 +205,8 @@ void Particle::update(const ParticleSendDataType &ptcl, const int& ProcessorNumb
 	this->CurrentTimeReg             = 0;
 	this->CurrentTimeIrr             = 0;
 	this->EnzoProcessorNumber        = ProcessorNumber;
+	if (OnlyIrregularRoutine && NumberOfSingleParticle + newNumberOfSingleParticle >= IrregularRoutineThreshold)
+		this->RadiusOfNeighbor       = InitialNeighborRadius2; // Now, we have to consider neighbor search by EW 2025.9.17
 #ifdef SEVN
 	if (this->StellarEvolution != nullptr) {
 		if (this->dm > 0.0 || this->SNEjectedMass > 0.0) { // This should be considered only once

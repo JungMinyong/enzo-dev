@@ -42,9 +42,9 @@ int ABYSS() {
 	//if (AbyssProcessorNumber == 0) remove("abyss_output.txt");
 	//MPI_Barrier(abyss_comm);
 
-	std::string filename = "log/output_" + std::to_string(AbyssProcessorNumber) + ".txt";
-  //nbpout = fopen("abyss_output_.txt", "a+");
-  nbpout = fopen(filename.c_str(), "w");
+	// std::string filename = "log/output_" + std::to_string(AbyssProcessorNumber) + ".txt";
+  nbpout = fopen("abyss_output_.txt", "w");
+//   nbpout = fopen(filename.c_str(), "w");
 
   // gpuout = fopen("cuda_output.txt", "w");
   fprintf(nbpout, "Abyss Output Starts!\n");
