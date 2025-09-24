@@ -58,30 +58,14 @@ void WorkerRoutines() {
 				MPI_Recv(&ptcl_index,   1, MPI_INT   , ROOT, PTCL_TAG, abyss_comm, &status);
 				//std::cout << "(IRR_FORCE) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl_index << std::endl;
 				MPI_Recv(&next_time, 1, MPI_DOUBLE, ROOT, TIME_TAG, abyss_comm, &status); // (Query to myself) it seems like it's not needed.
-#ifdef PerformanceTrace
-				ptcl = &particles[ptcl_index];
-#ifdef DEBUG_ABYSS
-				// fprintf(nbpout, "In IrrForce... 1. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
-				// fflush(nbpout);
-#endif
-				start_point = std::chrono::high_resolution_clock::now();
-				ptcl->computeAccelerationIrr();
-#ifdef DEBUG_ABYSS
-				// fprintf(nbpout, "In IrrForce... 2. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
-				// fflush(nbpout);
-#endif
-				end_point = std::chrono::high_resolution_clock::now();
-				performance.IrregularForce +=
-					std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
-#else
-				ptcl->computeAccelerationIrr();
-#endif
 
-				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+				ptcl = &particles[ptcl_index];
 				if (ptcl->RadiusOfNeighbor == 1e20)
 					ptcl->calculateTimeStepOnlyIrr();
 				else
 					ptcl->calculateTimeStepIrr();
+
+				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
 #ifdef DEBUG_ABYSS
 				// fprintf(nbpout, "In IrrForce... 3. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
 				// fflush(nbpout);

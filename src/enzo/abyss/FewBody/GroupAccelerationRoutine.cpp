@@ -338,7 +338,8 @@ void makePrimordialGroup(Particle* ptclCM) {
 	}
 
 	// ptclCM->RadiusOfNeighbor = ACRadius*ACRadius;
-	ptclCM->RadiusOfNeighbor = InitialNeighborRadius2; // fixed by EW 2025.3.18
+	// ptclCM->RadiusOfNeighbor = InitialNeighborRadius2; // fixed by EW 2025.3.18
+	ptclCM->RadiusOfNeighbor = particles[ptclCM->Members[0]].RadiusOfNeighbor; // changed for OnlyIrregularRoutine case by EW 2025.9.24
 
 	fprintf(workerout, "The ID of CM is %d.\n",ptclCM->PID);
 

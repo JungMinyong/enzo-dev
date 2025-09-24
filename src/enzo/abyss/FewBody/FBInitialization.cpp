@@ -295,24 +295,28 @@ void NewFBInitialization(Particle* ptclCM) {
 	ptclGroup->sym_int.initialIntegration(ptclGroup->CurrentTime*global_variable->EnzoTimeStep);
     ptclGroup->sym_int.info.calcDsAndStepOption(ptclGroup->manager.step.getOrder(), ptclGroup->manager.interaction.gravitational_constant, ptclGroup->manager.ds_scale);
 
-	ptclCM->calculateTimeStepReg();
-	if (ptclCM->TimeLevelReg <= ptcl->TimeLevelReg-1 
-			&& ptcl->TimeBlockReg/2+ptcl->CurrentBlockReg >= global_variable->NextRegTimeBlock)  { // this ensures that irr time of any particles is smaller than adjusted new reg time.
-		ptclCM->TimeLevelReg = ptcl->TimeLevelReg-1;
-	}
-	else if  (ptclCM->TimeLevelReg >= ptcl->TimeLevelReg+1) {
-		ptclCM->TimeLevelReg = ptcl->TimeLevelReg+1;
-	}
-	else 
-		ptclCM->TimeLevelReg = ptcl->TimeLevelReg;
+	if (ptclCM->RadiusOfNeighbor != 1e20) {
+		ptclCM->calculateTimeStepReg();
+		if (ptclCM->TimeLevelReg <= ptcl->TimeLevelReg-1 
+				&& ptcl->TimeBlockReg/2+ptcl->CurrentBlockReg >= global_variable->NextRegTimeBlock)  { // this ensures that irr time of any particles is smaller than adjusted new reg time.
+			ptclCM->TimeLevelReg = ptcl->TimeLevelReg-1;
+		}
+		else if  (ptclCM->TimeLevelReg >= ptcl->TimeLevelReg+1) {
+			ptclCM->TimeLevelReg = ptcl->TimeLevelReg+1;
+		}
+		else 
+			ptclCM->TimeLevelReg = ptcl->TimeLevelReg;
 
-	ptclCM->TimeStepReg  = static_cast<double>(pow(2, ptclCM->TimeLevelReg));
-	ptclCM->TimeBlockReg = static_cast<ULL>(pow(2, ptclCM->TimeLevelReg-global_variable->time_block));
+		ptclCM->TimeStepReg  = static_cast<double>(pow(2, ptclCM->TimeLevelReg));
+		ptclCM->TimeBlockReg = static_cast<ULL>(pow(2, ptclCM->TimeLevelReg-global_variable->time_block));
+	}
 
 	if (ptclCM->NumberOfNeighbor != 0) {	
 
-		// ptclCM->calculateTimeStepIrr();
-		ptclCM->calculateTimeStepIrr2(); // by EW 2025.1.4
+		if (ptclCM->RadiusOfNeighbor == 1e20) // Only irregular routines
+			ptclCM->calculateTimeStepOnlyIrr2(); // by EW 2025.9.24
+		else
+			ptclCM->calculateTimeStepIrr2(); // by EW 2025.1.4
 		ptclCM->NewCurrentBlockIrr = ptclCM->CurrentBlockIrr + ptclCM->TimeBlockIrr;
 		ptclCM->NextBlockIrr = ptclCM->CurrentBlockIrr + ptclCM->TimeBlockIrr;
 	}

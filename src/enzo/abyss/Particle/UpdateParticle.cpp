@@ -579,6 +579,33 @@ void Particle::calculateTimeStepOnlyIrr() {
 
 
 
+// Use this function in FBInitialization when OnlyIrregularRoutines is true (RadiusOfNeighbor == 1e20)
+void Particle::calculateTimeStepOnlyIrr2() {
 
+	assert(this->NumberOfNeighbor > 0);
+	assert(this->RadiusOfNeighbor == 1e20);
+
+	double TimeStepTmp;
+	ULL TimeBlockTmp;
+	int TimeLevelTmp, TimeLevelTmp0;
+
+	getBlockTimeStep(getNewTimeStepReg(Velocity, a_irr), TimeLevelTmp, TimeBlockTmp, TimeStepTmp);
+	TimeLevelTmp0 = TimeLevelTmp;
+
+	TimeLevelIrr = std::max(global_variable->time_block,TimeLevelTmp);
+	TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
+	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
+
+	if (CurrentTimeIrr+TimeStepIrr > 1 && CurrentTimeIrr != 1.0) {
+		TimeStepIrr = 1 - CurrentTimeIrr;
+		TimeBlockIrr = global_variable->block_max-CurrentBlockIrr;
+	}
+
+	while (TimeStepIrr > 1) {
+		TimeLevelIrr--;
+		TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
+		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
+	}
+}
 
 

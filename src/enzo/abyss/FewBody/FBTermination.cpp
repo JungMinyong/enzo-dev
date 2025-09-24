@@ -95,22 +95,26 @@ void FBTermination(Particle* ptclCM) {
 			members->CurrentTimeIrr = ptclCM->CurrentTimeIrr;
 		}
 
-		members->calculateTimeStepReg();
-		if (members->TimeLevelReg <= ptclCM->TimeLevelReg-1 
-				&& members->TimeBlockReg/2+members->CurrentBlockReg >= global_variable->NextRegTimeBlock)  { // this ensures that irr time of any particles is smaller than adjusted new reg time.
-			members->TimeLevelReg = ptclCM->TimeLevelReg-1;
+		if (members->RadiusOfNeighbor != 1e20) {
+			members->calculateTimeStepReg();
+			if (members->TimeLevelReg <= ptclCM->TimeLevelReg-1 
+					&& members->TimeBlockReg/2+members->CurrentBlockReg >= global_variable->NextRegTimeBlock)  { // this ensures that irr time of any particles is smaller than adjusted new reg time.
+				members->TimeLevelReg = ptclCM->TimeLevelReg-1;
+			}
+			else if  (members->TimeLevelReg >= ptclCM->TimeLevelReg+1) {
+				members->TimeLevelReg = ptclCM->TimeLevelReg+1;
+			}
+			else 
+				members->TimeLevelReg = ptclCM->TimeLevelReg;
+			members->TimeStepReg  = static_cast<double>(pow(2, members->TimeLevelReg));
+			members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-global_variable->time_block));
 		}
-		else if  (members->TimeLevelReg >= ptclCM->TimeLevelReg+1) {
-			members->TimeLevelReg = ptclCM->TimeLevelReg+1;
-		}
-		else 
-			members->TimeLevelReg = ptclCM->TimeLevelReg;
-		members->TimeStepReg  = static_cast<double>(pow(2, members->TimeLevelReg));
-		members->TimeBlockReg = static_cast<ULL>(pow(2, members->TimeLevelReg-global_variable->time_block));
 
 		if (members->NumberOfNeighbor != 0) {
-			// members->calculateTimeStepIrr2();
-			members->calculateTimeStepIrr();
+			if (members->RadiusOfNeighbor == 1e20) // Only irregular routines
+				members->calculateTimeStepOnlyIrr(); // by EW 2025.9.24
+			else
+				members->calculateTimeStepIrr(); // by EW 2025.1.4
 
 			if (ptclCM->NumberOfMember > 2) {
 				members->TimeLevelIrr--;

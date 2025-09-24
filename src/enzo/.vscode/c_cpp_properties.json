@@ -4,18 +4,12 @@
             "name": "Intel C++ Compiler",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/mnt/home/yjo10/packages/enzo-abyss/src/enzo/",
-                "/mnt/home/yjo10/packages/enzo-abyss/src/enzo/abyss/",
-                "/mnt/sw/nix/store/494gvfa9gj2ibqg8210v89h2iljfgqj8-gcc-7.5.0/include/",
-                "/mnt/sw/nix/store/bjxnws41q81ccp0lybgzacy5wdv2n82g-hdf5-1.8.22/include/",
-                "/mnt/home/yjo10/packages/grackle-aeos/build/include/",
-                "/mnt/sw/nix/store/r3bwp9b2501bv77y6g1nwkb483p0y9z2-cuda-12.3.2/include/",
-                "/usr/include/**"
+                "/home/vinicius/enzoAA/src/enzo/grid.h",
+                "/usr/local/hdf5/1.10.5_intel21/include"
             ],
             "defines": [
                 "_GNU_SOURCE"
             ],
-            "compilerPath": "/mnt/sw/nix/store/494gvfa9gj2ibqg8210v89h2iljfgqj8-gcc-7.5.0/bin/g++",
             "cStandard": "c11",
             "cppStandard": "c++11"
         }
