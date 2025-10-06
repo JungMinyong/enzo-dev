@@ -6,6 +6,7 @@
 #include "../global.h"
 #include "../def.h"
 
+#define SMALL_TIMESTEP_TEST
 
 
 
@@ -218,6 +219,16 @@ void Particle::calculateTimeStepIrr() {
 	int TimeLevelTmp, TimeLevelTmp0;
 	ULL TimeBlockTmp;
 
+
+#ifdef SMALL_TIMESTEP_TEST
+	fprintf(stderr, "In calculateTimeStepyIrr, before SMALL_TIMESTEP_TEST, TimeLevelIrr=%d, TimeStepIrr=%e\n", TimeLevelIrr, TimeStepIrr);
+	TimeStepIrr  = 0.25; // 0.5 Myr
+	TimeLevelIrr  = static_cast<int>(log(TimeStepIrr)/log(2.)); // 0.5 Myr
+	TimeBlockIrr = static_cast<ULL>(pow(2,TimeLevelIrr-global_variable->time_block));
+	return;
+#endif
+
+
 	if (this->NumberOfNeighbor == 0) {
 		TimeLevelIrr = TimeLevelReg;
 		TimeStepIrr = static_cast<double>(pow(2, TimeLevelReg));
@@ -329,6 +340,14 @@ void Particle::calculateTimeStepIrr2() {
 	int TimeLevelTmp, TimeLevelTmp0;
 	ULL TimeBlockTmp;
 
+#ifdef SMALL_TIMESTEP_TEST
+fprintf(stderr, "In calculateTimeStepIrr2, before SMALL_TIMESTEP_TEST, TimeLevelIrr=%d, TimeStepIrr=%e\n", TimeLevelIrr, TimeStepIrr);
+	TimeStepIrr  = 0.25; // 0.5 Myr
+	TimeLevelIrr  = static_cast<int>(log(TimeStepIrr)/log(2.)); // 0.5 Myr
+	TimeBlockIrr = static_cast<ULL>(pow(2,TimeLevelIrr-global_variable->time_block));
+	return;
+#endif
+
 	if (this->NumberOfNeighbor == 0) {
 		TimeLevelIrr = TimeLevelReg;
 		TimeStepIrr = static_cast<double>(pow(2, TimeLevelReg));
@@ -412,6 +431,14 @@ void Particle::calculateTimeStepReg() {
 	double TimeStepTmp;
 	ULL TimeBlockTmp;
 	int TimeLevelTmp, TimeLevelTmp0;
+
+#ifdef SMALL_TIMESTEP_TEST
+	TimeStepReg  = 0.5; 
+	TimeLevelReg  = static_cast<int>(log(TimeStepReg)/log(2.)); // 0.5 Myr
+	TimeBlockReg = static_cast<ULL>(pow(2,TimeLevelReg-global_variable->time_block));
+	fprintf(stderr, "In calculateTimeStepReg, before SMALL_TIMESTEP_TEST, TimeLevelReg=%d, TimeStepReg=%e\n", TimeLevelReg, TimeStepReg);
+	return;
+#endif
 
 	getBlockTimeStep(getNewTimeStepReg(Velocity, a_reg), TimeLevelTmp, TimeBlockTmp, TimeStepTmp);
 
@@ -520,12 +547,21 @@ void Particle::calculateTimeStepReg() {
 	}
 	// */
 
+
 	//std::cout << "NBODY+: TimeStepReg = " << TimeStepReg << std::endl;
 }
 
 
 // Use this function when OnlyIrregularRoutines is true (RadiusOfNeighbor == 1e20)
 void Particle::calculateTimeStepOnlyIrr() {
+
+#ifdef SMALL_TIMESTEP_TEST
+	TimeStepIrr  = 0.25; // 0.5 Myr
+	TimeLevelIrr  = static_cast<int>(log(TimeStepIrr)/log(2.)); // 0.5 Myr
+	TimeBlockIrr = static_cast<ULL>(pow(2,TimeBlockIrr-global_variable->time_block));
+	fprintf(stderr, "In calculateTimeStepOnlyIrr, before SMALL_TIMESTEP_TEST, TimeLevelIrr=%d, TimeStepIrr=%e\n", TimeLevelIrr, TimeStepIrr);
+	return;
+#endif
 
 	assert(this->NumberOfNeighbor > 0);
 	assert(this->RadiusOfNeighbor == 1e20);
@@ -575,12 +611,21 @@ void Particle::calculateTimeStepOnlyIrr() {
 		TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 	}
+
 }
 
 
 
 // Use this function in FBInitialization when OnlyIrregularRoutines is true (RadiusOfNeighbor == 1e20)
 void Particle::calculateTimeStepOnlyIrr2() {
+
+#ifdef SMALL_TIMESTEP_TEST
+	TimeStepIrr  = 0.25; // 0.5 Myr
+	TimeLevelIrr  = static_cast<int>(log(TimeStepIrr)/log(2.)); // 0.5 Myr
+	TimeBlockIrr = static_cast<ULL>(pow(2, TimeBlockIrr-global_variable->time_block));
+fprintf(stderr, "In calculateTimeStepOnlyIrr2, before SMALL_TIMESTEP_TEST, TimeLevelIrr=%d, TimeStepIrr=%e\n", TimeLevelIrr, TimeStepIrr);
+return;
+#endif
 
 	assert(this->NumberOfNeighbor > 0);
 	assert(this->RadiusOfNeighbor == 1e20);
@@ -606,6 +651,8 @@ void Particle::calculateTimeStepOnlyIrr2() {
 		TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 	}
+
+
 }
 
 

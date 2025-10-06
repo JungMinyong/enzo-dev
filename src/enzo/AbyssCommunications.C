@@ -461,7 +461,7 @@ int ReceiveParticleFromAbyss(
   delete[] recvbuf;
 
   if (isNbodyParticleIdentification && isIdentificationOnTheFly) {
-    MPI_Wait(&request, MPI_STATUS_IGNORE);
+    //MPI_Wait(&request, MPI_STATUS_IGNORE);
     fprintf(stderr, "In Final, NbodyClusterPosition = (%e, %e, %e)\n",
             NbodyClusterPosition[0], NbodyClusterPosition[1],
             NbodyClusterPosition[2]);

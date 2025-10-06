@@ -117,8 +117,14 @@ void GetAcceleration(
     int NumNeighbor[],
     int *NeighborList
 ) {
-    assert(is_open);
-	assert((NumTargetTotal > 0) && (NumTargetTotal <= NNB));
+
+  assert(is_open);
+
+	if ((NumTargetTotal > 0) && (NumTargetTotal <= NNB)) {
+		fprintf(stderr, "GetAcceleration: NumTargetTotal = %d, NNB = %d\n", NumTargetTotal, NNB);
+		assert((NumTargetTotal > 0) && (NumTargetTotal <= NNB));
+	}
+
 
     // -----------------------------------------------------------------
     // MULTI-GPU PATH (illustration)

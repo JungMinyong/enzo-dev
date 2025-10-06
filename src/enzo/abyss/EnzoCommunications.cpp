@@ -554,7 +554,8 @@ int ReceiveParticleFromEnzo() {
         displs_old[i] = displs_old[i - 1] + recv_counts_old[i - 1];
         displs_new[i] = displs_new[i - 1] + recv_counts_new[i - 1];
     }
-    int NumberOfSingleParticleOld = displs_old[size - 1] + recv_counts_new[size - 1];
+    //int NumberOfSingleParticleOld = displs_old[size - 1] + recv_counts_new[size - 1];
+    int NumberOfSingleParticleOld = displs_old[size - 1] + recv_counts_old[size - 1];
     newNumberOfSingleParticle = displs_new[size - 1] + recv_counts_new[size - 1];
 
     if (NumberOfSingleParticleOld != NumberOfSingleParticle) {
