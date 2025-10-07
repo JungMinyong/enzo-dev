@@ -10,8 +10,8 @@ cd ../../
 ./configure
 cd src/enzo/
 
-module load intel21/hdf5-1.10.5
-module load intel21/intelmpi-21
+#module load intel21/hdf5-1.10.5
+#module load intel21/intelmpi-21
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/sevn/build/lib64/sevn
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vinicius/install/grackle-mainrepo/lib
 
