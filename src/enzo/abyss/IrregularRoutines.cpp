@@ -573,7 +573,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         fprintf(nbpout, "updateSkipList starts\n");
         fflush(nbpout);
 #endif
-        for (int i = 0; i < ThisLevelNode->ParticleList.size(); i++)
+        int ParticleListSize = ThisLevelNode->ParticleList.size();
+        for (int i = 0; i < ParticleListSize; i++)
             updateSkipList(skiplist, ThisLevelNode->ParticleList[i]);
 #ifdef DEBUG_ABYSS
         fprintf(nbpout, "updateSkipList ended\n");

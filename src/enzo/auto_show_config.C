@@ -2,11 +2,11 @@
 void auto_show_config(FILE *fp) {
    fprintf (fp,"\n");
    fprintf (fp,"   MACHINE: Generic Ubuntu 8.04\n");
-   fprintf (fp,"   MACHINE-NAME: rusty\n");
+   fprintf (fp,"   MACHINE-NAME: linux-mpich-EW\n");
    fprintf (fp,"\n");
    fprintf (fp,"   PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000\n");
-   fprintf (fp,"   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 70\n");
-   fprintf (fp,"   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 60\n");
+   fprintf (fp,"   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 60\n");
+   fprintf (fp,"   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 30\n");
    fprintf (fp,"   PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 64\n");
    fprintf (fp,"   PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : 100000\n");
    fprintf (fp,"\n");
@@ -26,11 +26,11 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : no\n");
    fprintf (fp,"   CONFIG_ECUDA  [cuda-{yes,no}]                             : no\n");
    fprintf (fp,"   CONFIG_NBODY  [nbody-{yes,no}]                            : yes\n");
-   fprintf (fp,"   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : no\n");
+   fprintf (fp,"   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : yes\n");
    fprintf (fp,"   CONFIG_SEVN  [sevn-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no\n");
    fprintf (fp,"   CONFIG_ACCELERATION_BOUNDARY  [acceleration-boundary-{yes,no}] : yes\n");
-   fprintf (fp,"   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : debug\n");
+   fprintf (fp,"   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : aggressive\n");
    fprintf (fp,"   CONFIG_TESTING  [testing-{yes,no}]                        : no\n");
    fprintf (fp,"   CONFIG_PHOTON  [photon-{yes,no}]                          : yes\n");
    fprintf (fp,"   CONFIG_HYPRE  [hypre-{yes,no}]                            : no\n");

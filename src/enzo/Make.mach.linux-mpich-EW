@@ -21,8 +21,8 @@ MACH_FILE  = Make.mach.ubuntu-hardy
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_HDF5_INSTALL	= /usr/local/hdf5/1.10.5_intel21
-LOCAL_MPI		= /usr/local/intel/oneapi/mpi/2021.5.0
+LOCAL_HDF5_INSTALL	= /usr/local/hdf5/1.10.5_gcc85
+LOCAL_MPI		= /usr/local/mpi/gcc85/openmpi-5.0.0
 LOCAL_GRACKLE_INSTALL	= /home/vinicius/install/grackle-mainrepo
 LOCAL_CUDA_INSTALL	= /usr/local/cuda-12.8
 
@@ -35,11 +35,11 @@ MACH_CPP       = cpp # C preprocessor command
 
 # With MPI
 
-MACH_CC_MPI    =  $(LOCAL_MPI)/bin/mpiicc
-MACH_CXX_MPI   =  $(LOCAL_MPI)/bin/mpiicpc
-MACH_FC_MPI    =  $(LOCAL_MPI)/bin/mpiifort
-MACH_F90_MPI   =  $(LOCAL_MPI)/bin/mpiifort
-MACH_LD_MPI    =  $(LOCAL_MPI)/bin/mpiicpc
+MACH_CC_MPI    =  $(LOCAL_MPI)/bin/mpicc
+MACH_CXX_MPI   =  $(LOCAL_MPI)/bin/mpicxx
+MACH_FC_MPI    =  $(LOCAL_MPI)/bin/mpifort
+MACH_F90_MPI   =  $(LOCAL_MPI)/bin/mpifort
+MACH_LD_MPI    =  $(LOCAL_MPI)/bin/mpicxx
 
 MACH_CUDACOMPILER = $(LOCAL_CUDA_INSTALL)/bin/nvcc
 
@@ -72,7 +72,7 @@ MACH_CFLAGS   =
 MACH_CXXFLAGS = -std=c++17
 MACH_FFLAGS   = -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi
 MACH_F90FLAGS = 
-MACH_LDFLAGS  = -lifcore -limf
+MACH_LDFLAGS  = #-lifcore -limf
 
 
 #-----------------------------------------------------------------------
