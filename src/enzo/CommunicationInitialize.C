@@ -309,6 +309,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 		 *     Struct MPI Data Type        *
 		 ***********************************/
 		{
+			MPI_Datatype MPI_ENZO_PTCL_RAW;
+
 			ParticleDataType dummy;
 
 			int block_lengths[5] = {
@@ -339,14 +341,17 @@ int CommunicationInitialize(int &argc, char *argv[])
 			for (int i = 0; i < 5; ++i)
 				displacements[i] -= base;
 
-			MPI_Type_create_struct(5, block_lengths, displacements, types, &MPI_ENZO_PTCL);
-			MPI_Type_commit(&MPI_ENZO_PTCL);
+			MPI_Type_create_struct(5, block_lengths, displacements, types, &MPI_ENZO_PTCL_RAW);
+			MPI_Type_commit(&MPI_ENZO_PTCL_RAW);
+
+			MPI_Aint lb=0, extent=sizeof(ParticleDataType);
+			//MPI_Type_get_extent(MPI_ENZO_PTCL, &lb, &extent);
+			MPI_Type_create_resized(MPI_ENZO_PTCL_RAW, lb, extent, &MPI_ENZO_PTCL);
+			fprintf(stderr,"Extent = %ld, sizeof = %zu\n", (long)extent, sizeof(ParticleDataType));
 		}
-		MPI_Aint lb, extent;
-		MPI_Type_get_extent(MPI_ENZO_PTCL, &lb, &extent);
-		fprintf(stderr,"Extent = %ld, sizeof = %zu\n", (long)extent, sizeof(ParticleDataType));
 
 		{
+			MPI_Datatype MPI_ENZO_PTCL_SEND_RAW;
 			ParticleSendDataType dummy;
 
 			int block_lengths[2] = {1, MAX_DIMENSION};
@@ -362,11 +367,15 @@ int CommunicationInitialize(int &argc, char *argv[])
 			for (int i = 0; i < 2; ++i)
 				displacements[i] -= base;
 
-			MPI_Type_create_struct(2, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND);
-			MPI_Type_commit(&MPI_ENZO_PTCL_SEND);
+			MPI_Type_create_struct(2, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND_RAW);
+			MPI_Type_commit(&MPI_ENZO_PTCL_SEND_RAW);
+
+			MPI_Aint lb=0, extent=sizeof(ParticleSendDataType);
+			MPI_Type_create_resized(MPI_ENZO_PTCL_SEND_RAW, lb, extent, &MPI_ENZO_PTCL_SEND);
 		}
 
 		{
+			MPI_Datatype MPI_ENZO_PTCL_RECV_RAW;
 			ParticleReceiveDataType dummy;
 
 			int block_lengths[3] = {1, MAX_DIMENSION, MAX_DIMENSION};
@@ -383,8 +392,11 @@ int CommunicationInitialize(int &argc, char *argv[])
 			displacements[1] -= base;
 			displacements[2] -= base;
 
-			MPI_Type_create_struct(3, block_lengths, displacements, types, &MPI_ENZO_PTCL_RECV);
-			MPI_Type_commit(&MPI_ENZO_PTCL_RECV);
+			MPI_Type_create_struct(3, block_lengths, displacements, types, &MPI_ENZO_PTCL_RECV_RAW);
+			MPI_Type_commit(&MPI_ENZO_PTCL_RECV_RAW);
+
+			MPI_Aint lb=0, extent=sizeof(ParticleReceiveDataType);
+			MPI_Type_create_resized(MPI_ENZO_PTCL_RECV_RAW, lb, extent, &MPI_ENZO_PTCL_RECV);
 		}
 #endif
 
