@@ -42,6 +42,9 @@
 #define END_TIMING ;
 #endif
 
+
+void CommunicationBufferedSend_CheckNoOverlap(const void* buf, MPI_Datatype dt, MPI_Arg count,
+                                              const char* what);
  
 /***********************************************************************
                              MINIMUM VALUE
@@ -750,6 +753,10 @@ int CommunicationAllReduceValues(Eint32 *Values, int Number,
   MPI_Datatype DataType = MPI_INT;
   MPI_Arg Count = Number;
   
+  // (optional) catch alias early:
+  CommunicationBufferedSend_CheckNoOverlap(Values, DataType, Count, "Allreduce dst");
+
+
   int i;
   Eint32 *buffer = new Eint32[Number];
   for (i = 0; i < Number; i++)

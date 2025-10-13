@@ -39,6 +39,9 @@ static int CallCount = 0;
 
 static MPI_Request  RequestHandle[MAX_NUMBER_OF_MPI_BUFFERS];
 static char        *RequestBuffer[MAX_NUMBER_OF_MPI_BUFFERS];
+#ifdef MUST_FIX
+static size_t RequestNBytes[MAX_NUMBER_OF_MPI_BUFFERS];
+#endif
 static int          LastActiveIndex = -1;
 
 
@@ -205,11 +208,55 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 	// MPI_Wait(RequestHandle+index, &Status);
 
 	/* Store buffer info. */
+	
+	#ifdef MUST_FIX
+	int tsz = 0;
+	MPI_Type_size(Type, &tsz);
+	RequestNBytes[index]  = (size_t)Count * (size_t)tsz;
+	#endif
 
-	RequestBuffer[index] = (char *) buffer_send;
+	RequestBuffer[index]  = (char*)buffer_send;
+
 	LastActiveIndex = enzo_max(LastActiveIndex, index);
 
 	return SUCCESS;
 }
 
+#ifdef  MUST_FIX
+static inline int datatype_size_local(MPI_Datatype t) { int s=0; MPI_Type_size(t,&s); return s; }
+
+void CommunicationBufferedSend_CheckNoOverlap(const void* buf, MPI_Datatype dt, MPI_Arg count,
+                                              const char* what)
+{
+  const char* A  = (const char*)buf;
+  size_t      An = (size_t)count * (size_t)datatype_size_local(dt);
+
+  for (int i = 0; i <= LastActiveIndex; ++i) {
+    if (RequestHandle[i] == MPI_REQUEST_NULL) continue;
+
+    const char* B  = (const char*)RequestBuffer[i];
+    size_t      Bn = RequestNBytes[i];  // <— use bytes we stored at Isend
+
+    if ((A < B + Bn) && (B < A + An)) {
+      int rank; MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      fprintf(stderr,
+        "[%d] ERROR: %s buffer [%p..%p) overlaps in-flight Isend [%p..%p)\n",
+        rank, what, (void*)A, (void*)(A+An), (void*)B, (void*)(B+Bn));
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+  }
+}
+void CommunicationBufferedSend_Flush()
+{
+  for (int i = 0; i <= LastActiveIndex; ++i) {
+    if (RequestHandle[i] != MPI_REQUEST_NULL) {
+      MPI_Wait(&RequestHandle[i], MPI_STATUS_IGNORE);
+      RequestHandle[i] = MPI_REQUEST_NULL;
+    }
+    RequestBuffer[i] = NULL;
+    RequestNBytes[i] = 0;
+  }
+  LastActiveIndex = -1;
+}
+#endif
 #endif /* USE_MPI */

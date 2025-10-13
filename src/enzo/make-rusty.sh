@@ -48,7 +48,7 @@ make io-64 precision-64 integers-32 particle-id-128 max-baryons-70 max-particle-
 make show-config
 make show-flags
 ##make -j3
-make -j16
+make -j8
 #cp enzo.exe enzo_spare.exe
 #cp enzo.exe enzo_spare_v100.exe
 #cp enzo.exe enzo_test_openmpi_escape.exe
