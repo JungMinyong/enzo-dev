@@ -10,6 +10,7 @@
 ************************************************************************/
 
 #ifdef NEW_PROBLEM_TYPES
+#ifndef INDIVIDUALSTAR
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -389,9 +390,4 @@ namespace{
                                                                                                                
 
 #endif
-
-
-    
-      
-	  
-	      
+#endif

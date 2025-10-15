@@ -23,14 +23,14 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_LCAPERF  [lcaperf-{yes,no}]                        : no\n");
    fprintf (fp,"   CONFIG_PAPI  [papi-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_PYTHON  [python-{yes,no}]                          : no\n");
-   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : no\n");
+   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : yes\n");
    fprintf (fp,"   CONFIG_ECUDA  [cuda-{yes,no}]                             : no\n");
    fprintf (fp,"   CONFIG_NBODY  [nbody-{yes,no}]                            : yes\n");
    fprintf (fp,"   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : no\n");
    fprintf (fp,"   CONFIG_SEVN  [sevn-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no\n");
    fprintf (fp,"   CONFIG_ACCELERATION_BOUNDARY  [acceleration-boundary-{yes,no}] : yes\n");
-   fprintf (fp,"   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : debug\n");
+   fprintf (fp,"   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : aggressive\n");
    fprintf (fp,"   CONFIG_TESTING  [testing-{yes,no}]                        : no\n");
    fprintf (fp,"   CONFIG_PHOTON  [photon-{yes,no}]                          : yes\n");
    fprintf (fp,"   CONFIG_HYPRE  [hypre-{yes,no}]                            : no\n");

@@ -10,6 +10,7 @@
 ************************************************************************/
 
 #ifdef NEW_PROBLEM_TYPES
+#ifndef INDIVIDUALSTAR
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -849,4 +850,5 @@ float Mass_of_r(float r){
 }
 
 
+#endif
 #endif
