@@ -45,6 +45,9 @@ void my_exit(int status);
  
 // function prototypes
  
+#ifdef MUST_FIX
+void CommunicationBufferedSend_Flush();
+#endif
 Eint32 compare_grid(const void *a, const void *b);
 Eint32 compare_star_grid(const void *a, const void *b);
 int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
@@ -127,6 +130,9 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 
     // Nothing to do, but still sync number of particles in grids.
     if (NumberOfSubgrids == 0) {
+      #ifdef MUST_FIX
+      CommunicationBufferedSend_Flush();
+      #endif
       CommunicationSyncNumberOfParticles(GridHierarchyPointer, NumberOfGrids);
       delete [] NumberToMove;
       delete [] StarsToMove;
@@ -379,7 +385,9 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 
     if ((!KeepLocal && NumberOfProcessors > 1) || 
 	(ParticlesAreLocal && SyncNumberOfParticles)) {
-
+    #ifdef MUST_FIX 
+    CommunicationBufferedSend_Flush();
+    #endif
       CommunicationSyncNumberOfParticles(GridHierarchyPointer, NumberOfGrids);
       CommunicationSyncNumberOfParticles(SubgridHierarchyPointer, NumberOfSubgrids);
 
@@ -659,8 +667,12 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
        processor, set number of particles so everybody agrees. 
     ************************************************************************/
 
-    if (SyncNumberOfParticles)
+    if (SyncNumberOfParticles) {
+      #ifdef MUST_FIX
+      CommunicationBufferedSend_Flush();
+      #endif
       CommunicationSyncNumberOfParticles(GridHierarchyPointer, NumberOfGrids);
+    }
     else {
       for (i = 0; i < NumberOfGrids; i++)
         if (MyProcessorNumber != 

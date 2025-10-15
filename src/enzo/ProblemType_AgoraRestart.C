@@ -12,6 +12,7 @@
  ************************************************************************/
 
 #ifdef NEW_PROBLEM_TYPES
+#ifndef INDIVIDUALSTAR
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -72,6 +73,7 @@ class AgoraRestartGrid : private grid
 class ProblemType_AgoraRestart : public EnzoProblemType
 {
 private:
+public:
 	FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
 	FLOAT CenterPosition[MAX_DIMENSION];
 	float Bfield[MAX_DIMENSION];
@@ -99,7 +101,7 @@ private:
 	float GasHaloRadius;
 	int isPlummer = 0;
 
-public:
+
 	ProblemType_AgoraRestart() : EnzoProblemType()
 	{
 		if (MyProcessorNumber == 0)
@@ -1821,4 +1823,5 @@ namespace
 		agora_restart("AgoraRestart");
 }
 
+#endif
 #endif

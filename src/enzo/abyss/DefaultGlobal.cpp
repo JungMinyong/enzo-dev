@@ -46,6 +46,7 @@ Particle* FirstEnzoParticle;
 double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
 double EnzoCurrentTime;
 double AbyssCenter[3];
+extern int NumberOfProcessors;
 
 // i/o
 char* fname;
@@ -109,8 +110,8 @@ void DefaultGlobal() {
 #ifndef INDIVIDUALSTAR
 		EnzoPIDs         = new int[MaxNumberOfParticle];
 #else
-		displs           = new int[NumberOfAbyssProcessors+1];
-		for (int i=0; i<NumberOfAbyssProcessors+1; i++) {
+		displs = new int[NumberOfProcessors+1];
+		for (int i=0; i<NumberOfProcessors+1; i++) {
 			displs[i] = 0;
 		}
 #endif

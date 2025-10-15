@@ -315,7 +315,7 @@ int InitialCommunication() {
 
 
     /* Step 4: Gatherv */
-    MPI_Gatherv(NULL, LocalNumberOfParticles, MPI_ENZO_PTCL, recvbuf, recv_counts, displs,
+    MPI_Gatherv(MPI_IN_PLACE, 0, MPI_ENZO_PTCL, recvbuf, recv_counts, displs,
                 MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
 
 
@@ -593,9 +593,9 @@ int ReceiveParticleFromEnzo() {
 
 
     /* Step 4: Gatherv */
-    MPI_Gatherv(NULL, 0, MPI_ENZO_PTCL_SEND, recvbuf_old, recv_counts_old, displs_old,
+    MPI_Gatherv(MPI_IN_PLACE, 0, MPI_ENZO_PTCL_SEND, recvbuf_old, recv_counts_old, displs_old,
                 MPI_ENZO_PTCL_SEND, NumberOfProcessors, inter_comm);
-    MPI_Gatherv(NULL, 0, MPI_ENZO_PTCL, recvbuf_new, recv_counts_new, displs_new,
+    MPI_Gatherv(MPI_IN_PLACE, 0, MPI_ENZO_PTCL, recvbuf_new, recv_counts_new, displs_new,
                 MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
     if (debug1) {
         fprintf(nbpout, "Date received!\n");
@@ -1239,10 +1239,16 @@ int SendParticleToEnzo(Worker *workers) {
     /*-------------------------------------------*/
     /********   Send Particles to ENZO  *********/
     /*-------------------------------------------*/
-    MPI_Scatterv(sendbuf, sendcounts, displs, MPI_ENZO_PTCL_RECV, NULL, 0,
+
+    fprintf(stderr, "ABYSS: MPI_Scatterv starts...\n");
+    fflush(stderr);
+    //MPI_Barrier(inter_comm);
+    MPI_Scatterv(sendbuf, sendcounts, displs, MPI_ENZO_PTCL_RECV, MPI_IN_PLACE, 0,
                 MPI_ENZO_PTCL_RECV, NumberOfProcessors, inter_comm);
     delete [] sendcounts;
     delete [] sendbuf;
+    fprintf(stderr, "ABYSS: MPI_Scatterv ends...\n");
+    fflush(stderr);
 
     if (IdentifyOnTheFly) { // (Query AEOS) EW changed the previous condition since enzo processors cannot know the total number of nbody particles 2025.7.20
         // fprintf(stderr, "NBODY: ClusterPosition =(%lf, %lf, %lf)\n",
@@ -1266,7 +1272,12 @@ int SendParticleToEnzo(Worker *workers) {
             NbodyCOM[dim] += ClusterPosition[dim];
         }
         // Synchronize Cluster Posiition
+
+        fprintf(stderr, "ABYSS: MPI_Ibscast starts...\n");
+        fflush(stderr);
         MPI_Ibcast(NbodyCOM, 3, MPI_DOUBLE, NumberOfProcessors, inter_comm, &request);
+        fprintf(stderr, "ABYSS: MPI_Ibscast ends...\n");
+        fflush(stderr);
         fprintf(nbpout, "ABYSS: Cluster position broadcating.\n");
 #endif
 #endif

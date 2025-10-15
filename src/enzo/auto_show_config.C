@@ -23,7 +23,7 @@ void auto_show_config(FILE *fp) {
    fprintf (fp,"   CONFIG_LCAPERF  [lcaperf-{yes,no}]                        : no\n");
    fprintf (fp,"   CONFIG_PAPI  [papi-{yes,no}]                              : no\n");
    fprintf (fp,"   CONFIG_PYTHON  [python-{yes,no}]                          : no\n");
-   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : no\n");
+   fprintf (fp,"   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : yes\n");
    fprintf (fp,"   CONFIG_ECUDA  [cuda-{yes,no}]                             : no\n");
    fprintf (fp,"   CONFIG_NBODY  [nbody-{yes,no}]                            : yes\n");
    fprintf (fp,"   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : yes\n");

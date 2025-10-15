@@ -11,6 +11,7 @@
  ************************************************************************/
 
 
+#include <cstddef>
 #if defined (NBODY) && defined (INDIVIDUALSTAR)
 #include <unordered_map>
 #include <map>
@@ -218,7 +219,7 @@ int CommunicationToAbyssInitialize(
   /*-------------------------------------------*/
 
   // Step 1: Gather sizes //I can make this MPI_Igather for a slight speep-up.
-  MPI_Gather(&LocalNumberOfParticles, 1, MPI_INT, NULL, 1, MPI_INT,
+  MPI_Gather(&LocalNumberOfParticles, 1, MPI_INT, nullptr, 1, MPI_INT,
             NumberOfProcessors, inter_comm);
 
   /* Step 2: Prepare Send Buffer sendbuf */
@@ -241,7 +242,7 @@ int CommunicationToAbyssInitialize(
   fprintf(stderr, "ENZO: Buffer Ready!\n");
 
   /* Step 4: Gatherv  */
-  MPI_Gatherv(sendbuf, LocalNumberOfParticles, MPI_ENZO_PTCL, NULL, NULL, NULL,
+  MPI_Gatherv(sendbuf, LocalNumberOfParticles, MPI_ENZO_PTCL, nullptr, nullptr, nullptr,
               MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
 
   fprintf(stdout, "ENZO: data sent to ABYSS (first) \n");
@@ -368,9 +369,9 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   fprintf(stderr, "ENZO: Buffer Ready!\n");
 
   /* Step 4: Gatherv  */
-  MPI_Gatherv(sendbuf_old, LocalNumberOfParticlesOld, MPI_ENZO_PTCL_SEND, NULL, NULL, NULL,
+  MPI_Gatherv(sendbuf_old, LocalNumberOfParticlesOld, MPI_ENZO_PTCL_SEND, nullptr, nullptr, nullptr,
               MPI_ENZO_PTCL_SEND, NumberOfProcessors, inter_comm);
-  MPI_Gatherv(sendbuf_new, LocalNumberOfParticlesNew, MPI_ENZO_PTCL, NULL, NULL, NULL,
+  MPI_Gatherv(sendbuf_new, LocalNumberOfParticlesNew, MPI_ENZO_PTCL, nullptr, nullptr, nullptr,
               MPI_ENZO_PTCL, NumberOfProcessors, inter_comm);
 
   fprintf(stdout, "ENZO: data sent to ABYSS \n");
@@ -425,7 +426,8 @@ int ReceiveParticleFromAbyss(
   fprintf(stderr, "ENZO: Waiting for ABYSS, to receive data \n");
   fflush(stderr);
 
-  MPI_Scatterv(NULL, NULL, NULL, MPI_ENZO_PTCL_RECV,
+  //MPI_Barrier(inter_comm);
+  MPI_Scatterv(nullptr, nullptr, nullptr, MPI_ENZO_PTCL_RECV,
           recvbuf, LocalNumberOfParticles, MPI_ENZO_PTCL_RECV, NumberOfProcessors, inter_comm);
   fprintf(stderr, "ENZO: data received! \n");
 

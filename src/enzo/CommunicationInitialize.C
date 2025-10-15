@@ -171,15 +171,55 @@ int CommunicationInitialize(int &argc, char *argv[])
 		MPI_Group world_group;
 		MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 
+	#define MUST
+	#ifdef MUST
+
+		// 1) Get and normalize hostname (helps when some ranks see FQDNs, others short names)
+		char raw_name[MPI_MAX_PROCESSOR_NAME]; int len = 0;
+		MPI_Get_processor_name(raw_name, &len);
+
+		// Make a normalized, short, lowercase name up to the first '.'
+		char name[MPI_MAX_PROCESSOR_NAME];
+		int n = 0;
+		for (int i = 0; i < len && n < MPI_MAX_PROCESSOR_NAME-1; ++i) {
+				char c = raw_name[i];
+				if (c == '.') break;                    // drop domain suffixes
+				if (c >= 'A' && c <= 'Z') c += 32;      // tolower ASCII
+				name[n++] = c;
+		}
+		name[n] = '\0';
+
+		// 2) Make a stable, non-negative color from hostname (FNV-1a masked to 31 bits)
+		uint32_t h = 2166136261u;
+		for (int i = 0; i < n; ++i) { h ^= (uint8_t)name[i]; h *= 16777619u; }
+		int color = (int)(h & 0x7fffffff);          // ensure color >= 0
+
+		// (Optional) Debug: ensure color is valid and show mapping
+		#ifndef NDEBUG
+		if (color < 0) { fprintf(stderr, "[%d] bad color=%d\n", world_rank, color); MPI_Abort(MPI_COMM_WORLD, 1); }
+		fprintf(stderr, "[%d] host=%s color=%d\n", world_rank, name, color);
+		#endif
+
+		// 3) Split by color; 'key' controls the ordering inside each node communicator
+		MPI_Comm local_comm = MPI_COMM_NULL;
+		MPI_Comm_split(MPI_COMM_WORLD, color, /*key=*/world_rank, &local_comm);
+
+		// 4) Now you have contiguous local ranks 0..local_size-1 per node
+		int local_rank = -1, local_size = 0;
+		MPI_Comm_rank(local_comm, &local_rank);
+		MPI_Comm_size(local_comm, &local_size);
+#else
 		// Create a shared memory communicator to identify node-local processes
+		//MPI_Comm local_comm = MPI_COMM_NULL;
+		//MPI_Comm_split(MPI_COMM_WORLD, (int)color, world_rank, &local_comm);
 		MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, world_rank, MPI_INFO_NULL, &local_comm);
+		int rc = MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, world_rank, MPI_INFO_NULL, &local_comm);
+		assert(rc == MPI_SUCCESS && local_comm != MPI_COMM_NULL);
 
 		// Get node-local rank
 		MPI_Comm_rank(local_comm, &local_rank);
 		MPI_Comm_size(local_comm, &local_size);
-
-
-
+#endif
 
 		int local_root = world_rank;
 		MPI_Allreduce(&world_rank, &local_root, 1, MPI_INT, MPI_MIN, local_comm);
@@ -232,11 +272,11 @@ int CommunicationInitialize(int &argc, char *argv[])
 		}
 
 		// Create a Inter communicator
-		#ifdef INDIVIDUAL
+#ifdef INDIVIDUAL
 		if (ordered_rank <= NumberOfEnzoProcessors)
-		#else
+#else
 		if (ordered_rank == 0 || ordered_rank == NumberOfEnzoProcessors)
-		#endif
+#endif
 		{
 			MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &inter_comm);
 		}
@@ -262,11 +302,11 @@ int CommunicationInitialize(int &argc, char *argv[])
 					  << std::endl;
 		}
 		int inter_rank;
-		#ifdef INDIVIDUAL
+#ifdef INDIVIDUAL
 		if (ordered_rank <= NumberOfEnzoProcessors)
-		#else
+#else
 		if (ordered_rank == 0 || ordered_rank == NumberOfEnzoProcessors)
-		#endif
+#endif
 		{
 			MPI_Comm_rank(inter_comm, &inter_rank);
 			std::cout << "World rank " << world_rank << " (local rank " << local_rank << " of node " << node_id << ") is in inter_comm"
@@ -347,6 +387,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Aint lb=0, extent=sizeof(ParticleDataType);
 			//MPI_Type_get_extent(MPI_ENZO_PTCL, &lb, &extent);
 			MPI_Type_create_resized(MPI_ENZO_PTCL_RAW, lb, extent, &MPI_ENZO_PTCL);
+			MPI_Type_commit(&MPI_ENZO_PTCL);
+			MPI_Type_free(&MPI_ENZO_PTCL_RAW);
 			fprintf(stderr,"Extent = %ld, sizeof = %zu\n", (long)extent, sizeof(ParticleDataType));
 		}
 
@@ -372,6 +414,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 
 			MPI_Aint lb=0, extent=sizeof(ParticleSendDataType);
 			MPI_Type_create_resized(MPI_ENZO_PTCL_SEND_RAW, lb, extent, &MPI_ENZO_PTCL_SEND);
+			MPI_Type_commit(&MPI_ENZO_PTCL_SEND);
+			MPI_Type_free(&MPI_ENZO_PTCL_SEND_RAW);
 		}
 
 		{
@@ -414,6 +458,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 
 			MPI_Aint lb=0, extent=sizeof(ParticleReceiveDataType);
 			MPI_Type_create_resized(MPI_ENZO_PTCL_RECV_RAW, lb, extent, &MPI_ENZO_PTCL_RECV);
+			MPI_Type_commit(&MPI_ENZO_PTCL_RECV);
+			MPI_Type_free(&MPI_ENZO_PTCL_RECV_RAW);
 		}
 
 
