@@ -421,7 +421,23 @@ int CommunicationInitialize(int &argc, char *argv[])
 		{
 			MPI_Datatype MPI_ENZO_PTCL_RECV_RAW;
 			ParticleReceiveDataType dummy;
+#ifdef SEVN
+			int block_lengths[4] = {1, MAX_DIMENSION, MAX_DIMENSION, 5};
+			MPI_Aint displacements[4];
+			MPI_Datatype types[4] = {MPI_INT, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
 
+			MPI_Aint base;
+			MPI_Get_address(&dummy, &base);
+			MPI_Get_address(&dummy.ID, &displacements[0]);
+			MPI_Get_address(&dummy.Position, &displacements[1]);
+			MPI_Get_address(&dummy.Velocity, &displacements[2]);
+			MPI_Get_address(&dummy.InitialMass, &displacements[3]);
+
+			for (int i = 0; i < 4; ++i)
+				displacements[i] -= base;
+
+			MPI_Type_create_struct(4, block_lengths, displacements, types, &MPI_ENZO_PTCL_RECV);
+#else
 			int block_lengths[3] = {1, MAX_DIMENSION, MAX_DIMENSION};
 			MPI_Aint displacements[3];
 			MPI_Datatype types[3] = {MPI_INT, MPI_DOUBLE, MPI_DOUBLE};
@@ -432,11 +448,12 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Get_address(&dummy.Position, &displacements[1]);
 			MPI_Get_address(&dummy.Velocity, &displacements[2]);
 
-			displacements[0] -= base;
-			displacements[1] -= base;
-			displacements[2] -= base;
+			for (int i = 0; i < 3; ++i)
+				displacements[i] -= base;
 
 			MPI_Type_create_struct(3, block_lengths, displacements, types, &MPI_ENZO_PTCL_RECV_RAW);
+ #endif
+      
 			MPI_Type_commit(&MPI_ENZO_PTCL_RECV_RAW);
 
 			MPI_Aint lb=0, extent=sizeof(ParticleReceiveDataType);
@@ -444,7 +461,7 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Type_commit(&MPI_ENZO_PTCL_RECV);
 			MPI_Type_free(&MPI_ENZO_PTCL_RECV_RAW);
 		}
-#endif
+
 
 		/***********************************
 		 *     Shared Memeory Setting      *

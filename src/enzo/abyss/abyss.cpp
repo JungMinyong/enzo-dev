@@ -75,10 +75,10 @@ int ABYSS() {
 
 
 	if (AbyssProcessorNumber == ROOT) {
-    fprintf(nbpout, "ABYSS: Entering IC...\n");
-    fflush(nbpout);
-    InitialCommunication();
-  }
+		fprintf(nbpout, "ABYSS: Entering IC...\n");
+		fflush(nbpout);
+		InitialCommunication();
+	}
 
 	// things that should be synchronized. this can be moved to GlobalVariable
 	MPI_Barrier(abyss_comm);
