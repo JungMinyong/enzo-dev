@@ -1,10 +1,10 @@
 
    MACHINE: Generic Ubuntu 8.04
-   MACHINE-NAME: linux-mpich-EW
+   MACHINE-NAME: rusty
 
    PARAMETER_MAX_SUBGRIDS  [max-subgrids-###]                : 100000
-   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 60
-   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 30
+   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : 70
+   PARAMETER_MAX_PARTICLE_ATTR [max-particle-attr-###]       : 60
    PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : 64
    PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : 100000
 
@@ -24,7 +24,7 @@
    CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : yes
    CONFIG_ECUDA  [cuda-{yes,no}]                             : no
    CONFIG_NBODY  [nbody-{yes,no}]                            : yes
-   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : yes
+   CONFIG_FEWBOY  [fewbody-{yes,no}]                         : no
    CONFIG_SEVN  [sevn-{yes,no}]                              : no
    CONFIG_OOC_BOUNDARY  [ooc-boundary-{yes,no}]              : no
    CONFIG_ACCELERATION_BOUNDARY  [acceleration-boundary-{yes,no}] : yes

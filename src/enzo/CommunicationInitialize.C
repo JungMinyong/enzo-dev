@@ -461,6 +461,7 @@ int CommunicationInitialize(int &argc, char *argv[])
 			MPI_Type_commit(&MPI_ENZO_PTCL_RECV);
 			MPI_Type_free(&MPI_ENZO_PTCL_RECV_RAW);
 		}
+		#endif // INDIVIDUALSTAR
 
 
 		/***********************************
@@ -511,8 +512,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 	  printf("MPI_Init: TotalNumberOfProcessors = %" ISYM "\n", TotalNumberOfProcessors);
   }
 #endif // ABYSS
+
 #else /* USE_MPI */
- 
   //MyProcessorNumber  = 0;
   //NumberOfProcessors = 1;
  
@@ -528,6 +529,8 @@ int CommunicationInitialize(int &argc, char *argv[])
   return 1; // SUCCESS -> 1 by EW 2025.3.11
   return 1; //SUCCESS;
 }
+
+
  
 #ifdef USE_MPI
 void CommunicationErrorHandlerFn(MPI_Comm *comm, MPI_Arg *err, ...)
@@ -546,6 +549,8 @@ void CommunicationErrorHandlerFn(MPI_Comm *comm, MPI_Arg *err, ...)
 }
 #endif /* USE_MPI */
  
+
+
 int CommunicationFinalize()
 {
  
@@ -579,4 +584,3 @@ void CommunicationAbort(int status)
 
   return;
 }
-

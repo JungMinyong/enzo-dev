@@ -1,1 +1,1 @@
-CONFIG_MACHINE = linux-mpich-EW
+CONFIG_MACHINE = rusty
