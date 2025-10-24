@@ -29,7 +29,7 @@ void Particle::setFirst(int *PID, double *Mass, double *InitialMass, double *Cre
 	this->BackgroundAcceleration[2]  = BackgroundAcceleration[2][i]*EnzoAcceleration;
 	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
 #ifndef SEVN
-	this->ParticleType = NoFeedbackStar;
+	this->ParticleType = NO_FEEDBACK_STAR;
 	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit
 	/*
 	if (this->Mass*1e9 > 8) {
@@ -68,7 +68,7 @@ void Particle::set(int *PID, double *Mass, double *CreationTime, double *Dynamic
 	this->BackgroundAcceleration[2]  = BackgroundAcceleration[2][i]*EnzoAcceleration;
 	this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
 #ifndef SEVN
-	this->ParticleType = NoFeedbackStar;
+	this->ParticleType = NO_FEEDBACK_STAR;
 	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit
 	/*
 	if (this->Mass*1e9 > 8) {
@@ -137,7 +137,7 @@ void Particle::setFirst(const ParticleDataType &ptcl, const int& ProcessorNumber
 		this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
 	this->EnzoProcessorNumber        = ProcessorNumber;
 #ifndef SEVN
-	this->ParticleType = NoFeedbackStar;
+	this->ParticleType = NO_FEEDBACK_STAR;
 	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit
 	/*
 	if (this->Mass*1e9 > 8) {
@@ -177,7 +177,7 @@ void Particle::set(const ParticleDataType &ptcl, const int& ProcessorNumber) {
 		this->RadiusOfNeighbor           = InitialNeighborRadius2; // fixed by EW 2025.3.12
 	this->EnzoProcessorNumber        = ProcessorNumber;
 #ifndef SEVN
-	this->ParticleType = NoFeedbackStar;
+	this->ParticleType = NO_FEEDBACK_STAR;
 	this->radius = 2.25461e-8/position_unit*pow(this->Mass*mass_unit, 1./3); // stellar radius in code unit
 	/*
 	if (this->Mass*1e9 > 8) {

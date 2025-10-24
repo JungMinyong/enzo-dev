@@ -83,13 +83,17 @@ public:
         }
     }
 
+    void sendQueueforRegCuda(Worker *worker) {
+        worker->sendTask(_queue);
+    }
+
 
     void takeQueueRegularList(std::unordered_set<int> &queue_list) {
         _queue_list_ = queue_list;
         _total_queues = _queue_list_.size();
     }
 
-    void assignQueueRegularList() {
+    void assignQueueAutoRegularList() {
         if (_queue_list_.size() == 0)
             return;
         for (auto worker = _FreeWorkers.begin(); worker != _FreeWorkers.end();)
@@ -199,7 +203,7 @@ public:
         std::cout << "Completed CM Queues = " << _completed_cm_queues << std::endl;
 
         std::cout << "-----------Worker Status-----------" << std::endl;
-        std::cout << std::left << std::setw(10) << "AbyssProcessorNumber";
+        std::cout << std::left << std::setw(10) << "MyRank";
         for (int i=1; i<=NumberOfWorker; i++) {
             std::cout << "|  " << std::setw(4) << workers[i].MyRank;
         }
@@ -350,7 +354,7 @@ private:
                 _assignJobs(_WorkerTmp);
                 _assigned_tasks++;
                 //fprintf(stdout, "assigned_tasks = %d, number of free worker = %d pid = %d rank = %d\n",
-                //_assigned_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->AbyssProcessorNumber);
+                //_assigned_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->MyRank);
                 fflush(stdout);
             }
         } while(_completed_tasks < _total_tasks);
@@ -454,7 +458,7 @@ private:
                 _WorkerTmp->task = 0;
                 _WorkerTmp->next_time = next_time;
                 //fprintf(stdout, "assigned_tasks = %d/%d, number of free worker = %d pid = %d rank = %d\n",
-                //_assigned_tasks, _total_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->AbyssProcessorNumber);
+                //_assigned_tasks, _total_tasks, _FreeWorkers.size(), _WorkerTmp->PID, _WorkerTmp->MyRank);
                 _assignJobs(_WorkerTmp);
                 _assigned_tasks++;
             }

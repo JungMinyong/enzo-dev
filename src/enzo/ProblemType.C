@@ -8,7 +8,7 @@
 	/  PURPOSE:
 	/
  ************************************************************************/
-
+#undef INDIVIDUALSTAR
 #ifdef INDIVIDUALSTAR
 #include <stdio.h>
 #include <iostream>

@@ -12,23 +12,23 @@ void write_out(std::ofstream& outputFile, const Particle* ptcl, const double *po
 void write_out_group(std::ofstream& outputFile, const Particle* ptcl, const Particle* members, const double *pos, const double *vel);
 void write_neighbor(std::ofstream& outputFile, const Particle* ptcl);
 #ifdef SEVN
-void initializeStellarEvolution();
+// void initializeStellarEvolution();
 #endif
 const int NUM_COLUMNS = 7; // Define the number of columns
 const int width = 18;
 
-int readData() {
+bool readData() {
 
 	fprintf(stdout, "Opening %s ...\n", fname);
 	std::ifstream inputFile(fname);
 
 	if (!inputFile) {
 		std::cerr << "Error: Could not open the file." << std::endl;
-		return FAIL;
+		return false;
 	}
 
 	NumberOfParticle = getLineNumber();
-	NewPID = NumberOfParticle;
+	// NewCMPID = NumberOfParticle;
 	LastParticleIndex = NumberOfParticle - 1;
 
 	// Declaration
@@ -62,7 +62,7 @@ int readData() {
 		}
 		//particle_temp[row].setParticleInfo(data[row], row);
 		//particle.push_back(new Particle()particle_temp[row]);
-		particles_original[row].initialize(data[row],row);
+		particles[row].initialize(data[row],row);
 		++row;
 	}
 
@@ -85,7 +85,7 @@ int readData() {
 	inputFile.close();
 
 #ifdef SEVN
-	initializeStellarEvolution();
+	// initializeStellarEvolution();
 #endif
 
 	/*
@@ -103,7 +103,7 @@ int readData() {
 	delete[] data;
 
 
-	return 1;
+	return true;
 }
 
 
@@ -184,7 +184,7 @@ int writeParticle(double current_time, int outputNum) {
     }
 	int NumPart = 0;
 	Particle *ptcl;
-	LastParticleIndex = global_variable->LastParticleIndex; //temporary added by Minyong // (Query to MY) NumPart should be equal to NumberOfParticle, right? by EW 2025.7.1
+
 	for (int i=0; i<=LastParticleIndex; i++) {
 		ptcl = &particles[i];
 		if (!ptcl->isActive) continue;
@@ -196,8 +196,7 @@ int writeParticle(double current_time, int outputNum) {
 	outputFile << NumPart << ", "; //
 	outputFile << outputTime << ", "; //
 	outputFile << outputTimeStep << ", "; //
-	outputFile << current_time << ", "; //
-	outputFile << AbyssCenter[0] << ", " << AbyssCenter[1] << ", " << AbyssCenter[2]; // AbyssCenter
+	outputFile << current_time << ""; //
 	outputFile << "\n";
     outputFile << std::left 
 			<< std::setw(width) << "PID"

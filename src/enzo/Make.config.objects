@@ -1306,8 +1306,6 @@ OBJS_NBODY= \
         abyss/InitializationRoutines.o\
         abyss/RegularRoutines.o\
         abyss/IrregularRoutines.o\
-        abyss/cuda/CalculateRegularAcceleration.o\
-        abyss/cuda/cuda_my_acceleration.o\
         abyss/DefaultGlobal.o\
         abyss/CommunicationToHydro.o \
         abyss/EnzoCommunications.o \
@@ -1316,7 +1314,6 @@ OBJS_NBODY= \
         abyss/Particle/UpdateParticle.o\
         abyss/Particle/Initialize.o\
         abyss/Particle/ComputeAcceleration.o\
-        abyss/cuda/cuda_kernels.o\
         abyss/ReadWrite.o\
         abyss/UpdateParticleBackground.o\
         star_maker7_individual.o \
@@ -1329,6 +1326,10 @@ OBJS_NBODY= \
         abyss/FewBody/FBTermination.o\
         abyss/FewBody/GroupAccelerationRoutine.o\
         abyss/StellarEvolution.o\
+
+        #abyss/cuda/CalculateRegularAcceleration.o\
+        #abyss/cuda/cuda_my_acceleration.o\
+        #abyss/cuda/cuda_kernels.o\
         
         #StarSplitter.o\
         #abyss/cuda/cuda_routines.o\

@@ -54,6 +54,30 @@
         "unordered_map": "cpp",
         "variant": "cpp",
         "vector": "cpp",
-        "algorithm": "cpp"
-    }
+        "algorithm": "cpp",
+        "cerrno": "cpp",
+        "chrono": "cpp",
+        "condition_variable": "cpp",
+        "deque": "cpp",
+        "unordered_set": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "map": "cpp",
+        "memory": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "set": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "thread": "cpp",
+        "CommunicationInitialize.C": "cpp",
+        "PrepareNbodyComputation.C": "cpp",
+        "regex": "cpp",
+        "cinttypes": "cpp",
+        "enzo.C": "cpp",
+        "StarRoutines.C": "cpp",
+        "ProblemType.C": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }

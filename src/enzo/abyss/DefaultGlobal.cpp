@@ -6,29 +6,36 @@
 #include <map>
 #endif
 
-std::unordered_set<int> RegularList;
 int NumberOfWorker;
-int NumberOfCommunication;
+
+// Custom MPI data types
+MPI_Datatype QueueType;
+MPI_Datatype IparticleType;
+MPI_Datatype JparticleType;
+
 int *AvailableIndices; 
 int NumberOfAvailableIndices;
 std::unordered_map<int,int> PIDtoIndexMap; // (Query) EW: How about CM particles?
 #ifndef INDIVIDUALSTAR
-int *EnzoPIDs; 
+int *EnzoPIDs;
 #else
 int *displs = NULL;
 #endif
 int newNumberOfSingleParticle;
 int NumberOfParticle; // The number of active particles (single + CM ptcl)
 int NumberOfSingleParticle; // The number of single particles (only single, not CM ptcl)
-int NewPID;
+int NewCMPID;
 int LastParticleIndex; // The last index of particle array; for few-body case by EW 2025.3.10
+
+// Enzo to Nbody
+Particle* FirstEnzoParticle;
+double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
+double EnzoCurrentTime;
+double AbyssCenter[3];
 
 // Few-Body
 std::unordered_map<int, int> CMPtclWorker;	   // by EW 2025.1.4 // unordered_map by EW 2025.1.11
 std::unordered_map<int, int> PrevCMPtclWorker; // by EW 2025.1.4 // unordered_map by EW 2025.1.11
-
-// Task
-int Task[NumberOfTask];
 
 // Time
 double global_time;
@@ -36,17 +43,6 @@ double global_time_irr;
 ULL NextRegTimeBlock;
 double outputTimeStep;
 double endTime;
-
-double binary_time;
-double binary_time_prev;
-ULL binary_block;
-
-// Enzo to Nbody
-Particle* FirstEnzoParticle;
-double EnzoLength, EnzoMass, EnzoVelocity, EnzoTime, EnzoForce, EnzoAcceleration;
-double EnzoCurrentTime;
-double AbyssCenter[3];
-extern int NumberOfProcessors;
 
 // i/o
 char* fname;
@@ -64,6 +60,15 @@ FILE* mergerout;
 FILE* SEVNout;
 IO* sevnio = nullptr;
 std::multimap<double, int> SEVNList; // This constains the time of next SEVN evolution time and the particle index by EW 2025.3.27
+
+int NumberOfEnzoSEVNParticle;		// This is the number of SEVN particles in Enzo, not in Abyss by EW 2025.4.27
+int newNumberOfEnzoSEVNParticle;	// This is the number of SEVN particles newly added in Enzo, not in Abyss by EW 2025.4.27
+std::unordered_map<int,int> PIDtoIndexMap_SEVN;
+int *EnzoPIDs_SEVN;
+
+std::vector<StarSEVN*> SEVNList_Enzo;
+std::vector<double> creation_time_Enzo;
+std::vector<double> world_time_Enzo;
 #endif
 FILE* workerout;
 
@@ -75,22 +80,10 @@ Performance performance;
 
 double InitialNeighborRadius2;
 double EPS2;
-int FixNumNeighbor, MaxNumNeighbor;
+int FixNumNeighbor;
 
 void DefaultGlobal() {
 
-
-	/* Task initialization */
-	//int Task[NumberOfTask];
-	for (int i=0;i<NumberOfTask; i++) {
-		Task[i] = i;
-	}
-
-	NumberOfCommunication = 0;
-	AbyssCenter[0] = 0.0;
-	AbyssCenter[1] = 0.0;
-	AbyssCenter[2] = 0.0;
-	
 	/* Timesteps */
 	endTime = 1;
 	outputTimeStep = outputTimeStep/endTime; // endTime should be Myr
@@ -108,38 +101,44 @@ void DefaultGlobal() {
 
 	if (AbyssProcessorNumber == 0)  {
 #ifndef INDIVIDUALSTAR
-		EnzoPIDs         = new int[MaxNumberOfParticle];
+		EnzoPIDs         = new int[MaxNumParticle];
 #else
-		displs = new int[NumberOfProcessors+1];
-		for (int i=0; i<NumberOfProcessors+1; i++) {
+		displs = new int[NumberOfAbyssProcessors+1];
+		for (int i=0; i<NumberOfAbyssProcessors+1; i++) {
 			displs[i] = 0;
 		}
 #endif
-		AvailableIndices = new int[MaxNumberOfParticle];
+		AvailableIndices = new int[MaxNumParticle];
 		NumberOfAvailableIndices = 0;
-		for (int i=0; i<MaxNumberOfParticle; i++) {
+		for (int i=0; i<MaxNumParticle; i++) {
 			AvailableIndices[i] = -1;
 		}
+#ifdef SEVN
+		EnzoPIDs_SEVN    = new int[MaxNumParticle];
+#endif
 	}
 
 	NumberOfWorker = NumberOfAbyssProcessors-1;
 
-	NewPID = -1;
+	NewCMPID = -1;
 
 #ifdef SEVN
 	std::vector<std::string> args = {"empty", // Not used
 		// "-myself", "/data/vinicius/NbodyPlus/SEVN",
-		"-tables", "/data/vinicius/sevn/tables/SEVNtracks_parsec_ov04_AGB", 
+		"-tables", "/home/vinicius/install/sevn/tables/SEVNtracks_parsec_ov04_AGB", 
 		//  "-tables", "/data/vinicius/NbodyPlus/SEVN/tables/SEVNtracks_MIST_AGB",
 		// "-tables_HE", "/data/vinicius/NbodyPlus/SEVN/tables/SEVNtracks_parsec_pureHe36",
 		// "-turn_WR_to_pureHe", "false",
-		"-snmode", "delayed",
+		"-xspinmode", "geneva",
+		"-hardmode", "disabled",
+		"-tmode", "disabled",
+		// "-snmode", "delayed",
 		// "-Z", "0.0002",
-		"-spin", "0.0",
-		"-tini", "zams",
-		"-tf", "end",
-		"-dtout", "events",
-		"-xspinmode", "geneva"};
+		// "-spin", "0.0",
+		// "-tini", "zams",
+		// "-tf", "end",
+		// "-dtout", "events",
+		};
 	std::vector<char*> c_args;
 	for (auto& arg : args) {
 		c_args.push_back(&arg[0]);

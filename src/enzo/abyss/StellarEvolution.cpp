@@ -11,7 +11,7 @@ void adjustEnzoSEVNParticle(int index, bool delete_sevn);
 
 // Start SEVN stellar evolution
 // Set stellar radii, BH spin, etc
-void initializeStellarEvolution() {
+void initializeStellarEvolution(double *MHECurrent, double *MCOCurrent, double *SEVNFrac, double *SEVNType, double *WorldTime) {
 
     std::ostringstream oss;
 	oss << sevnio->svpar;
@@ -25,17 +25,17 @@ void initializeStellarEvolution() {
 
         Particle* ptcl = &particles[i];
 
-        ptcl->WorldTime = ptcl->CreationTime;
+        ptcl->WorldTime = global_variable->EnzoCurrentTime;
 
         if (ptcl->CreationTime < 0.0) {
             ptcl->radius = 2.25461e-8/position_unit*pow(ptcl->Mass*mass_unit, 1/3);
-            ptcl->ParticleType = NoFeedbackStar;
+            ptcl->ParticleType = NO_FEEDBACK_STAR;
             continue;
         }
 
-        if (ptcl->InitialMass < 2.2) {
+        if (ptcl->InitialMass < SEVNLowerMassLimit) {
 			ptcl->radius = 2.25461e-8/position_unit*pow(ptcl->Mass*mass_unit, 1/3);
-            ptcl->ParticleType = NoFeedbackStar;
+            ptcl->ParticleType = NO_FEEDBACK_STAR;
             // stellar radius in code unit
             // extrapolated from the solar radius (it is assumed that low-mass stars have the same stellar density to the sun)
 
@@ -43,27 +43,58 @@ void initializeStellarEvolution() {
 			continue;
 		}
 
-        // ptcl->ParticleType = (ptcl->Mass*mass_unit >= 8.0) ? HighmassStar : LowmassStar;
-        ptcl->ParticleType = NormalStar;
+        ptcl->ParticleType = static_cast<int>(SEVNType[i]);
+        ptcl->WorldTime = WorldTime[i];
 
         // Mass, metallicity, spin, sn model, tini, tf, dtout, random seed(optional)
-        double Metallicity = ptcl->InitialMetallicity > 0.04 ? 0.04 : ptcl->InitialMetallicity;
-        std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(Metallicity), "0.0", "delayed", "zams", "end", "events"};
+        double Metallicity = ptcl->InitialMetallicity > SEVNMetallicityUpperLimit ? SEVNMetallicityUpperLimit : ptcl->InitialMetallicity;
+        Metallicity = Metallicity < SEVNMetallicityLowerLimit ? SEVNMetallicityLowerLimit : Metallicity;
+
+        std::stringstream Mass;
+        std::stringstream tini;
+        if (ptcl->ParticleType > 6) {
+
+            std::string remnant_suffix;
+
+            if (ptcl->ParticleType == 7 || ptcl->ParticleType == 8) {
+                fprintf(stderr, "Error: Particle %d is already a remnant (type %d) at birth! Setting to NO_FEEDBACK_STAR.\n", ptcl->PID, ptcl->ParticleType);
+                ptcl->ParticleType = NO_FEEDBACK_STAR;
+                continue;
+            }
+
+            if (ptcl->ParticleType == 9)
+                remnant_suffix = "HEWD";
+            else if (ptcl->ParticleType == 10)
+                remnant_suffix = "COWD";
+            else if (ptcl->ParticleType == 11)
+                remnant_suffix = "ONEWD";
+            else if (ptcl->ParticleType == 12)
+                remnant_suffix = "NSEC";
+            else if (ptcl->ParticleType == 13)
+                remnant_suffix = "NS";
+            else if (ptcl->ParticleType == 14 || ptcl->ParticleType == 15)
+                remnant_suffix = "BH";
+
+            Mass << std::setprecision(17) << ptcl->Mass*mass_unit << remnant_suffix;
+
+            tini << "zams";
+        } else {
+            Mass << std::setprecision(17) << "(" << ptcl->InitialMass << ","
+                << ptcl->Mass*mass_unit << ","
+                << MHECurrent[i] << "," 
+                << MCOCurrent[i] << ")";
+
+            tini << std::setprecision(17) << "%" << SEVNFrac[i] * 100
+                << ":" << ptcl->ParticleType;
+        }
+
+        std::vector<std::string> init_params{Mass.str(), std::to_string(Metallicity), "0.0", "delayed", tini.str(), "end", "events"};
 
         size_t id = ptcl->PID;
         ptcl->StellarEvolution = new StarSEVN(sevnio, init_params, id, false);
-        fprintf(stderr, "New star in SEVN! PID: %d, Initial mass: %e Msun, Z: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
-        fprintf(stdout, "New star in SEVN! PID: %d, Initial mass: %e Msun, Z: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
+        fprintf(stderr, "New star in SEVN! PID: %d, Mass: %e Msun, Z: %e\n", ptcl->PID, ptcl->Mass * mass_unit, ptcl->InitialMetallicity);
+        // fprintf(stdout, "New star in SEVN! PID: %d, Initial mass: %e Msun, Z: %e\n", ptcl->PID, ptcl->InitialMass, ptcl->InitialMetallicity);
 
-        while (ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID) <= global_variable->EnzoCurrentTime) {
-            ptcl->WorldTime += ptcl->StellarEvolution->getp(Timestep::ID);
-            ptcl->StellarEvolution->evolve();
-            if (!ptcl->StellarEvolution->amiremnant())
-                ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
-            else
-                break;
-        }
-        ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
         ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
 
@@ -82,9 +113,37 @@ void initializeStellarEvolution(int ParticleIndex) {
     Particle* ptcl = &particles[ParticleIndex];
 
     ptcl->WorldTime = global_variable->EnzoCurrentTime;
-    ptcl->ParticleType = NormalStar;
+    ptcl->ParticleType = NO_FEEDBACK_STAR;
 
-    double Metallicity = ptcl->InitialMetallicity > 0.04 ? 0.04 : ptcl->InitialMetallicity;
+    if (PIDtoIndexMap_SEVN.find(ptcl->PID) != PIDtoIndexMap_SEVN.end()) {
+        int index_SEVN = PIDtoIndexMap_SEVN[ptcl->PID];
+
+        ptcl->StellarEvolution = SEVNList_Enzo[index_SEVN];
+        // ptcl->CreationTime = creation_time_Enzo[index_SEVN]; // These two should be the same by EW 2025.5.1
+        ptcl->WorldTime = world_time_Enzo[index_SEVN];
+        ptcl->InitialMass = ptcl->StellarEvolution->get_zams();
+
+        adjustEnzoSEVNParticle(index_SEVN, false);
+
+        ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
+        if (ptcl->Mass*mass_unit > ptcl->StellarEvolution->get_max_zams()) // VMS correction; constant stellar density is assumed
+            ptcl->radius *= pow(ptcl->Mass*mass_unit/ptcl->StellarEvolution->get_max_zams(), 1./3);
+
+        if (ptcl->StellarEvolution->amiremnant()) {
+            ptcl->ParticleType = REMNANT + (int)ptcl->StellarEvolution->getp(RemnantType::ID);
+            if (ptcl->StellarEvolution->amiBH())
+                setBHspin(ptcl);
+            if (ptcl->Mass*mass_unit > MassiveBlackHoleCutoff) {
+                ptcl->ParticleType = MASSIVE_BLACK_HOLE;
+            }
+        }
+        else
+            ptcl->ParticleType = (int)ptcl->StellarEvolution->getp(Phase::ID);
+        return;
+    }
+
+    double Metallicity = ptcl->InitialMetallicity > SEVNMetallicityUpperLimit ? SEVNMetallicityUpperLimit : ptcl->InitialMetallicity;
+    Metallicity = Metallicity < SEVNMetallicityLowerLimit ? SEVNMetallicityLowerLimit : Metallicity;
     std::vector<std::string> init_params{std::to_string(double(ptcl->InitialMass)), std::to_string(Metallicity), "0.0", "delayed", "zams", "end", "events"};
 
     size_t id = ptcl->PID;
@@ -94,6 +153,7 @@ void initializeStellarEvolution(int ParticleIndex) {
 
     SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
 
+    ptcl->ParticleType = static_cast<int>(ptcl->StellarEvolution->getp(Phase::ID));
     ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // stellar radius in code unit
     ptcl->T_eff = ptcl->StellarEvolution->getp(Temperature::ID);
 }
@@ -139,7 +199,149 @@ void StellarEvolution() {
     fflush(SEVNout);
 }
 
+void StellarEvolution_Enzo(double *Mass, double *Wind, double *SN, double *Temperature,
+                            double *newMass, double *newWind, double *newSN, double *newTemperature) {
+
+
+    if (NumberOfEnzoSEVNParticle == 0 && newNumberOfEnzoSEVNParticle == 0)
+        return;
+
+    int index;
+    StarSEVN* star_sevn;
+    bool evolved;
+    double CurrentMass;
+    double WorldTime;
+    if (NumberOfEnzoSEVNParticle - newNumberOfEnzoSEVNParticle > 0) {
+        for (int i=0; i<NumberOfEnzoSEVNParticle - newNumberOfEnzoSEVNParticle; i++) {
+            index = PIDtoIndexMap_SEVN[EnzoPIDs_SEVN[i]];
+            star_sevn = SEVNList_Enzo[index];
+
+            if (star_sevn->amiremnant()) {
+                if (star_sevn->amiempty()) {
+                    Mass[i] = -1.0;
+                    adjustEnzoSEVNParticle(index, true);
+                }
+                else
+                    Mass[i] = star_sevn->getp(Mass::ID)/mass_unit/EnzoMass;
+                Wind[i] = 0.0;
+                SN[i] = 0.0;
+                Temperature[i] = 0.0;
+            }
+            else {
+                evolved = false;
+                CurrentMass = star_sevn->getp(Mass::ID);
+                WorldTime = world_time_Enzo[index];
+                Mass[i] = CurrentMass/mass_unit/EnzoMass;
+                Wind[i] = 0.0;
+                SN[i] = 0.0;
+                Temperature[i] = star_sevn->getp(Temperature::ID);
+                while (WorldTime + star_sevn->getp(Timestep::ID) <= global_time * global_variable->EnzoTimeStep * 1e4 + global_variable->EnzoCurrentTime) {
+                    evolved = true;
+                    WorldTime += star_sevn->getp(Timestep::ID);
+                    star_sevn->evolve();
+
+                    if (!star_sevn->amiremnant())
+                        Temperature[i] = star_sevn->getp(Temperature::ID);
+                    else
+                        break;
+                }
+                world_time_Enzo[index] = WorldTime;
+                if (evolved) {
+
+                    fprintf(SEVNout, "(Enzo) PID: %d, Phase: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, T_eff: %e K, Worldtime: %e Myr, CurrentTime: %e Myr\n", 
+                        EnzoPIDs_SEVN[i], int(star_sevn->getp(Phase::ID)), star_sevn->getp(Mass::ID), star_sevn->get_zams(), star_sevn->get_Z(),
+                        star_sevn->getp(Radius::ID)/(utilities::parsec_to_Rsun), star_sevn->getp(Temperature::ID), star_sevn->getp(Worldtime::ID), 
+                        global_time * global_variable->EnzoTimeStep * 1e4 + global_variable->EnzoCurrentTime);
+
+                    Mass[i] = star_sevn->getp(Mass::ID)/mass_unit/EnzoMass;
+                    if (star_sevn->amiempty()) {
+                        Mass[i] = -1.0;
+                        SN[i] = CurrentMass;
+                        adjustEnzoSEVNParticle(index, true);
+                    }
+                    else if (star_sevn->amiremnant()) {
+                        if (star_sevn->get_supernova()->get_fallback_frac() == 1.0) // direct collapse BH
+                            SN[i] = 0.0;
+                        else
+                            SN[i] = star_sevn->get_supernova()->get_Mejected();
+                        Wind[i] = CurrentMass - star_sevn->getp(Mass::ID) - SN[i];
+                    }
+                    else {
+                        Wind[i] = CurrentMass - star_sevn->getp(Mass::ID);
+                        SN[i] = 0.0;
+                    }
+                    fprintf(stderr, "(Enzo) Feedback info send to Enzo...\n");
+                    fprintf(stderr, "\tPID: %d. WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
+                            EnzoPIDs_SEVN[i], Wind[i], SN[i], Temperature[i]);
+                }
+            }
+        }
+    }
+    if (newNumberOfEnzoSEVNParticle > 0) {
+        int offset = NumberOfEnzoSEVNParticle - newNumberOfEnzoSEVNParticle;
+        for (int i=0; i<newNumberOfEnzoSEVNParticle; i++) {
+            index = PIDtoIndexMap_SEVN[EnzoPIDs_SEVN[i+offset]];
+            star_sevn = SEVNList_Enzo[index];
+
+            evolved = false;
+            CurrentMass = star_sevn->getp(Mass::ID);
+            WorldTime = world_time_Enzo[index];
+            newMass[i] = CurrentMass/mass_unit/EnzoMass;
+            newWind[i] = 0.0;
+            newSN[i] = 0.0;
+            newTemperature[i] = star_sevn->getp(Temperature::ID);
+            if (star_sevn->amiremnant()) {
+                fprintf(stderr, "Why new EnzoSEVN particle (PID: %d) is remnant?\n", EnzoPIDs_SEVN[i+offset]);
+                assert(!star_sevn->amiremnant());
+            }
+            while (WorldTime + star_sevn->getp(Timestep::ID) <= global_time * global_variable->EnzoTimeStep * 1e4 + global_variable->EnzoCurrentTime) {
+                evolved = true;
+                WorldTime += star_sevn->getp(Timestep::ID);
+                star_sevn->evolve();
+                if (!star_sevn->amiremnant())
+                    newTemperature[i] = star_sevn->getp(Temperature::ID);
+                else
+                    break;
+            }
+            world_time_Enzo[index] = WorldTime;
+            if (evolved) {
+
+                fprintf(SEVNout, "(Enzo) PID: %d, Phase: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, T_eff: %e K, Worldtime: %e Myr, CurrentTime: %e Myr\n", 
+                        EnzoPIDs_SEVN[i+offset], int(star_sevn->getp(Phase::ID)), star_sevn->getp(Mass::ID), star_sevn->get_zams(), star_sevn->get_Z(),
+                        star_sevn->getp(Radius::ID)/(utilities::parsec_to_Rsun), star_sevn->getp(Temperature::ID), star_sevn->getp(Worldtime::ID), 
+                        global_time * global_variable->EnzoTimeStep * 1e4 + global_variable->EnzoCurrentTime);
+
+                newMass[i] = star_sevn->getp(Mass::ID)/mass_unit/EnzoMass;
+                if (star_sevn->amiempty()) {
+                    newMass[i] = -1.0;
+                    newSN[i] = CurrentMass;
+                    adjustEnzoSEVNParticle(index, true);
+                }
+                else if (star_sevn->amiremnant()) {
+                    if (star_sevn->get_supernova()->get_fallback_frac() == 1.0) // direct collapse BH
+                        newSN[i] = 0.0;
+                    else
+                        newSN[i] = star_sevn->get_supernova()->get_Mejected();
+                    newWind[i] = CurrentMass - star_sevn->getp(Mass::ID) - newSN[i];
+                }
+                else {
+                    newWind[i] = CurrentMass - star_sevn->getp(Mass::ID);
+                    newSN[i] = 0.0;
+                }
+                fprintf(stderr, "(Enzo) Feedback info send to Enzo...\n");
+                fprintf(stderr, "\tPID: %d. WindEjectedMass: %e Msun, SNEjectedMass: %e Msun, T_eff: %e K\n", 
+                        EnzoPIDs_SEVN[i+offset], newWind[i], newSN[i], newTemperature[i]);
+            }
+        }
+    }
+}
+
 void UpdateEvolution(Particle* ptcl) {
+
+    if (ptcl->StellarEvolution->amiremnant())
+        ptcl->ParticleType = REMNANT + (int)ptcl->StellarEvolution->getp(RemnantType::ID);
+    else
+        ptcl->ParticleType = (int)ptcl->StellarEvolution->getp(Phase::ID);
 
     if (!ptcl->StellarEvolution->amiremnant()) {
         SEVNList.insert({ptcl->WorldTime + ptcl->StellarEvolution->getp(Timestep::ID), ptcl->ParticleIndex});
@@ -153,8 +355,6 @@ void UpdateEvolution(Particle* ptcl) {
             ptcl->radius*position_unit, ptcl->T_eff, ptcl->WorldTime, ptcl->StellarEvolution->getp(Worldtime::ID));
     }
     else if (ptcl->StellarEvolution->amiWD()) {
-
-        ptcl->ParticleType = NeutronStar_WhiteDwarf;
 
         ptcl->dm += ptcl->Mass - ptcl->StellarEvolution->getp(Mass::ID)/mass_unit; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
@@ -174,8 +374,6 @@ void UpdateEvolution(Particle* ptcl) {
         */
     }
     else if (ptcl->StellarEvolution->amiNS()) {
-
-        ptcl->ParticleType = NeutronStar_WhiteDwarf;
 
         ptcl->SNEjectedMass = ptcl->StellarEvolution->get_supernova()->get_Mejected()/mass_unit;
         ptcl->dm += ptcl->Mass - (ptcl->StellarEvolution->getp(Mass::ID)/mass_unit + ptcl->SNEjectedMass);
@@ -197,8 +395,6 @@ void UpdateEvolution(Particle* ptcl) {
     }
     else if (ptcl->StellarEvolution->amiBH()) {
 
-        ptcl->ParticleType = BlackHole;
-
         setBHspin(ptcl);
 
         // Direct collapse case! newly implemented by EW 2025.5.21
@@ -209,8 +405,8 @@ void UpdateEvolution(Particle* ptcl) {
 
         ptcl->dm += ptcl->Mass - (ptcl->StellarEvolution->getp(Mass::ID)/mass_unit + ptcl->SNEjectedMass);
         ptcl->Mass = ptcl->StellarEvolution->getp(Mass::ID)/mass_unit;
-        if (ptcl->Mass*mass_unit > 200)
-            ptcl->ParticleType = MassiveBlackHole; // This particle does feedback & accretion in Enzo by EW 2025.6.25
+        if (ptcl->Mass*mass_unit > MassiveBlackHoleCutoff)
+            ptcl->ParticleType = MASSIVE_BLACK_HOLE; // This particle does feedback & accretion in Enzo by EW 2025.6.25
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit; // this might be wrong!
         // ptcl->WorldTime = NUMERIC_FLOAT_MAX;
         fprintf(SEVNout, "BH. PID: %d, Mass: %e Msol, ZAMS Mass: %e Msol, Z: %e, Radius: %e pc, Fallback_frac: %e, Time: %e Myr, Worldtime: %e Myr\n", 
@@ -229,8 +425,6 @@ void UpdateEvolution(Particle* ptcl) {
         */
     }
     else if (ptcl->StellarEvolution->amiempty()) {
-
-        ptcl->ParticleType = BlackHole; // (SEVN Query) Actually, this is not a BH, but this will become empty star after processing SN feedback in Enzo
 
         /* // (SEVN Query) dm set to be 0 as SN is processed in Enzo by EW 2025.4.1
         ptcl->dm += ptcl->Mass; // Eunwoo: dm should be 0 after it distributes its mass to the nearby gas cells.
@@ -394,22 +588,45 @@ void Mix(StarSEVN* star1, StarSEVN* star2) {
 // Use this function when merger happened
 void SetRadius(Particle* ptcl) {
 
-    if (!ptcl->StellarEvolution->amiremnant()) {
+    if (ptcl->ParticleType < REMNANT) {
         ptcl->radius = ptcl->StellarEvolution->getp(Radius::ID)/(utilities::parsec_to_Rsun)/position_unit;
         if (ptcl->Mass*mass_unit > ptcl->StellarEvolution->get_max_zams()) // VMS correction; constant stellar density is assumed
             ptcl->radius *= pow(ptcl->Mass*mass_unit/ptcl->StellarEvolution->get_max_zams(), 1./3);
     }
-    else if (ptcl->StellarEvolution->amiWD()) {
+    else if (ptcl->ParticleType <= WHITE_DWARF_ONE) {
         double RNS = 11/(velocity_unit/yr*pc/1e5); // 11 km/s in code unit
         double Mch = 1.41/mass_unit;
         double RWD = 0.0115*std::sqrt(pow(Mch/ptcl->Mass,0.6666666667) -  pow(ptcl->Mass/Mch,0.6666666667));
         
         ptcl->radius = std::max(RNS,RWD);
     }
-    else if (ptcl->StellarEvolution->amiNS())
+    else if (ptcl->ParticleType <= NEUTRON_STAR_CCSN)
         ptcl->radius = 11/(velocity_unit/yr*pc/1e5); // 11 km/s in code unit
-    else if (ptcl->StellarEvolution->amiBH())
+    else
         ptcl->radius = 2*ptcl->Mass/pow(299752.458/(velocity_unit/yr*pc/1e5), 2); // Schwartzschild radius in code unit
+}
+
+void adjustEnzoSEVNParticle(int index, bool delete_sevn) {
+
+    StarSEVN* star_sevn = SEVNList_Enzo[index];
+
+    PIDtoIndexMap_SEVN.erase(int(star_sevn->get_ID()));
+
+    if (delete_sevn) {
+        assert(star_sevn->amiempty());
+        delete star_sevn;
+    }
+    star_sevn = nullptr;
+        
+    if (index != SEVNList_Enzo.size() - 1) {
+        std::swap(SEVNList_Enzo[index], SEVNList_Enzo.back());
+        std::swap(creation_time_Enzo[index], creation_time_Enzo.back());
+        std::swap(world_time_Enzo[index], world_time_Enzo.back());
+        PIDtoIndexMap_SEVN[int(SEVNList_Enzo[index]->get_ID())] = index;
+    }
+    SEVNList_Enzo.pop_back();
+    creation_time_Enzo.pop_back();
+    world_time_Enzo.pop_back();
 }
 
 #endif

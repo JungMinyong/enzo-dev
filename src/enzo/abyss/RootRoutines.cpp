@@ -7,8 +7,6 @@
 #include <mpi.h>
 #include <chrono>
 #include "global.h"
-#include "SkipList.h"
-#include "Worker.h"
 #include "QueueScheduler.h"
 
 #ifdef NSIGHT
@@ -18,8 +16,8 @@
 #define noDEBUG
 
 void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers);
-bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers);
-void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers);
+bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unordered_set<int>& RegularList);
+void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unordered_set<int>& RegularList);
 void InitialAssignmentOfTasks(std::vector<int> &data, double next_time, int NumTask, int TAG);
 void InitialAssignmentOfTasks(std::vector<int> &data, int NumTask, int TAG);
 void InitialAssignmentOfTasks(int data, int NumTask, int TAG);
@@ -29,8 +27,6 @@ void broadcastFromRoot(ULL &data);
 void broadcastFromRoot(int &data);
 void ParticleSynchronization();
 void updateNextRegTime(std::unordered_set<int> &RegularList);
-bool createSkipList(SkipList *skiplist);
-bool updateSkipList(SkipList *skiplist, int ptcl_id);
 int writeParticle(double current_time, int outputNum);
 int updateParticleBackground();
 
@@ -44,6 +40,8 @@ int ReceiveFromEnzo();
 
 
 
+
+
 void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *workers);
 #ifdef SEVN
 void StellarEvolution();
@@ -54,44 +52,31 @@ Worker *workers;
 void RootRoutines()
 {
 	outNum = 0;
-	int countSave = 0; // for StoreTimeStep
 	// int MinParticles = 5; // Minimum number of particles to start the nbody routine
 
 	std::cout << "Root processor is ready." << std::endl;
 	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
 
 	Particle *ptcl;
-	// int worker_rank;
 	TaskName task;
 	int total_tasks;
-	int remaining_tasks = 0, completed_tasks = 0, completed_rank;
+	int completed_tasks = 0;
 
 	std::chrono::high_resolution_clock::time_point start_point_routine;
 	std::chrono::high_resolution_clock::time_point end_point_routine;
 	long nbody_durationtime = 0;
 
-	std::vector<int> EmptyIndex;				   // by EW 2025.1.7  empty slots in particles e.g., due to mergers
-	// unordered_set? by EW 2025.1.11
-	// merged particles & PISN will be contained here
-	// new single Particle formed in Enzo can be formed in ParticleIndex of these ptcls
-	// if empty, LastParticleIndex++
+	std::unordered_set<int> RegularList;
 
-	// MPI_Request requests[NumberOfProcessor];  // Pointer to the request handle
-	// MPI_Status statuses[NumberOfProcessor];    // Pointer to the status object
-	MPI_Request request; // Pointer to the request handle
-	MPI_Status status;	 // Pointer to the status object
-
-	// int sender_rank, sender_tag;
-	int ptcl_id;
-
+	QueueScheduler queue_scheduler;
+	Queue queue;
 	workers = new Worker[NumberOfWorker + 1];
 
-	for (int i = 0; i <= NumberOfWorker; i++)
-	{
+	for (int i = 0; i <= NumberOfWorker; i++) {
 		workers[i].initialize(i);
 	}
 
-	QueueScheduler queue_scheduler;
+	
 
 #ifdef PerformanceTrace
 	std::chrono::high_resolution_clock::time_point start_point;
@@ -150,7 +135,7 @@ void RootRoutines()
 			fprintf(nbpout, "Before IrregularRoutines...\n");
 			fflush(nbpout);
 #endif
-			if (!IrregularRoutines(queue_scheduler, workers)) {
+			if (!IrregularRoutines(queue_scheduler, workers, RegularList)) {
 #ifdef DEBUG_ABYSS
 				fprintf(nbpout, "return false in IrregularRoutines...\n");
 				fflush(nbpout);
@@ -168,7 +153,7 @@ void RootRoutines()
 			fprintf(nbpout, "Before RegularRoutines...\n");
 			fflush(nbpout);
 #endif
-			RegularRoutines(queue_scheduler, workers); // If OnlyIrregularRoutine is true, this function returns immediately by EW 2025.9.17
+			RegularRoutines(queue_scheduler, workers, RegularList); // If OnlyIrregularRoutine is true, this function returns immediately by EW 2025.9.17
 #ifdef DEBUG_ABYSS
 			fprintf(nbpout, "After RegularRoutines...\n");
 			fflush(nbpout);
@@ -211,17 +196,10 @@ void RootRoutines()
 		// Time to communicate with enzo
 		if (global_time >= 1)
 		{	
-			if (StoreTimeStep > 0){
-				countSave++;
-				if (countSave >= StoreTimeStep) {
-					countSave = 0;
-					writeParticle(global_time, outNum++);
-				}
-			}
-
+			// writeParticle(global_time, outNum++); // commented out by EW 2025.5.11
+		
 			fprintf(stderr, "NbodyRoutine: %e (s)\n", nbody_durationtime*1e-9);
 			nbody_durationtime = 0;
-
 
 #ifdef INDIVIDUALSTAR
 			start_point_routine = std::chrono::high_resolution_clock::now();
@@ -253,10 +231,10 @@ void RootRoutines()
 			end_point_routine = std::chrono::high_resolution_clock::now();
 			fprintf(stderr, "InitializationAfterCommunication: %e (s)\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_routine - start_point_routine).count()*1e-9);
 #ifdef DEBUG_ABYSS
-			//fflush(nbpout);
-			//fclose(nbpout);
-			//nbpout = fopen("abyss_output.txt", "w");
-			//fprintf(nbpout, "Abyss Output Starts!\n");
+			fflush(nbpout);
+			fclose(nbpout);
+			nbpout = fopen("abyss_output.txt", "w");
+			fprintf(nbpout, "Abyss Output Starts!\n");
 #endif
 
 			NextRegTimeBlock = 0;
@@ -304,3 +282,4 @@ void updateNextRegTime(std::unordered_set<int> &RegularList)
 	NextRegTimeBlock = time;
 	global_variable->NextRegTimeBlock = NextRegTimeBlock;
 }
+

@@ -35,8 +35,8 @@ struct Worker {
         CurrentQueue = 0;
     }
 
-    void initialize(int _AbyssProcessorNumber) {
-        MyRank = _AbyssProcessorNumber;
+    void initialize(int _MyRank) {
+        MyRank = _MyRank;
         onDuty = false;
         if (CMPtclIDs.size() > 0) {
            isCMWorker = true; 
@@ -68,7 +68,7 @@ struct Worker {
         //q->print();
         //sendTask(*q);
         sendTask(queues[CurrentQueue]);
-        //std::cout << "Worker " << AbyssProcessorNumber << " is on duty" << std::endl;
+        //std::cout << "Worker " << MyRank << " is on duty" << std::endl;
     }
 
     void removeQueue() {
@@ -86,12 +86,12 @@ struct Worker {
         CurrentQueue++;
         CurrentQueue %= MAX_QUEUE;
         NumberOfQueues--;
-        //std::cout << "Worker " << AbyssProcessorNumber << " is off duty" << std::endl;
+        //std::cout << "Worker " << MyRank << " is off duty" << std::endl;
     }
 
 /*
     void callback(int &return_value) {
-        MPI_Recv(&return_value, 1, MPI_INT, this->AbyssProcessorNumber, TERMINATE_TAG, abyss_comm, &_status);
+        MPI_Recv(&return_value, 1, MPI_INT, this->MyRank, TERMINATE_TAG, abyss_comm, &_status);
         if (!onDuty) {
             fprintf(stderr, "Something's worng! the worker was not on duty.");
             exit(1);
@@ -102,17 +102,7 @@ struct Worker {
 
 
     void sendTask(Queue &_queue) {
-        if ((_queue.task == 0) || (_queue.task == 1) || (_queue.task == 26))
-        {
-            MPI_Send(&_queue.task,      1, MPI_INT,    this->MyRank, TASK_TAG, abyss_comm);
-            MPI_Send(&_queue.pid,       1, MPI_INT,    this->MyRank, PTCL_TAG, abyss_comm);
-            MPI_Send(&_queue.next_time, 1, MPI_DOUBLE, this->MyRank, TIME_TAG, abyss_comm);
-        }
-        else
-        {
-            MPI_Send(&_queue.task, 1, MPI_INT, this->MyRank, TASK_TAG, abyss_comm);
-            MPI_Send(&_queue.pid,  1, MPI_INT, this->MyRank, PTCL_TAG, abyss_comm);
-        }
+        MPI_Send(&_queue,   1,  QueueType,  this->MyRank,   QUEUE_TAG,  abyss_comm);
         onDuty = true;
     }
 

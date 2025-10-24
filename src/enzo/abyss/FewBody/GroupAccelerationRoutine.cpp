@@ -5,7 +5,6 @@
 
 void CalculateAcceleration01(Particle* ptcl1);
 void CalculateAcceleration23(Particle* ptcl1);
-void deleteNeighbors(int newOrder);
 void mergeGroupCandidates(int OriginalLastParticleIndex);
 
 void formPrimordialBinaries(int OriginalLastParticleIndex) {
@@ -15,12 +14,11 @@ void formPrimordialBinaries(int OriginalLastParticleIndex) {
 
 	for (int i=0; i<=OriginalLastParticleIndex; i++) {
 		ptcl = &particles[i];
-		if (ptcl->NewNumberOfNeighbor > 0) {
+		if (ptcl->NewNumberOfMember > 0) {
 			NewCM = &particles[LastParticleIndex+1];
 			NewCM->clear();
-			NewCM->copyNewNeighbor(ptcl);		
-			NewCM->NewNeighbors[ptcl->NewNumberOfNeighbor] = ptcl->ParticleIndex;
-			NewCM->NewNumberOfNeighbor++;
+			NewCM->copyNewMembers(ptcl);
+			NewCM->NewMembers[NewCM->NewNumberOfMember++] = ptcl->ParticleIndex;
 
 			LastParticleIndex++;
 		}
@@ -34,94 +32,16 @@ void formPrimordialBinaries(int OriginalLastParticleIndex) {
 	for (int i=OriginalLastParticleIndex+1; i<=LastParticleIndex; i++) {
 		// deleteNeighbors(i);
 		NewCM = &particles[i];
-		NewCM->ParticleIndex = i; // (Query) EW: for primordial binaries, there's no need to care about AvailableIndices, right?
-		NewCM->PID = NewPID;
-		NewPID--;
+		NewCM->ParticleIndex = i;
+		NewCM->PID = NewCMPID;
+		NewCMPID--;
 		std::cout << "New Primordial CM ParticleIndex: " << i << std::endl;
 		std::cout << "New Primordial CM PID: " << NewCM->PID << std::endl;
 		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
 
-		NumberOfParticle += 1 - NewCM->NewNumberOfNeighbor;
+		NumberOfParticle += 1 - NewCM->NewNumberOfMember;
 	}
 	global_variable->LastParticleIndex = LastParticleIndex;
-}
-
-void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls,
- std::unordered_map<int,int>& existing, std::unordered_map<int,int>& terminated) {
-
-	Particle* ptcl;
-	Particle* NewCM;
-
-	int OriginalLastParticleIndex = LastParticleIndex;
-
-	for (int i=0; i<ParticleList.size(); i++) {
-		ptcl = &particles[ParticleList[i]];
-		if (ptcl->NewNumberOfNeighbor > 0) {
-			// fprintf(stdout, "GAR. Num: %d\n", ptcl->NewNumberOfNeighbor + 1); // for debugging by EW 2025.1.23
-			// fprintf(stdout, "GAR. PID: %d\n", ptcl->PID); // for debugging by EW 2025.1.23
-			NewCM = &particles[LastParticleIndex+1];
-			NewCM->clear();
-			NewCM->copyNewNeighbor(ptcl);
-			/* // for debugging by EW 2025.1.23
-			for (int j = 0; j < ptcl->NewNumberOfNeighbor; j++) {
-				fprintf(stdout, "GAR. PID: %d\n", particles[ptcl->NewNeighbors[j]].PID);
-			}
-			*/
-			NewCM->NewNeighbors[ptcl->NewNumberOfNeighbor] = ptcl->ParticleIndex;
-			NewCM->NewNumberOfNeighbor++;
-
-			LastParticleIndex++;
-		}
-	}
-
-	if (OriginalLastParticleIndex == LastParticleIndex) return;
-
-	// fprintf(stdout, "A. global_variable->NOP: %d, NOP: %d\n", global_variable->LastParticleIndex, LastParticleIndex);
-
-	mergeGroupCandidates(OriginalLastParticleIndex);	// Merge group candidates
-					// ex) A & B form a group and B & C form a group --> Merge so that A & B & C become one group!
-	
-	// fprintf(stdout, "B. global_variable->NOP: %d, NOP: %d\n", global_variable->LastParticleIndex, LastParticleIndex);
-
-	assert(LastParticleIndex > OriginalLastParticleIndex); 
-
-	while (terminated.size() != 0) {
-
-		Particle* ptcl = &particles[LastParticleIndex];
-		auto it = terminated.begin();
-		particles[it->first].copyNewNeighbor(ptcl);
-
-		existing.insert({it->first, it->second});
-		newCMptcls.push_back(it->first);
-		terminated.erase(it);
-		LastParticleIndex--;
-		if (OriginalLastParticleIndex == LastParticleIndex)
-			break;
-	}
-	if (OriginalLastParticleIndex != LastParticleIndex) {
-		for (int i = OriginalLastParticleIndex+1; i <= LastParticleIndex; i++) {
-			existing.insert({i, existing.size() % NumberOfWorker + 1});
-			newCMptcls.push_back(i);
-		}
-	}
-
-	for (int i: newCMptcls) {
-		// deleteNeighbors(i);
-		NewCM = &particles[i];
-		NewCM->ParticleIndex = i;
-		NewCM->PID = NewPID;
-		NewPID--;
-#ifdef DEBUG_ABYSS
-		fprintf(nbpout, "New CM ParticleIndex, PID: %d, %d\n", i, NewCM->PID);
-		fflush(nbpout);
-#endif
-		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
-
-		NumberOfParticle += 1 - NewCM->NewNumberOfNeighbor;
-	}
-	global_variable->LastParticleIndex = LastParticleIndex;
-
-	ParticleList.insert(ParticleList.end(), newCMptcls.begin(), newCMptcls.end());
 }
 
 void formBinariesAfterCommunication(std::vector<int>& newCMptcls, 
@@ -138,19 +58,11 @@ void formBinariesAfterCommunication(std::vector<int>& newCMptcls,
 		ptcl = &particles[i];
 		if (!ptcl->isActive)
 			continue;
-		if (ptcl->NewNumberOfNeighbor > 0) {
-			// fprintf(stdout, "GAR. Num: %d\n", ptcl->NewNumberOfNeighbor + 1); // for debugging by EW 2025.1.23
-			// fprintf(stdout, "GAR. PID: %d\n", ptcl->PID); // for debugging by EW 2025.1.23
+		if (ptcl->NewNumberOfMember > 0) {
 			NewCM = &particles[LastParticleIndex+1];
 			NewCM->clear();
-			NewCM->copyNewNeighbor(ptcl);
-			/* // for debugging by EW 2025.1.23
-			for (int j = 0; j < ptcl->NewNumberOfNeighbor; j++) {
-				fprintf(stdout, "GAR. PID: %d\n", particles[ptcl->NewNeighbors[j]].PID);
-			}
-			*/
-			NewCM->NewNeighbors[ptcl->NewNumberOfNeighbor] = ptcl->ParticleIndex;
-			NewCM->NewNumberOfNeighbor++;
+			NewCM->copyNewMembers(ptcl);
+			NewCM->NewMembers[NewCM->NewNumberOfMember++] = ptcl->ParticleIndex;
 
 			LastParticleIndex++;
 		}
@@ -171,7 +83,7 @@ void formBinariesAfterCommunication(std::vector<int>& newCMptcls,
 
 		Particle* ptcl = &particles[LastParticleIndex];
 		auto it = terminated.begin();
-		particles[it->first].copyNewNeighbor(ptcl);
+		particles[it->first].copyNewMembers(ptcl);
 
 		existing.insert({it->first, it->second});
 		newCMptcls.push_back(it->first);
@@ -191,17 +103,130 @@ void formBinariesAfterCommunication(std::vector<int>& newCMptcls,
 		// deleteNeighbors(i);
 		NewCM = &particles[i];
 		NewCM->ParticleIndex = i;
-		NewCM->PID = NewPID;
-		NewPID--;
+		NewCM->PID = NewCMPID;
+		NewCMPID--;
 #ifdef DEBUG_ABYSS
 		fprintf(nbpout, "New CM ParticleIndex, PID: %d, %d\n", i, NewCM->PID);
 		fflush(nbpout);
 #endif
 		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
 
-		NumberOfParticle += 1 - NewCM->NewNumberOfNeighbor;
+		NumberOfParticle += 1 - NewCM->NewNumberOfMember;
 	}
 	global_variable->LastParticleIndex = LastParticleIndex;
+}
+
+void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls,
+ std::unordered_map<int,int>& existing, std::unordered_map<int,int>& terminated) {
+
+	Particle* ptcl;
+	Particle* NewCM;
+
+	int OriginalLastParticleIndex = LastParticleIndex;
+
+	for (int i=0; i<ParticleList.size(); i++) {
+		ptcl = &particles[ParticleList[i]];
+		if (ptcl->NewNumberOfMember > 0) {
+			// /* // test by EW 2025.9.18 // It seems to work well by EW 2025.9.20
+			int OriginalNewNumberOfMember = ptcl->NewNumberOfMember;
+			for (int j = 0; j < OriginalNewNumberOfMember; j++) {
+				Particle* member = &particles[ptcl->NewMembers[j]];
+				if (!member->isActive) {
+					fprintf(stdout, "Inactive member (PID: %d) found in formBinaries! Remove it from the group candidate of PID %d\n", member->PID, ptcl->PID);
+					if (j < OriginalNewNumberOfMember - 1) {
+						ptcl->NewMembers[j] = ptcl->NewMembers[OriginalNewNumberOfMember - 1];
+						j--;
+					}
+					else
+						ptcl->NewNumberOfMember--;
+				}
+			}
+			if (ptcl->NewNumberOfMember <= 0) {
+				fprintf(stdout, "Skipping forming group for PID %d since there are no more NewMembers!\n", ptcl->PID);
+				continue;
+			}
+			// */
+			// fprintf(stdout, "GAR. Num: %d\n", ptcl->NewNumberOfMember + 1); // for debugging by EW 2025.1.23
+			// fprintf(stdout, "GAR. PID: %d\n", ptcl->PID); // for debugging by EW 2025.1.23
+			NewCM = &particles[LastParticleIndex+1];
+			NewCM->clear();
+			NewCM->copyNewMembers(ptcl);
+			/* // for debugging by EW 2025.1.23
+			for (int j = 0; j < ptcl->NewNumberOfMember; j++) {
+				fprintf(stdout, "GAR. PID: %d\n", particles[ptcl->NewMembers[j]].PID);
+			}
+			*/
+			NewCM->NewMembers[NewCM->NewNumberOfMember++] = ptcl->ParticleIndex;
+
+			LastParticleIndex++;
+		}
+	}
+
+	if (OriginalLastParticleIndex == LastParticleIndex) return;
+
+	// fprintf(stdout, "A. global_variable->NOP: %d, NOP: %d\n", global_variable->LastParticleIndex, LastParticleIndex);
+
+	mergeGroupCandidates(OriginalLastParticleIndex);	// Merge group candidates
+					// ex) A & B form a group and B & C form a group --> Merge so that A & B & C become one group!
+	
+	// fprintf(stdout, "B. global_variable->NOP: %d, NOP: %d\n", global_variable->LastParticleIndex, LastParticleIndex);
+
+	assert(LastParticleIndex > OriginalLastParticleIndex); 
+
+	while (terminated.size() != 0) {
+
+		Particle* ptcl = &particles[LastParticleIndex];
+		auto it = terminated.begin();
+		particles[it->first].copyNewMembers(ptcl);
+
+		existing.insert({it->first, it->second});
+		newCMptcls.push_back(it->first);
+		terminated.erase(it);
+		LastParticleIndex--;
+		if (OriginalLastParticleIndex == LastParticleIndex)
+			break;
+	}
+	if (OriginalLastParticleIndex != LastParticleIndex) {
+		for (int i = OriginalLastParticleIndex+1; i <= LastParticleIndex; i++) {
+			existing.insert({i, existing.size() % NumberOfWorker + 1});
+			newCMptcls.push_back(i);
+		}
+	}
+
+	for (int i: newCMptcls) {
+		// deleteNeighbors(i);
+		NewCM = &particles[i];
+		if (NewCM->NewNumberOfMember < 2) {
+			fprintf(stderr, "Error in GroupAcceleratonRoutine.cpp: NewCM->NewNumberOfMember < 2\n");
+			for (int j=0; j<NewCM->NewNumberOfMember; j++) {
+				ptcl = &particles[NewCM->NewMembers[j]];
+				fprintf(stderr, "NewCM->NewMembers[%d]: %d\n", j, NewCM->NewMembers[j]);
+				ptcl->NewNumberOfMember = 0;
+				assert(ptcl->isActive);
+			}
+			if (i != LastParticleIndex)
+				terminated.insert({i, existing[i]});
+			else
+				LastParticleIndex--;
+			existing.erase(i);
+			NewCM->clear();
+			continue;
+		}
+		NewCM->ParticleIndex = i;
+		NewCM->NeighborsOffset = NewCM->ParticleIndex * MaxNumNeighbor;
+		NewCM->PID = NewCMPID;
+		NewCMPID--;
+#ifdef DEBUG
+		std::cout << "New CM ParticleIndex: " << i << std::endl;
+		std::cout << "New CM PID: " << NewCM->PID << std::endl;
+#endif
+		NewCM->setBinaryInterruptState(BinaryInterruptState::none);
+
+		NumberOfParticle += 1 - NewCM->NewNumberOfMember;
+	}
+	global_variable->LastParticleIndex = LastParticleIndex;
+
+	ParticleList.insert(ParticleList.end(), newCMptcls.begin(), newCMptcls.end());
 }
 
 
@@ -214,39 +239,38 @@ void mergeGroupCandidates(int OriginalLastParticleIndex) {
 		for (int i = OriginalLastParticleIndex+1; i <= LastParticleIndex; i++) {
 
 			Particle* currentCM = &particles[i];
-			if (currentCM->NewNumberOfNeighbor == 0) continue; // Skip already deleted groups
+			if (currentCM->NewNumberOfMember == 0) continue; // Skip already deleted groups
 
 			for (int j = i + 1; j <= LastParticleIndex; j++) {
 
 				Particle* otherCM = &particles[j];
-				if (otherCM->NewNumberOfNeighbor == 0) continue; // Skip already deleted groups
+				if (otherCM->NewNumberOfMember == 0) continue; // Skip already deleted groups
 
                 // Check if there's any common member between group1 and group2
                 bool commonFound = false;
-				for (int k=0; k < currentCM->NewNumberOfNeighbor; k++) {
-					int member1 = currentCM->NewNeighbors[k];
-					if (std::find(otherCM->NewNeighbors, otherCM->NewNeighbors + otherCM->NewNumberOfNeighbor, member1) != otherCM->NewNeighbors + otherCM->NewNumberOfNeighbor) {
-                        commonFound = true;
-                        break;
-                    }
+				for (int k=0; k < currentCM->NewNumberOfMember; k++) {
+					int member1 = currentCM->NewMembers[k];
+					if (std::find(otherCM->NewMembers, otherCM->NewMembers + otherCM->NewNumberOfMember, member1) != otherCM->NewMembers + otherCM->NewNumberOfMember) {
+						commonFound = true;
+						break;
+					}
                 }
 
                 // If common members are found, merge group2 into group1
                 if (commonFound) {
                     // Merge group2 into group1, avoiding duplicates
-					for (int l=0; l < otherCM->NewNumberOfNeighbor; l++) {
-						int member2 = otherCM->NewNeighbors[l];
-						if (std::find(currentCM->NewNeighbors, currentCM->NewNeighbors + currentCM->NewNumberOfNeighbor, member2) == currentCM->NewNeighbors + currentCM->NewNumberOfNeighbor) {
-							currentCM->NewNeighbors[currentCM->NewNumberOfNeighbor] = member2;
-							currentCM->NewNumberOfNeighbor++;
-                        }
-                    }
+					for (int l=0; l < otherCM->NewNumberOfMember; l++) {
+						int member2 = otherCM->NewMembers[l];
+						if (std::find(currentCM->NewMembers, currentCM->NewMembers + currentCM->NewNumberOfMember, member2) == currentCM->NewMembers + currentCM->NewNumberOfMember) {
+							currentCM->NewMembers[currentCM->NewNumberOfMember] = member2;
+							currentCM->NewNumberOfMember++;
+						}
+					}
 					merged = true;
 
                     // Mark otherGroup for deletion after the loop
-					if (j != LastParticleIndex) {
-						particles[j].copyNewNeighbor(&particles[LastParticleIndex]);
-					}
+					if (j != LastParticleIndex)
+						particles[j].copyNewMembers(&particles[LastParticleIndex]);
 					particles[LastParticleIndex].clear();
 					LastParticleIndex--;
                 }
@@ -255,62 +279,6 @@ void mergeGroupCandidates(int OriginalLastParticleIndex) {
     }
 }
 
-
-void deleteNeighbors(int newOrder) {
-
-	Particle* ptclCM;
-
-	std::cout << "New particle index is " << newOrder << std::endl;
-	ptclCM = &particles[newOrder];
-	ptclCM->PID = NewPID;
-	NewPID--;
-	ptclCM->isActive = true;
-	ptclCM->isCMptcl = true;
-	ptclCM->setBinaryInterruptState(BinaryInterruptState::none);
-
-	Particle* members;
-
-	for (int i=0; i<ptclCM->NewNumberOfNeighbor; i++) {
-		members = &particles[ptclCM->NewNeighbors[i]];
-		members->isActive = false;
-	}
-	NumberOfParticle += 1 - ptclCM->NewNumberOfNeighbor;
-
-	// Erase members and put CM particle in neighbors
-	for (int i=0; i<=LastParticleIndex; i++) {
-
-		Particle* ptcl = &particles[i];
-		if (!ptcl->isActive)
-			continue;
-
-		auto newEnd = std::remove_if(
-			ptcl->Neighbors, 
-			ptcl->Neighbors + ptcl->NumberOfNeighbor, 
-			/* // for debugging by EW 2025.1.22
-			[ptcl, &particles](int j) {
-				if (!particles[j].isActive) {
-					std::cout << "Inactive neighbor PID: " << particles[j].PID << " of particle PID: " << ptcl->PID << std::endl;
-					return true;
-				}
-				return false;
-			*/
-			// /* // original code by EW 2025.1.22
-			[&particles](int j) {
-				return !particles[j].isActive;
-			// */
-			}
-		);
-
-		if (newEnd != ptcl->Neighbors + ptcl->NumberOfNeighbor) {
-			// std::cout << "Original NumberOfNeighbor: " << ptcl->NumberOfNeighbor << std::endl; // for debugging by EW 2025.1.22
-			ptcl->NumberOfNeighbor = newEnd - ptcl->Neighbors;
-			ptcl->Neighbors[ptcl->NumberOfNeighbor] = ptclCM->ParticleIndex;
-			// std::cout << "newly added CM ptcl PID: " << ptclCM->PID << std::endl; // for debugging by EW 2025.1.22
-			ptcl->NumberOfNeighbor++;
-			// std::cout << "New NumberOfNeighbor: " <<ptcl->NumberOfNeighbor << std::endl; // for debugging by EW 2025.1.22
-		}
-	}
-}
 
 void makePrimordialGroup(Particle* ptclCM) {
 
@@ -322,13 +290,13 @@ void makePrimordialGroup(Particle* ptclCM) {
 	ptclCM->GroupInfo = ptclGroup;
 	ptclGroup->groupCM = ptclCM;
 
-	for (int i = 0; i < ptclCM->NewNumberOfNeighbor; ++i) {
-		Particle* members = &particles[ptclCM->NewNeighbors[i]];
+	for (int i = 0; i < ptclCM->NewNumberOfMember; ++i) {
+		Particle* members = &particles[ptclCM->NewMembers[i]];
 		members->isActive = false;
     }
 
 	ptclGroup->initialManager();
-	ptclGroup->initialIntegrator(ptclCM->NewNumberOfNeighbor); // Binary tree is made and CM particle is made automatically.
+	ptclGroup->initialIntegrator(ptclCM->NewNumberOfMember); // Binary tree is made and CM particle is made automatically.
 
 	// ptclCM = &ptclGroup->sym_int.particles.cm;
 	for (int dim=0; dim<Dim; dim++) {
@@ -337,49 +305,15 @@ void makePrimordialGroup(Particle* ptclCM) {
 		ptclCM->Mass = ptclGroup->sym_int.particles.cm.Mass;
 	}
 
-	// ptclCM->RadiusOfNeighbor = ACRadius*ACRadius;
-	// ptclCM->RadiusOfNeighbor = InitialNeighborRadius2; // fixed by EW 2025.3.18
-	ptclCM->RadiusOfNeighbor = particles[ptclCM->Members[0]].RadiusOfNeighbor; // changed for OnlyIrregularRoutine case by EW 2025.9.24
+	// ptclCM->RadiusOfNeighbor = InitialNeighborRadius*InitialNeighborRadius;
+	ptclCM->RadiusOfNeighbor = particles[ptclCM->NewMembers[0]].RadiusOfNeighbor; // changed for OnlyIrregularRoutine case by EW 2025.9.24
 
 	fprintf(workerout, "The ID of CM is %d.\n",ptclCM->PID);
 
 	fprintf(workerout, "------------------NEW-GROUP-MEMBER-INFORMATION------------------\n");
 	for (int i=0; i < ptclGroup->sym_int.particles.getSize(); i++) {
 		Particle* members = &ptclGroup->sym_int.particles[i];
-
-		fprintf(workerout, "PID: %d. Position (pc) - x:%e, y:%e, z:%e, \n", members->PID, members->Position[0]*position_unit, members->Position[1]*position_unit, members->Position[2]*position_unit);
-		fprintf(workerout, "PID: %d. Velocity (km/s) - vx:%e, vy:%e, vz:%e, \n", members->PID, members->Velocity[0]*velocity_unit/yr*pc/1e5, members->Velocity[1]*velocity_unit/yr*pc/1e5, members->Velocity[2]*velocity_unit/yr*pc/1e5);
-		fprintf(workerout, "PID: %d. Mass (Msol) - %e, \n", members->PID, members->Mass*mass_unit);
-		fprintf(workerout, "PID: %d. Particle type: %d\n", members->PID, members->ParticleType);
-        fprintf(workerout, "PID: %d. Total Acceleration - ax:%e, ay:%e, az:%e \n", members->PID, members->a_tot[0][0], members->a_tot[1][0], members->a_tot[2][0]);
-        // fprintf(workerout, "PID: %d. Total Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_tot[0][1], members->a_tot[1][1], members->a_tot[2][1]);
-		// fprintf(workerout, "PID: %d. Total Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_tot[0][2], members->a_tot[1][2], members->a_tot[2][2]);
-		// fprintf(workerout, "PID: %d. Total Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_tot[0][3], members->a_tot[1][3], members->a_tot[2][3]);
-		fprintf(workerout, "PID: %d. Reg Acceleration - ax:%e, ay:%e, az:%e, \n", members->PID, members->a_reg[0][0], members->a_reg[1][0], members->a_reg[2][0]);
-		// fprintf(workerout, "PID: %d. Reg Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_reg[0][1], members->a_reg[1][1], members->a_reg[2][1]);
-		// fprintf(workerout, "PID: %d. Reg Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_reg[0][2], members->a_reg[1][2], members->a_reg[2][2]);
-		// fprintf(workerout, "PID: %d. Reg Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_reg[0][3], members->a_reg[1][3], members->a_reg[2][3]);
-		fprintf(workerout, "PID: %d. Irr Acceleration - ax:%e, ay:%e, az:%e, \n", members->PID, members->a_irr[0][0], members->a_irr[1][0], members->a_irr[2][0]);
-		// fprintf(workerout, "PID: %d. Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_irr[0][1], members->a_irr[1][1], members->a_irr[2][1]);
-		// fprintf(workerout, "PID: %d. Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_irr[0][2], members->a_irr[1][2], members->a_irr[2][2]);
-		// fprintf(workerout, "PID: %d. Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_irr[0][3], members->a_irr[1][3], members->a_irr[2][3]);
-
-		// fprintf(workerout, "PID: %d. Position - x:%e, y:%e, z:%e, \n", members->PID, members->Position[0], members->Position[1], members->Position[2]);
-		// fprintf(workerout, "PID: %d. Velocity - vx:%e, vy:%e, vz:%e, \n", members->PID, members->Velocity[0], members->Velocity[1], members->Velocity[2]);
-		// fprintf(workerout, "PID: %d. Mass - %e, \n", members->PID, members->Mass);
-		// fprintf(workerout, "PID: %d. Particle type: %d\n", members->PID, members->ParticleType);
-        // fprintf(workerout, "PID: %d. Total Acceleration - ax:%e, ay:%e, az:%e \n", members->PID, members->a_tot[0][0], members->a_tot[1][0], members->a_tot[2][0]);
-        // fprintf(workerout, "PID: %d. Total Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_tot[0][1], members->a_tot[1][1], members->a_tot[2][1]);
-		// fprintf(workerout, "PID: %d. Total Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_tot[0][2], members->a_tot[1][2], members->a_tot[2][2]);
-		// fprintf(workerout, "PID: %d. Total Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_tot[0][3], members->a_tot[1][3], members->a_tot[2][3]);
-		// fprintf(workerout, "PID: %d. Reg Acceleration - ax:%e, ay:%e, az:%e, \n", members->PID, members->a_reg[0][0], members->a_reg[1][0], members->a_reg[2][0]);
-		// fprintf(workerout, "PID: %d. Reg Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_reg[0][1], members->a_reg[1][1], members->a_reg[2][1]);
-		// fprintf(workerout, "PID: %d. Reg Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_reg[0][2], members->a_reg[1][2], members->a_reg[2][2]);
-		// fprintf(workerout, "PID: %d. Reg Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_reg[0][3], members->a_reg[1][3], members->a_reg[2][3]);
-		// fprintf(workerout, "PID: %d. Irr Acceleration - ax:%e, ay:%e, az:%e, \n", members->PID, members->a_irr[0][0], members->a_irr[1][0], members->a_irr[2][0]);
-		// fprintf(workerout, "PID: %d. Irr Acceleration - axdot:%e, aydot:%e, azdot:%e, \n", members->PID, members->a_irr[0][1], members->a_irr[1][1], members->a_irr[2][1]);
-		// fprintf(workerout, "PID: %d. Irr Acceleration - ax2dot:%e, ay2dot:%e, az2dot:%e, \n", members->PID, members->a_irr[0][2], members->a_irr[1][2], members->a_irr[2][2]);
-		// fprintf(workerout, "PID: %d. Irr Acceleration - ax3dot:%e, ay3dot:%e, az3dot:%e, \n", members->PID, members->a_irr[0][3], members->a_irr[1][3], members->a_irr[2][3]);
+		members->printParticleInfo(workerout);
     }
 
 	ptclGroup->sym_int.initialIntegration(0); // This is primordial binary!

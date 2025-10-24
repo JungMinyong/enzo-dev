@@ -1,13 +1,14 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-enum TaskName {
+#include <cstdint>
+
+enum TaskName : int8_t {
     IrrForce = 0,
     RegForce = 1,
     IrrUpdate = 2, 
     RegUpdate = 3,
     RegCuda = 4,
-    RegCudaUpdate = 5,
     InitAcc1 = 7,
     InitAcc2 = 8,
     InitTime = 9,
@@ -21,6 +22,8 @@ enum TaskName {
     MergeManyBody = 27,
     ResetSDARTime = 28,
     InitOnGPU = 29,
+    PrepareGPUCalc = 31,
+    PrepareGPUCalc_init = 32,
     Synchronize = 100,
     Ends = -100,
     Error = -1

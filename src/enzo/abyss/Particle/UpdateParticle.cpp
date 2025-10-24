@@ -2,127 +2,9 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
-#include <cassert>
 #include "../global.h"
 #include "../def.h"
 
-#define SMALL_TIMESTEP_TEST
-
-
-
-
-#ifdef CUDA_FLOAT
-void Particle::predictParticleSecondOrder(double dt, CUDA_REAL pos[], CUDA_REAL vel[]) {
-	// Doubling check
-	// temporary variables for calculation
-
-	// only predict the positions if necessary
-	// how about using polynomial correction here?
-	
-#ifdef COMOVE
-	// (Query) Should I use CurrentTimeReg instead of CurrentTimeIrr if NumNeighbor == 0?
-	double vel_mid;
-	double a = getScaleFactor(dt, global_variable->a_i, global_variable->a_f); //global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(CurrentTimeIrr+dt*0.5); //dt is range from 0 to 1
-	double dadt = getScaleFactorDot(dt, global_variable->a_i, global_variable->a_f); //global_variable->dadt_i + (global_variable->dadt_f-global_variable->dadt_i)*(CurrentTimeIrr+dt*0.5);
-	double H   = dadt / a;
-	double a2  = a*a;
-#endif
-
-	dt = dt*global_variable->EnzoTimeStep;
-	fprintf(nbpout, "dt = %e, a, dadt, H = %e, %e, %e\n", dt, a, dadt, H);
-
-	if (dt == 0 || std::isnan(a_tot[0][0])) {
-		for (int dim=0; dim<Dim; dim++) {
-			pos[dim] = (CUDA_REAL)Position[dim];
-			vel[dim] = (CUDA_REAL)Velocity[dim];
-		}
-	}
-	else {
-		for (int dim=0; dim<Dim; dim++) {
-#ifdef COMOVE
-			// a_tot[dim] is obtained from comoving separation. So we have to devided it by a^2
-			// vel_mid = (a_tot[dim][1]*dt/2 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt*0.5 + Velocity[dim];
-			double acc = a_tot[dim][0] + BackgroundAcceleration[dim];// g/a^2
-			double jerk= a_tot[dim][1]; // - H * a_tot[dim][0]/a2;       // j/a^2
-			double dudt   = acc - H * Velocity[dim];   // total peculiar acceleration
-
-			fprintf(nbpout, "acc = %e, jerk = %e, dudt = %e\n", acc, jerk, dudt);
-
-			// 2nd‑order velocity
-			vel[dim] = (CUDA_REAL) Velocity[dim] + (dudt + 0.5*jerk*dt)*dt;
-			double xdot  = Velocity[dim]/a;
-			double xddot = (dudt - H*Velocity[dim]) / a;   // from d(u/a)/dt
-			pos[dim] = (CUDA_REAL) Position[dim] + xdot*dt + 0.5*xddot*dt*dt + jerk*dt*dt*dt/(6.0*a);
-			// fprintf(stderr, "PID = %d, a_tot[dim][0] = %e, a_tot[dim][1] = %e, BackgroundAcceleration[dim] = %e, vel_mid = %e, dt = %e\n",  PID, a_tot[dim][0], a_tot[dim][1], BackgroundAcceleration[dim], vel_mid, dt);
-			// fprintf(stderr, "PID = %d, a = %e, dadt = %e, dt = %e\n", PID, a, dadt, dt);
-#else
-			pos[dim] = (CUDA_REAL) ((a_tot[dim][1]*dt/3 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt/2 + Velocity[dim])*dt + Position[dim];
-			vel[dim] = (CUDA_REAL)  (a_tot[dim][1]*dt/2 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt   + Velocity[dim];
-#endif
-		}
-	}
-
-	/*
-	if (StarParticleFeedback != 0) {
-		PredMass = Mass + evolveStarMass(CurrentTimeIrr, CurrentTimeIrr+TimeStepIrr*1.01);
-		Mdot     = (PredMass - Mass)/TimeStepIrr*1e-2;
-	}
-	else {
-		PredMass = Mass;
-		Mdot     = 0;
-	}
-	*/
-	return;
-}
-#endif
-
-void Particle::predictParticleSecondOrder(double dt, double pos[], double vel[]) {
-	// Doubling check
-	// temporary variables for calculation
-
-	// only predict the positions if necessary
-	// how about using polynomial correction here?
-#ifdef COMOVE
-	// (Query) Should I use CurrentTimeReg instead of CurrentTimeIrr if NumNeighbor == 0?
-	double vel_mid;
-	double a = getScaleFactor(dt, global_variable->a_i, global_variable->a_f); //global_variable->a_i + (global_variable->a_f-global_variable->a_i)*(CurrentTimeIrr+dt*0.5); //dt is range from 0 to 1
-	double dadt = getScaleFactorDot(dt, global_variable->a_i, global_variable->a_f); //global_variable->dadt_i + (global_variable->dadt_f-global_variable->dadt_i)*(CurrentTimeIrr+dt*0.5);
-	double H   = dadt / a;
-	double a2  = a*a;
-#endif
-
-	dt = dt*global_variable->EnzoTimeStep;
-
-	if (dt == 0) {
-		for (int dim=0; dim<Dim; dim++) {
-			pos[dim] = Position[dim];
-			vel[dim] = Velocity[dim];
-		}
-	}
-	else {
-		for (int dim=0; dim<Dim; dim++) {
-#ifdef COMOVE
-			// a_tot[dim] is obtained from comoving separation. So we have to devided it by a^2
-			// vel_mid = (a_tot[dim][1]*dt/2 + a_tot[dim][0] + BackgroundAcceleration[dim])*dt*0.5 + Velocity[dim];
-			double acc = a_tot[dim][0] + BackgroundAcceleration[dim];// g/a^2
-			double jerk= a_tot[dim][1]; // - H * a_tot[dim][0]/a2;       // j/a^2
-			double dudt   = acc - H * Velocity[dim];   // total peculiar acceleration
-
-			// 2nd‑order velocity
-			vel[dim] = Velocity[dim] + (dudt + 0.5*jerk*dt)*dt;
-			double xdot  = Velocity[dim]/a;
-			double xddot = (dudt - H*Velocity[dim]) / a;   // from d(u/a)/dt
-			pos[dim] = Position[dim] + xdot*dt + 0.5*xddot*dt*dt + jerk*dt*dt*dt/(6.0*a);
-			// fprintf(stderr, "PID = %d, a_tot[dim][0] = %e, a_tot[dim][1] = %e, BackgroundAcceleration[dim] = %e, vel_mid = %e, dt = %e\n",  PID, a_tot[dim][0], a_tot[dim][1], BackgroundAcceleration[dim], vel_mid, dt);
-			// fprintf(stderr, "PID = %d, a = %e, dadt = %e, dt = %e\n", PID, a, dadt, dt);
-#else
-			pos[dim] = ((a_tot[dim][1] * dt / 3 + a_tot[dim][0] + BackgroundAcceleration[dim]) * dt / 2 + Velocity[dim]) * dt + Position[dim];
-			vel[dim] = (a_tot[dim][1] * dt / 2 + a_tot[dim][0] + BackgroundAcceleration[dim]) * dt + Velocity[dim];
-#endif
-		}
-	}
-	return;
-}
 
 
 /*
@@ -159,48 +41,43 @@ void Particle::polynomialPrediction(double current_time) {
 */
 
 
-void Particle::updateParticle() {
-	
-	for (int dim=0; dim<Dim; dim++) {
-		this->Position[dim] = this->NewPosition[dim];
-		this->Velocity[dim] = this->NewVelocity[dim];
-	}
-	
-	//updateTimeStep();
-}
-
-
 
 void Particle::updateRadius() {
 
 	/* exponential (aggressive) */
 	/*
-		const double c = 0.5;
-		const double b = std::log(2) / (NumNeighborMax);  // ln(2) / 40
-		double exp = a * (std::exp(b * NumberOfAC) - 1);
-		*/
+	const double c = 0.5;
+	const double b = std::log(2) / (MaxNumNeighbor);  // ln(2) / 40
+	double exp = a * (std::exp(b * NumberOfAC) - 1);
+	*/
 
 	/* n=2 polynomial (mild) as n increases it grows mild */
 
+	const double MaxRadius2 = MaxNeighborRadius*MaxNeighborRadius/(position_unit*position_unit);
+
 	if (this->NumberOfNeighbor > FixNumNeighbor) {
 		const int n = 2;
-		const double c = (NumNeighborMax-FixNumNeighbor);
+		const double c = (MaxNumNeighbor-FixNumNeighbor);
 		const double b = 0.9 / std::pow(c,n);  // ln(2) / 40
 		double x = this->NumberOfNeighbor-FixNumNeighbor;
 		double a = n%2==0 ? b*std::abs(x)*std::pow(x,n-1) : b*std::pow(x,n);
 		//fprintf(stdout, "PID=%d, NumberOfAC=%d, 1-a=%e, R0=%e(%e), R=%e(%e)\n",
 		//PID,NumberOfAC, 1.-a, RadiusOfAC, RadiusOfAC*RadiusOfAC, RadiusOfAC*(1-a),RadiusOfAC*(1-a)*RadiusOfAC*(1-a));
 		this->RadiusOfNeighbor *= (1.-a);
+		if (this->RadiusOfNeighbor > MaxRadius2)
+			this->RadiusOfNeighbor = MaxRadius2;
 	}
 	else if (this->NumberOfNeighbor < FixNumNeighbor) {
 		const int n = 3;
-		const double c = (NumNeighborMax-FixNumNeighbor);
+		const double c = (MaxNumNeighbor-FixNumNeighbor);
 		const double b = 0.5 / std::pow(c,n);  // ln(2) / 40
 		double x = this->NumberOfNeighbor-FixNumNeighbor;
 		double a = n%2==0 ? b*std::abs(x)*std::pow(x,n-1) : b*std::pow(x,n);
 		//fprintf(stdout, "PID=%d, NumberOfAC=%d, 1-a=%e, R0=%e(%e), R=%e(%e)\n",
 		//PID,NumberOfAC, 1.-a, RadiusOfAC, RadiusOfAC*RadiusOfAC, RadiusOfAC*(1-a),RadiusOfAC*(1-a)*RadiusOfAC*(1-a));
 		this->RadiusOfNeighbor *= (1.-a);
+		if (this->RadiusOfNeighbor > MaxRadius2)
+			this->RadiusOfNeighbor = MaxRadius2;
 	}
 }
 
@@ -218,16 +95,6 @@ void Particle::calculateTimeStepIrr() {
 	double TimeStepTmp;
 	int TimeLevelTmp, TimeLevelTmp0;
 	ULL TimeBlockTmp;
-
-
-#ifdef SMALL_TIMESTEP_TEST
-	fprintf(stderr, "In calculateTimeStepyIrr, before SMALL_TIMESTEP_TEST, TimeLevelIrr=%d, TimeStepIrr=%e\n", TimeLevelIrr, TimeStepIrr);
-	TimeStepIrr  = 0.25; // 0.5 Myr
-	TimeLevelIrr  = static_cast<int>(log(TimeStepIrr)/log(2.)); // 0.5 Myr
-	TimeBlockIrr = static_cast<ULL>(pow(2,TimeLevelIrr-global_variable->time_block));
-	return;
-#endif
-
 
 	if (this->NumberOfNeighbor == 0) {
 		TimeLevelIrr = TimeLevelReg;
@@ -303,7 +170,7 @@ void Particle::calculateTimeStepIrr() {
 		fprintf(stderr, "Too small TimeStepIrr! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
 				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit,
 				TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
-		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
@@ -339,14 +206,6 @@ void Particle::calculateTimeStepIrr2() {
 	double TimeStepTmp;
 	int TimeLevelTmp, TimeLevelTmp0;
 	ULL TimeBlockTmp;
-
-#ifdef SMALL_TIMESTEP_TEST
-fprintf(stderr, "In calculateTimeStepIrr2, before SMALL_TIMESTEP_TEST, TimeLevelIrr=%d, TimeStepIrr=%e\n", TimeLevelIrr, TimeStepIrr);
-	TimeStepIrr  = 0.25; // 0.5 Myr
-	TimeLevelIrr  = static_cast<int>(log(TimeStepIrr)/log(2.)); // 0.5 Myr
-	TimeBlockIrr = static_cast<ULL>(pow(2,TimeLevelIrr-global_variable->time_block));
-	return;
-#endif
 
 	if (this->NumberOfNeighbor == 0) {
 		TimeLevelIrr = TimeLevelReg;
@@ -397,8 +256,8 @@ fprintf(stderr, "In calculateTimeStepIrr2, before SMALL_TIMESTEP_TEST, TimeLevel
 	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
 		fprintf(stderr, "Too small TimeStepIrr! PID: %d, TimeStep = %e, TimeStepTmp0 = %e\n",
 				PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
-		exit(1);
-		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+		// exit(1);
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
 			TimeLevelIrr++;
 			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
@@ -431,14 +290,6 @@ void Particle::calculateTimeStepReg() {
 	double TimeStepTmp;
 	ULL TimeBlockTmp;
 	int TimeLevelTmp, TimeLevelTmp0;
-
-#ifdef SMALL_TIMESTEP_TEST
-	TimeStepReg  = 0.5; 
-	TimeLevelReg  = static_cast<int>(log(TimeStepReg)/log(2.)); // 0.5 Myr
-	TimeBlockReg = static_cast<ULL>(pow(2,TimeLevelReg-global_variable->time_block));
-	fprintf(stderr, "In calculateTimeStepReg, before SMALL_TIMESTEP_TEST, TimeLevelReg=%d, TimeStepReg=%e\n", TimeLevelReg, TimeStepReg);
-	return;
-#endif
 
 	getBlockTimeStep(getNewTimeStepReg(Velocity, a_reg), TimeLevelTmp, TimeBlockTmp, TimeStepTmp);
 
@@ -502,16 +353,14 @@ void Particle::calculateTimeStepReg() {
 	TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
 	TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 
+	/*
 	if (TimeStepReg*global_variable->EnzoTimeStep*1e4 < 1e-7) {
 		fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
 				PID, TimeStepReg * global_variable->EnzoTimeStep * 1e4, static_cast<double>(pow(2, TimeLevelTmp0)) * global_variable->EnzoTimeStep * 1e4);
 		fflush(stderr);
 	}
+	*/
 
-	if (CurrentTimeReg+TimeStepReg > 1 && CurrentTimeReg != 1.0) {
-		TimeStepReg = 1 - CurrentTimeReg;
-		TimeBlockReg = global_variable->block_max-CurrentBlockReg;
-	}
 	/*
 	if (TimeStepReg*EnzoTimeStep*1e4<1e-9) {
 		fprintf(stderr, "PID: %d, TimeStep = %.3e, TimeStepTmp0 = %.3e\n",
@@ -519,11 +368,11 @@ void Particle::calculateTimeStepReg() {
 		throw std::runtime_error("TimeStepReg is too small.");
 	}
 	*/
-	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-7) {
+	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-8) {
 		fprintf(stderr, "Too small TimeStepReg! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
 				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit, 
 				TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
-		while (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-7) {
+		while (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-6) {
 			TimeLevelReg++;
 			TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
 			TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
@@ -545,14 +394,22 @@ void Particle::calculateTimeStepReg() {
 		TimeStepReg  = static_cast<double>(pow(2, TimeLevelReg));
 		TimeBlockReg = static_cast<ULL>(pow(2, TimeLevelReg-global_variable->time_block));
 	}
+	if (CurrentTimeReg+TimeStepReg > 1 && CurrentTimeReg != 1.0) {
+		TimeStepReg = 1 - CurrentTimeReg;
+		TimeBlockReg = global_variable->block_max-CurrentBlockReg;
+	}
 	// */
-
 
 	//std::cout << "NBODY+: TimeStepReg = " << TimeStepReg << std::endl;
 }
 
 
-// Use this function when OnlyIrregularRoutines is true (RadiusOfNeighbor == 1e20)
+
+
+
+
+
+// Use this function when OnlyIrregularRoutine is true (RadiusOfNeighbor == 1e20)
 void Particle::calculateTimeStepOnlyIrr() {
 
 #ifdef SMALL_TIMESTEP_TEST
@@ -616,7 +473,7 @@ void Particle::calculateTimeStepOnlyIrr() {
 
 
 
-// Use this function in FBInitialization when OnlyIrregularRoutines is true (RadiusOfNeighbor == 1e20)
+// Use this function in FBInitialization when OnlyIrregularRoutine is true (RadiusOfNeighbor == 1e20)
 void Particle::calculateTimeStepOnlyIrr2() {
 
 #ifdef SMALL_TIMESTEP_TEST

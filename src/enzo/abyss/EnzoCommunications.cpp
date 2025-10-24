@@ -149,7 +149,7 @@ int InitialCommunication() {
     IdentifyNbodyParticles      = params_int[1];
     IdentifyOnTheFly            = params_int[2];
     FixNumNeighbor              = params_int[3];
-    MaxNumNeighbor              = params_int[4]; // (Query) This is compile parameter
+    int unused_maxnumneighbor   = params_int[4]; // (Query) This is compile parameter
     BinaryRegularization        = params_int[5];
     StoreTimeStep               = params_int[6];
 
@@ -1019,9 +1019,9 @@ int SendParticleToEnzo(Worker *workers) {
                 if (CMPtclsSet.find(ptcl->CMPtclIndex) == CMPtclsSet.end()) {
 
                     CMPtclsSet.insert(ptcl->CMPtclIndex);
-                    ptclCM->NewNumberOfNeighbor = 0;
+                    ptclCM->NewNumberOfMember = 0;
                 }
-                ptclCM->NewNeighbors[ptclCM->NewNumberOfNeighbor++] = offset;
+                ptclCM->NewMembers[ptclCM->NewNumberOfMember++] = i;
             } else if (ptcl->Mass < 0.0) { // merger induced zero-mass particles, PISN case
 
                 fprintf(stdout,
@@ -1133,7 +1133,7 @@ int SendParticleToEnzo(Worker *workers) {
 			ptcl->Position[dim] -= NbodyCOM[dim] * EnzoLength;
 #endif
 
-        assert(ptcl->NewNumberOfNeighbor == ptcl->NumberOfMember);
+        assert(ptcl->NewNumberOfMember == ptcl->NumberOfMember);
 
         double memPosition[3];
         double memVelocity[3];
@@ -1183,13 +1183,13 @@ int SendParticleToEnzo(Worker *workers) {
 
             fprintf(stderr,
                     "Binary escape... CM PID: %d, NumberOfMember: %d, "
-                    "NewNumberOfNeighbors: %d\n",
-                    ptcl->PID, ptcl->NumberOfMember, ptcl->NewNumberOfNeighbor);
+                    "NewNumberOfMember: %d\n",
+                    ptcl->PID, ptcl->NumberOfMember, ptcl->NewNumberOfMember);
             for (int j = 0; j < ptcl->NumberOfMember; j++) {
                 members = &particles[ptcl->Members[j]];
-                sendbuf[ptcl->NewNeighbors[j]].Position[0] -= 20;
+                sendbuf[ptcl->NewMembers[j]].Position[0] -= 20;
                 fprintf(stderr, "Binary escape... mem PID: %d, i: %d\n",
-                        members->PID, ptcl->NewNeighbors[j]);
+                        members->PID, ptcl->NewMembers[j]);
                 deleteParticle(members->PID, ptcl->Members[j]);
                 NumberOfEscapeParticle++;
 #ifdef SEVN

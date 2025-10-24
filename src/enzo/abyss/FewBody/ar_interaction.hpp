@@ -5,7 +5,7 @@
 
 extern FILE* workerout;
 extern Particle *particles;
-extern GlobalVariable *global_variable;
+extern int* Neighbors;
 
 #include "ar_perturber.hpp"
 #include <cassert>
@@ -202,7 +202,7 @@ public:
             Float time = _time;
 
             // auto* pert_adr = _perturber.neighbor_address.getDataAddress();
-            auto pert_adr = _particle_cm.Neighbors;
+            int* pert_adr = Neighbors + _particle_cm.NeighborsOffset;
 
             Float xp[n_pert][3], xcm[3], m[n_pert];
             // ChangeOver* changeover[n_pert_single];
@@ -236,7 +236,7 @@ public:
                 //     n_single_count++;
                 // }
 
-                
+
 #ifdef COMOVE
                 Float dt = time / global_variable->EnzoTimeStep - pertj->CurrentTimeIrr;
                 // ASSERT(dt>=0.0); // Eunwoo debug // Is this right?
@@ -292,10 +292,6 @@ public:
                 m[n_pert_active] = pertj->Mass;
                 n_pert_active++;
             }
-            if (n_pert_active != n_pert) {
-                m[n_pert_active] = 0.0;
-                n_pert_active++;
-            }
             // ASSERT(n_single_count == n_pert_single);
             // ASSERT(n_group_count == n_pert_group);
 #ifdef COMOVE
@@ -338,7 +334,7 @@ public:
                 xi[2] = pi.Position[2] + xcm[2];
 
                 // single perturber
-                for (int j=0; j<n_pert; j++) {
+                for (int j=0; j<n_pert_active; j++) {
                     Float dr[3] = {xp[j][0] - xi[0],
                                    xp[j][1] - xi[1],
                                    xp[j][2] - xi[2]};
@@ -405,7 +401,7 @@ public:
       \return perturbation energy to calculate slowdown factor
     */
     // Float calcAccPotAndGTKickInv(AR::Force* _force, Float& _epot, const Particle* _particles, const int _n_particle, const Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
-        Float calcAccPotAndGTKickInv(AR::Force* _force, Float& _epot, const Particle* _particles, const int _n_particle, Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
+    Float calcAccPotAndGTKickInv(AR::Force* _force, Float& _epot, const Particle* _particles, const int _n_particle, Particle& _particle_cm, const Perturber& _perturber, const Float _time) {
         // inner force
         Float gt_kick_inv;
         if (_n_particle==2) gt_kick_inv = calcInnerAccPotAndGTKickInvTwo(_force[0], _force[1], _epot, _particles[0], _particles[1]);
@@ -533,7 +529,7 @@ public:
 
         if (n_pert>0) {
 
-            auto pert_adr = _particle_cm.Neighbors;
+            int* pert_adr = Neighbors + _particle_cm.NeighborsOffset;
 
             std::unordered_set<int> CMPtclsSet;
 
@@ -699,7 +695,7 @@ public:
                 Float gm = gravitational_constant*(mcm+mj);
 
                 calcSlowDownTimeScale(_t_min_sq, dv, dr, r, gm);
-#endif
+#endif                
             }
         }
         else {
@@ -861,16 +857,18 @@ public:
 
         Float radius = 0.0;
 
-        if (p1->ParticleType >= BlackHole && p2->ParticleType == BlackHole) {
-            radius = (p1->radius > p2->radius) ? 3*p1->radius : 3*p2->radius; // r_ISCO == 3 * Schwartzschild raiuds
+        if (p1->ParticleType > REMNANT && p2->ParticleType > REMNANT) {
+            // radius = (p1->radius > p2->radius) ? 3*p1->radius : 3*p2->radius; 
+            // r_ISCO == 3 * Schwartzschild raiuds
+            radius = (p1->Mass >= p2->Mass) ? 6*p1->Mass/pow(299752.458/(velocity_unit/yr*pc/1e5), 2) : 6*p2->Mass/pow(299752.458/(velocity_unit/yr*pc/1e5), 2);
         }
-        else if (p1->ParticleType >= BlackHole && p2->ParticleType < BlackHole) {
+        else if (p1->ParticleType > REMNANT && p2->ParticleType < REMNANT) {
             radius = 1.3*pow((p1->Mass + p2->Mass)/p2->Mass, 1./3)*p2->radius; // TDE radius
         }
-        else if (p1->ParticleType < BlackHole && p2->ParticleType >= BlackHole) {
+        else if (p1->ParticleType < REMNANT && p2->ParticleType > REMNANT) {
             radius = 1.3*pow((p1->Mass + p2->Mass)/p1->Mass, 1./3)*p1->radius; // TDE radius
         }
-        else if (p1->ParticleType < BlackHole && p2->ParticleType < BlackHole) {
+        else if (p1->ParticleType < REMNANT && p2->ParticleType < REMNANT) {
             radius = p1->radius + p2->radius; // Sum of two stellar radius
         }
 

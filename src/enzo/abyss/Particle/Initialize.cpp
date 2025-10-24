@@ -38,7 +38,7 @@ void CalculateAcceleration01(Particle* ptcl1) {
 	
 	//fprintf(stdout, "pid=%d, nn=%d, numpart=%d\n", ptcl1->PID, ptcl1->NumberOfNeighbor, LastParticleIndex);
 	Particle *ptcl2;
-	for (int i=0; i<global_variable->LastParticleIndex; i++) {
+	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl2 = &particles[i];
 
 		if (!ptcl2->isActive || ptcl1->PID == ptcl2->PID) {
@@ -75,13 +75,15 @@ void CalculateAcceleration01(Particle* ptcl1) {
 				ptcl1->a_irr[dim][1] += m_r3*(v[dim] - 3*x[dim]*vx/r2);
 			}
 			if (!ptcl2->isCMptcl) {
-				ptcl1->Neighbors[ptcl1->NumberOfNeighbor] = ptcl2->ParticleIndex; // Eunwoo: PID -> ParticleIndex
+				Neighbors[ptcl1->NeighborsOffset + ptcl1->NumberOfNeighbor] = ptcl2->ParticleIndex;
 				ptcl1->NumberOfNeighbor++;
+				assert(ptcl1->NumberOfNeighbor < MaxNumNeighbor);
 			}
 			else {
 				for (int j=0; j<ptcl2->NumberOfMember; j++) {
-					ptcl1->Neighbors[ptcl1->NumberOfNeighbor] = ptcl2->Members[j];
+					Neighbors[ptcl1->NeighborsOffset + ptcl1->NumberOfNeighbor] = ptcl2->Members[j];
 					ptcl1->NumberOfNeighbor++;
+					assert(ptcl1->NumberOfNeighbor < MaxNumNeighbor);
 				}
 			}
 			//fprintf(stdout, "pid=%d, nn=%d\n", ptcl1->PID, ptcl1->NumberOfNeighbor);
@@ -95,14 +97,6 @@ void CalculateAcceleration01(Particle* ptcl1) {
 	}
 	return;
 }
-
-
-	/*
-		// Calculate 2nd and 3rd derivatives of acceleration
-		if (restart) {
-			;
-		}
-	*/
 
 void CalculateAcceleration23(Particle* ptcl1) {
 
@@ -121,13 +115,13 @@ void CalculateAcceleration23(Particle* ptcl1) {
 	}
 
 	Particle *ptcl2;
-	for (int i=0; i<global_variable->LastParticleIndex; i++) {
+	for (int i=0; i<=global_variable->LastParticleIndex; i++) {
 		ptcl2 = &particles[i];
 
 		if (!ptcl2->isActive || ptcl1->PID == ptcl2->PID) {
 			continue;
 		}
-		
+
 		r2 = 0;
 		r3 = 0;
 		v2 = 0;
@@ -213,7 +207,7 @@ void Particle::initializeTimeStep() {
 	//std::cout << "TimeStepReg=" << this->TimeStepReg*EnzoTimeStep*1e10/1e6 << std::endl;
 
 
-	this->TimeStepReg  = MIN(1,this->TimeStepReg);
+	this->TimeStepReg  = std::min(1.0, this->TimeStepReg);
 	this->TimeBlockReg = std::min(global_variable->block_max, this->TimeBlockReg);
 	this->TimeLevelReg = std::min(0, this->TimeLevelReg);
 
@@ -232,64 +226,4 @@ void Particle::initializeTimeStep() {
 	this->CurrentBlockIrr = 0;
 	this->CurrentBlockReg = 0;
 
-	/*
-    fprintf(stderr, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n",
-	AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
-    fprintf(nbpout, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n",
-	AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
-    fprintf(workerout, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n",
-	AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
-	fflush(nbpout);
-	*/
 }
-
-
-/* this is for few body initialization
- *
-int InitializeTimeStep(Particle* particle, int size) {
-	std::cout << "Initializing timesteps ..." << std::endl;
-	double dtIrr, dtReg;
-	Particle *ptcl;
-
-	for (int i=0; i<size; i++){
-		ptcl = &particle[i];
-		dtReg = getNewTimeStep(ptcl->a_reg, ptcl->a_reg);
-		getBlockTimeStep(dtReg, ptcl->TimeLevelReg, ptcl->TimeBlockReg, ptcl->TimeStepReg);
-
-		if (ptcl->NumberOfAC != 0) {
-			dtIrr = getNewTimeStep(ptcl->a_tot, ptcl->a_irr);
-			getBlockTimeStep(dtIrr, ptcl->TimeLevelIrr, ptcl->TimeBlockIrr, ptcl->TimeStepIrr);
-		}
-		else {
-			ptcl->TimeBlockIrr = ptcl->TimeBlockReg;
-			ptcl->TimeLevelIrr = ptcl->TimeLevelReg;
-			ptcl->TimeStepIrr  = ptcl->TimeStepReg;
-		}
-
-		ptcl->TimeStepReg  = MIN(1,ptcl->TimeStepReg);
-		ptcl->TimeBlockReg = std::min(block_max, ptcl->TimeBlockReg);
-		ptcl->TimeLevelReg = std::min(0, ptcl->TimeLevelReg);
-
-		ptcl->CurrentTimeIrr  = 0;
-		ptcl->CurrentTimeReg  = 0;
-		ptcl->CurrentBlockIrr = 0;
-		ptcl->CurrentBlockReg = 0;
-	} // endfor size
-
-	for (int i=0; i<size; i++){
-		ptcl = &particle[i];
-
-		if (ptcl->NumberOfAC != 0) {
-			while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg) {
-				ptcl->TimeLevelIrr--;
-			}
-		}
-		ptcl->TimeBlockIrr = static_cast<ULL>(pow(2, ptcl->TimeLevelIrr-time_block));
-		ptcl->TimeBlockReg = static_cast<ULL>(pow(2, ptcl->TimeLevelReg-time_block));
-	} //endfor size
-	return true;
-}
-
-
-
-*/

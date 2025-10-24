@@ -40,7 +40,7 @@ void Particle::checkNewGroup() {
     // check only active particles 
     // single case
     for (int i=0; i < this->NumberOfNeighbor; i++) {
-        ptcl2 = &particles[this->Neighbors[i]];
+        ptcl2 = &particles[Neighbors[this->NeighborsOffset + i]];
         if (!ptcl2->isActive) {
             if (ptcl2->CMPtclIndex != -1) {
                 CMPtclsSet.insert(ptcl2->CMPtclIndex);
@@ -52,15 +52,16 @@ void Particle::checkNewGroup() {
         if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
             continue;
 
-        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double time_ptcl2 = (ptcl2->NumberOfNeighbor == 0) ? ptcl2->CurrentTimeReg : ptcl2->CurrentTimeIrr;
+
+        double dt = std::abs(this->CurrentTimeIrr - time_ptcl2);
 
         double pos2[Dim], vel2[Dim];
         
 		this->predictParticleSecondOrder(dt, pos1, vel1);
 		ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-        const Float dr = dist(pos1, pos2);
+        const Float dr = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
         
         if (dr < r_crit) {
 
@@ -89,8 +90,7 @@ void Particle::checkNewGroup() {
                 // if kappa_org < criterion, avoid to form new group, should be consistent as checkbreak
                 if(kappa_org<kappa_org_crit) continue;
 // */ // test_1e4_2
-                this->NewNeighbors[this->NewNumberOfNeighbor] = this->Neighbors[i];
-                this->NewNumberOfNeighbor++;
+                this->NewMembers[this->NewNumberOfMember++] = ptcl2->ParticleIndex;
             }
         }
     }
@@ -110,15 +110,16 @@ void Particle::checkNewGroup() {
         if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
             continue;
 
-        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double time_ptcl2 = (ptcl2->NumberOfNeighbor == 0) ? ptcl2->CurrentTimeReg : ptcl2->CurrentTimeIrr;
+
+        double dt = std::abs(this->CurrentTimeIrr - time_ptcl2);
 
         double pos2[Dim], vel2[Dim];
         
         this->predictParticleSecondOrder(dt, pos1, vel1);
         ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-        const Float dr = dist(pos1, pos2);
+        const Float dr = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
         
         if (dr < r_crit) {
 
@@ -147,8 +148,7 @@ void Particle::checkNewGroup() {
                 // if kappa_org < criterion, avoid to form new group, should be consistent as checkbreak
                 if(kappa_org<kappa_org_crit) continue;
 // */ // test_1e4_2
-                this->NewNeighbors[this->NewNumberOfNeighbor] = i;
-                this->NewNumberOfNeighbor++;
+                this->NewMembers[this->NewNumberOfMember++] = i;
             }
         }
     }
@@ -174,7 +174,7 @@ void Particle::checkNewGroup2() {
     // check only active particles 
     // single case
     for (int i=0; i < this->NumberOfNeighbor; i++) {
-        ptcl2 = &particles[this->Neighbors[i]];
+        ptcl2 = &particles[Neighbors[this->NeighborsOffset + i]];
         if (!ptcl2->isActive) {
             if (ptcl2->CMPtclIndex != -1) {
                 CMPtclsSet.insert(ptcl2->CMPtclIndex);
@@ -182,22 +182,22 @@ void Particle::checkNewGroup2() {
             continue;
         }
 
-        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double time_ptcl2 = (ptcl2->NumberOfNeighbor == 0) ? ptcl2->CurrentTimeReg : ptcl2->CurrentTimeIrr;
+
+        double dt = std::abs(this->CurrentTimeIrr - time_ptcl2);
 
         double pos2[Dim], vel2[Dim];
         
 		this->predictParticleSecondOrder(dt, pos1, vel1);
 		ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-        const Float dr = dist(pos1, pos2);
+        const Float dr = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
 
-        double v2 = std::pow(dist(vel1, vel2), 2);
+        double v2 = (vel1[0]-vel2[0])*(vel1[0]-vel2[0]) + (vel1[1]-vel2[1])*(vel1[1]-vel2[1]) + (vel1[2]-vel2[2])*(vel1[2]-vel2[2]);
         double energy = v2/2 - (this->Mass + ptcl2->Mass)/dr; // determine they are bound or not
         
         if (dr < r_crit && energy < 0) {
-            this->NewNeighbors[this->NewNumberOfNeighbor] = this->Neighbors[i];
-            this->NewNumberOfNeighbor++;
+            this->NewMembers[this->NewNumberOfMember++] = ptcl2->ParticleIndex;
         }
     }
     for (int i: CMPtclsSet) {
@@ -212,22 +212,22 @@ void Particle::checkNewGroup2() {
             assert(ptcl2->isActive);
         }
 
-        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double time_ptcl2 = (ptcl2->NumberOfNeighbor == 0) ? ptcl2->CurrentTimeReg : ptcl2->CurrentTimeIrr;
+
+        double dt = std::abs(this->CurrentTimeIrr - time_ptcl2);
 
         double pos2[Dim], vel2[Dim];
         
         this->predictParticleSecondOrder(dt, pos1, vel1);
         ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-        const Float dr = dist(pos1, pos2);
+        const Float dr = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
 
-        double v2 = std::pow(dist(vel1, vel2), 2);
+        double v2 = (vel1[0]-vel2[0])*(vel1[0]-vel2[0]) + (vel1[1]-vel2[1])*(vel1[1]-vel2[1]) + (vel1[2]-vel2[2])*(vel1[2]-vel2[2]);
         double energy = v2/2 - (this->Mass + ptcl2->Mass)/dr; // determine they are bound or not
         
         if (dr < r_crit && energy < 0) {
-            this->NewNeighbors[this->NewNumberOfNeighbor] = i;
-            this->NewNumberOfNeighbor++;
+            this->NewMembers[this->NewNumberOfMember++] = i;
         }
     }
 }
@@ -237,23 +237,26 @@ void Particle::checkNewGroup3() {
     const Float kappa_org_crit = 1e-2; // kappa_org criterion for new group kappa_org>kappa_org_crit
     Particle* ptcl2;
 
-    int NumberOfGroupCandidate = this->NewNumberOfNeighbor;
+    int NumberOfGroupCandidate = this->NewNumberOfMember;
 
-    this->NewNumberOfNeighbor = 0;
+    this->NewNumberOfMember = 0;
 
     double pos1[Dim], vel1[Dim];
     double pos2[Dim], vel2[Dim];
 
     for (int i=0; i < NumberOfGroupCandidate; i++) {
-        ptcl2 = &particles[this->NewNeighbors[i]];
+        ptcl2 = &particles[this->NewMembers[i]];
 
-        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double time_ptcl2 = (ptcl2->NumberOfNeighbor == 0) ? ptcl2->CurrentTimeReg : ptcl2->CurrentTimeIrr;
+
+        double dt = std::abs(this->CurrentTimeIrr - time_ptcl2);
 
         this->predictParticleSecondOrder(dt, pos1, vel1);
         ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-        const Float dr = dist(pos1, pos2);
+        const Float dr = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
+
+        if (dr > RSEARCH/position_unit) continue;
 
         Float fcm[3] = {this->Mass*this->a_tot[0][0] + ptcl2->Mass*ptcl2->a_tot[0][0], 
         this->Mass*this->a_tot[1][0] + ptcl2->Mass*ptcl2->a_tot[1][0], 
@@ -276,8 +279,7 @@ void Particle::checkNewGroup3() {
         // if kappa_org < criterion, avoid to form new group, should be consistent as checkbreak
         if(kappa_org<kappa_org_crit) continue;
 
-        this->NewNeighbors[this->NewNumberOfNeighbor] = this->NewNeighbors[i];
-        this->NewNumberOfNeighbor++;
+        this->NewMembers[this->NewNumberOfMember++] = ptcl2->ParticleIndex;
     }
 }
 
@@ -298,7 +300,7 @@ void Particle::checkNewGroup4() {
     // check only active particles 
     // single case
     for (int i=0; i < this->NumberOfNeighbor; i++) {
-        ptcl2 = &particles[this->Neighbors[i]];
+        ptcl2 = &particles[Neighbors[this->NeighborsOffset + i]];
         if (!ptcl2->isActive) {
             if (ptcl2->CMPtclIndex != -1) {
                 CMPtclsSet.insert(ptcl2->CMPtclIndex);
@@ -310,23 +312,23 @@ void Particle::checkNewGroup4() {
         if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
             continue;
 
-        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double time_ptcl2 = (ptcl2->NumberOfNeighbor == 0) ? ptcl2->CurrentTimeReg : ptcl2->CurrentTimeIrr;
+
+        double dt = std::abs(this->CurrentTimeIrr - time_ptcl2);
 
         double pos2[Dim], vel2[Dim];
         
 		this->predictParticleSecondOrder(dt, pos1, vel1);
 		ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-        const Float dr = dist(pos1, pos2);
+        const Float dr = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
         
         if (dr < r_crit) {
 
             Float drdv = calcDrDv(pos1, pos2, vel1, vel2);
             // only inwards
             if(drdv<0.0) {
-                this->NewNeighbors[this->NewNumberOfNeighbor] = this->Neighbors[i];
-                this->NewNumberOfNeighbor++;
+                this->NewMembers[this->NewNumberOfMember++] = ptcl2->ParticleIndex;
             }
         }
     }
@@ -346,23 +348,23 @@ void Particle::checkNewGroup4() {
         if (ptcl2->TimeStepIrr*global_variable->EnzoTimeStep*1e4 > TSEARCH) // fiducial: 1e-5 but for RSEARCH = 0.00025 pc, 1e-6 Myr seems good
             continue;
 
-        double dt = this->CurrentTimeIrr > ptcl2->CurrentTimeIrr ? \
-                        this->CurrentTimeIrr - ptcl2->CurrentTimeIrr : ptcl2->CurrentTimeIrr - this->CurrentTimeIrr;
+        double time_ptcl2 = (ptcl2->NumberOfNeighbor == 0) ? ptcl2->CurrentTimeReg : ptcl2->CurrentTimeIrr;
+
+        double dt = std::abs(this->CurrentTimeIrr - time_ptcl2);
 
         double pos2[Dim], vel2[Dim];
         
         this->predictParticleSecondOrder(dt, pos1, vel1);
         ptcl2->predictParticleSecondOrder(dt, pos2, vel2);
 
-        const Float dr = dist(pos1, pos2);
+        const Float dr = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1])+(pos1[2]-pos2[2])*(pos1[2]-pos2[2]));
         
         if (dr < r_crit) {
 
             Float drdv = calcDrDv(pos1, pos2, vel1, vel2);
             // only inwards
             if(drdv<0.0) {
-                this->NewNeighbors[this->NewNumberOfNeighbor] = i;
-                this->NewNumberOfNeighbor++;
+                this->NewMembers[this->NewNumberOfMember++] = i;
             }
         }
     }
@@ -406,7 +408,7 @@ bool Group::CheckBreak() {
             }
         }
         */
-        // /*
+        /*
         if (n_member == 3) {
             fprintf(workerout, "Left PID: %d, Right PID: %d\n", bin_root.getLeftMember()->PID, bin_root.getRightMember()->PID);
             int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
@@ -416,22 +418,64 @@ bool Group::CheckBreak() {
                     continue;
                 else {
                     fprintf(workerout, "ptcl1 PID: %d\n", ptcl1->PID);
-                    ptcl1->NewNumberOfNeighbor = 0;
+                    ptcl1->NewNumberOfMember = 0;
                     ptcl1->setBinaryInterruptState(BinaryInterruptState::threebody);
                     for (int j=0; j<n_member; j++) {
                         Particle* ptcl2 = &particles[groupCM->Members[j]];
                         if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
                             ptcl2->setBinaryInterruptState(BinaryInterruptState::threebody);
-                            ptcl2->NewNumberOfNeighbor = 0;
-                            ptcl1->NewNeighbors[ptcl1->NewNumberOfNeighbor++] = ptcl2->ParticleIndex;
-                            fprintf(workerout, "ptcl2 PID: %d, ptcl1 NewNumberOfNeighbor: %d\n", ptcl2->PID, ptcl1->NewNumberOfNeighbor);
+                            ptcl2->NewNumberOfMember = 0;
+                            ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                            fprintf(workerout, "ptcl2 PID: %d, ptcl1 NewNumberOfMember: %d\n", ptcl2->PID, ptcl1->NewNumberOfMember);
                         }
                     }
                     break;
                 }
             }
         }
-        // */
+        */
+        for (int i=0; i<n_member; i++) {
+            Particle* ptcl1 = &particles[groupCM->Members[i]];
+            ptcl1->NewNumberOfMember = 0;
+        }
+        if (sym_int.particles.getSize() == 3) {
+            for (int k=0; k<2; k++) {
+                if (bin_root.isMemberTree(k)) {
+                    auto memberTree = bin_root.getMemberAsTree(k);
+                    Particle* ptcl1 = &particles[memberTree->getLeftMember()->ParticleIndex];
+                    Particle* ptcl2 = &particles[memberTree->getRightMember()->ParticleIndex];
+                    ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                }
+            }
+        }
+        if (sym_int.particles.getSize() == 4) {
+            if (bin_root.isMemberTree(0) && bin_root.isMemberTree(1)) {
+                auto memberTree1 = bin_root.getMemberAsTree(0);
+                auto memberTree2 = bin_root.getMemberAsTree(1);
+                Particle* ptcl1 = &particles[memberTree1->getLeftMember()->ParticleIndex];
+                Particle* ptcl2 = &particles[memberTree1->getRightMember()->ParticleIndex];
+                Particle* ptcl3 = &particles[memberTree2->getLeftMember()->ParticleIndex];
+                Particle* ptcl4 = &particles[memberTree2->getRightMember()->ParticleIndex];
+                ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                ptcl3->NewMembers[ptcl3->NewNumberOfMember++] = ptcl4->ParticleIndex;
+            } else {
+                int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
+                for (int i=0; i<4; i++) {
+                    Particle* ptcl1 = &particles[groupCM->Members[i]];
+                    if (ptcl1->PID == outgoingPID)
+                        continue;
+                    else {
+                        for (int j=0; j<4; j++) {
+                            Particle* ptcl2 = &particles[groupCM->Members[j]];
+                            if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
+                                ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
         fflush(workerout);
         return true;
     }
@@ -465,7 +509,7 @@ bool Group::CheckBreak() {
                 }
             }
             */
-            // /*
+            /*
             if (n_member == 3) {
                 fprintf(workerout, "Left PID: %d, Right PID: %d\n", bin_root.getLeftMember()->PID, bin_root.getRightMember()->PID);
                 int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
@@ -475,22 +519,64 @@ bool Group::CheckBreak() {
                         continue;
                     else {
                         fprintf(workerout, "ptcl1 PID: %d\n", ptcl1->PID);
-                        ptcl1->NewNumberOfNeighbor = 0;
+                        ptcl1->NewNumberOfMember = 0;
                         ptcl1->setBinaryInterruptState(BinaryInterruptState::threebody);
                         for (int j=0; j<n_member; j++) {
                             Particle* ptcl2 = &particles[groupCM->Members[j]];
                             if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
                                 ptcl2->setBinaryInterruptState(BinaryInterruptState::threebody);
-                                ptcl2->NewNumberOfNeighbor = 0;
-                                ptcl1->NewNeighbors[ptcl1->NewNumberOfNeighbor++] = ptcl2->ParticleIndex;
-                                fprintf(workerout, "ptcl2 PID: %d, ptcl1 NewNumberOfNeighbor: %d\n", ptcl2->PID, ptcl1->NewNumberOfNeighbor);
+                                ptcl2->NewNumberOfMember = 0;
+                                ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                                fprintf(workerout, "ptcl2 PID: %d, ptcl1 NewNumberOfMember: %d\n", ptcl2->PID, ptcl1->NewNumberOfMember);
                             }
                         }
                         break;
                     }
                 }
             }
-            // */
+            */
+            for (int i=0; i<n_member; i++) {
+                Particle* ptcl1 = &particles[groupCM->Members[i]];
+                ptcl1->NewNumberOfMember = 0;
+            }
+            if (sym_int.particles.getSize() == 3) {
+                for (int k=0; k<2; k++) {
+                    if (bin_root.isMemberTree(k)) {
+                        auto memberTree = bin_root.getMemberAsTree(k);
+                        Particle* ptcl1 = &particles[memberTree->getLeftMember()->ParticleIndex];
+                        Particle* ptcl2 = &particles[memberTree->getRightMember()->ParticleIndex];
+                        ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                    }
+                }
+            }
+            if (sym_int.particles.getSize() == 4) {
+                if (bin_root.isMemberTree(0) && bin_root.isMemberTree(1)) {
+                    auto memberTree1 = bin_root.getMemberAsTree(0);
+                    auto memberTree2 = bin_root.getMemberAsTree(1);
+                    Particle* ptcl1 = &particles[memberTree1->getLeftMember()->ParticleIndex];
+                    Particle* ptcl2 = &particles[memberTree1->getRightMember()->ParticleIndex];
+                    Particle* ptcl3 = &particles[memberTree2->getLeftMember()->ParticleIndex];
+                    Particle* ptcl4 = &particles[memberTree2->getRightMember()->ParticleIndex];
+                    ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                    ptcl3->NewMembers[ptcl3->NewNumberOfMember++] = ptcl4->ParticleIndex;
+                } else {
+                    int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
+                    for (int i=0; i<4; i++) {
+                        Particle* ptcl1 = &particles[groupCM->Members[i]];
+                        if (ptcl1->PID == outgoingPID)
+                            continue;
+                        else {
+                            for (int j=0; j<4; j++) {
+                                Particle* ptcl2 = &particles[groupCM->Members[j]];
+                                if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
+                                    ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
             fflush(workerout);
             return true;
         }
@@ -560,7 +646,7 @@ bool Group::CheckBreak() {
                     }
                 }
                 */
-                // /*
+                /*
                 if (n_member == 3) {
                     fprintf(workerout, "Left PID: %d, Right PID: %d\n", bin_root.getLeftMember()->PID, bin_root.getRightMember()->PID);
                     int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
@@ -570,22 +656,64 @@ bool Group::CheckBreak() {
                             continue;
                         else {
                             fprintf(workerout, "ptcl1 PID: %d\n", ptcl1->PID);
-                            ptcl1->NewNumberOfNeighbor = 0;
+                            ptcl1->NewNumberOfMember = 0;
                             ptcl1->setBinaryInterruptState(BinaryInterruptState::threebody);
                             for (int j=0; j<n_member; j++) {
                                 Particle* ptcl2 = &particles[groupCM->Members[j]];
                                 if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
                                     ptcl2->setBinaryInterruptState(BinaryInterruptState::threebody);
-                                    ptcl2->NewNumberOfNeighbor = 0;
-                                    ptcl1->NewNeighbors[ptcl1->NewNumberOfNeighbor++] = ptcl2->ParticleIndex;
-                                    fprintf(workerout, "ptcl2 PID: %d, ptcl1 NewNumberOfNeighbor: %d\n", ptcl2->PID, ptcl1->NewNumberOfNeighbor);
+                                    ptcl2->NewNumberOfMember = 0;
+                                    ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                                    fprintf(workerout, "ptcl2 PID: %d, ptcl1 NewNumberOfMember: %d\n", ptcl2->PID, ptcl1->NewNumberOfMember);
                                 }
                             }
                             break;
                         }
                     }
                 }
-                // */
+                */
+                for (int i=0; i<n_member; i++) {
+                    Particle* ptcl1 = &particles[groupCM->Members[i]];
+                    ptcl1->NewNumberOfMember = 0;
+                }
+                if (sym_int.particles.getSize() == 3) {
+                    for (int k=0; k<2; k++) {
+                        if (bin_root.isMemberTree(k)) {
+                            auto memberTree = bin_root.getMemberAsTree(k);
+                            Particle* ptcl1 = &particles[memberTree->getLeftMember()->ParticleIndex];
+                            Particle* ptcl2 = &particles[memberTree->getRightMember()->ParticleIndex];
+                            ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                        }
+                    }
+                }
+                if (sym_int.particles.getSize() == 4) {
+                    if (bin_root.isMemberTree(0) && bin_root.isMemberTree(1)) {
+                        auto memberTree1 = bin_root.getMemberAsTree(0);
+                        auto memberTree2 = bin_root.getMemberAsTree(1);
+                        Particle* ptcl1 = &particles[memberTree1->getLeftMember()->ParticleIndex];
+                        Particle* ptcl2 = &particles[memberTree1->getRightMember()->ParticleIndex];
+                        Particle* ptcl3 = &particles[memberTree2->getLeftMember()->ParticleIndex];
+                        Particle* ptcl4 = &particles[memberTree2->getRightMember()->ParticleIndex];
+                        ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                        ptcl3->NewMembers[ptcl3->NewNumberOfMember++] = ptcl4->ParticleIndex;
+                    } else {
+                        int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
+                        for (int i=0; i<4; i++) {
+                            Particle* ptcl1 = &particles[groupCM->Members[i]];
+                            if (ptcl1->PID == outgoingPID)
+                                continue;
+                            else {
+                                for (int j=0; j<4; j++) {
+                                    Particle* ptcl2 = &particles[groupCM->Members[j]];
+                                    if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
+                                        ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
                 fflush(workerout);
                 return true;
             }
@@ -625,7 +753,7 @@ bool Group::CheckBreak() {
 
     }
     // return false;
-// /* // test_1e4_2
+/* // test_1e4_2
     // check strong perturbed binary case (only check further if it is outgoing case)
     // calculate slowdown in a consistent way like in checknewgroup to avoid switching
     // fcm may not properly represent the perturbation force (perturber mass is unknown)
@@ -641,7 +769,7 @@ bool Group::CheckBreak() {
         sd.pert_in = manager.interaction.calcPertFromMR(bin_root.r, bin_root.m1, bin_root.m2);
         Float acc_cm[3];
         for (int i = 0; i < Dim; ++i) {
-            acc_cm[i] = sym_int.particles.cm.a_tot[i][0]; // a_irr or a_tot? // a_tot seems more reasonable by EW 2025.7.1
+            acc_cm[i] = sym_int.particles.cm.a_tot[i][0]; // a_irr or a_tot? // I think a_tot is absolutely right by EW 2025.7.19
         }
         Float fcm[3] = {acc_cm[0]*bin_root.Mass, acc_cm[1]*bin_root.Mass, acc_cm[2]*bin_root.Mass};
         sd.pert_out= manager.interaction.calcPertFromForce(fcm, bin_root.Mass, bin_root.Mass);
@@ -674,8 +802,171 @@ bool Group::CheckBreak() {
             }
         }
     }
-// */ // test_1e4_2
+*/ // test_1e4_2
     return false;
 
+}
+
+bool Group::CheckBreak2() {
+
+    sym_int.info.generateBinaryTree(sym_int.particles, manager.interaction.gravitational_constant);
+    auto& bin_root = sym_int.info.getBinaryTreeRoot();
+
+    if (bin_root.r > RSEARCH/position_unit) {
+
+        if (bin_root.semi > 0.0 && bin_root.ecca < 0.0) // incoming binary
+            return false;
+
+        fprintf(workerout, "Break group: r > RSEARCH! (CM PID: %d)\n\t", groupCM->PID);
+        fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
+        fprintf(workerout, "N_member: %d\n\t", sym_int.particles.getSize());
+        fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
+        fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
+        fprintf(workerout, "ecc: %e \n\t", bin_root.ecc);
+        fprintf(workerout, "ecca: %e \n\t", bin_root.ecca);
+        fprintf(workerout, "peri: %e pc\n\t", bin_root.semi*(1-bin_root.ecc)*position_unit);
+        fprintf(workerout, "apo: %e pc\n\n", bin_root.semi*(1+bin_root.ecc)*position_unit);
+        fflush(workerout);
+
+        for (int i=0; i<sym_int.particles.getSize(); i++) {
+            Particle* ptcl1 = &particles[groupCM->Members[i]];
+            ptcl1->NewNumberOfMember = 0;
+        }
+
+        if (sym_int.particles.getSize() == 3) {
+            for (int k=0; k<2; k++) {
+                if (bin_root.isMemberTree(k)) {
+                    auto memberTree = bin_root.getMemberAsTree(k);
+                    Particle* ptcl1 = &particles[memberTree->getLeftMember()->ParticleIndex];
+                    Particle* ptcl2 = &particles[memberTree->getRightMember()->ParticleIndex];
+                    ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                }
+            }
+        }
+        if (sym_int.particles.getSize() == 4) {
+            if (bin_root.isMemberTree(0) && bin_root.isMemberTree(1)) {
+                auto memberTree1 = bin_root.getMemberAsTree(0);
+                auto memberTree2 = bin_root.getMemberAsTree(1);
+                Particle* ptcl1 = &particles[memberTree1->getLeftMember()->ParticleIndex];
+                Particle* ptcl2 = &particles[memberTree1->getRightMember()->ParticleIndex];
+                Particle* ptcl3 = &particles[memberTree2->getLeftMember()->ParticleIndex];
+                Particle* ptcl4 = &particles[memberTree2->getRightMember()->ParticleIndex];
+                ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                ptcl3->NewMembers[ptcl3->NewNumberOfMember++] = ptcl4->ParticleIndex;
+            } else {
+                int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
+                for (int i=0; i<4; i++) {
+                    Particle* ptcl1 = &particles[groupCM->Members[i]];
+                    if (ptcl1->PID == outgoingPID)
+                        continue;
+                    else {
+                        for (int j=0; j<4; j++) {
+                            Particle* ptcl2 = &particles[groupCM->Members[j]];
+                            if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
+                                ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool Group::CheckBreak3() {
+
+    sym_int.info.generateBinaryTree(sym_int.particles, manager.interaction.gravitational_constant);
+    auto& bin_root = sym_int.info.getBinaryTreeRoot();
+
+    if (bin_root.r > RSEARCH/position_unit) {
+
+        if (bin_root.semi > 0.0 && bin_root.ecca < 0.0) // incoming binary
+            return false;
+
+        fprintf(workerout, "Break group: r > RSEARCH! (CM PID: %d)\n\t", groupCM->PID);
+        fprintf(workerout, "time: %e Myr\n\t", CurrentTime*global_variable->EnzoTimeStep*1e4 + global_variable->EnzoCurrentTime);
+        fprintf(workerout, "N_member: %d\n\t", sym_int.particles.getSize());
+        fprintf(workerout, "separation: %e pc\n\t", bin_root.r*position_unit);
+        fprintf(workerout, "semi: %e pc\n\t", bin_root.semi*position_unit);
+        fprintf(workerout, "ecc: %e \n\t", bin_root.ecc);
+        fprintf(workerout, "ecca: %e \n\t", bin_root.ecca);
+        fprintf(workerout, "peri: %e pc\n\t", bin_root.semi*(1-bin_root.ecc)*position_unit);
+        fprintf(workerout, "apo: %e pc\n\n", bin_root.semi*(1+bin_root.ecc)*position_unit);
+        fflush(workerout);
+
+        for (int i=0; i<sym_int.particles.getSize(); i++) {
+            Particle* ptcl1 = &particles[groupCM->Members[i]];
+            ptcl1->NewNumberOfMember = 0;
+        }
+
+        if (sym_int.particles.getSize() == 3) {
+            for (int k=0; k<2; k++) {
+                if (bin_root.isMemberTree(k)) {
+                    auto memberTree = bin_root.getMemberAsTree(k);
+                    if (memberTree->r < RSEARCH/position_unit || (memberTree->semi > 0.0 && memberTree->ecca > 0.0)) {
+                        Particle* ptcl1 = &particles[memberTree->getLeftMember()->ParticleIndex];
+                        Particle* ptcl2 = &particles[memberTree->getRightMember()->ParticleIndex];
+                        ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                    }
+                }
+            }
+        }
+        if (sym_int.particles.getSize() == 4) {
+            if (bin_root.isMemberTree(0) && bin_root.isMemberTree(1)) {
+                auto memberTree1 = bin_root.getMemberAsTree(0);
+                if (memberTree1->r < RSEARCH/position_unit || (memberTree1->semi > 0.0 && memberTree1->ecca > 0.0)) {
+                    Particle* ptcl1 = &particles[memberTree1->getLeftMember()->ParticleIndex];
+                    Particle* ptcl2 = &particles[memberTree1->getRightMember()->ParticleIndex];
+                    ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                }
+                auto memberTree2 = bin_root.getMemberAsTree(1);
+                if (memberTree2->r < RSEARCH/position_unit || (memberTree2->semi > 0.0 && memberTree2->ecca > 0.0)) {
+                    Particle* ptcl3 = &particles[memberTree2->getLeftMember()->ParticleIndex];
+                    Particle* ptcl4 = &particles[memberTree2->getRightMember()->ParticleIndex];
+                    ptcl3->NewMembers[ptcl3->NewNumberOfMember++] = ptcl4->ParticleIndex;
+                }
+            } else {
+                int outgoingPID = bin_root.getLeftMember()->PID != -1 ? bin_root.getLeftMember()->PID : bin_root.getRightMember()->PID;
+                for (int k=0; k<2; k++) {
+                    if (bin_root.isMemberTree(k)) {
+                        auto memberTree = bin_root.getMemberAsTree(k);
+                        if (memberTree->r < RSEARCH/position_unit || (memberTree->semi > 0.0 && memberTree->ecca > 0.0)) {
+                            for (int i=0; i<4; i++) {
+                                Particle* ptcl1 = &particles[groupCM->Members[i]];
+                                if (ptcl1->PID == outgoingPID)
+                                    continue;
+                                else {
+                                    for (int j=0; j<4; j++) {
+                                        Particle* ptcl2 = &particles[groupCM->Members[j]];
+                                        if (ptcl2->PID != ptcl1->PID && ptcl2->PID != outgoingPID) {
+                                            ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        } else {
+                            for (int i=0; i<2; i++) {
+                                if (memberTree->isMemberTree(i)) {
+                                    auto subTree = memberTree->getMemberAsTree(i);
+                                    if (subTree->r < RSEARCH/position_unit || (subTree->semi > 0.0 && subTree->ecca > 0.0)) {
+                                        Particle* ptcl1 = &particles[subTree->getLeftMember()->ParticleIndex];
+                                        Particle* ptcl2 = &particles[subTree->getRightMember()->ParticleIndex];
+                                        ptcl1->NewMembers[ptcl1->NewNumberOfMember++] = ptcl2->ParticleIndex;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+        return true;
+    }
+    return false;
 }
 #endif

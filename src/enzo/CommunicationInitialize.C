@@ -49,6 +49,8 @@ typedef int MPI_Arg;
 #include "abyss/particle.h"
 #include "abyss/global.h"
 #include "abyss/def.h"
+#include "abyss/Queue.h"
+#include "abyss/cuda/cuda_defs.h"
 #undef NormalStar
 #undef BlackHole
 #endif
@@ -81,17 +83,15 @@ extern MPI_Comm local_comm;
 */
 
 #ifdef NBODY
-Particle *particles_original;
-Particle *particles;
-int *ActiveIndexToOriginalIndex;
-int *ActiveIndexToOriginalIndex_orginal;
-
 MPI_Win win;
 MPI_Win win2;
 MPI_Win win3;
+MPI_Win win4;
 
+Particle *particles;
 GlobalVariable *global_variable;
-GlobalVariable *global_variable_original;
+int* Neighbors;
+int* NewNeighbors;
 
 MPI_Comm abyss_comm;
 MPI_Comm inter_comm;
@@ -473,19 +473,17 @@ int CommunicationInitialize(int &argc, char *argv[])
 		//{
 		if (AbyssProcessorNumber == 0)
 		{
-			// MPI_Win_allocate_shared(sizeof(int), sizeof(int), MPI_INFO_NULL, local_comm, &shared_mem, &win);
-			MPI_Win_allocate_shared(sizeof(Particle) * MaxNumberOfParticle, sizeof(Particle),
-									MPI_INFO_NULL, local_comm, &particles_original, &win);
-			MPI_Win_allocate_shared(sizeof(GlobalVariable), sizeof(GlobalVariable),
-									MPI_INFO_NULL, local_comm, &global_variable_original, &win2);
-			MPI_Win_allocate_shared(sizeof(int) * MaxNumberOfParticle, sizeof(int),
-									MPI_INFO_NULL, local_comm, &ActiveIndexToOriginalIndex_orginal, &win3);
+			MPI_Win_allocate_shared(sizeof(Particle) * MaxNumParticle, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles, &win);
+			MPI_Win_allocate_shared(sizeof(GlobalVariable), sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable, &win2);
+			MPI_Win_allocate_shared(sizeof(int) * MaxNumParticle * MaxNumNeighbor, sizeof(int), MPI_INFO_NULL, local_comm, &Neighbors, &win3);
+			MPI_Win_allocate_shared(sizeof(int) * MaxNumParticle * MaxNumNeighbor, sizeof(int), MPI_INFO_NULL, local_comm, &NewNeighbors, &win4);
 		}
 		else
 		{
-			MPI_Win_allocate_shared(0, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles_original, &win);
-			MPI_Win_allocate_shared(0, sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable_original, &win2);
-			MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &ActiveIndexToOriginalIndex_orginal, &win3);
+			MPI_Win_allocate_shared(0, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles, &win);
+			MPI_Win_allocate_shared(0, sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable, &win2);
+			MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &Neighbors, &win3);
+			MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &NewNeighbors, &win4);
 		}
 		// Query shared memory of rank 0
 
@@ -494,7 +492,8 @@ int CommunicationInitialize(int &argc, char *argv[])
 
 		MPI_Win_shared_query(win, 0, &size_bytes, &disp_unit, &particles);
 		MPI_Win_shared_query(win2, 0, &size_bytes, &disp_unit, &global_variable);
-		MPI_Win_shared_query(win3, 0, &size_bytes, &disp_unit, &ActiveIndexToOriginalIndex);
+		MPI_Win_shared_query(win3, 0, &size_bytes, &disp_unit, &Neighbors);
+		MPI_Win_shared_query(win4, 0, &size_bytes, &disp_unit, &NewNeighbors);
 		//}
 	}
 	else
@@ -530,7 +529,91 @@ int CommunicationInitialize(int &argc, char *argv[])
   return 1; //SUCCESS;
 }
 
+#ifdef USE_MPI
+#ifdef NBODY
+MPI_Datatype createQueueType() {
+    MPI_Datatype QueueType;
+    int blocklen[3] = {1, 1, 1};
+    MPI_Datatype types[3] = {MPI_INT8_T, MPI_INT, MPI_DOUBLE};
+	MPI_Aint disp[3], base;
 
+	Queue sample;
+    MPI_Get_address(&sample,           &base);
+    MPI_Get_address(&sample.task,      &disp[0]);
+    MPI_Get_address(&sample.pid,       &disp[1]);
+    MPI_Get_address(&sample.next_time, &disp[2]);
+
+	for (int i = 0; i < 3; ++i) disp[i] -= base;
+
+    MPI_Type_create_struct(3, blocklen, disp, types, &QueueType);
+    MPI_Type_commit(&QueueType);
+
+    return QueueType;
+}
+
+MPI_Datatype createIparticleType() {
+	MPI_Datatype IparticleType;
+	int blocklen[8] = {1,1,1,1,1,1,1,1};
+#ifdef CUDA_FLOAT
+	MPI_Datatype types[8] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+							MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT};
+#else
+	MPI_Datatype types[8] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
+							MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
+#endif
+	MPI_Aint disp[8], base;
+
+	Iparticle sample;
+	MPI_Get_address(&sample,		&base);
+	MPI_Get_address(&sample.posx,	&disp[0]);
+	MPI_Get_address(&sample.posy,	&disp[1]);
+	MPI_Get_address(&sample.posz,	&disp[2]);
+	MPI_Get_address(&sample.r2,		&disp[3]);
+	MPI_Get_address(&sample.velx,	&disp[4]);
+	MPI_Get_address(&sample.vely,	&disp[5]);
+	MPI_Get_address(&sample.velz,	&disp[6]);
+	MPI_Get_address(&sample.dtr,	&disp[7]);
+
+	for (int i = 0; i < 8; ++i) disp[i] -= base;
+
+	MPI_Type_create_struct(8, blocklen, disp, types, &IparticleType);
+	MPI_Type_commit(&IparticleType);
+
+	return IparticleType;
+}
+
+MPI_Datatype createJparticleType() {
+	MPI_Datatype JparticleType;
+	int blocklen[8] = {1,1,1,1,1,1,1,1};
+#ifdef CUDA_FLOAT
+	MPI_Datatype types[8] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+							MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_INT};
+#else
+	MPI_Datatype types[8] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
+							MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_LONG_LONG};
+#endif
+	MPI_Aint disp[8], base;
+
+	Jparticle sample;
+	MPI_Get_address(&sample,		&base);
+	MPI_Get_address(&sample.posx,	&disp[0]);
+	MPI_Get_address(&sample.posy,	&disp[1]);
+	MPI_Get_address(&sample.posz,	&disp[2]);
+	MPI_Get_address(&sample.mass,	&disp[3]);
+	MPI_Get_address(&sample.velx,	&disp[4]);
+	MPI_Get_address(&sample.vely,	&disp[5]);
+	MPI_Get_address(&sample.velz,	&disp[6]);
+	MPI_Get_address(&sample.index,	&disp[7]);
+
+	for (int i = 0; i < 8; ++i) disp[i] -= base;
+
+	MPI_Type_create_struct(8, blocklen, disp, types, &JparticleType);
+	MPI_Type_commit(&JparticleType);
+
+	return JparticleType;
+}
+#endif
+#endif
  
 #ifdef USE_MPI
 void CommunicationErrorHandlerFn(MPI_Comm *comm, MPI_Arg *err, ...)

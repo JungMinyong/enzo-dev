@@ -5,6 +5,7 @@ struct GlobalVariable {
 	int NumberOfSingleParticle;
 	int LastParticleIndex;
 	ULL NextRegTimeBlock;
+	
 	int time_block;
 	double time_step;
 	ULL block_max;

@@ -1,97 +1,73 @@
-#define PerformanceTrace
-#define CUDA
 
-#define FAIL    -1
-// #define SUCCESS  1
+#define MaxNumParticle 200000
+#define MaxNumNeighbor 1000 // 10000 -> 2000 modified by EW 2025.1.11
+#define MaxNeighborRadius 0.2 // Let's set MaxNeighborRadius as 0.2 pc // Newly set by EW 2025.8.18 // This can be set in config file later.
 
-
-#define NumberOfTask 20
-#define MaxNumberOfParticle 200000
-#define MaxNumberOfNeighbor 1000 // 10000 -> 2000 modified by EW 2025.1.11
-//#define MaxNumberOfNeighbor 1 
-
-
-
-#define MaxNumberOfCommunication 10000
-
-
-//#define FixNumNeighbor 20
-//#define FixNumNeighbor 100 // 500 -> 100 modified by EW 2025.1.11
-//#define NumNeighborMax 100
-#define NumNeighborMax 1000 // 5000 -> 1000 modified by EW 2025.1.11
-//#define NumNeighborMax 1 // 5000 -> 1000 modified by EW 2025.1.11
-#define ACRadius 0.05 // 0.11 -> 0.05 modified by EW 2025.1.11
-
-
-// SDAR
+// SDAR // These should be set in config file, not in macro here!!! by EW 2025.8.28
 #define RSEARCH 1e-4 // 1e-4 // pc
-#define TSEARCH 1e-6 // 1e-6 // Myr
+#define TSEARCH 1e-6 // 1e-6 // Myr // unused anymore by EW 2025.9.15
 
-
-// (SEVN Query) Particle types for SEVN and feedback in Enzo (for AEOS someday...)
-#define NoFeedbackStar 0 // No SEVN (M_zams < 2.2 Msun) // No feedback in Enzo
-#define NormalStar 1
-#define NeutronStar_WhiteDwarf 2
-#define BlackHole 3
-#define MassiveBlackHole 4 // Massive BH, which acceretes gas and AGN feedback in Enzo
-
-
-#define MIN_LEVEL_BUFFER 30
+// Particle Type in line with SEVN by EW 2025.7.5
+#define NO_FEEDBACK_STAR            0
+#define MAIN_SEQUENCE               1
+#define TERMINAL_MAIN_SEQUENCE      2
+#define SHELL_H_BURNING             3
+#define CORE_HE_BURNING             4
+#define TERMINAL_CORE_HE_BURNING    5
+#define SHELL_HE_BURNING            6
+#define EMPTY                       7 // Useful, but not directly stored in ptcl->ParticleType
+#define REMNANT                     8 // Useful, but not directly stored in ptcl->ParticleType
+#define WHITE_DWARF_HE              9
+#define WHITE_DWARF_CO              10
+#define WHITE_DWARF_ONE             11
+#define NEUTRON_STAR_ECSN           12
+#define NEUTRON_STAR_CCSN           13
+#define BLACK_HOLE                  14
+#define MASSIVE_BLACK_HOLE          15
 
 #define Dim 3
 #define eta 0.01
 #define HERMITE_ORDER 4
+#define MIN_LEVEL_BUFFER 30
 
-
+// Custom type definitions
+// #define CUDA
+#define CUDA_FLOAT
+#ifdef CUDA_FLOAT
+typedef float CUDA_REAL;
+#else
+typedef double CUDA_REAL;
+#endif
 typedef unsigned long long ULL;
-
-
-
-#define mag(a) (a[0]*a[0]+a[1]*a[1]+a[2]*a[2])
-#define mag0(a) (a[0][0]*a[0][0]+a[1][0]*a[1][0]+a[2][0]*a[2][0])
-#define dist(a,b) std::sqrt((a[0]-b[0])*(a[0]-b[0])+(a[1]-b[1])*(a[1]-b[1])+(a[2]-b[2])*(a[2]-b[2]))
-
-
 
 // Physical units in cgs
 #define pc 3.08567758149137e18
 #define yr 3.1536e7
 #define Msun 1.98847e33
 
-// Code unit in pc, yr, Msun
+// Conversion factors ([pc, yr, Msun] = [position_unit, time_unit, mass_unit] * [code unit])
 #define time_unit 1e10 // in 1e10 yr
 #define position_unit 4. // in 4 pc
 #define velocity_unit 4e-10 // in 4e-10 pc/yr
-//#define mass_unit 256e-20  // 256e-20 Msun in the unit that G = 1.
 #define mass_unit 0.0001424198  // Msun in the unit that G = 1.
-// Physical constants
-// #define G_cgs 6.67430e-8 // Eunwoo: crash with SEVN
-// #define G // pc, yr, Msun // Eunwoo: crash with SEVN
 
-#define RCAST(a)  static_cast<double>(a)
-#define ABS(a) static_cast<double>(std::abs(a))
-#define MIN(a,b) std::min(RCAST(a),RCAST(b))
-
-#define CUDA_FLOAT
-#ifdef CUDA_FLOAT
-#define CUDA_REAL float
-#else
-#define CUDA_REAL double
-#endif
-
+// GPU related parameters
 #define nbodymax 100000000 //100000000 for node14
 #define BatchSize 64 // 64. each thread calculates BatchSize particles with a single shared memory
 #define GridDimY 32 // 32 original //  each block calcuates NNB/GridDimY particles
 #define NNB_per_block 128 //256 original
-#define NSIGHT // for nsight debugging
-#define MultiGPU // for multi-gpu
 //#define BatchSize 32 // each thread calculates BatchSize particles
 //#define GridDimY 16 // each block calcuates NNB/GridDimY particles
 //#define NNB_per_block 128
-// #define MinParticles 50
-//#define MinParticles 40
+
+// Parameters for Enzo-Abyss interface
 #define MinParticles 2
 #define IrregularRoutineThreshold 100 // If nuber of particle is less than this value, only irregular routine is performed by EW 2025.9.17
-//#define HUBBLE_FLOW
+
+#define SEVNMetallicityLowerLimit 0.0001
+#define SEVNMetallicityUpperLimit 0.04
+#define SEVNLowerMassLimit 2.2
+#define MassiveBlackHoleCutoff 100.0 // Msun
+
 #define COMOVE
 #define NO_HUBBLE_FLOW

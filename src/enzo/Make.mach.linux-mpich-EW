@@ -24,7 +24,7 @@ MACH_FILE  = Make.mach.ubuntu-hardy
 LOCAL_HDF5_INSTALL	= /usr/local/hdf5/1.10.5_gcc85
 LOCAL_MPI		= /usr/local/mpi/gcc85/openmpi-5.0.0
 LOCAL_GRACKLE_INSTALL	= /home/vinicius/install/grackle-mainrepo
-LOCAL_CUDA_INSTALL	= /usr/local/cuda-12.8
+LOCAL_CUDA_INSTALL	= # /usr/local/cuda-12.8
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -41,7 +41,7 @@ MACH_FC_MPI    =  $(LOCAL_MPI)/bin/mpifort
 MACH_F90_MPI   =  $(LOCAL_MPI)/bin/mpifort
 MACH_LD_MPI    =  $(LOCAL_MPI)/bin/mpicxx
 
-MACH_CUDACOMPILER = $(LOCAL_CUDA_INSTALL)/bin/nvcc
+MACH_CUDACOMPILER = # $(LOCAL_CUDA_INSTALL)/bin/nvcc
 
 # Without MPI
 #MACH_CC_NOMPI    = /home/kerex/intel/bin/icc 
@@ -131,7 +131,7 @@ MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
 MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
 MACH_LIBS_GRACKLE = $(LOCAL_LIBS_GRACKLE)
-MACH_LIBS_NBODY = -L$(LOCAL_CUDA_INSTALL)/lib64 -lcuda -lcudart -lcublas -lnvToolsExt
+MACH_LIBS_NBODY = # -L$(LOCAL_CUDA_INSTALL)/lib64 -lcuda -lcudart -lcublas -lnvToolsExt
 # node 14
 #MACH_LIBS_SEVN     = -L/home/vinicius/install/sevn_enzo/build_n14/lib64/sevn -lsevn_lib_shared
 # node 15

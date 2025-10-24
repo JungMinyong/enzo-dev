@@ -17,7 +17,14 @@ struct Node {
 	Node(ULL value, int level, int ptcl_id) {
 		this->value = value;
 		ParticleList.push_back(ptcl_id);
-		forward = new Node*[level + 1];
+		// forward = new Node*[level + 1]; // original code by EW 2025.6.29
+		try {
+			forward = new Node*[level + 1];
+		} catch (const std::bad_alloc& e) {
+			std::cerr << "Memory allocation failed for forward: " << e.what()
+					  << ", level = " << level << std::endl;
+			throw;  // rethrow if you want to crash after logging
+		}
 		memset(forward, 0, sizeof(Node*) * (level + 1));
 	}
 

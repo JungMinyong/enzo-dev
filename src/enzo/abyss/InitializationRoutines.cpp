@@ -6,8 +6,6 @@
 #include <cassert>
 #include <mpi.h>
 #include "global.h"
-#include "SkipList.h"
-#include "Worker.h"
 #include "QueueScheduler.h"
 
 #ifdef NSIGHT
@@ -26,8 +24,11 @@ void broadcastFromRoot(int &data);
 void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vector<int> ParticleIndices);
 
 void formPrimordialBinaries(int beforeLastParticleIndex);
-
+#ifdef CUDA
 void InitializationOnGPU(QueueScheduler &queue_scheduler, Worker *workers);
+#else
+void InitializationOnCPU(QueueScheduler &queue_scheduler, Worker *workers);
+#endif
 void formBinariesAfterCommunication(std::vector<int>& newCMptcls, std::unordered_map<int,int>& existing, std::unordered_map<int,int>& terminated);
 
 /* Initialization */
@@ -35,6 +36,7 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 {
 
     Particle* ptcl;
+    Queue queue;
 	TaskName task;
 	int total_tasks;
 	MPI_Request request;  // Pointer to the request handle
@@ -74,7 +76,6 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 
 #ifdef FEWBODY
     // Primordial binary search
-
     queue_scheduler.initialize(SearchPrimordialGroup);
     queue_scheduler.takeQueue(ParticleIndices);
     do
@@ -85,54 +86,56 @@ void InitializationRoutines(QueueScheduler &queue_scheduler, Worker *workers)
     } while (queue_scheduler.isComplete());
     std::cout << "Primordial binary search done" << std::endl;
 
-    // example code by EW 2025.1.7
-    Queue queue;
     int rank;
-    int OriginalLastParticleIndex = global_variable->LastParticleIndex;
-    LastParticleIndex = global_variable->LastParticleIndex; // for formPrimordialBinaires function by EW 2025.3.11
+    int OriginalLastParticleIndex = LastParticleIndex;
     formPrimordialBinaries(OriginalLastParticleIndex);
-    assert(OriginalLastParticleIndex <= global_variable->LastParticleIndex); // for debugging by EW 2025.1.4
-    assert(CMPtclWorker.empty());                           // for debugging by EW 2025.1.4
-    if (OriginalLastParticleIndex != global_variable->LastParticleIndex)
-    {
-        std::cout << "In total, " << global_variable->LastParticleIndex - OriginalLastParticleIndex
+    assert(OriginalLastParticleIndex <= LastParticleIndex); // for debugging by EW 2025.1.4
+    assert(CMPtclWorker.empty()); // for debugging by EW 2025.1.4
+    // Let's modify this primordial binary part later!!! by EW 2025.5.24
+    if (OriginalLastParticleIndex != LastParticleIndex) {
+        std::cout << "In total, " << LastParticleIndex - OriginalLastParticleIndex
                   << " primordial binaries are created." << std::endl;
         queue_scheduler.initialize(MakePrimordialGroup);
-        for (int i = OriginalLastParticleIndex + 1; i <= global_variable->LastParticleIndex; i++)
-        {
-            std::cout << "New Primordial Binary of PID="
-                      << i << " is created with being assigned to a worker of rank "
-                      << rank << "." << std::endl;
+        for (int i=OriginalLastParticleIndex+1; i<=LastParticleIndex; i++) {
             ptcl = &particles[i];
             CMPtclWorker.insert({ptcl->ParticleIndex, CMPtclWorker.size() % NumberOfWorker + 1});
             ParticleIndices.push_back(ptcl->ParticleIndex);
             rank = CMPtclWorker[ptcl->ParticleIndex];
-
+            std::cout << "New Primordial Binary of PID="
+                      << ptcl->PID << " is created with being assigned to a worker of rank "
+                      << rank << "." << std::endl;
+#ifdef SEVN_BINARY
+#ifdef PERFORMANCETRACE
+            start_point_BSE = std::chrono::high_resolution_clock::now();
+#endif
+            if (!makeSEVNBinary(ptcl)) {
+                if (ptcl->ParticleIndex == LastParticleIndex) {
+                    LastParticleIndex--;
+                    global_variable->LastParticleIndex = LastParticleIndex;
+                }
+                else
+                    PrevCMPtclWorker.insert({ptcl->ParticleIndex, CMPtclWorker[ptcl->ParticleIndex]});
+                CMPtclWorker.erase(ptcl->ParticleIndex);
+                continue;
+            }
+#ifdef PERFORMANCETRACE
+            end_point_BSE = std::chrono::high_resolution_clock::now();
+            performance.BinaryStellarEvolution +=
+                std::chrono::duration_cast<std::chrono::nanoseconds>(end_point_BSE - start_point_BSE).count();
+#endif
+#endif
             queue.task = MakePrimordialGroup;
             queue.pid = ptcl->ParticleIndex;
             workers[rank].addQueue(queue);
             queue_scheduler.assignWorker(&workers[rank]);
         }
         queue_scheduler.setTotalQueue(CMPtclWorker.size());
-        do
-        {
+        do {
             queue_scheduler.runQueueAuto();
             queue_scheduler.waitQueue(0);
-        } while (queue_scheduler.isComplete());
-
-        // Erase member particles from ParticleIndices by EW 2025.3.11
-        ParticleIndices.erase(
-            std::remove_if(ParticleIndices.begin(), ParticleIndices.end(),
-                [](int i) {
-                return !particles[i].isActive;
-                }
-            ),
-            ParticleIndices.end()
-        );
-
+        } while(queue_scheduler.isComplete());
     }
-    else
-    {
+    else {
         std::cout << "There is no primordial binary." << std::endl;
     }
     fprintf(stdout, "PrimordialBinariesRoutine has ended...\n"
@@ -250,17 +253,17 @@ void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vecto
         {
             ptcl = &particles[i];
 
-            if (ptcl->NumberOfNeighbor != 0)
-            {
-                while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg)
-                {
+            if (!ptcl->isActive)
+                continue;
+
+            if (ptcl->NumberOfNeighbor != 0) {
+                while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg) {
                     ptcl->TimeStepIrr *= 0.5;
                     ptcl->TimeBlockIrr *= 0.5;
                     ptcl->TimeLevelIrr--;
                 }
             }
-            if (ptcl->TimeLevelIrr < min_time_level)
-            {
+            if (ptcl->TimeLevelIrr < min_time_level) {
                 min_time_level = ptcl->TimeLevelIrr;
             }
         }
@@ -273,6 +276,9 @@ void initializeTime(QueueScheduler &queue_scheduler, Worker *workers, std::vecto
         for (int i = 0; i <= global_variable->LastParticleIndex; i++)
         {
             ptcl = &particles[i];
+
+            if (!ptcl->isActive)
+                continue;
 
             ptcl->TimeBlockIrr = static_cast<ULL>(pow(2, ptcl->TimeLevelIrr - global_variable->time_block));
             ptcl->TimeBlockReg = static_cast<ULL>(pow(2, ptcl->TimeLevelReg - global_variable->time_block));
@@ -331,23 +337,12 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
     /* Since we're not doing full-initialization, we have to do more work on time steps
     e.g., if enzo time can be smaller than regualr time steps. we gotta re-normalize it.
     but this part is not complete yet. */
-
-    for (int i = 0; i < NumberOfSingleParticle; i++) {
-      fprintf(stderr, "PID= %d, pos = (%.3e,%.3e,%.3e), mass = %.3e, acc=%.3e \n",
-              particles[i].PID, particles[i].Position[0],
-              particles[i].Position[1], particles[i].Position[2],
-              particles[i].Mass, particles[i].a_tot[0][0]);
-      fprintf(nbpout, "PID= %d, pos = (%.3e,%.3e,%.3e), mass = %.3e, acc=%.3e \n",
-              particles[i].PID, particles[i].Position[0],
-              particles[i].Position[1], particles[i].Position[2],
-              particles[i].Mass, particles[i].a_tot[0][0]);
-    }
-
+    
     Particle* ptcl;
 
     // Example code by EW 2025.3.18
     if (newNumberOfSingleParticle > 0 && NumberOfParticle > 1) {
-        // /*
+        /*
         fprintf(nbpout, "Before GPU Initialization...\n");
         for (int i=0; i<=global_variable->LastParticleIndex; i++) {
             ptcl = &particles[i];
@@ -381,10 +376,13 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
                     ptcl->BackgroundAcceleration[2]
                     );
         }
-        fflush(nbpout);
-        // */
+        */
+#ifdef CUDA
         InitializationOnGPU(queue_scheduler, workers); // GPU Initialization code
-        // /*
+#else
+        InitializationOnCPU(queue_scheduler, workers); // CPU Initialization code
+#endif
+        /*
         fprintf(nbpout, "After GPU Initialization...\n");
         for (int i=0; i<=global_variable->LastParticleIndex; i++) {
             ptcl = &particles[i];
@@ -420,7 +418,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
         }
         fflush(nbpout);
         // assert(NumberOfParticle == 0); // to force the program to stop by EW 2025.5.6
-        // */
+        */
 #ifdef FEWBODY // forming new binaries after communication with Enzo by EW 2025.3.27
         std::vector<int> newCMptcls;
         LastParticleIndex = global_variable->LastParticleIndex;
@@ -438,7 +436,7 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
 
             for (int j = 0; j < ptclCM->NewNumberOfNeighbor; j++)
             {
-                mem_ptclCM = &particles[ptclCM->NewNeighbors[j]];
+                mem_ptclCM = &particles[NewNeighbors[ptclCM->NeighborsOffset + j]];
                 if (mem_ptclCM->isCMptcl)
                 {
                     fprintf(stdout, "manybody group detected; PID %d should be deleted first\n", mem_ptclCM->PID);
@@ -450,7 +448,12 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
                     workers[rank_delete].runQueue();
                     workers[rank_delete].callback();
 
-                    PrevCMPtclWorker.insert({mem_ptclCM->ParticleIndex, CMPtclWorker[mem_ptclCM->ParticleIndex]});
+                    if (ptcl->ParticleIndex == LastParticleIndex) {
+                        LastParticleIndex--;
+                        global_variable->LastParticleIndex = LastParticleIndex;
+                    }
+                    else
+                        PrevCMPtclWorker.insert({ptcl->ParticleIndex, CMPtclWorker[ptcl->ParticleIndex]});
                     CMPtclWorker.erase(mem_ptclCM->ParticleIndex);
                 }
             }
@@ -545,4 +548,119 @@ void InitializationAfterCommunication(QueueScheduler &queue_scheduler, Worker *w
     }
     */
     fflush(nbpout);
+}
+
+void InitializationOnCPU(QueueScheduler &queue_scheduler, Worker *workers) {
+
+    std::vector<int> RegularList_init;
+	assert(RegularList_init.empty());
+
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
+        Particle* ptcl = &particles[i];
+        if (ptcl->isActive) {
+            RegularList_init.push_back(ptcl->ParticleIndex);
+        }
+    }
+    assert(RegularList_init.size() == NumberOfParticle);
+
+    queue_scheduler.initialize(InitAcc1);
+    queue_scheduler.takeQueue(RegularList_init);
+    do
+    {
+        queue_scheduler.assignQueueAuto();
+        queue_scheduler.runQueueAuto();
+        queue_scheduler.waitQueue(0); // blocking wait
+    } while (queue_scheduler.isComplete());
+
+    queue_scheduler.initialize(InitAcc2);
+    queue_scheduler.takeQueue(RegularList_init);
+    do
+    {
+        queue_scheduler.assignQueueAuto();
+        queue_scheduler.runQueueAuto();
+        queue_scheduler.waitQueue(0); // blocking wait
+    } while (queue_scheduler.isComplete());
+
+    for (const auto& pair: CMPtclWorker) {
+		Queue queue;
+		int rank = pair.second;
+		queue.task = ResetSDARTime;
+		queue.pid = pair.first;
+		workers[rank].addQueue(queue);
+		workers[rank].runQueue();
+		workers[rank].callback();
+	}
+
+    queue_scheduler.initialize(SearchPrimordialGroup);
+    queue_scheduler.takeQueue(RegularList_init);
+    do
+    {
+        queue_scheduler.assignQueueAuto();
+        queue_scheduler.runQueueAuto();
+        queue_scheduler.waitQueue(0); // blocking wait
+    } while (queue_scheduler.isComplete());
+
+    for (int i = 0; i <= global_variable->LastParticleIndex; i++) {
+        Particle* ptcl = &particles[i];
+        if (ptcl->isActive) {
+            if (ptcl->RadiusOfNeighbor != 1e20)
+                ptcl->updateRadius();
+
+            if (ptcl->TimeStepIrr != 0) { // originally existing nbody particles
+
+                if (ptcl->RadiusOfNeighbor == 1e20)
+                    ptcl->calculateTimeStepOnlyIrr();
+                else {
+                    ptcl->calculateTimeStepReg();
+                    ptcl->calculateTimeStepIrr();
+                }
+            } else { // newly detected nbody particles
+
+                if (ptcl->RadiusOfNeighbor == 1e20) {
+                    fprintf(stderr, "All particles are neighbors to each other (PID: %d)\n", ptcl->PID);
+                    ptcl->calculateTimeStepOnlyIrr();
+
+                    ptcl->CurrentTimeIrr  = 0;
+                    ptcl->CurrentTimeReg  = 0;
+                    ptcl->CurrentBlockIrr = 0;
+                    ptcl->CurrentBlockReg = 0;
+                } else {
+                    ptcl->initializeTimeStep();
+                
+                    // Timestep correction
+                    if (ptcl->NumberOfNeighbor != 0) {
+                        while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg)
+                        {
+                            ptcl->TimeStepIrr *= 0.5;
+                            ptcl->TimeBlockIrr *= 0.5;
+                            ptcl->TimeLevelIrr--;
+                        }
+                    }
+                    while (ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-7 && ptcl->TimeLevelIrr <= ptcl->TimeLevelReg) {
+                        ptcl->TimeLevelIrr++;
+                        ptcl->TimeStepIrr  = static_cast<double>(pow(2, ptcl->TimeLevelIrr));
+                    }
+                    ptcl->TimeBlockIrr = static_cast<ULL>(pow(2, ptcl->TimeLevelIrr - global_variable->time_block));
+                    ptcl->TimeBlockReg = static_cast<ULL>(pow(2, ptcl->TimeLevelReg - global_variable->time_block));
+                }
+                fprintf(stderr, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", ptcl->PID, ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4, ptcl->TimeStepReg*global_variable->EnzoTimeStep*1e4);
+                fprintf(stderr, "\tCreationTime: %e Myr, M_ini: %e Msol, Z_ini: %e \n", ptcl->CreationTime, ptcl->InitialMass, ptcl->InitialMetallicity);
+                // fprintf(stdout, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", this->PID, this->TimeStepIrr*global_variable->EnzoTimeStep*1e4, this->TimeStepReg*global_variable->EnzoTimeStep*1e4);
+                // fprintf(stdout, "\tCreationTime: %e Myr, M_ini: %e Msol, Z_ini: %e \n", this->CreationTime, this->InitialMass, this->InitialMetallicity);
+                /*
+                if (this->TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-5) {
+                    fprintf(stderr, "TimeStepReg correction until > 1e-5 Myr\n");
+                    fprintf(stdout, "TimeStepReg correction until > 1e-5 Myr\n");
+                    while (this->TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-5) {
+                        this->TimeLevelReg++;
+                        this->TimeStepReg  = static_cast<double>(pow(2, this->TimeLevelReg));
+                        this->TimeBlockReg = static_cast<ULL>(pow(2, this->TimeLevelReg-global_variable->time_block));
+                    }
+                }
+                */
+            }
+
+            ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr;
+        }
+    }
 }

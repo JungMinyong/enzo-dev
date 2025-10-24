@@ -16,7 +16,6 @@
 
 #define noDEBUG
 
-void updateNextRegTime(std::unordered_set<int> &RegularList);
 bool createSkipList(SkipList *skiplist);
 bool updateSkipList(SkipList *skiplist, int ptcl_id);
 
@@ -24,13 +23,18 @@ void formBinaries(std::vector<int>& ParticleList, std::vector<int>& newCMptcls, 
 void FBTermination(Particle* ptclCM);
 void Merge(Particle* p1, Particle* p2);
 
-bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
-{
+#ifdef SEVN_BINARY
+bool makeSEVNBinary(Particle* ptclCM);
+void deleteSEVNBinary(Particle* ptclCM);
+void BinaryEvolution(Particle* ptclCM);
+#endif
+
+bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unordered_set<int>& RegularList) {
 #ifdef PerformanceTrace
     std::chrono::high_resolution_clock::time_point start_point;
     std::chrono::high_resolution_clock::time_point end_point;
 #endif
-    int max_level = 5;
+    int max_level = 20;
     double prob = 0.5;
     SkipList *skiplist;
     Node *ThisLevelNode;
@@ -55,7 +59,7 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
     skiplist = new SkipList(max_level, prob);
-    if (createSkipList(skiplist) == FAIL)
+    if (createSkipList(skiplist) == false)
         fprintf(stderr, "There are no irregular particles!\nBut is it really happening? check skiplist->display()\n");
 
 #ifdef DEBUG_ABYSS
@@ -134,6 +138,9 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
         Queue queue;
         queue_scheduler.initializeIrr(IrrForce, next_time, ThisLevelNode->ParticleList);
         auto iter = queue_scheduler.CMPtcls.begin();
+#ifdef SEVN_BINARY
+        std::vector<int> CMPtclsForSEVN;
+#endif
         do
         {
             queue_scheduler.assignQueueAuto();
@@ -170,6 +177,10 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                     workers[CMPtclWorker[cm_pid]].addQueue(queue);
                     queue_scheduler.assignWorker(&workers[CMPtclWorker[cm_pid]]);
                     iter = queue_scheduler.CMPtcls.erase(iter);
+#ifdef SEVN_BINARY
+                    if (ptcl->BinaryEvolution != nullptr)
+                        CMPtclsForSEVN.push_back(cm_pid);
+#endif
                     // std::cout << "after: The number of CM ptcl is " << queue_scheduler.CMPtcls.size() << std::endl;
                     // queue_scheduler.printFreeWorker();
                     // queue_scheduler.printWorkerToGo();
@@ -256,8 +267,9 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef NSIGHT
         nvtxRangePushA("FewBodyTermination");
 #endif
-        int OriginalSize = ThisLevelNode->ParticleList.size();
-        for (int i = 0; i < OriginalSize; i++)
+        int OriginalParticleListSize;
+        OriginalParticleListSize = ThisLevelNode->ParticleList.size();
+        for (int i = 0; i < OriginalParticleListSize; i++)
         {
             ptcl = &particles[ThisLevelNode->ParticleList[i]];
             if (ptcl->getBinaryInterruptState() == BinaryInterruptState::merger ||
@@ -350,7 +362,6 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 }
 
                 bin_termination = true;
-                ptcl->isActive = false;
 
                 if (ptcl->ParticleIndex == global_variable->LastParticleIndex)
                 {
@@ -397,23 +408,33 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         continue;
                     }
                     ThisLevelNode->ParticleList.push_back(ptcl->Members[j]);
-                    particles[ptcl->Members[j]].isActive = true;
+#ifdef DEBUG_ABYSS
+                    fprintf(nbpout, "PID: %d is added to ParticleList\n", particles[ptcl->Members[j]].PID);
+                    fprintf(nbpout, "ParticleList size: %d\n", ThisLevelNode->ParticleList.size());
+                    fflush(nbpout);
+#endif
                 }
+#ifdef DEBUG_ABYSS
+                fprintf(nbpout, "FBTermination (PID: %d)\n", ptcl->PID);
+                fflush(nbpout);
+#endif
 
+#ifdef SEVN_BINARY
+                if (ptcl->BinaryEvolution != nullptr) {
+                    deleteSEVNBinary(ptcl);
+                }
+#endif
+                RegularList.erase(ptcl->ParticleIndex);
                 FBTermination(ptcl);
             }
         }
 
         if (bin_termination) {
-            for (int i=OriginalSize; i<ThisLevelNode->ParticleList.size(); i++) {
+            for (int i=OriginalParticleListSize; i<ThisLevelNode->ParticleList.size(); i++) {
                 ptcl = &particles[ThisLevelNode->ParticleList[i]];
 
                 if (ptcl->CurrentBlockReg + ptcl->TimeBlockReg == NextRegTimeBlock)
                     RegularList.insert(ptcl->ParticleIndex);
-
-                ptcl->NewNumberOfNeighbor = 0;
-                if (ptcl->TimeStepIrr * global_variable->EnzoTimeStep * 1e4 < TSEARCH)
-                    ptcl->checkNewGroup4();
             }
 
             // Erase terminated CM particles by EW 2025.1.6
@@ -425,8 +446,12 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 ),
                 ThisLevelNode->ParticleList.end()
             );
+#ifdef DEBUG_ABYSS
+            fprintf(nbpout, "After bin_termination, ParticleList size: %d\n", ThisLevelNode->ParticleList.size());
+            fflush(nbpout);
+#endif
         }
-
+#ifdef unused
 #ifdef NSIGHT
         nvtxRangePop();
 #endif
@@ -482,11 +507,12 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef NSIGHT
         nvtxRangePop();
 #endif
+#endif // unused
 
 #ifdef NSIGHT
         nvtxRangePushA("FormBinaries");
 #endif
-        int OriginalParticleListSize = ThisLevelNode->ParticleList.size();
+        OriginalParticleListSize = ThisLevelNode->ParticleList.size();
         int rank_delete, rank_new;
 #ifdef DEBUG_ABYSS
         fprintf(nbpout, "formBinaries starts\n");
@@ -513,13 +539,12 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
             {
                 ptclCM = &particles[newCMptcls[i]]; // 2025.01.10 edited to newCMptcls[i] by YS
 
-                for (int j = 0; j < ptclCM->NewNumberOfNeighbor; j++)
+                for (int j = 0; j < ptclCM->NewNumberOfMember; j++)
                 {
-                    mem_ptclCM = &particles[ptclCM->NewNeighbors[j]];
+                    mem_ptclCM = &particles[ptclCM->NewMembers[j]];
                     if (mem_ptclCM->isCMptcl)
                     {
                         fprintf(stdout, "manybody group detected; PID %d should be deleted first\n", mem_ptclCM->PID);
-                        queue_scheduler.initialize(DeleteGroup);
                         rank_delete = CMPtclWorker[mem_ptclCM->ParticleIndex];
                         fprintf(stdout, "Rank of CM ptcl %d: %d\n", mem_ptclCM->PID, rank_delete);
                         queue.task = DeleteGroup;
@@ -528,7 +553,12 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                         workers[rank_delete].runQueue();
                         workers[rank_delete].callback();
 
-                        PrevCMPtclWorker.insert({mem_ptclCM->ParticleIndex, CMPtclWorker[mem_ptclCM->ParticleIndex]});
+                        if (mem_ptclCM->ParticleIndex == LastParticleIndex) {
+                            LastParticleIndex--;
+                            global_variable->LastParticleIndex = LastParticleIndex;
+                        }
+                        else
+                            PrevCMPtclWorker.insert({mem_ptclCM->ParticleIndex, CMPtclWorker[mem_ptclCM->ParticleIndex]});
                         CMPtclWorker.erase(mem_ptclCM->ParticleIndex);
                     }
                 }
@@ -538,15 +568,31 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
                 fprintf(nbpout, "Rank of CM ptcl %d: %d\n", ptclCM->PID, rank_new);
                 fflush(nbpout);
 #endif
+
+#ifdef SEVN_BINARY
+                if (!makeSEVNBinary(ptclCM)) {
+                    if (ptclCM->ParticleIndex == LastParticleIndex) {
+                        LastParticleIndex--;
+                        global_variable->LastParticleIndex = LastParticleIndex;
+                    }
+                    else
+                        PrevCMPtclWorker.insert({ptclCM->ParticleIndex, CMPtclWorker[ptclCM->ParticleIndex]});
+                    CMPtclWorker.erase(ptclCM->ParticleIndex);
+                    continue;
+                }
+#endif
                 queue.task = MakeGroup;
                 queue.pid = ptclCM->ParticleIndex;
                 workers[rank_new].addQueue(queue);
                 workers[rank_new].runQueue();
                 workers[rank_new].callback();
 
-                if (ptclCM->CurrentBlockReg + ptclCM->TimeBlockReg == NextRegTimeBlock) {
-                    RegularList.insert(ptcl->ParticleIndex);
+                for (int i = 0; i < ptclCM->NewNumberOfMember; i++) {
+                    RegularList.erase(ptclCM->NewMembers[i]);
+                    particles[ptclCM->NewMembers[i]].NewNumberOfMember = 0;
                 }
+                if (ptclCM->CurrentBlockReg + ptclCM->TimeBlockReg == NextRegTimeBlock)
+                    RegularList.insert(ptclCM->ParticleIndex); // VERY IMPORTANT BUG FIXED by EW 2025.7.18
             }
 #ifdef DEBUG_ABYSS
             fprintf(nbpout, "All new fewbody objects are initialized.\n");
@@ -569,12 +615,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #endif
 
 #endif
-#ifdef DEBUG_ABYSS
-        fprintf(nbpout, "updateSkipList starts\n");
-        fflush(nbpout);
-#endif
-        int ParticleListSize = ThisLevelNode->ParticleList.size();
-        for (int i = 0; i < ParticleListSize; i++)
+        OriginalParticleListSize = ThisLevelNode->ParticleList.size();
+        for (int i = 0; i < OriginalParticleListSize; i++)
             updateSkipList(skiplist, ThisLevelNode->ParticleList[i]);
 #ifdef DEBUG_ABYSS
         fprintf(nbpout, "updateSkipList ended\n");
@@ -703,23 +745,8 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers)
 #ifdef FEWBODY
     if (bin_termination || new_binaries) {
 
-        for (auto it = RegularList.begin(); it != RegularList.end(); ) {
-            if (!particles[*it].isActive)
-                it = RegularList.erase(it);
-            else
-                ++it;
-        }
-
-        if (RegularList.empty()) {
-
-#ifdef PerformanceTrace
-            end_point = std::chrono::high_resolution_clock::now();
-            performance.IrregularRoutine +=
-                std::chrono::duration_cast<std::chrono::nanoseconds>(end_point - start_point).count();
-#endif
-
+        if (RegularList.empty())
             return false;
-        }
     }
 #endif
 
@@ -779,9 +806,9 @@ bool createSkipList(SkipList *skiplist) {
 	//fflush(stdout);
 
 	if (skiplist->getFirstNode() == nullptr)
-		return FAIL;
+		return false;
 	else
-		return 1; // SUCCESS -> 1 by EW 2025.3.11
+		return true;
 }
 
 
