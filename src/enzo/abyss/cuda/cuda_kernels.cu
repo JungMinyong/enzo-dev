@@ -1,3 +1,4 @@
+#ifdef CUDA
 #include <iostream>
 #include <stdio.h>
 #include <cmath>
@@ -971,3 +972,4 @@ __global__ void compute_forces_init23(const Iparticle* __restrict__ d_Ip, const 
 		i += gridDim.x * blockDim.x;
 	} //end of i loop
 }
+#endif

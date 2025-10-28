@@ -177,6 +177,8 @@ void Particle::calculateTimeStepIrr() {
 		}
 	}
 
+	fprintf(stderr, "In calculateTimeStepIrr, PID: %d, RadiusOfNeighbor: %e, TimeStepIrr = %e Myr\n", PID, RadiusOfNeighbor, TimeStepIrr*global_variable->EnzoTimeStep*1e4);
+
 	if (TimeStepIrr > 1) {
 		fprintf(stderr, "Why TimeStepIrr is too large? PID: %d, pos: (%e, %e, %e), vel: (%e, %e, %e)\n",
 				PID, Position[0], Position[1], Position[2], Velocity[0], Velocity[1], Velocity[2]);
@@ -187,6 +189,7 @@ void Particle::calculateTimeStepIrr() {
 				a_reg[0][0], a_reg[1][0], a_reg[2][0], a_reg[0][1], a_reg[1][1], a_reg[2][1],
 				a_reg[0][2], a_reg[1][2], a_reg[2][2], a_reg[0][3], a_reg[1][3], a_reg[2][3]);
 		fprintf(stderr, "TimeStepIrr=%e, TimeLevelIrr=%d, TimeLevelTmp0=%d\n",TimeStepIrr, TimeLevelIrr, TimeLevelTmp0);
+		fprintf(stderr, "RadiusOfNeighbor = %e\n", RadiusOfNeighbor);
 		fflush(stderr);
 		throw std::runtime_error("");
 	}
@@ -469,6 +472,7 @@ void Particle::calculateTimeStepOnlyIrr() {
 		TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 	}
 
+	// fprintf(stderr, "In calculateTimeStepOnlyIrr, PID: %d, TimeStepIrr = %e Myr\n", PID, TimeStepIrr*global_variable->EnzoTimeStep*1e4);
 }
 
 

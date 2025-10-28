@@ -77,7 +77,10 @@
         "cinttypes": "cpp",
         "enzo.C": "cpp",
         "StarRoutines.C": "cpp",
-        "ProblemType.C": "cpp"
+        "ProblemType.C": "cpp",
+        "LoadBalanceHilbertCurve.C": "cpp",
+        "LoadBalanceHilbertCurveRootGrids.C": "cpp",
+        "AbyssCommunications.C": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

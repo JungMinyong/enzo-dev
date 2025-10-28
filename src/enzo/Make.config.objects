@@ -1326,7 +1326,6 @@ OBJS_NBODY= \
         abyss/FewBody/FBTermination.o\
         abyss/FewBody/GroupAccelerationRoutine.o\
         abyss/StellarEvolution.o\
-
         #abyss/cuda/CalculateRegularAcceleration.o\
         #abyss/cuda/cuda_my_acceleration.o\
         #abyss/cuda/cuda_kernels.o\

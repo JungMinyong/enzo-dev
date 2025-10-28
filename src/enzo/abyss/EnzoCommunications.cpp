@@ -380,6 +380,7 @@ int InitialCommunication() {
             particles[i].setFirst(recvbuf[i], EnzoProcessorNumber);
             PIDtoIndexMap.insert({recvbuf[i].ID, i});
             particles[i].ParticleIndex = i;
+            particles[i].NeighborsOffset = i * MaxNumNeighbor;
             fprintf(nbpout, "%d, ", EnzoProcessorNumber);
         }
         fprintf(nbpout, "\n");
@@ -777,6 +778,7 @@ int ReceiveParticleFromEnzo() {
 
             particles[index].set(recvbuf_new[i], EnzoProcessorNumber);
             particles[index].ParticleIndex = index;
+            particles[index].NeighborsOffset = index * MaxNumNeighbor;
             PIDtoIndexMap.insert({recvbuf_new[i].ID, index});
 
             if (debug1) {

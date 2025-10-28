@@ -1,3 +1,4 @@
+#ifdef CUDA
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
@@ -821,3 +822,4 @@ extern "C" {
 		GetAcceleration_init(*NumTargetTotal, RegularList);
 	}
 }
+#endif

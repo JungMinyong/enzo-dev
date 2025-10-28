@@ -192,6 +192,7 @@ void CalculateAcceleration23(Particle* ptcl1) {
 
 
 double getNewTimeStep(double f[3][4], double df[3][4]);
+double getNewTimeStepReg(double v[3], double f[3][4]);
 void getBlockTimeStep(double dt, int& TimeLevel, ULL &TimeBlock, double &TimeStep);
 
 
@@ -201,24 +202,33 @@ void Particle::initializeTimeStep() {
 
 	double dtIrr, dtReg;
 
-	dtReg = getNewTimeStep(this->a_reg, this->a_reg);
-	//std::cout << "dtReg=" << dtReg << std::endl;
-	getBlockTimeStep(dtReg, this->TimeLevelReg, this->TimeBlockReg, this->TimeStepReg);
-	//std::cout << "TimeStepReg=" << this->TimeStepReg*EnzoTimeStep*1e10/1e6 << std::endl;
-
-
-	this->TimeStepReg  = std::min(1.0, this->TimeStepReg);
-	this->TimeBlockReg = std::min(global_variable->block_max, this->TimeBlockReg);
-	this->TimeLevelReg = std::min(0, this->TimeLevelReg);
-
-	if (this->NumberOfNeighbor != 0) {
-		dtIrr = getNewTimeStep(this->a_tot, this->a_irr);
+	if (this->RadiusOfNeighbor == 1e20) {
+		dtIrr = getNewTimeStepReg(this->Velocity, this->a_irr);
 		getBlockTimeStep(dtIrr, this->TimeLevelIrr, this->TimeBlockIrr, this->TimeStepIrr);
-	}
-	else {
-		this->TimeBlockIrr = this->TimeBlockReg;
-		this->TimeLevelIrr = this->TimeLevelReg;
-		this->TimeStepIrr  = this->TimeStepReg;
+
+		this->TimeStepIrr = std::min(1.0, this->TimeStepIrr);
+		this->TimeBlockIrr = std::min(global_variable->block_max, this->TimeBlockIrr);
+		this->TimeLevelIrr = std::min(0, this->TimeLevelIrr);
+	} else {
+		dtReg = getNewTimeStep(this->a_reg, this->a_reg);
+		//std::cout << "dtReg=" << dtReg << std::endl;
+		getBlockTimeStep(dtReg, this->TimeLevelReg, this->TimeBlockReg, this->TimeStepReg);
+		//std::cout << "TimeStepReg=" << this->TimeStepReg*EnzoTimeStep*1e10/1e6 << std::endl;
+
+
+		this->TimeStepReg  = std::min(1.0, this->TimeStepReg);
+		this->TimeBlockReg = std::min(global_variable->block_max, this->TimeBlockReg);
+		this->TimeLevelReg = std::min(0, this->TimeLevelReg);
+
+		if (this->NumberOfNeighbor != 0) {
+			dtIrr = getNewTimeStep(this->a_tot, this->a_irr);
+			getBlockTimeStep(dtIrr, this->TimeLevelIrr, this->TimeBlockIrr, this->TimeStepIrr);
+		}
+		else {
+			this->TimeBlockIrr = this->TimeBlockReg;
+			this->TimeLevelIrr = this->TimeLevelReg;
+			this->TimeStepIrr  = this->TimeStepReg;
+		}
 	}
 
 	this->CurrentTimeIrr  = 0;

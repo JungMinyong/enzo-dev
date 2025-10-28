@@ -616,33 +616,24 @@ void InitializationOnCPU(QueueScheduler &queue_scheduler, Worker *workers) {
                 }
             } else { // newly detected nbody particles
 
-                if (ptcl->RadiusOfNeighbor == 1e20) {
-                    fprintf(stderr, "All particles are neighbors to each other (PID: %d)\n", ptcl->PID);
-                    ptcl->calculateTimeStepOnlyIrr();
-
-                    ptcl->CurrentTimeIrr  = 0;
-                    ptcl->CurrentTimeReg  = 0;
-                    ptcl->CurrentBlockIrr = 0;
-                    ptcl->CurrentBlockReg = 0;
-                } else {
-                    ptcl->initializeTimeStep();
-                
-                    // Timestep correction
-                    if (ptcl->NumberOfNeighbor != 0) {
-                        while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg)
-                        {
-                            ptcl->TimeStepIrr *= 0.5;
-                            ptcl->TimeBlockIrr *= 0.5;
-                            ptcl->TimeLevelIrr--;
-                        }
+                ptcl->initializeTimeStep();
+            
+                // Timestep correction
+                if (ptcl->RadiusOfNeighbor != 1e20 && ptcl->NumberOfNeighbor != 0) {
+                    while (ptcl->TimeLevelIrr >= ptcl->TimeLevelReg)
+                    {
+                        ptcl->TimeStepIrr *= 0.5;
+                        ptcl->TimeBlockIrr *= 0.5;
+                        ptcl->TimeLevelIrr--;
                     }
-                    while (ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-7 && ptcl->TimeLevelIrr <= ptcl->TimeLevelReg) {
-                        ptcl->TimeLevelIrr++;
-                        ptcl->TimeStepIrr  = static_cast<double>(pow(2, ptcl->TimeLevelIrr));
-                    }
-                    ptcl->TimeBlockIrr = static_cast<ULL>(pow(2, ptcl->TimeLevelIrr - global_variable->time_block));
-                    ptcl->TimeBlockReg = static_cast<ULL>(pow(2, ptcl->TimeLevelReg - global_variable->time_block));
                 }
+                while (ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-7 && ptcl->TimeLevelIrr <= ptcl->TimeLevelReg) {
+                    ptcl->TimeLevelIrr++;
+                    ptcl->TimeStepIrr  = static_cast<double>(pow(2, ptcl->TimeLevelIrr));
+                }
+                ptcl->TimeBlockIrr = static_cast<ULL>(pow(2, ptcl->TimeLevelIrr - global_variable->time_block));
+                ptcl->TimeBlockReg = static_cast<ULL>(pow(2, ptcl->TimeLevelReg - global_variable->time_block));
+
                 fprintf(stderr, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", ptcl->PID, ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4, ptcl->TimeStepReg*global_variable->EnzoTimeStep*1e4);
                 fprintf(stderr, "\tCreationTime: %e Myr, M_ini: %e Msol, Z_ini: %e \n", ptcl->CreationTime, ptcl->InitialMass, ptcl->InitialMetallicity);
                 // fprintf(stdout, "New ptcl (PID: %d) TimeStepIrr: %e Myr, TimeStepReg: %e Myr\n", this->PID, this->TimeStepIrr*global_variable->EnzoTimeStep*1e4, this->TimeStepReg*global_variable->EnzoTimeStep*1e4);

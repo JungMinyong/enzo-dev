@@ -12,7 +12,7 @@ void updateRegularMap(std::multimap<ULL,int>& RegularMap, std::unordered_set<int
 void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unordered_set<int>& RegularList) {
 
     if (OnlyIrregularRoutine) {
-        fprintf(stderr, "Skip Regular routines!!! NumberOfParticle: %d\n", NumberOfParticle);
+        // fprintf(stderr, "Skip Regular routines!!! NumberOfParticle: %d\n", NumberOfParticle);
         return;
     }
 

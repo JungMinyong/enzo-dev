@@ -43,13 +43,14 @@ void WorkerRoutines() {
 			case IrrForce: // Irregular Acceleration
 				
 				ptcl = &particles[ptcl_id];
+				ptcl->computeAccelerationIrr();
+
+				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+
 				if (ptcl->RadiusOfNeighbor == 1e20)
 					ptcl->calculateTimeStepOnlyIrr();
 				else
 					ptcl->calculateTimeStepIrr();
-
-				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
-				ptcl->calculateTimeStepIrr();
 				ptcl->NextBlockIrr = ptcl->NewCurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
 				ptcl->isUpdateToDate = true;
 				break;

@@ -1,3 +1,4 @@
+#ifdef CUDA
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -524,3 +525,4 @@ void sendAllParticlesToGPU_init_Worker() {
 				nullptr, nullptr, nullptr, MPI_INT, ROOT, abyss_comm);
 
 }
+#endif
