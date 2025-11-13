@@ -685,7 +685,8 @@ int fill_table(hid_t file_id,
                dname.c_str(), filename.c_str());
   }
 
-  status = H5Dread(dset_id, HDF5_I8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_anum);
+  //status = H5Dread(dset_id, HDF5_I8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_anum);
+  status = H5Dread(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_anum);
   if (status == h5_error){
     ENZO_VFAIL("Error reading in atomic_numbers for %s in %s\n",
                dname.c_str(), filename.c_str());
@@ -697,9 +698,18 @@ int fill_table(hid_t file_id,
   int temp_size = table->Nm * table->Nz *
                    Nyields;
 
-  float *temp_yields = new float [temp_size];
-  for(int i = 0 ; i < temp_size; i++) temp_yields[i] = 0.0;
+  //float *temp_yields = new float [temp_size];
+  //for(int i = 0 ; i < temp_size; i++) temp_yields[i] = 0.0;
 
+  float *temp_yields = new (std::nothrow) float[temp_size];
+  if (!temp_yields)
+  {
+    std::cerr << "Allocation failed\n";
+  }
+
+  for (int i = 0; i < temp_size; i++)
+    temp_yields[i] = 0.0;
+    
   dset_id = H5Dopen(file_id, ("/"+dname+"/yields").c_str());
   if (dset_id == h5_error){
     ENZO_VFAIL("Error opening yields for %s in %s\n",
