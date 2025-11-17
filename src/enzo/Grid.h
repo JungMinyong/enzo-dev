@@ -2455,6 +2455,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			  float CosmologySimulationInitialFractionH2II,
 			  float CosmologySimulationInitialFractionMetal,
 			  float CosmologySimulationInitialFractionMetalIa,
+#ifdef TRANSFER
+           float RadHydroInitialRadiationEnergy,
+#endif
 			  int   CosmologySimulationUseMetallicityField,
 			  PINT &CurrentNumberOfParticles,
 			  int CosmologySimulationManuallySetParticleMassRatio,
