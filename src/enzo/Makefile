@@ -193,7 +193,7 @@ verbose: $(EXE).exe
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .c .C .F .F90 .o .cu .pyx
+.SUFFIXES: .c .C .F .F90 .o .cu .pyx .cpp
 
 # Inhibit removing any *.o files after compiling
 
@@ -292,6 +292,29 @@ verbose: $(EXE).exe
 	  fi ; \
 	fi)
 
+.cpp.o:
+	@rm -f $@
+	@echo "Compiling $<"
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  $(NCXX) -c -std=c++11 -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle  -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
+	    >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
+             echo; \
+             echo "$(NCXX) -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss $(INCLUDES) $*.cpp"; \
+             echo; \
+             $(NCXX)-o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp;\
+             echo; \
+             exit 1; \
+          fi ; \
+	else \
+	  $(NCXX) -c -std=c++11 -o $@ $(DEFINES) $(CXXFLAGS) -I./abyss/Particle -I./abyss/FewBody -I./abyss $(INCLUDES) $*.cpp \
+	    >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
+
 .cu.o: 
 	@rm -f $@
 	@echo "Compiling $<"
@@ -354,6 +377,8 @@ dep:
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.C) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.c) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- */*.cpp) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- */*.cu) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F90) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- */*.h) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.h) >> out.make.DEPEND 2>&1
@@ -402,6 +427,10 @@ help:
 clean:
 	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) enzo.exe \
           auto_show*.C hydro_rk/*.o *.oo hydro_rk/*.oo \
+					abyss/*.o \
+					abyss/Particle/*.o \
+					abyss/FewBody/*.o \
+					abyss/cuda/*.o \
           uuid/*.oo DEPEND TAGS \
           libconfig/*.o \
           python_bridge/problemtype_handler.C \

@@ -832,7 +832,7 @@
 # DETERMINE Direct Nbody Calculation Settings
 # but only uses it if you set UseNBODY = 1 in your parameter files.
 #-----------------------------------------------------------------------
-
+    
     ERROR_NBODY = 1
 
     # Settings to compile CUDA kernels 
@@ -844,6 +844,7 @@
         ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY)
  	    ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES)
         OBJS_NBODY_LIB = $(OBJS_NBODY_ALL)
+        OBJS_NBODY = $(POBJS_NBODY)
 
         ERROR_FEWBODY = 1
         ifeq ($(CONFIG_FEWBODY),yes)
@@ -891,7 +892,8 @@
     ifeq ($(CONFIG_NBODY),no)
         ERROR_NBODY = 0
         ASSEMBLE_NBODY_DEFINES = 
-	OBJS_NBODY_LIB = 
+	    OBJS_NBODY_LIB = 
+        OBJS_NBODY = 
     endif
 
     # error if 
