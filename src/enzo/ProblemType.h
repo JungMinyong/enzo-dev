@@ -14,6 +14,8 @@
 
 #include <string>
 
+class ProblemType_IsolatedAEOS;
+
 class EnzoProblemType
 {
 /* These will be overridden in the public namespace by implementations */
@@ -37,22 +39,24 @@ protected:
     {}
     int DataLabelCount;
 
-    grid *CreateNewUniformGrid(grid *ParentGrid,
-            int Rank, int Dimensions[], 
-		    FLOAT LeftEdge[], FLOAT RightEdge[], int NumParticles,
-            float UniformDensity,
-			float UniformTotalEnergy,
+    grid *CreateNewUniformGrid(grid *ParentGrid, HierarchyEntry &TopGrid,
+                               TopGridData &MetaData, int Rank,
+                               int Dimensions[], FLOAT LeftEdge[],
+                               FLOAT RightEdge[], int NumParticles,
+                               float UniformDensity, float UniformTotalEnergy,
 			float UniformInternalEnergy,
-			float UniformVelocity[], 
-			float UniformBField[]);
+                               float UniformVelocity[], float UniformBField[]);
 
     int InitializeUniformGrid(
                 grid *thisgrid,
+                HierarchyEntry &TopGrid,
+                TopGridData &MetaData,
                 float UniformDensity,
 				float UniformTotalEnergy,
 				float UniformInternalEnergy,
                 float UniformVelocity[], 
-                float UniformBField[]);
+                float UniformBField[],
+                ProblemType_IsolatedAEOS *TestProblemData=nullptr);
 
     void FinalizeGrids(HierarchyEntry **RefLevels, HierarchyEntry &TopGrid,
                        TopGridData &MetaData);

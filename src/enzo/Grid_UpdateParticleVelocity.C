@@ -82,6 +82,16 @@ int grid::UpdateParticleVelocity(float TimeStep)
 	 already been divided by a(t). */
  
       for (i = 0; i < NumberOfParticles; i++) {
+#ifdef NBODY
+#ifdef INDIVIDUALSTAR
+				if ( ParticleType[i] != PARTICLE_TYPE_DARK_MATTER && ParticleType[i] != PARTICLE_TYPE_GAS) continue;
+				//#define PARTICLE_TYPE_MUST_REFINE    4 should I include this?
+#else
+				// by YS Jo
+				if ( ParticleType[i] == PARTICLE_TYPE_NBODY || ParticleType[i] == PARTICLE_TYPE_NBODY_NEW || ParticleType[i] == PARTICLE_TYPE_NBODY_REMOVE) continue;
+				//&& GridLevel != MaximumRefinementLevel )
+#endif
+#endif				
  
 #ifdef VELOCITY_METHOD1
  
@@ -90,8 +100,10 @@ int grid::UpdateParticleVelocity(float TimeStep)
 	VelocityMidStep = ParticleVelocity[dim][i] +
 	                  ParticleAcceleration[dim][i]*0.5*TimeStep;
  
+#ifdef NBODY
 	ParticleVelocity[dim][i] +=
 	  (-VelocityMidStep*dadt/a + ParticleAcceleration[dim][i]) * TimeStep;
+#endif
  
 #endif /* VELOCITY_METHOD1 */
  
@@ -101,29 +113,44 @@ int grid::UpdateParticleVelocity(float TimeStep)
  
 	VelocityMidStep = ParticleVelocity[dim][i] ;
  
+#ifdef NBODY
 	ParticleVelocity[dim][i] +=
 	  (-VelocityMidStep*dadt/a + ParticleAcceleration[dim][i]) * TimeStep;
+#endif
+				//ParticleVelocity[dim][i] +=
+				//  (-VelocityMidStep*dadt/a + ParticleAcceleration[dim][i]) * TimeStep;
  
 #endif /* VELOCITY_METHOD2 */
  
 #ifdef VELOCITY_METHOD3
  
         /* iii) Semi-implicit way */
- 
+#ifdef NBODY 
         ParticleVelocity[dim][i] = (coef1*ParticleVelocity[dim][i] +
                                     ParticleAcceleration[dim][i]*TimeStep)*coef2;
+#endif
 
  
 #endif /* VELOCITY_METHOD3 */
  
       }
     }
-    else
+		else {
  
       /* Otherwise, just add the acceleration. */
  
-      for (i = 0; i < NumberOfParticles; i++)
+			for (i = 0; i < NumberOfParticles; i++) {
+#ifdef NBODY
+#ifdef INDIVIDUALSTAR
+				if ( ParticleType[i] != PARTICLE_TYPE_DARK_MATTER && ParticleType[i] != PARTICLE_TYPE_GAS) continue;
+				//#define PARTICLE_TYPE_MUST_REFINE    4 should I include this?
+#else
+				if ( ParticleType[i] != PARTICLE_TYPE_NBODY  && ParticleType[i] != PARTICLE_TYPE_NBODY_NEW  && ParticleType[i] != PARTICLE_TYPE_NBODY_REMOVE ) 
+#endif
+#endif
 	ParticleVelocity[dim][i] += ParticleAcceleration[dim][i] * TimeStep;
+			}
+		}
  
   }
 

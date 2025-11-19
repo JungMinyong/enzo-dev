@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <map>
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "EnzoTiming.h"
@@ -27,10 +28,18 @@
 #include "LevelHierarchy.h"
 
 int StarParticlePopIII_IMFInitialize(void);
-int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
+int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                        ,
+                        //std::unordered_map<int, Star *> &LocalStarLookupMap,
+                        std::map<int, Star *> &LocalStarLookupMap,
+                        int &ThisLevel
+#endif
+);
 int StarParticleMergeNew(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
 int StarParticleMergeMBH(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
 int FindTotalNumberOfParticles(LevelHierarchyEntry *LevelArray[]);
+int FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[]); // by YS
 void RecordTotalStarParticleCount(HierarchyEntry *Grids[], int NumberOfGrids,
 				  int TotalStarParticleCountPrevious[]);
 
@@ -45,12 +54,15 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 			   int ThisLevel, Star *&AllStars,
 			   int TotalStarParticleCountPrevious[]
 #ifdef INDIVIDUALSTAR
-                           , int SkipFeedbackFlag = 0
+#ifdef NBODY
+                           ,
+                           //std::unordered_map<int, Star *> &LocalStarLookupMap
+                           std::map<int, Star *> &LocalStarLookupMap
 #endif
-                           )
-
-
-{
+                           ,
+                           int SkipFeedbackFlag = 0
+#endif
+) {
 
   /* Return if this does not concern us */
   if (!(StarParticleCreation || StarParticleFeedback)) 
@@ -113,11 +125,18 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Create a master list of all star particles */
 
   TIMER_START("StarParticleInitialize:MasterList");
-  if (StarParticleFindAll(LevelArray, AllStars) == FAIL) {
+  if (StarParticleFindAll(LevelArray, AllStars
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                          ,
+                          LocalStarLookupMap,
+                          ThisLevel
+#endif
+                          ) == FAIL) {
         ENZO_FAIL("Error in StarParticleFindAll.");
   }
   TIMER_STOP("StarParticleInitialize:MasterList");
 
+#ifndef NBODY
   if (MetaData->FirstTimestepAfterRestart == FALSE) {
 
     /* Merge any newly created, clustered particles */
@@ -136,6 +155,7 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   TIMER_STOP("StarParticleInitialize:MergeParticles");
 
   } // ENDIF !restart
+#endif
 
   /* 
      Set feedback flags.  

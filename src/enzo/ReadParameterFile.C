@@ -1507,6 +1507,31 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "Mu = %"FSYM, &Mu);
     ret += sscanf(line, "DivBDampingLength = %"FSYM, &DivBDampingLength);
     ret += sscanf(line, "UseCUDA = %"ISYM,&UseCUDA);
+
+    ret += sscanf(line, "UseNBODY = %"ISYM,&UseNBODY);
+#ifdef NBODY
+		ret += sscanf(line, "NbodyRestartStarToNbody = %"ISYM, &NbodyRestartStarToNbody);
+		ret += sscanf(line, "NbodyNewStarToNbody = %"ISYM, &NbodyNewStarToNbody);
+    ret += sscanf(line, "UseNbodyClusterIdentification = %"ISYM, &isNbodyParticleIdentification);
+    ret += sscanf(line, "IdentificationOnTheFly = %"ISYM, &isIdentificationOnTheFly);
+		ret += sscanf(line, "NbodyClusterPosition = %"FSYM" %"FSYM" %"FSYM, 
+				NbodyClusterPosition, NbodyClusterPosition+1, NbodyClusterPosition+2);
+		ret += sscanf(line, "NbodyClusterRadius = %"FSYM, NbodyClusterPosition+3);
+		ret += sscanf(line, "NbodySmoothingLength = %"FSYM, &NbodySmoothingLength);
+		ret += sscanf(line, "NbodyTimeStepConstant = %"FSYM, &NbodyTimeStepConstant);
+		ret += sscanf(line, "NbodyNeighborRadius = %"FSYM, &NbodyNeighborRadius);
+		ret += sscanf(line, "NbodyFixNumNeighbor = %"ISYM, &NbodyFixNumNeighbor);
+		ret += sscanf(line, "NbodyMaxNumNeighbor = %"ISYM, &NbodyMaxNumNeighbor);
+		ret += sscanf(line, "NbodyBinaryRegularization = %"ISYM, &NbodyBinaryRegularization);
+		ret += sscanf(line, "NbodyBinaryDistance       = %"FSYM, &NbodyBinaryDistance);
+		ret += sscanf(line, "NbodyBinaryTimeStep       = %"FSYM, &NbodyBinaryTimeStep);
+    ret += sscanf(line, "NbodyStoreTimeStep = %"ISYM, &NbodyStoreTimeStep);
+		//ret += sscanf(line, "NbodyFilename             = %"FSYM, &NbodyFilename);
+    if (sscanf(line, "NbodyDir           = %s", dummy) == 1)
+      NbodyDir = dummy;
+    //ret += sscanf(line, "UseNbodyClusterIdentificationOnTheFly = %d", &isNbodyParticleIdentification);
+		//
+#endif
     ret += sscanf(line, "ClusterSMBHFeedback = %"ISYM, &ClusterSMBHFeedback);
     ret += sscanf(line, "ClusterSMBHJetMdot = %"FSYM, &ClusterSMBHJetMdot);
     ret += sscanf(line, "ClusterSMBHJetVelocity = %"FSYM, &ClusterSMBHJetVelocity);
@@ -2423,7 +2448,48 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     }
   } // if(StarMakerMinimumMassRamp > 0)
 
+	if (UseNBODY) {
+		float DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1,
+					TemperatureUnits=1;
+		double MassUnits=1;
 
+		if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+					&TimeUnits, &VelocityUnits, &MassUnits, MetaData.Time) == FAIL) {
+			ENZO_FAIL("Error in GetUnits.");
+		}
+
+		// this is for background acceleration
+#ifndef INDIVIDUALSTAR
+  #ifdef SEVN
+    if (NumberOfParticleAttributes < 11) {
+      NumberOfParticleAttributes = 11;
+      fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
+    }
+  #else
+		if (NumberOfParticleAttributes < 7) {
+			NumberOfParticleAttributes = 7;
+			fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
+		}
+  #endif
+  #endif
+
+#ifdef NBODY
+		if (isNbodyParticleIdentification) {
+			fprintf(stdout, "LengthUnits=%e\n", LengthUnits);
+			NbodyClusterPosition[3] = (NbodyClusterPosition[3] * kpc_cm / LengthUnits)*(NbodyClusterPosition[3] * kpc_cm / LengthUnits);
+		} else {
+			NbodyClusterPosition[3] = 0;
+		}
+
+		NbodySmoothingLength = NbodySmoothingLength * kpc_cm / LengthUnits;
+		NbodyNeighborRadius *= kpc_cm / LengthUnits;
+
+		fprintf(stdout, "NbodySmoothingLength  = %e\n", NbodySmoothingLength);
+		fprintf(stdout, "NbodyNeighborRadius   = %e\n", NbodyNeighborRadius);
+		fprintf(stdout, "NbodyTimeStepConstant = %e\n", NbodyTimeStepConstant);
+		fprintf(stdout, "ClusterRadius2        = %e\n", NbodyClusterPosition[3]);
+#endif
+	}
 
   return SUCCESS;
 

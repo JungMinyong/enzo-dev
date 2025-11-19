@@ -404,7 +404,8 @@ c
 c      write(6,*) 'star_feedback3: start',npart
       do n=1_IKIND, npart
          if (tcp(n) .gt. 0._RKIND .and. mp(n) .gt. 0._RKIND .and. 
-     &        type(n) .eq. 2_IKIND) then
+     &        (type(n) .eq. 2_IKIND .or. type(n) .eq. 101_IKIND .or. 
+     &         type(n) .eq. 102_IKIND .or. type(n) .eq. 103_IKIND)) then
 c
 c        The star particle creation algorithm partnered with this 
 c        feedback algorithm creates a star particle instantaneously.

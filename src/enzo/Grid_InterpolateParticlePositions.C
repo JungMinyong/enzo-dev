@@ -46,12 +46,20 @@ int grid::InterpolateParticlePositions(grid *FromGrid, int DifferenceType)
       FromGrid->CellLeftEdge[dim][0] -= 0.5*FromGrid->CellWidth[dim][0];
     }
 
-    if (NumberOfParticles > 0)
+		if (NumberOfParticles > 0) {
       if (FromGrid->InterpolatePositions(ParticlePosition, dim,
 					 ParticleAcceleration[dim],
 					 NumberOfParticles) == FAIL) {
         ENZO_FAIL("Error in grid->InterpolatePositions.\n");
       }
+#ifdef NBODY
+			if (FromGrid->InterpolatePositionsNoStar(ParticlePosition, dim,
+						ParticleAccelerationNoStar[dim],
+						NumberOfParticles) == FAIL) {
+				ENZO_FAIL("Error in grid->InterpolatePositionsNoStar.\n");
+			}
+#endif
+		}
 
     if (NumberOfActiveParticles > 0) {
 

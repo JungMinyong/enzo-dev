@@ -86,12 +86,21 @@ int grid::AddExternalAcceleration()
 	      (4.0*pi*rcubed*a);
  
 	    /* Apply force. */
- 
+#ifdef NBODY 
+	    AccelerationFieldNoStar[0][n] -= accel*xpos;
+	    if (GridRank > 1) {
+	      AccelerationFieldNoStar[1][n] -= accel*ypos;
+			}
+	    if (GridRank > 2) {
+	      AccelerationFieldNoStar[2][n] -= accel*zpos;
+			}
+#else
 	    AccelerationField[0][n] -= accel*xpos;
 	    if (GridRank > 1)
 	      AccelerationField[1][n] -= accel*ypos;
 	    if (GridRank > 2)
 	      AccelerationField[2][n] -= accel*zpos;
+#endif
  
 	  }
 	}

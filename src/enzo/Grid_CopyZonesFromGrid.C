@@ -449,8 +449,13 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 
   /* Clean up if we have transfered data. */
   
-  if (MyProcessorNumber != OtherGrid->ProcessorNumber)
+
+	if (MyProcessorNumber != OtherGrid->ProcessorNumber) {
     OtherGrid->DeleteAllFields();
+#ifdef NBODY
+		OtherGrid->DeleteAllFieldsNoStar();
+#endif
+	}
 
  
  

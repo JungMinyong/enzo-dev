@@ -562,7 +562,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
                 ParticleAttribute[2][istar]    = metal_mass / bmass ; //BaryonField[MetalNum][index]; // metal fraction (conv from density in Grid_StarParti$
 
                 if (ParticleType[istar] == -PARTICLE_TYPE_INDIVIDUAL_STAR){
-
+                  // (Query AEOS) Do we need this interpolation in SEVN? by EW 2025.7.28
                   if(IndividualStarInterpolateLifetime(ParticleAttribute[1][istar], ParticleMass[istar],
                                                                                     ParticleAttribute[2][istar], 1) == FAIL){
                     printf(" %" ESYM "  %" ESYM "  %" ESYM "\n",ParticleAttribute[1][istar], ParticleMass[istar], ParticleAttribute[2][istar]);
@@ -579,7 +579,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
                   temp_mass = 1.0 * ParticleMass[istar];
 
                   FORTRAN_NAME(pop3_properties)(&temp_mass, &temp_luminosity, &temp_lifetime);
-
+                  // (Query AEOS) Do we need this interpolation in SEVN? by EW 2025.7.28
                   ParticleAttribute[1][istar] = temp_lifetime * yr_s; // in seconds
 
                 } // end check for particle type for assigning lifetimes
@@ -889,6 +889,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
     // Done forming stars!!! Output and exit
     if (ii > 0){
       printf("P(%" ISYM "): individual_star_maker[add]: %" ISYM " new star particles. PopIII = %" ISYM " Unresolved = %" ISYM " UnresolvedInc = %" ISYM " Individual(PopII/PopI) = %" ISYM " - Total Mass (Msun) = %" ESYM " Unresolved Mass = %" ESYM "\n", MyProcessorNumber, ii, popiii_counter, unresolved_counter, unresolved_increment, individualstar_counter, total_mass_sf, total_unresolved_mass);
+      fprintf(stderr, "individual_star_maker... cell size: %e pc, IndividualStarVelocityDispersion: %e km/s\n", dx * LengthUnits / pc_cm, IndividualStarVelocityDispersion);
     }
     if (ii >= *nmax){
       fprintf(stdout, "individual_star_maker: reached max new particle count!! Available: %" ISYM ". Made: %" ISYM "\n", *nmax, ii);
@@ -899,6 +900,14 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
   // set progenitor masses in solar
   for (int counter = 0; counter < ii; counter++){
     ParticleMass[counter]   = ParticleMass[counter] / (dx*dx*dx); // code units / cell volume
+    fprintf(stderr, "individual_star_maker... position: %e %e %e [pc]\n", 
+            ParticlePosition[0][counter] * LengthUnits / pc_cm,
+            ParticlePosition[1][counter] * LengthUnits / pc_cm,
+            ParticlePosition[2][counter] * LengthUnits / pc_cm);
+    fprintf(stderr, "individual_star_maker... velocity: %e %e %e [km/s]\n",
+            ParticleVelocity[0][counter] * VelocityUnits / km_cm,
+            ParticleVelocity[1][counter] * VelocityUnits / km_cm,
+            ParticleVelocity[2][counter] * VelocityUnits / km_cm);
   }
 
   *np = ii; // number of stars formed : AJE 2/29 check if this is a bug with the -1
@@ -962,3 +971,49 @@ float SampleIMF(float * data, const float & lower_mass, const float & upper_mass
 
   return m;
 }
+
+#ifdef NBODY
+#define nouse
+#ifdef use
+float SampleKroupaIMF() {
+
+  const float mlow = IndividualStarIMFLowerMassCutoff;
+  const float mup = IndividualStarIMFUpperMassCutoff;
+
+  const float alpha1 = 1.3;
+  const float apha2 = 2.3;
+
+  float c1, c2, k1, k2, xx;
+  float mass;
+
+  c1 = 1.0 - alpha1;
+  c2 = 1.0 - alpha2;
+
+  k1 = 2.0/c1 * (POW(0.5, c1) - POW(mlow, c1));
+  if (mlow > 0.5) {
+    k1 = 0.0;
+    k2 = 1.0/c2 * (POW(mup, c2) - POW(mlow, c2));
+  } else {
+    k2 = k1 + 1.0/c2 * (POW(mup, c2) - POW(0.5, c2));
+  }
+  if (mup < 0.5) {
+    k1 = 2.0/c1 * (POW(mup, c1) - POW(mlow, c1));
+    k2 = k1;
+  }
+
+  unsigned_long_int random_int = mt_random();
+  const int max_random = (1<<16);
+  float xx = (float) (random_int%max_random) / (float) (max_random);
+
+  if (xx < k1/k2) {
+    mass = POW(0.5*c1*xx*k2 + POW(mlow, c1), 1.0/c1);
+  } else {
+    mass = POW(c2*(xx*k2 - k1) + enzo_max(0.5, mlow)**c2, 1.0/c2);
+  }
+
+  IndividualStarIMFCalls++;
+
+  return mass;
+}
+#endif
+#endif

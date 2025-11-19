@@ -31,6 +31,12 @@ void grid::CleanUp()
   int i;
  
   for (i = 0; i < MAX_DIMENSION; i++) {
+#ifdef NBODY
+		if (ParticleAccelerationNoStar[i] != NULL) {
+			delete [] ParticleAccelerationNoStar[i];
+			ParticleAccelerationNoStar[i] = NULL; 
+		}
+#endif
     delete [] ParticleAcceleration[i];
 //    delete [] AccelerationField[i];
  
@@ -39,12 +45,26 @@ void grid::CleanUp()
   }
   delete [] ParticleAcceleration[MAX_DIMENSION];
   ParticleAcceleration[MAX_DIMENSION] = NULL;
+#ifdef NBODY
+		if (ParticleAccelerationNoStar[i] != NULL) {
+			delete [] ParticleAccelerationNoStar[MAX_DIMENSION];
+			ParticleAccelerationNoStar[MAX_DIMENSION] = NULL; 
+		}
+#endif
  
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
     delete [] OldBaryonField[i];
     OldBaryonField[i] = NULL;
   }
  
+
+#ifdef NBODY	
+  delete [] GravitatingMassFieldNoStar;
+  delete [] GravitatingMassFieldParticlesNoStar;
+
+  GravitatingMassFieldNoStar          = NULL;
+  GravitatingMassFieldParticlesNoStar = NULL;
+#endif
   delete [] GravitatingMassField;
   delete [] GravitatingMassFieldParticles;
  

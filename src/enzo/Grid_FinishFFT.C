@@ -27,7 +27,7 @@ extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
                                    int *dstart1, int *dstart2, int *dststart3);
  
  
-int grid::FinishFFT(region *InitialRegion, int Field, int DomainDim[])
+int grid::FinishFFT(region *InitialRegion, int Field, int DomainDim[], bool NoStar)
 {
  
   int dim, size;
@@ -64,9 +64,21 @@ int grid::FinishFFT(region *InitialRegion, int Field, int DomainDim[])
  
     float *FieldPointer;
     if (Field == POTENTIAL_FIELD) {
+#ifdef NBODY
+			if (NoStar) {
+				if (PotentialFieldNoStar == NULL)  
+					PotentialFieldNoStar = new float[size]();
+				FieldPointer = PotentialFieldNoStar;
+			} else {
+				if (PotentialField == NULL)  
+					PotentialField = new float[size]();
+				FieldPointer = PotentialField;
+			}
+#else
       if (PotentialField == NULL)
 	PotentialField = new float[size]();
       FieldPointer = PotentialField;
+#endif
     } else {
       ENZO_VFAIL("Field %"ISYM" not recognized.\n", Field)
     }

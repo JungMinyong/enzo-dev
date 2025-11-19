@@ -16,6 +16,7 @@
 / MACRO DEFINITIONS AND PARAMETERS
 /
 ************************************************************************/
+#define MUST_FIX //by YS Jo
 #ifdef USE_PYTHON
 #ifndef ENZO_PYTHON_IMPORTED
 #define PY_ARRAY_UNIQUE_SYMBOL enzo_ARRAY_API
@@ -153,10 +154,16 @@
 
 /* Precision-related definitions. */
 
+#ifdef NBODY
+struct double3 {double x; double y; double z;};
+               //double3(double _x, double _y, double _z)
+                  //: x(_x), y(_y), z(_z) {}};
+#endif
 typedef long long long_int;
 typedef long double long_double;
 typedef unsigned int unsigned_int;
 typedef unsigned long long int unsigned_long_int;
+typedef double FLOAT;
 
 /* Previously in hdf4.h */
 
@@ -288,7 +295,7 @@ typedef long long int   HDF5_hid_t;
 
 #ifdef CONFIG_PFLOAT_8
 #define PFLOAT_EPSILON 1e-12f
-#define FLOAT double
+#define FLOAT double // by YS
 #define PEXP exp
 #define PSYM "lf"
 #define GSYM "g"
@@ -422,6 +429,8 @@ typedef long long int   HDF5_hid_t;
 #define ELECTRIC_FIELD                   -9
 #define nBfields 3
 
+#define NOSTAR_YES 1
+#define NOSTAR_NO 0
 #define INTERPOLATED_FIELDS              -8
 #define PARTICLE_MASS_FLAGGING_FIELD     -7
 #define MASS_FLAGGING_FIELD              -6
@@ -429,6 +438,14 @@ typedef long long int   HDF5_hid_t;
 #define POTENTIAL_FIELD                  -4
 #define GRAVITATING_MASS_FIELD           -3
 #define GRAVITATING_MASS_FIELD_PARTICLES -2
+
+#define ACCELERATION_FIELDS_NO_STAR              -105
+#define POTENTIAL_FIELD_NO_STAR                  -104
+#define GRAVITATING_MASS_FIELD_NO_STAR           -103
+#define GRAVITATING_MASS_FIELD_PARTICLES_NO_STAR -102
+
+
+
 #define ALL_FIELDS   -1
 
 #define NEW_AND_OLD   0
@@ -487,6 +504,7 @@ typedef long long int   HDF5_hid_t;
 #define MPI_SENDPART_TAG 23
 #define MPI_SENDMARKER_TAG 24
 #define MPI_SGMARKER_TAG 25
+#define MPI_SENDREGION_NOSTAR_TAG 26 // by YS
 
 /* The Active Particle tag is this big to ensure that the sends and
    recvs in grid::CommunicationSendActiveParticles match up and that the AP
@@ -527,6 +545,27 @@ typedef long long int   HDF5_hid_t;
 #define PARTICLE_TYPE_INDIVIDUAL_STAR_UNRESOLVED 15
 #define PARTICLE_TYPE_RAD           16
 
+#ifdef NBODY
+#define NUM_PARTICLE_TYPES 19
+//#define PARTICLE_TYPE_NBODY         101  //by YS 
+//#define PARTICLE_TYPE_NBODY_NEW     102  //by YS 
+//#define PARTICLE_TYPE_NBODY_REMOVE  103  //by YS 
+
+// After integration with AEOS, this will work in a way that 
+// regular particle type + Abyss particle type
+#define MAX_ENZO_PARTICLE_TYPE      127
+#define MAX_ENZO_PARTICLE_TYPE_BIT  7
+#define PARTICLE_TYPE_NBODY         128  //by YS  2^7 
+#define PARTICLE_TYPE_NBODY_NEW     129  //by YS  2^7+1
+#define PARTICLE_TYPE_NBODY_REMOVE  130  //by YS  2^7+2
+
+#define ENZO_PARTICLE_TYPE(A)  (A & MAX_ENZO_PARTICLE_TYPE)
+#define ABYSS_PARTICLE_TYPE(A) (A >> MAX_ENZO_PARTICLE_TYPE_BIT)
+
+#else
+#define NUM_PARTICLE_TYPES 16
+#endif
+
 #define CHILDRENPERPARENT           12
 
 /* Splitting particles more than 4 times can induce numerical
@@ -557,6 +596,8 @@ typedef long long int   HDF5_hid_t;
 #define DISTR_FEEDBACK 13
 #define MOM_STAR 14
 #define INDIVIDUAL_STAR 15
+
+#define INDIVIDUAL 20
 
 #define STARMAKE_METHOD(A) (StarParticleCreation >> (A) & 1)
 #define STARFEED_METHOD(A) (StarParticleFeedback >> (A) & 1)
@@ -636,6 +677,9 @@ typedef long long int   HDF5_hid_t;
 
 #define IMF_TABLE_ENTRIES 2000
 
+#ifdef NBODY
+#define HERMITE_ORDER 4
+#endif
 /* Maximum number of entries in the time varying external gravity position */
 
 #define EXTERNAL_GRAVITY_ENTRIES 5000

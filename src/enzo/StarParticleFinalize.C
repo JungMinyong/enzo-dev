@@ -29,6 +29,8 @@
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
 
+#include <map>
+
 #define NO_DEATH 0
 #define KILL_STAR 1
 #define KILL_ALL 2
@@ -53,6 +55,11 @@ int StarParticleDeath(LevelHierarchyEntry *LevelArray[], int level,
 int IndividualStarParticleAddFeedback(HierarchyEntry *Grids[], TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                                       int level, Star* &AllStars, bool* &AddedFeedback);
 
+#ifdef SEVN
+int IndividualStarParticleAddFeedbackSEVN(HierarchyEntry *Grids[], TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
+                                          int level, Star* &AllStars, bool* &AddedFeedback);
+#endif
+
 int UpdateAveragedAbundances(TopGridData *MetaData,
                              LevelHierarchyEntry *LevelArray[],
                              int level, Star* &AllStars);
@@ -63,9 +70,12 @@ void DeleteStarList(Star * &Node);
 int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 			 int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
 			 int level, Star *&AllStars,
-			 int TotalStarParticleCountPrevious[],
-			 int &OutputNow)
-{
+                         int TotalStarParticleCountPrevious[], int &OutputNow
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                         //, std::unordered_map<int, Star *> &LocalStarLookupMap
+                         , std::map<int, Star *> &LocalStarLookupMap
+#endif
+) {
 
   if (!StarParticleCreation && !StarParticleFeedback)
     return SUCCESS;
@@ -96,8 +106,10 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Update position and velocity of star particles from the actual
      particles */
 
+#ifndef NBODY // (Query AEOS) I think we should change this if a star is not ABYSS star by EW 2025.7.28
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
     ThisStar->UpdatePositionVelocity();
+#endif
 
   // Apply individual star feedback if it exists
   if(STARMAKE_METHOD(INDIVIDUAL_STAR) && STARFEED_METHOD(INDIVIDUAL_STAR)){
@@ -110,7 +122,11 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     }
 
     UpdateAveragedAbundances(MetaData, LevelArray, level, AllStars);
+#ifdef SEVN
+    IndividualStarParticleAddFeedbackSEVN(Grids, MetaData, LevelArray, level, AllStars, AddedFeedback);
+#else
     IndividualStarParticleAddFeedback(Grids, MetaData, LevelArray, level, AllStars, AddedFeedback);
+#endif
   } else{
 
     /* Apply any stellar feedback onto the grids and add any gas to the
@@ -208,6 +224,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   if (PopIIIOutputOnFeedback)
     OutputNow = CommunicationMaxValue(OutputNow);
 
+#ifndef NBODY
   /* Merge star particles */
 
   if (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) {  
@@ -216,6 +233,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
       return FAIL;
     }
   }
+#endif
 
   /* Set minimum refinement level for metallicity if desired */
 
@@ -225,6 +243,10 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
 #ifndef INDIVIDUALSTAR
   DeleteStarList(AllStars);
+#endif
+
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+  LocalStarLookupMap.clear();
 #endif
 
   delete [] AddedFeedback;

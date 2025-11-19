@@ -4,7 +4,8 @@
 /
 /  written by: John Wise
 /  date:       March, 2009
-/  modified1:
+	/  modified1: August 2021 by Ka Hou Leong 
+	(fixed MPI issue and lack of memory)
 /
 /  PURPOSE: First synchronizes particle information in the normal and 
 /           star particles.  Then we make a global particle list, which
@@ -15,6 +16,7 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
+#include <map>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -62,7 +64,13 @@ std::map<int, Star*> grid::MakeStarParticleMap() // makes lookup table to quickl
   return StarParticleLookupMap;
 }
 
-int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
+int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                        //, std::unordered_map<int, Star*> &LocalStarLookupMap,
+                        , std::map<int, Star*> &LocalStarLookupMap,
+                        int &ThisLevel
+#endif
+)
 {
 
   int i, level, GridNum, TotalNumberOfStars, LocalNumberOfStars;
@@ -79,6 +87,11 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   if (AllStars != NULL)
     DeleteStarList(AllStars);
 
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+	//if (!LocalStarLookupMap.empty())
+	LocalStarLookupMap.clear();
+	//LocalStarLookupMap.reserve(1000);
+#endif
   for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
 
     TIMER_START("StarParticleFindAll:GenerateGridArray");
@@ -158,7 +171,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
     Eint32 *displace = new Eint32[NumberOfProcessors];
 
     MPI_Allgather(&LocalNumberOfStars, 1, MPI_INT, nCount, 1, MPI_INT, 
-		  MPI_COMM_WORLD);
+		  enzo_comm);
 
     TIMER_START("StarParticleFindAll:DisplacementList");
     /* Generate displacement list. */
@@ -173,19 +186,52 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
     /* If any, gather all shining particles */
 
     if (TotalNumberOfStars > 0) {
-
+			if (recvBufferSize > 2 * ceil_log2(TotalNumberOfStars))
+			{
+				// Avoiding recvBuffer occurs memoeries which exceed 2 times of the powers of buffer space which has minimum space to contain TotalNumberOfStars.
+				delete [] recvBuffer;
+				recvBufferSize = 0;
+			}
       if (TotalNumberOfStars > recvBufferSize) {
+				if (recvBufferSize > 0)
+				{
         recvBufferSize = ceil_log2(TotalNumberOfStars);
         delete [] recvBuffer;
+				}
+				else recvBufferSize = ceil_log2(TotalNumberOfStars);
         recvBuffer = new StarBuffer[recvBufferSize];
       }
-      if (LocalNumberOfStars > sendBufferSize) {
+			if ((LocalNumberOfStars > 0) && (sendBufferSize > 2 * ceil_log2(LocalNumberOfStars)))
+			{
+				// Avoiding sendBuffer occurs memoeries which exceed 2 times of the powers of buffer space which has minimum space to contain LocalNumberOfStars.
+				delete [] sendBuffer;
+				sendBufferSize = 0;
+			}
+			if (LocalNumberOfStars > sendBufferSize) 
+			{ 
+				if(sendBufferSize > 0)
+				{
         sendBufferSize = ceil_log2(LocalNumberOfStars);
         delete [] sendBuffer;
+				}
+				else sendBufferSize = ceil_log2(LocalNumberOfStars); 
         sendBuffer = new StarBuffer[sendBufferSize];
       }
       if (LocalNumberOfStars > 0)
+			{
         LocalStars->StarListToBuffer(sendBuffer, LocalNumberOfStars);
+			}
+			else
+			{ 
+				// Due to No local star, reinitialise sendbuffer.
+				// release memories and reset sendBufferSize.
+				if(sendBufferSize > 0)
+				{
+					delete [] sendBuffer;
+					sendBufferSize = 0;
+				}
+				sendBuffer = NULL;
+			}
       TIMER_STOP("StarParticleFindAll:GatherShiningParticles");
 
       TIMER_START("StarParticleFindAll:ShareData");
@@ -193,7 +239,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 
       MPI_Allgatherv(sendBuffer, LocalNumberOfStars, MPI_STAR,
 		     recvBuffer, nCount, displace, MPI_STAR,
-		     MPI_COMM_WORLD);
+		     enzo_comm);
 
       AllStars = StarBufferToList(recvBuffer, TotalNumberOfStars);
       TIMER_STOP("StarParticleFindAll:ShareData");
@@ -241,6 +287,68 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   for (cstar = AllStars; cstar; cstar = cstar->NextStar)
     if (cstar->ReturnMass() > 1e-9)
       minStarLifetime = min(minStarLifetime, cstar->ReturnLifetime());
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+		if (cstar->ReturnCurrentGrid() != NULL && 
+		(ThisLevel == cstar->ReturnLevel() || LevelArray[ThisLevel+1] == NULL)) {
+			if (cstar->ReturnMass()>0) {
+				assert(cstar != nullptr);
+				fprintf(stderr, "Before LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
+						cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
+				fflush(stderr);
+				for (const auto& [id, starPtr] : LocalStarLookupMap) {
+					std::cerr << "ID: " << id;
+					if (starPtr) {
+						std::cerr << " | Name: " << starPtr->ReturnID();
+												//<< " | Mass: " << starPtr->mass;
+					} else {
+						std::cerr << " | [null Star pointer]";
+					}
+					std::cerr << '\n';
+				}
+				if (!cstar) {
+						fprintf(stderr, "cstar has a problem!\n");
+						fflush(stderr);
+				} else {
+
+				}
+				try {
+
+
+					if (LocalStarLookupMap.find(cstar->ReturnID()) != LocalStarLookupMap.end()) {
+				    std::cerr << "Warning: duplicate star ID " << cstar->ReturnID() << std::endl;
+					} else {
+						LocalStarLookupMap.insert(std::make_pair(cstar->ReturnID(), cstar));
+						//.emplace(cstar->ReturnID(), cstar);
+					}
+					for (const auto& [id, starPtr] : LocalStarLookupMap) {
+						std::cout << "ID: " << id;
+						if (starPtr) {
+							std::cout << " | Name: " << starPtr->ReturnID();
+													//<< " | Mass: " << starPtr->mass;
+						} else {
+							std::cout << " | [null Star pointer]";
+						}
+						std::cout << '\n';
+					}
+					fprintf(stderr, "After LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
+							cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
+					fflush(stderr);
+				} catch (const std::bad_alloc& e) {
+					fprintf(stderr, "Caught bad_alloc during insert! what(): %s\n", e.what());
+				} catch (...) {
+					fprintf(stderr, "Caught unknown exception during insert!\n");
+				}
+			}
+			else
+				cstar->SetAbyssFlag(false);
+		}
+	//if I want i can optimize it by using level (e.g., if level==star->ReturnLevel()). Except the finest level, 
+	//all I need is the particles on this level, not all the level. But, then I have to pass level from Evolve Level
+	// and for the finest level, I have to add all the particles across levels.
+#endif
+
+
+
 
   TIMER_STOP("StarParticleFindAll:MiniStellarLife");
   /* Store in global variable */

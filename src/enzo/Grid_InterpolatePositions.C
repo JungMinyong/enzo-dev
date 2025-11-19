@@ -69,3 +69,46 @@ int grid::InterpolatePositions(FLOAT *Position[], int dim, float *Field,
  
   return SUCCESS;
 }
+
+
+#ifdef NBODY
+int grid::InterpolatePositionsNoStar(FLOAT *Position[], int dim, float *Field,
+		int Number)
+{
+	if (Number == 0 || MyProcessorNumber != ProcessorNumber)
+		return SUCCESS;
+
+	/* Set the pointer to the AccelerationField or the PotentialField. */
+
+	float *InterpolationField = AccelerationFieldNoStar[dim];
+
+	if (dim == GridRank)
+		InterpolationField = PotentialFieldNoStar;
+
+	/* Error check. */
+
+	if (InterpolationField == NULL) {
+		ENZO_VFAIL("AccelerationField[%"ISYM"] absent.\n", dim)
+	}
+
+	if (GravitatingMassFieldCellSize <= 0) {
+		ENZO_FAIL("GravitatingMassFieldCellSize undefined.\n");
+
+	}
+
+	/* Set the left edge of the field. */
+
+	FLOAT LeftEdge[MAX_DIMENSION];
+	for (int i = 0; i < GridRank; i++)
+		LeftEdge[i] = CellLeftEdge[i][0];
+	//    LeftEdge[i] = CellLeftEdge[i][0] - ((dim == i)? (0.5*CellWidth[i][0]) : 0);
+
+	/* Interpolate from field. */
+	PFORTRAN_NAME(cic_interp)(Position[0], Position[1], Position[2], &GridRank,
+			&Number, Field, InterpolationField, LeftEdge,
+			GridDimension, GridDimension+1, GridDimension+2,
+			&GravitatingMassFieldCellSize);
+
+	return SUCCESS;
+}
+#endif

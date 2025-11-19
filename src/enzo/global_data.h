@@ -20,10 +20,15 @@
 #ifndef GLOBAL_DATA_DEFINED__
 #define GLOBAL_DATA_DEFINED__
 
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
 #include <stdio.h>
 #ifdef MEMORY_POOL
 #include "MemoryPool.h"
 #endif
+#include "macros_and_parameters.h" // by YS
+#include "typedefs.h"
 #ifdef DEFINE_STORAGE
 # define EXTERN
 #else /* DEFINE_STORAGE */
@@ -39,6 +44,60 @@ class EnzoProblemType;
                           1 = Equalize processor memory count
                          2 = Load balance only on a node
 */
+
+
+
+#ifdef NBODY
+#define HERMITE_ORDER 4
+EXTERN int NumberOfNbodyParticles;
+EXTERN int NumberOfNewNbodyParticles;
+EXTERN int NumberOfNbodyParticlesOld;
+EXTERN int *NbodyParticleID;
+EXTERN int *NbodyParticleIDOld;
+EXTERN int *NbodyParticleIDTemp;
+EXTERN int *NewNbodyParticleIDTemp;
+EXTERN double *NbodyParticleMass;
+EXTERN double *NbodyParticlePosition[MAX_DIMENSION];
+EXTERN double *NbodyParticleVelocity[MAX_DIMENSION];
+#ifdef SEVN
+EXTERN double *NbodyParticleInitialMass;
+EXTERN double *NbodyParticleWindEjectedMass;
+EXTERN double *NbodyParticleSNEjectedMass;
+EXTERN double *NbodyParticleTemperature;
+#endif
+EXTERN double *NbodyParticleAcceleration[MAX_DIMENSION][HERMITE_ORDER];
+EXTERN double *NbodyParticleAccelerationOld[MAX_DIMENSION][HERMITE_ORDER];
+EXTERN double *NbodyParticleAccelerationNoStar[MAX_DIMENSION];
+EXTERN double NbodyClusterPosition[MAX_DIMENSION+1];
+EXTERN int NbodyFirst;
+EXTERN int isNbodyParticleIdentification;
+EXTERN int isIdentificationOnTheFly;
+EXTERN double NbodySmoothingLength;
+EXTERN double NbodyTimeStepConstant;
+EXTERN double NbodyNeighborRadius;
+EXTERN int NbodyFixNumNeighbor;
+EXTERN int NbodyMaxNumNeighbor;
+EXTERN int NbodyBinaryRegularization;
+EXTERN int NbodyStoreTimeStep;
+EXTERN double NbodyBinaryDistance;
+EXTERN double NbodyBinaryTimeStep;
+EXTERN int NbodyNewStarToNbody;
+EXTERN int NbodyRestartStarToNbody;
+EXTERN char *NbodyDir;
+
+/* by YS, MPI COMMs*/
+extern MPI_Comm abyss_comm;
+extern MPI_Comm inter_comm;
+extern MPI_Comm local_comm;
+extern int local_rank, local_size;
+#ifdef INDIVIDUALSTAR
+extern MPI_Datatype MPI_ENZO_PTCL;
+extern MPI_Datatype MPI_ENZO_PTCL_SEND;
+extern MPI_Datatype MPI_ENZO_PTCL_RECV;
+#endif
+#endif
+extern MPI_Comm enzo_comm;
+
 EXTERN int NumberOfGhostZones;
 EXTERN int LoadBalancing;
 EXTERN int LoadBalancingCycleSkip;
@@ -571,7 +630,13 @@ EXTERN FLOAT EvolveCoolingRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right
 
 EXTERN int MyProcessorNumber;
 EXTERN int NumberOfProcessors;
+EXTERN int TotalNumberOfProcessors;
 EXTERN float CommunicationTime;
+#ifdef NBODY
+EXTERN int WorldProcessorNumber;
+EXTERN int AbyssProcessorNumber;
+EXTERN int NumberOfAbyssProcessors;
+#endif
 
 /* Parameter to indicate if top grid should do parallel IO
    (currently only works for ProblemType == 30). */
@@ -941,6 +1006,9 @@ EXTERN float DrivingEfficiency;
 
 /* Parameters to use CUDA extensions */
 EXTERN int UseCUDA;
+
+/* Paramters for Nbody comutation */
+EXTERN int UseNBODY;
 
 /* End of Stanford block */
 

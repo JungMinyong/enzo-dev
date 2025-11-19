@@ -18,6 +18,8 @@
 
 #include "preincludes.h" 
 #include <time.h>
+#include <cmath>            // For std::sqrt
+#include "phys_constants.h" // for kpc_cm
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -1291,7 +1293,25 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 #ifdef ECUDA
   fprintf(fptr, "UseCUDA = %"ISYM"\n", UseCUDA);
 #endif
-
+  fprintf(fptr, "\nUseNBODY                    = %"ISYM"\n", UseNBODY);
+#ifdef NBODY
+	fprintf(fptr, "NbodyRestartStarToNbody       = %d\n", NbodyRestartStarToNbody);
+	fprintf(fptr, "NbodyNewStarToNbody					 = %d\n", NbodyNewStarToNbody);
+	fprintf(fptr, "UseNbodyClusterIdentification = %d\n", isNbodyParticleIdentification);
+	fprintf(fptr, "IdentificationOnTheFly        = %d\n", isIdentificationOnTheFly);
+	fprintf(fptr, "NbodyClusterPosition          = %lf %lf %lf\n", NbodyClusterPosition[0], NbodyClusterPosition[1], NbodyClusterPosition[2]);
+	fprintf(fptr, "NbodyClusterRadius            = %lf\n", std::sqrt(NbodyClusterPosition[3]) / kpc_cm * LengthUnits);
+	fprintf(fptr, "NbodySmoothingLength          = %f\n",  NbodySmoothingLength / kpc_cm * LengthUnits);
+	fprintf(fptr, "NbodyTimeStepConstant         = %f\n", NbodyTimeStepConstant);
+	fprintf(fptr, "NbodyNeighborRadius           = %f\n", NbodyNeighborRadius / kpc_cm * LengthUnits);
+	fprintf(fptr, "NbodyFixNumNeighbor           = %d\n", NbodyFixNumNeighbor); 
+	fprintf(fptr, "NbodyMaxNumNeighbor           = %d\n", NbodyMaxNumNeighbor); 
+	fprintf(fptr, "NbodyBinaryRegularization     = %d\n", NbodyBinaryRegularization); 
+	fprintf(fptr, "NbodyBinaryDistance           = %d\n", NbodyBinaryDistance); 
+	fprintf(fptr, "NbodyBinaryTimeStep           = %d\n\n", NbodyBinaryTimeStep); 
+  fprintf(fptr, "NbodyStoreTimeStep           = %d\n\n", NbodyStoreTimeStep);
+	//fprintf(fptr, "UseNbodyClusterIdentificationOnTheFly = %d\n", isNbodyParticleIdentification);
+  #endif
   /* Poisson Solver */
 
   fprintf(fptr, "PoissonDivergenceCleaningBoundaryBuffer = %"ISYM"\n",

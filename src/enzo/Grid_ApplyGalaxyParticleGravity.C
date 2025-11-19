@@ -106,6 +106,9 @@ int grid::ApplyGalaxyParticleGravity(ActiveParticleType** ThisParticle){
           if (dist2 > rad2dx) continue;
           // If we've gotten this far, at least some part of this cell overlaps
           // with the sphere of this GP.
+#ifdef NBODY 
+					this->GravitatingMassFieldNoStar[index] = 5 * max_gmf;
+#endif
           this->GravitatingMassField[index] = 5 * max_gmf;
         } // i
       } // j

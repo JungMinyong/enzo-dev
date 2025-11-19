@@ -96,3 +96,42 @@ void grid::DeleteAllFields()
   GravitatingMassFieldParticles = NULL;
  
 }
+
+
+#ifdef NBODY
+void grid::DeleteAllFieldsNoStar()
+{
+
+  int i;
+/*   MergerYS
+#ifdef INDIVIDUALSTAR
+  if (IndividualStarOutputChemicalTags)
+    this->DeleteStellarAbundances();
+#endif
+  this->DeleteActiveParticles();
+*/
+  for (i = 0; i < MAX_DIMENSION; i++) {
+
+    delete [] AccelerationFieldNoStar[i];
+		if (ParticleAccelerationNoStar[i] != NULL) {
+		delete [] ParticleAccelerationNoStar[i];
+		ParticleAccelerationNoStar[i] = NULL;
+		}
+    AccelerationFieldNoStar[i]         = NULL;
+
+  }
+
+	delete [] ParticleAccelerationNoStar[MAX_DIMENSION];
+	ParticleAccelerationNoStar[MAX_DIMENSION] = NULL;
+
+
+  delete [] PotentialFieldNoStar;
+  delete [] GravitatingMassFieldNoStar;
+  delete [] GravitatingMassFieldParticlesNoStar;
+
+  PotentialFieldNoStar                = NULL;
+  GravitatingMassFieldNoStar          = NULL;
+  GravitatingMassFieldParticlesNoStar = NULL;
+
+}
+#endif

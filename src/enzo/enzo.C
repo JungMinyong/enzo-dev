@@ -60,6 +60,13 @@ int InitializePythonInterface(int argc, char **argv);
 int FinalizePythonInterface();
 #endif
 
+
+#ifdef NBODY
+int ABYSS();
+#endif
+		
+
+
 // Function prototypes
  
 int InitializeNew(  char *filename, HierarchyEntry &TopGrid, TopGridData &tgd,
@@ -284,23 +291,28 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   // Initialize Communications
 
   CommunicationInitialize(&argc, &argv); 
+  #ifdef NBODY
 
-//#define DEBUG_MPI
-#ifdef DEBUG_MPI
-  const int DebugProcessor = 78;
-  if (MyProcessorNumber == DebugProcessor) {
-    int impi = 0;
-    char hostname[256];
-    gethostname(hostname, sizeof(hostname));    
-    printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
-    fflush(stdout);
-    while (impi == 0)
-      sleep(5);
+	if (abyss_comm != MPI_COMM_NULL) {
+		if (inter_comm != MPI_COMM_NULL) {
+			fprintf(stderr, "inter_comm is not NULL!\n");
+		}
+
+    fprintf(stderr, "abyss processors: (%d, %d)\n", WorldProcessorNumber, AbyssProcessorNumber);
+    fprintf(stdout, "abyss processors: (%d, %d)\n", WorldProcessorNumber, AbyssProcessorNumber);
+
+    fprintf(stderr, "Abyss starts!\n");
+		fprintf(stdout, "Abyss starts!\n");
+		ABYSS();
+		my_exit(EXIT_SUCCESS);
+	} 
+  else
+  {
+    fprintf(stderr, "enzo processors: (%d, %d)\n", WorldProcessorNumber, MyProcessorNumber);
+    fprintf(stdout, "enzo processors: (%d, %d)\n", WorldProcessorNumber, MyProcessorNumber);
   }
-  char hostname[256];
-  gethostname(hostname, sizeof(hostname));
-  fprintf(stdout, "Proc%03d: PID %d on %s\n", MyProcessorNumber, getpid(), hostname);
 #endif
+
 
 #ifdef USE_GRACKLE
   if (MyProcessorNumber == ROOT_PROCESSOR) {

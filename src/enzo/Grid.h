@@ -11,6 +11,7 @@
 ************************************************************************/
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
+#include <unordered_map>
 #include <vector>
 #include <map>
 #include "ProtoSubgrid.h"
@@ -127,8 +128,24 @@ class grid
 //
   int    NumberOfParticles;
   FLOAT *ParticlePosition[MAX_DIMENSION];  // pointers to position arrays
-  float *ParticleVelocity[MAX_DIMENSION];  // pointers to velocity arrays
-  float *ParticleAcceleration[MAX_DIMENSION+1];  //
+		FLOAT *ParticleVelocity[MAX_DIMENSION];  // pointers to velocity arrays
+		FLOAT *ParticleAcceleration[MAX_DIMENSION+1];  // 
+																									 //
+#ifdef NBODY
+		float *ParticleAccelerationNoStar[MAX_DIMENSION+1];  //  by YS
+#ifdef INDIVIDUALSTAR
+		double3 *BackgroundAcceleration;
+		//std::unordered_map<int, int> IDtoIndexforBG; // PID to Index convertor for background acceleration
+		std::map<int, int> IDtoIndexforBG; // PID to Index convertor for background acceleration
+		// this is a winner over various combinations such as <int, *double>, <int, vector>
+		// due to memeory management and cache-friendly/memory locality by YS
+#else
+		int NumberOfNbodyParticlesInGrid;
+		int NumberOfNewNbodyParticlesInGrid;
+		int *IndicesOfNbodyParticlesInGrid;					// added by EW 2025.4.24
+		int *IndicesOfNewNbodyParticlesInGrid;				// added by EW 2025.4.24
+#endif
+#endif
   float *ParticleMass;                     // pointer to mass array
   PINT  *ParticleNumber;                   // unique identifier
   int   *ParticleType;                     // type of particle
@@ -142,6 +159,7 @@ class grid
 //  Star particle data
 //
   int NumberOfStars;
+		int NumberOfNbodyStars;
   Star *Stars;
 
   int Grid_ChemicalEvolutionTestStarFormed;
@@ -165,6 +183,14 @@ class grid
 //
 //  Gravity data
 //
+
+#ifdef NBODY
+		int background_acc_counter = 0;
+		float *PotentialFieldNoStar;
+		float *AccelerationFieldNoStar[MAX_DIMENSION]; // cell cntr acceleration at n+1/2
+		float *GravitatingMassFieldNoStar; 
+		float *GravitatingMassFieldParticlesNoStar;     // for particles only // by YS Jo
+#endif
   float *PotentialField;
   float *AccelerationField[MAX_DIMENSION]; // cell cntr acceleration at n+1/2
   float *GravitatingMassField;
@@ -429,6 +455,13 @@ public:
 
   void SetGridID(int id) { ID = id; };
   int GetGridID(void) { return ID; };
+
+
+#ifdef NBODY
+		float *GetPotentialField(void) {return PotentialField;};
+		float *GetGravitatingMassFieldParticles(void) {return GravitatingMassFieldParticles;};
+		float *GetGravitatingMassField(void) {return GravitatingMassField;};
+#endif
 
   /* Return, set level of this grid */
   int GetLevel() { return GridLevel; };
@@ -853,6 +886,9 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Delete all the fields, but leave other grid data. */
 
    void DeleteAllFields();
+#ifdef NBODY
+		void DeleteAllFieldsNoStar();
+#endif
 
 /* Delete all the fields except for the particle data */
 
@@ -1107,12 +1143,20 @@ gradient force to gravitational force for one-zone collapse test. */
 
   int CopyActiveZonesFromGrid(grid *GridOnSameLevel,
                   FLOAT EdgeOffset[MAX_DIMENSION], int SendField);
+#ifdef NBODY
+		int CopyActiveZonesFromGridNoStar(grid *GridOnSameLevel,
+				FLOAT EdgeOffset[MAX_DIMENSION], int SendField);
+#endif
 
 /* gravity: copy coincident potential field zones from grid in the argument
             (gg #7).  Return SUCCESS or FAIL. */
 
    int CopyPotentialField(grid *GridOnSameLevel,
 			  FLOAT EdgeOffset[MAX_DIMENSION]);
+#ifdef NBODY
+		int CopyPotentialFieldNoStar(grid *GridOnSameLevel, 
+				FLOAT EdgeOffset[MAX_DIMENSION]);
+#endif
 
 /* baryons: check for coincident zone from the (old) grid in the argument
             (gg #7).  Return SUCCESS or FAIL. */
@@ -1176,15 +1220,24 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Gravity: allocate & clear the GravitatingMassField. */
 
    int ClearGravitatingMassField();
+#ifdef NBODY
+		int ClearGravitatingMassFieldNoStar();
+#endif
 
 /* Gravity & baryons: Copy the parent density field to the extra boundary
       region of GravitatingMassField (if any). */
 
    int CopyParentToGravitatingFieldBoundary(grid *ParentGrid);
+#ifdef NBODY
+		int CopyParentToGravitatingFieldBoundaryNoStar(grid *ParentGrid);
+#endif
 
 /* Gravity & Particles: allocate & clear the GravitatingMassFieldParticles. */
 
    int ClearGravitatingMassFieldParticles();
+#ifdef NBODY
+		int ClearGravitatingMassFieldParticlesNoStar();
+#endif
 
 /* Baryons: add the baryon mass to the GravitatingMassField. */
 
@@ -1207,6 +1260,9 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Gravity: Interpolate accelerations from other grid. */
 
    int InterpolateAccelerations(grid *FromGrid);
+#ifdef NBODY
+		int InterpolateAccelerationsNoStar(grid *FromGrid);
+#endif
 
 /* Gravity: Compute particle and grid accelerations. */
 
@@ -1218,9 +1274,17 @@ gradient force to gravitational force for one-zone collapse test. */
    int CopyOverlappingMassField(grid *TargetGrid,
 				FLOAT EdgeOffset[MAX_DIMENSION]);
 
+#ifdef NBODY
+		int CopyOverlappingMassFieldNoStar(grid *TargetGrid, 
+				FLOAT EdgeOffset[MAX_DIMENSION]);
+#endif
+
 /* Gravity: Allocate and make initial guess for PotentialField. */
 
    int PreparePotentialField(grid *ParentGrid);
+#ifdef NBODY
+		int PreparePotentialFieldNoStar(grid *ParentGrid);
+#endif
 
 /* Gravity: Allocate and make initial guess for PotentialField. */
 
@@ -1233,12 +1297,13 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Gravity: Copy potential/density into/out of FFT regions. */
 
-   int PrepareFFT(region *InitialRegion, int Field, int DomainDim[]);
-   int FinishFFT(region *InitialRegion, int Field, int DomainDim[]);
+		int PrepareFFT(region *InitialRegion, int Field, int DomainDim[], bool NoStar);
+		int FinishFFT(region *InitialRegion, int Field, int DomainDim[], bool NoStar);
 
 /* Gravity: set the potential boundary for isolated BC's */
 
    int SetIsolatedPotentialBoundary();
+		int SetIsolatedPotentialBoundaryNoStar();
 
 /* Gravity: Set the external acceleration fields. */
 
@@ -1261,6 +1326,7 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Particles + Gravity: Clear ParticleAccleration. */
 
    int ClearParticleAccelerations();
+		int ClearParticleAccelerationsNoStar();
 
 /* Baryons + Gravity: Interpolate the AccelerationField in FromGrid to
              AccelerationFieldForCells at the GridPositions in this grid. */
@@ -1276,10 +1342,18 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int InterpolatePositions(FLOAT *Positions[], int dim, float *Field,
 			    int Number);
+#ifdef NBODY
+		int InterpolatePositionsNoStar(FLOAT *Positions[], int dim, float *Field, 
+				int Number);
+#endif
 
 /* Gravity: Delete GravitatingMassField. */
 
    void DeleteGravitatingMassField() {
+#ifdef NBODY
+			delete [] GravitatingMassFieldNoStar; 
+			GravitatingMassFieldNoStar = NULL;
+#endif
      delete [] GravitatingMassField;
      GravitatingMassField = NULL;
    };
@@ -1287,6 +1361,9 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Gravity: Init GravitatingMassField. */
 
    void InitGravitatingMassField(int size) {
+#ifdef NBODY
+			GravitatingMassFieldNoStar = new float[size];
+#endif
      GravitatingMassField = new float[size];
    }
 
@@ -1301,6 +1378,10 @@ gradient force to gravitational force for one-zone collapse test. */
    void DeleteAccelerationField() {
      if (!((SelfGravity || UniformGravity || PointSourceGravity || ExternalGravity))) return;
      for (int dim = 0; dim < GridRank; dim++) {
+#ifdef NBODY
+				delete [] AccelerationFieldNoStar[dim]; 
+				AccelerationFieldNoStar[dim] = NULL;
+#endif
        delete [] AccelerationField[dim];
        AccelerationField[dim] = NULL;
      }
@@ -1315,7 +1396,12 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Gravity: deposit baryons into target GravitatingMassField. */
 
-   int DepositBaryons(grid *TargetGrid, FLOAT DepositTime);
+//#ifdef NBODY
+		int DepositBaryons(grid *TargetGrid, FLOAT DepositTime, bool NoStar); // by YS
+//#else
+//		int DepositBaryons(grid *TargetGrid, FLOAT DepositTime); // by YS
+//#endif
+
 
 // -------------------------------------------------------------------------
 // Functions for accessing various grid-based information
@@ -1398,6 +1484,12 @@ gradient force to gravitational force for one-zone collapse test. */
    float* AccessAcceleration0();
    float* AccessAcceleration1();
    float* AccessAcceleration2();
+#ifdef NBODY
+		float* AccessGravPotentialNoStar();
+		float* AccessAcceleration0NoStar();
+		float* AccessAcceleration1NoStar();
+		float* AccessAcceleration2NoStar();
+#endif
    float* AccessRadPressure0();
    float* AccessRadPressure1();
    float* AccessRadPressure2();
@@ -1467,9 +1559,8 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Particles: Deposit particles in the specified field (DepositField) of the
               TargetGrid at the given time. */
-
-   int DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
-				int DepositField);
+	  int DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime, 
+				int DepositField, bool NoStar);
 
    int DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField,
 				     bool BothFlags);
@@ -1479,6 +1570,10 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int AddOverlappingParticleMassField(grid *TargetGrid,
 				       FLOAT EdgeOffset[MAX_DIMENSION]);
+#ifdef NBODY
+		int AddOverlappingParticleMassFieldNoStar(grid *TargetGrid, 
+				FLOAT EdgeOffset[MAX_DIMENSION]);
+#endif
 
 /* Particles: Apply particle acceleration to velocity for particles in this
               grid
@@ -1490,6 +1585,7 @@ gradient force to gravitational force for one-zone collapse test. */
     (for step #13) */
 
    int UpdateParticlePosition(float TimeStep, int OffProcessorUpdate = FALSE);
+		int UpdateParticlePositionNoStar(float TimeStep, int OffProcessorUpdate = FALSE);
 
 /* Particles: Move particles from TargetGrid to this grid. */
 
@@ -1535,6 +1631,13 @@ gradient force to gravitational force for one-zone collapse test. */
      for (int dim = 0; dim < GridRank+ComputePotential; dim++) {
        delete [] ParticleAcceleration[dim];
        ParticleAcceleration[dim] = NULL;
+#ifdef NBODY
+				if (ParticleAccelerationNoStar[dim] != NULL) {
+					delete [] ParticleAccelerationNoStar[dim];
+					ParticleAccelerationNoStar[dim] = NULL;
+				}
+#endif
+				//#endif
        delete [] ActiveParticleAcceleration[dim];
        ActiveParticleAcceleration[dim] = NULL;
      }
@@ -1543,6 +1646,10 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Particles & Gravity: Delete GravitatingMassField. */
 
    void DeleteGravitatingMassFieldParticles() {
+#ifdef NBODY
+			delete [] GravitatingMassFieldParticlesNoStar; 
+			GravitatingMassFieldParticlesNoStar = NULL;
+#endif
      delete [] GravitatingMassFieldParticles;
      GravitatingMassFieldParticles = NULL;
      GravitatingMassFieldParticlesCellSize = FLOAT_UNDEFINED;
@@ -1553,8 +1660,8 @@ gradient force to gravitational force for one-zone collapse test. */
    int ReturnNumberOfParticles() {return NumberOfParticles;};
   int ReturnNumberOfActiveParticles() {return NumberOfActiveParticles;};
    int ReturnNumberOfActiveParticlesOfThisType(int ActiveParticleIDToFind);
-   ActiveParticleList<ActiveParticleType>& ReturnActiveParticles() {return Act\
-iveParticles;};
+		ActiveParticleList<ActiveParticleType>& ReturnActiveParticles() {return ActiveParticles;};
+			
 
    int ReturnNumberOfStarParticles(void);
 
@@ -1802,6 +1909,423 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
  int ChangeParticleTypeBeforeSN(int _type, int level,
 				int *ParticleBufferSize=NULL);
 
+
+#ifdef NBODY
+		/* */
+
+		void GetNbodyCenterOfMass(double &TotalMass);
+#ifdef INDIVIDUALSTAR
+		void SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier);
+		void DeleteBackgroundAcceleration();
+		void UpdateToGridParticle(const double *pos, const double *vel);
+#else
+    void SetIndicesOfNbodyParticles(void) {
+			if (MyProcessorNumber != ProcessorNumber) return;
+			
+			if (IndicesOfNbodyParticlesInGrid != NULL)
+				delete [] IndicesOfNbodyParticlesInGrid;
+			IndicesOfNbodyParticlesInGrid = NULL;
+
+			if (IndicesOfNewNbodyParticlesInGrid != NULL)
+				delete [] IndicesOfNewNbodyParticlesInGrid;
+			IndicesOfNewNbodyParticlesInGrid = NULL;
+
+			if (NumberOfNbodyParticlesInGrid != 0)
+				IndicesOfNbodyParticlesInGrid = new int[NumberOfNbodyParticlesInGrid];
+			if (!NbodyFirst && NumberOfNewNbodyParticlesInGrid != 0)
+				IndicesOfNewNbodyParticlesInGrid = new int[NumberOfNewNbodyParticlesInGrid];
+
+			int count = 0;
+			int count_new = 0;
+			if (NbodyFirst) {
+				for (int i=0; i<NumberOfParticles; i++) {
+					if (ParticleType[i] == PARTICLE_TYPE_NBODY)
+						IndicesOfNbodyParticlesInGrid[count++] = i;
+				}
+			}
+			else {
+				for (int i=0; i<NumberOfParticles; i++) {
+					if (ParticleType[i] == PARTICLE_TYPE_NBODY)
+						IndicesOfNbodyParticlesInGrid[count++] = i;
+					else if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW)
+						IndicesOfNewNbodyParticlesInGrid[count_new++] = i;
+				}
+			}
+			assert(count == NumberOfNbodyParticlesInGrid);
+			assert(count_new == NumberOfNewNbodyParticlesInGrid);
+		}
+
+		void SetNumberOfNbodyParticles(void) {
+			if (MyProcessorNumber != ProcessorNumber) return;
+			int i, count=0, count_new=0;
+				for (i=0; i<NumberOfParticles; i++) {
+					//fprintf(stderr,"ParticleType: %d", ParticleType[i]);
+					if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
+						count++;
+					}
+					if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
+						if (NbodyFirst) {
+							ParticleType[i] = PARTICLE_TYPE_NBODY_NEW+10;
+							fprintf(stderr, "Something's wrong");
+						}
+						else
+							count_new++;
+					}
+				}
+				NumberOfNbodyParticlesInGrid = count;
+				NumberOfNewNbodyParticlesInGrid = count_new;
+		}
+
+		/* */
+		int ReturnNumberOfNbodyParticles(void){
+			if (MyProcessorNumber == ProcessorNumber)
+				return NumberOfNbodyParticlesInGrid;
+			else
+				return 0;
+		}
+
+		int ReturnNumberOfNewNbodyParticles(void){
+			if (MyProcessorNumber == ProcessorNumber)
+				return NumberOfNewNbodyParticlesInGrid;
+			else
+				return 0;
+		}
+
+
+
+		/* Reduce ParticleAccelerationNoStar so that it can have only acceleration
+		 * of the Nbody particles. */
+		void CopyAccelerationToAttribute(void){
+			if (MyProcessorNumber != ProcessorNumber) return;
+
+			for (int dim=0; dim<MAX_DIMENSION; dim++ ) {
+				for (int i=0; i<NumberOfParticles; i++) {
+					ParticleAttribute[NumberOfParticleAttributes-4+dim][i] = ParticleAccelerationNoStar[dim][i];
+					//ParticleAttribute[NumberOfParticleAttributes-4+dim][i] = ParticleAcceleration[dim][i];
+				}
+				delete [] ParticleAccelerationNoStar[dim];
+				ParticleAccelerationNoStar[dim] = NULL;
+			}
+			return;
+		}
+
+
+
+		int CopyNbodyParticlesFirst(int* count,int NbodyParticleIDTemp[], double NbodyParticleMassTemp[], 
+				double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[], double *NbodyParticleAccelerationNoStarTemp[],
+				double *NbodyParticleCreationTimeTemp, double *NbodyParticleDynamicalTimeTemp, double *NbodyParticleMetallicityTemp) {
+
+			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+			if (NumberOfNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNbodyParticlesInGrid[i];
+					assert(ParticleType[index] == PARTICLE_TYPE_NBODY);
+
+					NbodyParticleIDTemp[*count]           = ParticleNumber[index];
+					NbodyParticleMassTemp[*count]         = ParticleMass[index]*dv;
+					NbodyParticleCreationTimeTemp[*count]  = ParticleAttribute[0][index];
+					NbodyParticleDynamicalTimeTemp[*count] = ParticleAttribute[1][index];
+					NbodyParticleMetallicityTemp[*count]   = ParticleAttribute[2][index];
+
+					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						NbodyParticlePositionTemp[dim][*count] = ParticlePosition[dim][index];
+						NbodyParticleVelocityTemp[dim][*count] = ParticleVelocity[dim][index];
+
+						// if you want potential then go with MAX_DIMENSION+1 by YS
+						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][index];
+					} // ENDFOR dim
+					(*count)++;
+				} // ENDFOR nbody particles
+			}
+			return SUCCESS;
+		}
+
+
+
+		int CopyNbodyParticles(int* count,int NbodyParticleIDTemp[], double NbodyParticleMassTemp[], double *NbodyParticleAccelerationNoStarTemp[],
+				int* count_new, int NewNbodyParticleIDTemp[], double NewNbodyParticleMassTemp[],
+				double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[], double *NewNbodyParticleAccelerationNoStarTemp[],
+				double *NewNbodyParticleCreationTimeTemp, double *NewNbodyParticleDynamicalTimeTemp, double *NewNbodyParticleMetallicityTemp
+				) {
+
+			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+			if (NumberOfNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNbodyParticlesInGrid[i];
+					assert(ParticleType[index] == PARTICLE_TYPE_NBODY);
+
+					NbodyParticleIDTemp[*count]           = ParticleNumber[index];
+					NbodyParticleMassTemp[*count]         = ParticleMass[index]*dv;
+
+					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						// if you want potential then go with MAX_DIMENSION+1 by YS
+						NbodyParticleAccelerationNoStarTemp[dim][*count] = ParticleAttribute[NumberOfParticleAttributes-4+dim][index];
+					} // ENDFOR dim
+					(*count)++;
+				} // ENDFOR nbody particles
+			}
+			if (NumberOfNewNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNewNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNewNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNewNbodyParticlesInGrid[i];
+					assert(ParticleType[index] == PARTICLE_TYPE_NBODY_NEW);
+
+					NewNbodyParticleIDTemp[*count_new]           = ParticleNumber[index];
+					NewNbodyParticleMassTemp[*count_new]         = ParticleMass[index]*dv;
+					NewNbodyParticleCreationTimeTemp[*count_new]  = ParticleAttribute[0][index];
+					NewNbodyParticleDynamicalTimeTemp[*count_new] = ParticleAttribute[1][index];
+					NewNbodyParticleMetallicityTemp[*count_new]   = ParticleAttribute[2][index];
+
+					//fprintf(stderr, "In Grid, PID: %d \n", ParticleNumber[i]);
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						NewNbodyParticlePositionTemp[dim][*count_new] = ParticlePosition[dim][index];
+						NewNbodyParticleVelocityTemp[dim][*count_new] = ParticleVelocity[dim][index];
+
+						// if you want potential then go with MAX_DIMENSION+1 by YS
+						NewNbodyParticleAccelerationNoStarTemp[dim][*count_new] = ParticleAttribute[NumberOfParticleAttributes-4+dim][index];
+						//NewNbodyParticleAccelerationNoStarTemp[dim][*count_new] = 246.22271888;
+					} // ENDFOR dim
+					(*count_new)++;
+				} // ENDFOR nbody particles
+			}
+			return SUCCESS;
+		}
+
+
+		int UpdateNbodyParticles(int* count, int NbodyParticleIDTemp[],
+			 	double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[],
+				int* count_new, int NewNbodyParticleIDTemp[],
+			 	double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[]) {
+
+			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+			if (NumberOfNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNbodyParticlesInGrid[i];
+					assert(ParticleNumber[index] == NbodyParticleIDTemp[*count]);
+
+					if (NbodyParticlePositionTemp[0][*count] < -10) {
+						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
+						NbodyParticlePositionTemp[0][*count] += 20;
+						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+					} // particle removal
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						ParticlePosition[dim][index] = NbodyParticlePositionTemp[dim][*count];
+						ParticleVelocity[dim][index] = NbodyParticleVelocityTemp[dim][*count];
+					} // ENDFOR dim
+					(*count)++;
+				} // ENDFOR nbody particles
+				delete [] IndicesOfNbodyParticlesInGrid;
+				IndicesOfNbodyParticlesInGrid = NULL;
+			} // ENDIF nbody particles exist
+			if (NumberOfNewNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNewNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNewNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNewNbodyParticlesInGrid[i];
+					assert(ParticleNumber[index] == NewNbodyParticleIDTemp[*count_new]);
+
+					if (NewNbodyParticlePositionTemp[0][*count_new] < -10) {
+						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
+						NewNbodyParticlePositionTemp[0][*count_new] += 20;
+						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+					} // particle removal
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						ParticlePosition[dim][index] = NewNbodyParticlePositionTemp[dim][*count_new];
+						ParticleVelocity[dim][index] = NewNbodyParticleVelocityTemp[dim][*count_new];
+					} // ENDFOR dim
+					(*count_new)++;
+				} // ENDFOR new nbody particles
+				delete [] IndicesOfNewNbodyParticlesInGrid;
+				IndicesOfNewNbodyParticlesInGrid = NULL;
+			} // ENDIF new nbody particles exist
+			return SUCCESS;
+		}
+#ifdef SEVN
+		int UpdateNbodyParticles(int* count, int NbodyParticleIDTemp[],
+			double *NbodyParticlePositionTemp[], double *NbodyParticleVelocityTemp[],
+			double NbodyParticleInitialMassTemp[], double NbodyParticleWindEjectedMassTemp[],
+			double NbodyParticleSNEjectedMassTemp[], double NbodyParticleTemperatureTemp[],
+			double NbodyParticleMassTemp[],
+			int* count_new, int NewNbodyParticleIDTemp[],
+			double *NewNbodyParticlePositionTemp[], double *NewNbodyParticleVelocityTemp[],
+			double NewNbodyParticleInitialMassTemp[], double NewNbodyParticleWindEjectedMassTemp[],
+			double NewNbodyParticleSNEjectedMassTemp[], double NewNbodyParticleTemperatureTemp[],
+			double NewNbodyParticleMassTemp[]) {
+
+			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+			double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+			if (NumberOfNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNbodyParticlesInGrid[i];
+					assert(ParticleNumber[index] == NbodyParticleIDTemp[*count]);
+
+					if (NbodyParticlePositionTemp[0][*count] < -10) {
+						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
+						NbodyParticlePositionTemp[0][*count] += 20;
+						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+					} // particle removal
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						ParticlePosition[dim][index] = NbodyParticlePositionTemp[dim][*count];
+						ParticleVelocity[dim][index] = NbodyParticleVelocityTemp[dim][*count];
+					} // ENDFOR dim
+					ParticleAttribute[NumberOfParticleAttributes-8+0][index]	= NbodyParticleInitialMassTemp[*count];
+					ParticleAttribute[NumberOfParticleAttributes-8+1][index]	= NbodyParticleWindEjectedMassTemp[*count];
+					ParticleAttribute[NumberOfParticleAttributes-8+2][index]	= NbodyParticleSNEjectedMassTemp[*count];
+					ParticleAttribute[NumberOfParticleAttributes-8+3][index]	= NbodyParticleTemperatureTemp[*count];
+
+					ParticleMass[index] = NbodyParticleMassTemp[*count]/dv;
+					if (ParticleMass[index] < 0) {
+						ParticleType[index] = PARTICLE_TYPE_DARK_MATTER;
+						ParticleMass[index] = tiny_number;
+						fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[index]);
+					} // merger induced zero mass particle & (P)PISN
+					(*count)++;
+				} // ENDFOR nbody particles
+				delete [] IndicesOfNbodyParticlesInGrid;
+				IndicesOfNbodyParticlesInGrid = NULL;
+			} // ENDIF nbody particles exist
+			if (NumberOfNewNbodyParticlesInGrid != 0) {
+				assert(IndicesOfNewNbodyParticlesInGrid != NULL);
+				for (int i=0; i < NumberOfNewNbodyParticlesInGrid; i++) {
+					int index = IndicesOfNewNbodyParticlesInGrid[i];
+					assert(ParticleNumber[index] == NewNbodyParticleIDTemp[*count_new]);
+
+					ParticleType[index] = PARTICLE_TYPE_NBODY;
+
+					if (NewNbodyParticlePositionTemp[0][*count_new] < -10) {
+						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
+						NewNbodyParticlePositionTemp[0][*count_new] += 20;
+						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+					} // particle removal
+					for (int dim=0; dim<MAX_DIMENSION; dim++) {
+						ParticlePosition[dim][index] = NewNbodyParticlePositionTemp[dim][*count_new];
+						ParticleVelocity[dim][index] = NewNbodyParticleVelocityTemp[dim][*count_new];
+					} // ENDFOR dim
+					ParticleAttribute[NumberOfParticleAttributes-8+0][index]	= NewNbodyParticleInitialMassTemp[*count_new];
+					ParticleAttribute[NumberOfParticleAttributes-8+1][index]	= NewNbodyParticleWindEjectedMassTemp[*count_new];
+					ParticleAttribute[NumberOfParticleAttributes-8+2][index]	= NewNbodyParticleSNEjectedMassTemp[*count_new];
+					ParticleAttribute[NumberOfParticleAttributes-8+3][index]	= NewNbodyParticleTemperatureTemp[*count_new];
+
+					ParticleMass[index] = NewNbodyParticleMassTemp[*count_new]/dv;
+					if (ParticleMass[index] < 0) {
+						ParticleType[index] = PARTICLE_TYPE_DARK_MATTER;
+						ParticleMass[index] = tiny_number;
+						fprintf(stdout,"Removed PID=%d in deletion\n", ParticleNumber[index]);
+					} // merger induced zero mass particle & (P)PISN
+					(*count_new)++;
+				} // ENDFOR new nbody particles
+				delete [] IndicesOfNewNbodyParticlesInGrid;
+				IndicesOfNewNbodyParticlesInGrid = NULL;
+			} // ENDIF new nbody particles exist
+			return SUCCESS;
+		}
+#endif
+
+		int IdentifyNbodyParticles() {
+
+			const double thres_r2 = NbodyClusterPosition[3];
+			double r2;
+
+			if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+			//float dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+			NumberOfNbodyParticlesInGrid = 0;
+			NumberOfNewNbodyParticlesInGrid = 0;
+
+			for (int i=0; i < NumberOfParticles; i++) {
+				if (ParticleType[i] == PARTICLE_TYPE_NBODY_REMOVE) {
+					ParticleType[i] = PARTICLE_TYPE_STAR;
+					continue;
+				}
+
+				if (!NbodyFirst && ParticleType[i] == PARTICLE_TYPE_NBODY) {
+					NumberOfNbodyParticlesInGrid++;
+					continue;
+				}
+
+				if (ParticleType[i] == PARTICLE_TYPE_STAR || 
+					ParticleType[i] == PARTICLE_TYPE_NBODY_NEW || 
+					(NbodyFirst && ParticleType[i] == PARTICLE_TYPE_NBODY)) {
+
+					r2 = 0;
+					for (int dim = 0; dim < MAX_DIMENSION; dim++) {
+						r2 += (ParticlePosition[dim][i] - NbodyClusterPosition[dim])\
+								*(ParticlePosition[dim][i] - NbodyClusterPosition[dim]);
+					}
+
+					if ( r2 < thres_r2 ) {
+						if (NbodyFirst) {
+							ParticleType[i] = PARTICLE_TYPE_NBODY;
+							NumberOfNbodyParticlesInGrid++;
+						}
+						else {
+							ParticleType[i] = PARTICLE_TYPE_NBODY_NEW;
+							NumberOfNewNbodyParticlesInGrid++;
+						}
+					}
+					else {
+						if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW ||
+								(NbodyFirst && ParticleType[i] == PARTICLE_TYPE_NBODY)) {
+							ParticleType[i] = PARTICLE_TYPE_STAR;
+						}
+					}
+				} // endif				
+			} // endfor particles
+			return SUCCESS;
+		}
+#endif
+
+		/* EW Individual star formation and feedback */
+		void individual_star_feedback3mom(const float &dx, const float &kinf_in, float *mu, const float &yield);
+
+		void momentum(const int &ParticleIndex,
+			const int &ic, const int &jc, const int &kc,
+			const int &iface, const int &jface, const int &kface,
+			const int &idir);
+
+		void sum_mass_kinetic_energy(const int &ParticleIndex,
+			const int &iface, const int &jface, const int &kface,
+			const int &ic, const int &jc, const int &kc,
+			float &mass_sum, float &kin_energy_sum);
+
+		void sum_abc(float ***u1, float ***v1, float *** d1,
+			const int &iface, const int &jface, const int &kface,
+			const int &ic, const int &jc, const int &kc,
+			float &asum, float &bsum, float &csum);
+
+		void add_feedback1(float ***u1, float ***v1, float ***w1, float ***d1, float ***ge1, float ***te1, float ***metal1,
+			const float &dxf, const float &dyf, const float &dzf, 
+			const float &dxc, const float &dyc, const float &dzc,
+			const float &m_eject, const float &yield, const float &metalf,
+			const float &mass_per_cell, const float mom_per_cell, const float therm_per_cell);
+
+		void add_feedback2(const int &nx, const int &ny, const int &nz,
+			const int &ic, const int &jc, const int &kc, const int &iface, const int &jface, const int &kface,
+			const float &dxf, const float &dyf, const float &dzf, 
+			const float &dxc, const float &dyc, const float &dzc,
+			const float &m_eject, const float &yield, const float &metalf,
+			const float &mass_per_cell, const float mom_per_cell, const float therm_per_cell);
+
+#endif
+
+
 // -------------------------------------------------------------------------
 // Communication functions
 //
@@ -1973,7 +2497,13 @@ int TransferSubgridActiveParticles(grid* Subgrids[], int NumberOfSubgrids,
 
   /* Identify potential field */
   int IdentifyPotentialField(int &PotenNum);
+#ifdef NBODY
+		int IdentifyPotentialField(int &PotenNum, int &Acce1Num, int &Acce2Num, int &Acce3Num,
+				int &PotenNoStarNum, int &Acce1NoStarNum, int &Acce2NoStarNum, int &Acce3NoStarNum);
+		int IdentifyPotentialField(int &PotenNum, int &PotenNoStarNum);
+#else
   int IdentifyPotentialField(int &PotenNum, int &Acce1Num, int &Acce2Num, int &Acce3Num);
+#endif
 
   /* Identify colour field */
 
@@ -2508,6 +3038,11 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int IndividualStarAddFeedbackSphere(HierarchyEntry* SubgridPointer,
                                       Star *cstar, float *mp, const int mode);
 
+#ifdef SEVN
+  int IndividualStarAddFeedbackSphereSEVN(HierarchyEntry* SubgridPointer, 
+										  Star *cstar, const int mode);
+#endif
+
   int IndividualStarInjectSphericalFeedback(Star *cstar,
                                             const FLOAT xp, const FLOAT yp, const FLOAT zp,
                                             const float m_eject, const float E_thermal,
@@ -2805,6 +3340,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 /* Adjust the gravity source terms for comoving coordinates. */
 
   int ComovingGravitySourceTerm();
+#ifdef NBODY
+								int ComovingGravitySourceTermNoStar();
+#endif
 
 /* Star Particle handler routine. */
 
@@ -2839,6 +3377,12 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
 
 /* Calculate the potential across the grid. */
+#ifdef NBODY
+								void CalculatePotentialFieldNoStar(float *PotentialField, int DensNum, float DensityUnits,
+										float TimeUnits, float LengthUnits);
+
+								// int grid::StarSplitter(int np, int* nnp);
+#endif
   void CalculatePotentialField(float *PotentialField, int DensNum, float DensityUnits,
 			       float TimeUnits, float LengthUnits);
 

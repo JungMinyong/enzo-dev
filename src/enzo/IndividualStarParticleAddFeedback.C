@@ -97,7 +97,7 @@ int IndividualStarParticleAddFeedback(HierarchyEntry *Grids[],
   for (cstar = AllStars; cstar; cstar = cstar->NextStar, count++){
 
     AddedFeedback[count] = false;
-
+    // (Query AEOS) I'll add BH feedback here later! by EW 2025.7.28
     if( ABS(cstar->ReturnType()) != IndividualStar &&
         ABS(cstar->ReturnType()) != IndividualStarWD &&
         ABS(cstar->ReturnType()) != IndividualStarRemnant &&
@@ -1228,3 +1228,478 @@ float ComputeOverlap(const int &i_shape, const float &radius,
 
   return ((float) inside_count) / ((float) nsample*nsample*nsample);
 }
+
+
+#ifdef SEVN
+int IndividualStarParticleAddFeedbackSEVN(HierarchyEntry *Grids[],
+                                          TopGridData *MetaData,
+                                          LevelHierarchyEntry *LevelArray[],
+                                          int level, Star* &AllStars,
+                                          bool* &AddedFeedback){
+
+  /* stars and hierarchy */
+  Star *cstar;
+  LevelHierarchyEntry *Temp;
+
+  /* pos and vel for star */
+  FLOAT *pos;
+
+  if (AllStars == NULL)
+    return SUCCESS;
+
+  TIMER_START("IndividualStarParticleAddFeedback");
+
+  int count = 0;
+  bool any_feedback_added = false;
+
+  /* Loop over all stars, checking properties before doing feedback */
+  for (cstar = AllStars; cstar; cstar = cstar->NextStar, count++){
+
+    AddedFeedback[count] = false;
+    // (Query AEOS) I'll add BH feedback here later! by EW 2025.7.28
+
+    // This is fine IF the feedback is fully contained on that grid level
+    //
+    //    if( cstar->ReturnLevel() > level){
+    //      continue; // only apply feedback on level of star
+    //    }
+
+    /* // PISN or merger-induced zero-mass stars have negative mass // Their mass will set to zero later
+    if(cstar->ReturnMass() < 0.0){
+      cstar->PrintInfo();
+      ENZO_FAIL("Particle Mass initially negative in IndividualStarParticleAddFeedback");
+    }
+    */
+
+    /* Get Units */
+    float DensityUnits, LengthUnits, TemperatureUnits,
+          TimeUnits, VelocityUnits, MassUnits, EnergyUnits;
+    if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+                 &TimeUnits, &VelocityUnits, MetaData->Time) == FAIL){
+        ENZO_FAIL("Error in GetUnits");
+    }
+
+    /* feedback is done in a cic interpolation. This is number of cells
+       on eiher side of central cell (i.e. 3x3 CIC -> ncell = 1) */
+
+    pos = cstar->ReturnPosition();
+
+    double particle_mass;
+    int gridnum=0;
+    //
+    // Check Stellar Winds - Apply if particle on grid and grid local
+    //
+    if (cstar->ReturnWindMassEjected() > 0.0) {
+      for (int l = level; l < MAX_DEPTH_OF_HIERARCHY; l ++){
+        gridnum=0;
+        for (Temp = LevelArray[l]; Temp; Temp = Temp ->NextGridThisLevel,gridnum++){
+          int ncell = IndividualStarFeedbackStencilSize+1;
+          if (IndividualStarFeedbackRadius > 0){
+            ncell = (int) ceil(IndividualStarFeedbackRadius*pc_cm/LengthUnits / Temp->GridData->ReturnCellWidth());
+          }
+
+          if(Temp->GridData->isLocal() && IsParticleFeedbackInGrid(pos, ncell, Temp) ){
+            Temp->GridData->IndividualStarAddFeedbackSphereSEVN(Temp->GridHierarchyEntry->NextGridNextLevel, cstar, -1); // -1 = wind mode
+            AddedFeedback[count] = TRUE;
+          }
+        }
+      }
+
+      if (AddedFeedback[count]) { // only if this particle did something
+        AddedFeedback[count] = true;
+        cstar->SetWindMassEjected(0.0); // reset wind mass ejected to zero after adding feedback
+      }
+    }
+
+    if (cstar->ReturnSNMassEjected() > 0.0) {
+      if (cstar->ReturnType() == IndividualStarPopIII) { // Check Pop III Supernova
+        for (int l = level; l < MAX_DEPTH_OF_HIERARCHY; l++){
+          gridnum=0;
+          for (Temp = LevelArray[l]; Temp; Temp = Temp->NextGridThisLevel, gridnum++){
+            int ncell = IndividualStarFeedbackStencilSize+1;
+            if (IndividualStarFeedbackRadius > 0){
+              ncell = (int) ceil(IndividualStarFeedbackRadius*pc_cm/LengthUnits / Temp->GridData->ReturnCellWidth());
+            }
+  
+            if(Temp->GridData->isLocal() && IsParticleFeedbackInGrid(pos, ncell, Temp)){
+              Temp->GridData->IndividualStarAddFeedbackSphereSEVN(Temp->GridHierarchyEntry->NextGridNextLevel, cstar, 3); // 3 == popIII mode
+              AddedFeedback[count] = TRUE;
+            }
+          }
+        }
+  
+        if (AddedFeedback[count]) {
+          AddedFeedback[count] = true;
+          cstar->SetNewMass(0.0); // now a massless tracer
+          cstar->SetSNMassEjected(0.0); // reset SN mass ejected to zero after adding feedback
+        }
+      } else if (cstar->ReturnType() == IndividualStar) { // Check Core Collapse Supernova
+        for (int l = level; l < MAX_DEPTH_OF_HIERARCHY; l ++){
+          gridnum=0;
+          for (Temp = LevelArray[l]; Temp; Temp = Temp ->NextGridThisLevel,gridnum++){
+            int ncell = IndividualStarFeedbackStencilSize+1;
+            if (IndividualStarFeedbackRadius > 0){
+              ncell = (int) ceil(IndividualStarFeedbackRadius*pc_cm/LengthUnits / Temp->GridData->ReturnCellWidth());
+            }
+  
+            if(Temp->GridData->isLocal() && IsParticleFeedbackInGrid(pos, ncell, Temp)){
+              Temp->GridData->IndividualStarAddFeedbackSphereSEVN(Temp->GridHierarchyEntry->NextGridNextLevel, cstar, 1); // 1 == snII mode
+              AddedFeedback[count] = TRUE;
+            }
+          }
+        }
+  
+        if (AddedFeedback[count]){
+          AddedFeedback[count] = true;
+          cstar->SetSNMassEjected(0.0); // reset SN mass ejected to zero after adding feedback
+        }
+      } else {
+        fprintf(stderr, "Error: IndividualStarParticleAddFeedbackSEVN called for star type %d\n", cstar->ReturnType());
+        ENZO_FAIL("Wrong supernova feedback in strange star type");
+      }
+    }
+
+    // Check Type Ia Supernova
+    if( cstar->ReturnFeedbackFlag() == INDIVIDUAL_STAR_SNIA){
+      for (int l = level; l < MAX_DEPTH_OF_HIERARCHY; l ++){
+        gridnum = 0;
+        for (Temp = LevelArray[l]; Temp; Temp = Temp ->NextGridThisLevel,gridnum++){
+          int ncell = IndividualStarFeedbackStencilSize+1;
+          if (IndividualStarFeedbackRadius > 0){
+            ncell = (int) ceil(IndividualStarFeedbackRadius*pc_cm/LengthUnits / Temp->GridData->ReturnCellWidth());
+          }
+
+          if(Temp->GridData->isLocal() && IsParticleFeedbackInGrid(pos, ncell, Temp)){
+
+            Temp->GridData->IndividualStarAddFeedbackSphereSEVN(Temp->GridHierarchyEntry->NextGridNextLevel, cstar, 2); // 2 == SNIa
+
+          }
+        }
+      }
+
+      AddedFeedback[count] = true;
+      cstar->SetFeedbackFlag(INDIVIDUAL_STAR_SN_COMPLETE);
+      cstar->SetNewMass(0.0); // now a massless tracer
+    }
+
+    if (AddedFeedback[count]) any_feedback_added = true;
+
+  } // end stars loop
+
+  /* Ensure injection is valid at all levels */
+  /*
+  //  if (any_feedback_added){
+      for (int l = level; l > 0; l--){
+        Temp = LevelArray[l];
+        while (Temp != NULL) {
+            if (Temp->GridData->ProjectSolutionToParentGrid(*Temp->GridHierarchyEntry->ParentGrid->GridData) == FAIL){
+              fprintf(stderr, "Error in grid->ProjectSolutionToParentGrid\n");
+              return FAIL;
+            }
+              Temp = Temp->NextGridThisLevel;
+        }
+      }
+    //}
+  */
+
+  TIMER_STOP("IndividualStarParticleAddFeedback");
+  return SUCCESS;
+}
+
+int grid::IndividualStarAddFeedbackSphereSEVN(HierarchyEntry* SubgridPointer, Star *cstar, const int mode){
+
+/*
+     General function to add feedback for a given star in a spherical region
+
+     Thermal energy injection ONLY
+
+     mode   :   integer, (Values)
+                switches between stellar wind (-1), core collapse SN (1), type Ia SN (2), or pop III SN (3)
+
+*/
+  if (this->NumberOfBaryonFields == 0 || !this->isLocal())
+    return SUCCESS;
+
+  /* AJE Try something here */
+  /* First, set under_subgrid field */
+  HierarchyEntry *Subgrid;
+  if (FALSE){
+    this->ZeroSolutionUnderSubgrid(NULL, ZERO_UNDER_SUBGRID_FIELD);
+    for (Subgrid = SubgridPointer; Subgrid; Subgrid = Subgrid->NextGridThisLevel){
+      this->ZeroSolutionUnderSubgrid(Subgrid->GridData, ZERO_UNDER_SUBGRID_FIELD);
+    }
+  }
+
+
+  float dx = this->CellWidth[0][0];
+
+  float m_eject, E_thermal;
+
+  const float lifetime = cstar->ReturnLifetime();
+
+
+  float *metal_mass; // array of individual species masses
+
+  FLOAT * pos;
+  pos = cstar->ReturnPosition();
+
+  /* Get Units */
+  float DensityUnits, LengthUnits, TemperatureUnits,
+        TimeUnits, VelocityUnits, MassUnits, EnergyUnits;
+  if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+               &TimeUnits, &VelocityUnits, this->Time) == FAIL){
+      ENZO_FAIL("Error in GetUnits");
+  }
+  MassUnits   = DensityUnits*LengthUnits*LengthUnits*LengthUnits;
+  EnergyUnits = MassUnits * VelocityUnits * VelocityUnits;
+
+  /* If we are following yields, initialize array to hold ejecta masses */
+  if(IndividualStarFollowStellarYields && MultiMetals == 2){
+
+    metal_mass = new float[StellarYieldsNumberOfSpecies + 1];
+
+    for (int i = 0; i < StellarYieldsNumberOfSpecies + 1; i ++){
+      metal_mass[i] = 0.0;
+    }
+
+  } else { metal_mass = NULL;}
+
+
+  int stellar_wind_mode = FALSE;
+
+  if( mode < 0 ){ // compute properties for stellar wids
+
+    // mproj needs to be in SolarMass - everything else in CGS
+    m_eject = cstar->ReturnWindMassEjected();
+    IndividualStarSetStellarWindPropertiesSEVN(cstar, this->Time, this->dtFixed, TimeUnits,
+                                               m_eject, E_thermal, metal_mass);
+    stellar_wind_mode = TRUE;
+  } else if (mode == 1){ // core collapse supernova
+
+    m_eject = cstar->ReturnSNMassEjected();
+    IndividualStarSetCoreCollapseSupernovaPropertiesSEVN(cstar, m_eject, E_thermal, metal_mass);
+
+    stellar_wind_mode = FALSE;
+  } else if (mode == 2){ // Type Ia supernova properties
+
+    IndividualStarSetTypeIaSupernovaProperties(m_eject, E_thermal, metal_mass);
+    m_eject = cstar->ReturnSNMassEjected();
+    stellar_wind_mode = FALSE;
+
+  } else if (mode == 3){ // PopIII supernova
+
+    m_eject = cstar->ReturnSNMassEjected();
+    IndividualStarSetPopIIISupernovaPropertiesSEVN(cstar, m_eject, E_thermal, metal_mass);
+
+    stellar_wind_mode = FALSE;
+  }
+
+  /* Return surface abundances of stars */
+  if (IndividualStarSurfaceAbundances && !cstar->IsPopIII()){
+    // This works under the assumption that yield tables provide just
+    // the amount of each element produced (not production - ambient). By summing
+    // here, we take the amount released for a given element (X) as:
+    // ejected_mass_X = surface_abundance_X * total_ejecta_mass + yield_table_production_for_X
+    //
+    // --- likely this is never really a dominant effect to account for
+    //
+
+    // Decide which table to use. Lodders+ for AGB winds, Asplund otherwise
+    int table = 0;
+    if (mode == 0 && cstar->ReturnBirthMass() < IndividualStarAGBThreshold) { // maybe AGB
+      table = 1; // use Lodders+2003
+    }
+
+    double *abundances = cstar->ReturnAbundances();
+
+    // this should vary with yield table assumptions of Z_solar and solar abund !!!
+    const double z_solar = StellarYields_SolarAbundancesByNumber(0, table);
+    const double z_ratio = cstar->ReturnMetallicity() / z_solar;
+    float dm_total = 0.0;
+
+    /* Solar [Fe/H] */
+    const double Fe_H_solar = StellarYields_SolarAbundancesByNumber(26, table) -
+                              StellarYields_SolarAbundancesByNumber(1, table);
+
+    for(int i = 0; i < StellarYieldsNumberOfSpecies; i++){
+
+      if ((StellarYieldsAtomicNumbers[i] <= 2)) continue; // no H or He adjustments
+
+      double a_solar;
+
+      if (LimongiAbundances && cstar->ReturnMetallicity() <= 3.236E-3
+          && cstar->ReturnBirthMass() > IndividualStarSNIIMassCutoff){
+        double enhancement = 0.0;
+
+        switch (StellarYieldsAtomicNumbers[i]){
+          /* At [Fe/H] <= -1, these abundances are enhanced by the following
+             [X/Fe] values. Therefore, rather than [X/H] = [Fe/H] always,
+             initial models have [X/H] = [X/Fe]_enchancement + [Fe/H].  */
+          case  6: enhancement = 0.18; break;
+          case  8: enhancement = 0.47; break;
+          case 12: enhancement = 0.27; break; // paper has 0.0.27 ...
+          case 14: enhancement = 0.37; break;
+          case 16: enhancement = 0.35; break;
+          case 18: enhancement = 0.35; break;
+          case 20: enhancement = 0.33; break;
+          case 23: enhancement = 0.23; break;
+
+          default:
+            enhancement = 0.0;
+        }
+        // (f_H) (0.7381 in Asplund+2009) is the H mass fraction. Strictly speaking this needs to change by
+        // a couple percent for changes in He and metals... ignoring this...
+        //   since we are scaling by metallicity with z_ratio, 
+
+        //
+        if (enhancement > 0){
+          const double element_H_solar = StellarYields_SolarAbundancesByNumber(StellarYieldsAtomicNumbers[i],table) -
+                                   StellarYields_SolarAbundancesByNumber(1,table);
+
+          const double f_H = StellarYields_SolarAbundancesByNumber(-1,table); // H mass fraction
+
+          a_solar = z_ratio * POW(10.0, enhancement + element_H_solar) * f_H * (StellarYields_MMW(StellarYieldsAtomicNumbers[i]) /
+                                                            StellarYields_MMW(1));
+        } else {
+          a_solar = StellarYields_ScaledSolarMassFractionByNumber(cstar->ReturnMetallicity(),StellarYieldsAtomicNumbers[i], table);
+        }
+
+      } else{
+        /* Else just use Asplund abundances */
+        a_solar = StellarYields_ScaledSolarMassFractionByNumber(cstar->ReturnMetallicity(),
+                                                                       StellarYieldsAtomicNumbers[i], table);
+      }
+      // abundances in stars are really mass fractions, so a_solar should be the scaled solar mass
+      // fraction of the element (which is what is calculated above)
+      float mass_change        = (abundances[i] - a_solar)*m_eject; // *z_ratio)*m_eject;
+      if (TRUE) { // debugging
+        if (ABS(mass_change) > metal_mass[i+1]){
+          printf("WARNING - SURFACE ABUNDANCES PRODUCING BIZZARE RESULTS\n");
+          printf("Total mass change = %" ESYM " from initial = %" ESYM " and total ejection of %" ESYM "\n", mass_change, metal_mass[i+1], m_eject);
+          printf("For element %" ISYM " with abundance %" ESYM " and scaled solar abundance %" ESYM "\n",StellarYieldsAtomicNumbers[i],cstar->abundances[i],a_solar);
+          printf("NEED TO DOUBLE CHECK THESE VALUES");
+        }
+      }
+
+      // correct to ensure no negative mass ejection (can happen if abundances are VERY low -- should be rare / never)
+      if (mass_change > metal_mass[i+1]){
+          mass_change = (-1.0*metal_mass[i+1]);
+      } else {
+          mass_change = mass_change;
+      }
+
+      metal_mass[i+1] += mass_change;
+      dm_total += mass_change; 
+    } // end loop ove rspecies
+
+    /* strictly speaking this should be conserved if we follow ALL species
+       but we don't. Unsure if I should leave as += 0 or += dm */
+    metal_mass[0]     += dm_total ; // (cstar->ReturnMetallicity() - z_solar*z_ratio)*m_eject;
+    // m_eject           += dm_total; // m_eject is already calculated in SEVN by EW 2025.7.28
+
+    if ((metal_mass[0] < -1.0E-4) || (m_eject < -1.0E-4)){
+      ENZO_VFAIL("Failure in surface abundances. Total metal mass (%" FSYM ") / total ejected mass (%" FSYM ")are negative\n",metal_mass[0], m_eject);
+    }
+
+/*
+    if(FALSE){ // more detailed error checking
+      for (int i = 0; i < StellarYieldsNumberOfSpecies; i++){
+        if ((metal_mass[0] < 0) || (metal_mass[i+1] < 0) || ((StellarYieldsAtomicNumbers[i]>2) && (metal_mass[i+1] > metal_mass[0]))  ){
+          // if any fail here, print all and exit 
+          printf("Total mass = %" FSYM " --- DM total = %" ESYM "\n", m_eject,dm_total);
+          printf("Abundances: ");
+          for(int j=0;j<StellarYieldsNumberOfSpecies;j++){
+            printf(" %" ESYM ,cstar->abundances[j]);
+          }
+          printf("\n");
+
+          printf("Solar Values: ");
+          for(int j =2; j<StellarYieldsNumberOfSpecies;j++){
+            double a_solar = 0.0;
+
+            if (LimongiAbundances && cstar->ReturnMetallicity() <= 3.236E-3){
+              double enhancement = 0.0;
+
+              switch (StellarYieldsAtomicNumbers[j]){
+                /// At [Fe/H] <= -1, these abundances are enhanced by the following
+                //   [X/Fe] values. Therefore, rather than [X/H] = [Fe/H] always,
+                //  initial models have [X/H] = [X/Fe]_enchancement + [Fe/H].  
+                case  6: enhancement = 0.18; break;
+                case  8: enhancement = 0.47; break;
+                case 12: enhancement = 0.27; break; // paper has 0.0.27 ...
+                case 14: enhancement = 0.37; break;
+                case 16: enhancement = 0.35; break;
+                case 18: enhancement = 0.35; break;
+                case 20: enhancement = 0.33; break;
+                case 23: enhancement = 0.23; break;
+
+                default:
+                  enhancement = 0.0;
+              }
+              // 0.7381 is the H mass fraction in Asplund+2009. Strictly speaking this needs to change by
+              // a couple percent for changes in He and metals... ignoring this...
+              if (enhancement > 0){
+                a_solar = z_ratio * POW(10.0, enhancement + element_H_solar) * f_H * (StellarYields_MMW(StellarYieldsAtomicNumbers[j]) /
+                                                                  StellarYields_MMW(1));
+              } else {
+                a_solar = StellarYields_ScaledSolarMassFractionByNumber(cstar->ReturnMetallicity(),StellarYieldsAtomicNumbers[j], table);
+              }
+
+            } else{
+              a_solar = StellarYields_ScaledSolarMassFractionByNumber(cstar->ReturnMetallicity(),
+                                                                             StellarYieldsAtomicNumbers[j], table);
+            }
+
+            printf(" %"ESYM, a_solar);
+          }
+          printf("\n");
+
+          printf("Metal Masses: ");
+          for(int j=0;j<StellarYieldsNumberOfSpecies+1;j++){
+            printf(" %"ESYM,metal_mass[j]);
+          }
+          printf("\n");
+
+
+          ENZO_FAIL("Negative mass or too much mass in surface abundance return");
+        } //
+      } // if weird answers
+    } // loop over species
+*/
+  } // surface abundances 
+
+
+  /* convert computed parameters to code units */
+  m_eject   = m_eject*SolarMass / MassUnits   / (dx*dx*dx);
+  E_thermal = E_thermal      / EnergyUnits / (dx*dx*dx);
+
+  if(IndividualStarFollowStellarYields && MultiMetals == 2){
+    for(int i = 0; i < StellarYieldsNumberOfSpecies + 1; i++){
+      // printf("metal mass species %" ISYM "   = %" ESYM "\n", i, metal_mass[i]);
+      metal_mass[i] = metal_mass[i] * SolarMass / MassUnits / (dx*dx*dx);
+    }
+  }
+
+  //
+  // now that we've computed the explosion properties
+  // find where we should go off
+  //
+  if( (m_eject > 0) || (E_thermal > 0)){ // can sometimes both be zero for stellar winds due to mass corrections
+    this->IndividualStarInjectSphericalFeedback(cstar, pos[0], pos[1], pos[2], m_eject, E_thermal,
+                                                metal_mass, stellar_wind_mode);
+  }
+
+  delete [] metal_mass;
+
+  /* Maybe? */
+//  HierarchyEntry *Subgrid;
+  if (FALSE){
+    this->ZeroSolutionUnderSubgrid(NULL, ZERO_UNDER_SUBGRID_FIELD);
+    for (Subgrid = SubgridPointer; Subgrid; Subgrid = Subgrid->NextGridThisLevel){
+      this->ZeroSolutionUnderSubgrid(Subgrid->GridData, ZERO_UNDER_SUBGRID_FIELD);
+    }
+  }
+
+  return SUCCESS;
+}
+#endif

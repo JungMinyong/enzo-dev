@@ -437,8 +437,10 @@ c
 c     Loop over particles
 c
 c      write(6,*) 'star_feedback7: start'
+c    by YS I added type 12 which is nbody particles
       do n=1, npart
-         if (tcp(n) .gt. 0 .and. mp(n) .gt. 0 .and. type(n) .eq. 2) then
+         if ((tcp(n).ge.0).and.(mp(n).gt.0).and.
+     &       ((type(n).eq.2).or.(type(n).eq.12))) then 
 c
 c
 c        The star particle creation algorithm partnered with this 
@@ -489,7 +491,7 @@ c
 c
 c          skip if very little mass is formed.
 c
-            if (mform/d(i,j,k) .lt. 1.e-10_RKIND) goto 10
+c            if (mform/d(i,j,k) .lt. 1.e-10_RKIND) goto 10
 c
 c           subtract ejected mass from particle (ejection due
 c           to winds, supernovae)

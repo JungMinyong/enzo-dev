@@ -501,19 +501,46 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       int abs_type;
       for (i = 0; i < NumberOfParticles; i++) {
 	abs_type = ABS(ParticleType[i]);
-        if (abs_type < PARTICLE_TYPE_GAS ||
-            abs_type > NUM_PARTICLE_TYPES-1) {
+#ifdef NBODY
+				if (abs_type < PARTICLE_TYPE_GAS || (abs_type > NUM_PARTICLE_TYPES-1
+							&& abs_type < PARTICLE_TYPE_NBODY) || abs_type > PARTICLE_TYPE_NBODY_REMOVE)
+#else
+					if (abs_type < PARTICLE_TYPE_GAS || abs_type > NUM_PARTICLE_TYPES-1)
+#endif
+					{
           ENZO_VFAIL("file: %s: particle %"ISYM" has unknown type %"ISYM"\n", name, i, ParticleType[i])
         }
-      }
-
+#ifdef NBODY
+				if (NbodyRestartStarToNbody && (ParticleType[i] == PARTICLE_TYPE_STAR 
+							|| ParticleType[i] == 12 || ParticleType[i] == 13 || ParticleType[i] == 14)) {
+					ParticleType[i] = PARTICLE_TYPE_NBODY;
+				}
+				if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
+					ParticleType[i] = PARTICLE_TYPE_NBODY;
+				}
+#endif
+			}
     } else {
 
       /* Otherwise create the type. */
 
       for (i = 0; i < NumberOfParticles; i++)
+			{
+#ifdef NBODY
+				if (ReturnParticleType(i) == PARTICLE_TYPE_NBODY_NEW) { 
+					ParticleType[i] = PARTICLE_TYPE_NBODY;
+				}
+				else if (NbodyRestartStarToNbody && (ReturnParticleType(i) == PARTICLE_TYPE_STAR 
+							|| ReturnParticleType(i) == 12 || ReturnParticleType(i) == 13 || ReturnParticleType(i) == 14)) {
+					ParticleType[i] = PARTICLE_TYPE_NBODY;
+				}
+				else {
         ParticleType[i] = ReturnParticleType(i);
-
+				}
+#else 
+				ParticleType[i] = ReturnParticleType(i);
+#endif
+			}
     }
 
 
@@ -822,6 +849,9 @@ int grid::ReadExtraFields(hid_t group_id)
     float *temp = new float[size];
     for (dim = 0; dim < GridRank; dim++) {
       if(this->AccelerationField[dim] != NULL) {
+#ifdef NBODY
+        delete this->AccelerationFieldNoStar[dim];
+#endif
         delete this->AccelerationField[dim];
       }
       snprintf(acc_name, 254, "AccelerationField%"ISYM, dim);
@@ -843,9 +873,18 @@ int grid::ReadExtraFields(hid_t group_id)
         size *= GravitatingMassFieldDimension[dim];
         GMFOutDims[GridRank-dim-1] = GravitatingMassFieldDimension[dim];
     }
-      if(this->GravitatingMassField != NULL)
+
+		if(this->GravitatingMassField != NULL) {
+#ifdef NBODY
+        delete this->GravitatingMassFieldNoStar;
+#endif
         delete this->GravitatingMassField;
+			}
       //fprintf(stderr, "ALLOCATING %"ISYM" for GMF\n", size);
+#ifdef NBODY
+			//this->GravitatingMassField = new float*[2];
+			this->GravitatingMassFieldNoStar = new float[size];
+#endif
       this->GravitatingMassField = new float[size];
       this->read_dataset(GridRank, GMFOutDims, "GravitatingMassField",
           group_id, HDF5_REAL, (VOIDP) this->GravitatingMassField, FALSE);
@@ -861,9 +900,16 @@ int grid::ReadExtraFields(hid_t group_id)
         size *= GravitatingMassFieldDimension[dim];
         GMFOutDims[GridRank-dim-1] = GravitatingMassFieldDimension[dim];
     }
-      if(this->PotentialField != NULL)
+		if(this->PotentialField != NULL) {
+#ifdef NBODY
+        delete this->PotentialFieldNoStar;
+#endif
         delete this->PotentialField;
+			}
       //fprintf(stderr, "ALLOCATING %"ISYM" for PF\n", size);
+#ifdef NBODY
+			this->PotentialFieldNoStar = new float[size];
+#endif
       this->PotentialField = new float[size];
       this->read_dataset(GridRank, GMFOutDims, "PotentialField",
           group_id, HDF5_REAL, (VOIDP) this->PotentialField, FALSE);

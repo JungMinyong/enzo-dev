@@ -88,6 +88,18 @@ void IndividualStarSetPopIIISupernovaProperties(Star *cstar, float &m_eject, flo
 
 void IndividualStarSetTypeIaSupernovaProperties(float &m_eject, float &E_thermal, float *metal_mass);
 
+#ifdef SEVN
+void IndividualStarSetStellarWindPropertiesSEVN(Star *cstar, const float &Time,
+                                                const float &dtFixed, const float &TimeUnits,
+                                                const float &m_eject,
+                                                float &E_thermal, float *metal_mass);
+
+void IndividualStarSetCoreCollapseSupernovaPropertiesSEVN(Star *cstar,
+                                                          const float &m_eject, float &E_thermal, float *metal_mass);
+
+void IndividualStarSetPopIIISupernovaPropertiesSEVN(Star *cstar, const float &m_eject, float &E_thermal, float *metal_mass);
+#endif
+
 float SNIaProbability(const float &current_time, const float &formation_time,
                       const float &lifetime, const float &TimeUnits);
 int SetWDLifetime(float &WD_lifetime,

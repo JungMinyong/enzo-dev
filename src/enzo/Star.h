@@ -13,7 +13,9 @@
 ************************************************************************/
 #ifndef __STAR_H
 #define __STAR_H
-
+#ifdef NBODY
+#include <unordered_map>
+#endif
 #include "typedefs.h"
 #include "Grid.h"
 #include "Hierarchy.h"
@@ -52,6 +54,13 @@ class Star
   int            SNIaType;     // for individual stars
   int            PopIIIStar;   // if popIII at any point
 
+#ifdef NBODY
+  int GridParticleIndex;
+  double bg_acc[MAX_DIMENSION]; // background acceeleration for ABYSS
+  bool isABYSS;        // in case we would like to exclude this particle from the ABYSS pool
+  bool isNewlyFormed;   // in case we would like to exclude this particle from the ABYSS pool
+#endif
+
   /* AJE: for individual stars - yield table numbers */
   int se_table_position[2];
   int rad_table_position[3];
@@ -84,6 +93,30 @@ public:
   Star* copy(void);
 
   // Routines
+#if defined (NBODY) && defined (INDIVIDUALSTAR)
+  double *ReturnBackgroundAcceleration(void) { return bg_acc; }
+  bool ReturnAbyssFlag(){return isABYSS;};        // in case we would like to exclude this particle from the ABYSS pool
+  bool ReturnNewStarFlag(){return isNewlyFormed;};   
+  int ReturnGridParticleIndex(){return GridParticleIndex;};
+  void SetPosition(double *temp){pos[0]=temp[0];pos[1]=temp[1];pos[2]=temp[2];};
+  void SetVelocity(double *temp){vel[0]=temp[0];vel[1]=temp[1];vel[2]=temp[2];};
+
+  void SetAbyssFlag(bool is){isABYSS=is;};        // in case we would like to exclude this particle from the ABYSS pool
+  void SetNewStarFlag(bool is){isNewlyFormed=is;};   
+  void MakeStarsUnorderedMap(std::unordered_map<int, Star*> &StarLookupMap); // makes lookup table to quickly find stars in grid during CopyToGrid
+	void GetBackgroundAcceleration();
+  void UpdateBackgroundAcceleration();
+	void DeleteBackgroundAcceleration();
+  void UpdateToGridParticle(const double *pos, const double *vel);
+#ifdef SEVN
+  void SetMass(double mass){ Mass = mass; };
+  void SetBirthMass(double mzams){ BirthMass = mzams; };
+  void SetWindMassEjected(double m_wind){ wind_mass_ejected = m_wind; };
+  void SetSNMassEjected(double m_sn){ sn_mass_ejected = m_sn; };
+  void SetTeff(double teff){ Teff = teff; };
+  double ReturnTeff(){ return Teff; };
+#endif
+#endif
   star_type ReturnType(void) { return type; };
   int   ReturnID(void) { return Identifier; };
   double ReturnMass(void) { return Mass; };

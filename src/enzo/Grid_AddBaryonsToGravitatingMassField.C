@@ -81,10 +81,17 @@ int grid::AddBaryonsToGravitatingMassField()
       gmfindex = ((k+Offset[2])*GravitatingMassFieldDimension[1] +
 		  (j+Offset[1]))*GravitatingMassFieldDimension[0] +
 		     Offset[0];
-      for (i = 0; i < GridDimension[0]; i++, index++, gmfindex++)
+      for (i = 0; i < GridDimension[0]; i++, index++, gmfindex++) {
+#ifdef NBODY
+	GravitatingMassFieldNoStar[gmfindex] += BaryonField[DensNum][index];
+#endif
 	GravitatingMassField[gmfindex] += BaryonField[DensNum][index];
+		}
   // Add FDM density
   if (QuantumPressure ==1){
+#ifdef NBODY
+      GravitatingMassFieldNoStar[gmfindex] += BaryonField[FDMDensNum][index];
+#endif
       GravitatingMassField[gmfindex] += BaryonField[FDMDensNum][index];
     }
   }
@@ -98,10 +105,17 @@ int grid::AddBaryonsToGravitatingMassField()
 		   GridStartIndex[0]+Offset[0];
       index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++,
-	     index++, gmfindex++)
+	     index++, gmfindex++) {
+#ifdef NBODY
+	GravitatingMassFieldNoStar[gmfindex] += BaryonField[DensNum][index];
+#endif
 	GravitatingMassField[gmfindex] += BaryonField[DensNum][index];
+			}
   // Add FDM density
   if (QuantumPressure ==1){
+#ifdef NBODY
+      GravitatingMassFieldNoStar[gmfindex] += BaryonField[FDMDensNum][index];
+#endif
       GravitatingMassField[gmfindex] += BaryonField[FDMDensNum][index];
     }
     }

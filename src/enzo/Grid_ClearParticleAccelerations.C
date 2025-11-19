@@ -44,11 +44,21 @@ int grid::ClearParticleAccelerations()
  
       ParticleAcceleration[dim] = new float[NumberOfParticles];
  
-      /* Clear it. */
+#ifdef NBODY 
+      if (ParticleAccelerationNoStar[dim] != NULL)
+				fprintf(stderr, "ClearStarBackGroundAcceleration: Field not NULL.\n");
+
+			/* Allocate accleration field. */
+			ParticleAccelerationNoStar[dim] = new float[NumberOfParticles]; //by YS, we have to change this to
+#endif
+
  
-      for (i = 0; i < NumberOfParticles; i++)
+			for (i = 0; i < NumberOfParticles; i++) {
 	ParticleAcceleration[dim][i] = 0.0;
- 
+#ifdef NBODY
+				ParticleAccelerationNoStar[dim][i] = 0.0; //by YS, we have to change this to
+#endif
+			}
     }
 
   if (NumberOfActiveParticles > 0)
@@ -76,3 +86,35 @@ int grid::ClearParticleAccelerations()
   return SUCCESS;
 }
  
+#ifdef NBODY
+ 
+int grid::ClearParticleAccelerationsNoStar()
+{
+ 
+	int i, j, dim;
+
+	if (NumberOfParticles > 0)
+
+		/* Loop over active dimension */
+
+		for (dim = 0; dim < GridRank+ComputePotential; dim++) {
+
+			/* Error check. */
+
+			if (ParticleAccelerationNoStar[dim] != NULL)
+				fprintf(stderr, "ClearParticleAccelerations: Field not NULL.\n");
+
+			/* Allocate accleration field. */
+			ParticleAccelerationNoStar[dim] = new float[NumberOfParticles]; //by YS, we have to change this to
+																																			 //number of nbody stars
+
+			/* Clear it. */
+			for (i = 0; i < NumberOfParticles; i++) {
+					ParticleAccelerationNoStar[dim][i] = 0;  //by YS, we have to change this to
+																										 //number of nbody stars
+			}
+		}
+
+	return SUCCESS;
+}
+#endif

@@ -100,6 +100,8 @@
 #else
 void RunEventHooks(char *, HierarchyEntry *Grid[], TopGridData &MetaData) {}
 #endif
+
+#include <unordered_map>
  
 /* function prototypes */
  
@@ -107,6 +109,20 @@ void RunEventHooks(char *, HierarchyEntry *Grid[], TopGridData &MetaData) {}
 #define IMPLICIT_MACRO , ImplicitSolver
 #else
 #define IMPLICIT_MACRO 
+#endif
+#ifdef NBODY
+#ifndef INDIVIDUALSTAR
+int PrepareNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
+int FinalizeNbodyComputation(LevelHierarchyEntry *LevelArray[],int level);
+void IdentifyNbodyParticlesEvolveLevel(LevelHierarchyEntry *LevelArray[], int level);
+#else
+int SendParticleToAbyss(LevelHierarchyEntry *LevelArray[], int level,
+    //Star *&AllStars, std::unordered_map<int, Star *> &LocalStarLookupMap);
+    Star *&AllStars, std::map<int, Star *> &LocalStarLookupMap);
+int ReceiveParticleFromAbyss(
+    //Star *&AllStar, std::unordered_map<int, Star *> &LocalStarLookupMap);
+    Star *&AllStar, std::map<int, Star *> &LocalStarLookupMap);
+#endif
 #endif
 
 #define EXTRA_OUTPUT_MACRO(A,B) ExtraOutput(A,LevelArray,MetaData,level,Exterior IMPLICIT_MACRO,B);
@@ -148,6 +164,10 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 #else  // !FAST_SIB
 int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
                         int level, TopGridData *MetaData, FLOAT When);
+#ifdef NBODY
+int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
+		int level, TopGridData *MetaData, FLOAT When);
+#endif
 #endif  // end FAST_SIB
  
 #ifdef FAST_SIB
@@ -236,14 +256,22 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 			   int ThisLevel, Star *&AllStars,
 			   int TotalStarParticleCountPrevious[]
 #ifdef INDIVIDUALSTAR
+#ifdef NBODY
+                           //, std::unordered_map<int, Star *> &LocalStarLookupMap
+                           , std::map<int, Star *> &LocalStarLookupMap
+#endif
                            , int SkipFeedbackFlag = 0
 #endif
                            );
 
 int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
-			 int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
-			 int level, Star *&AllStars,
-			 int TotalStarParticleCountPrevious[], int &OutputNow);
+        int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
+        int level, Star *&AllStars,
+        int TotalStarParticleCountPrevious[], int &OutputNow
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+      , std::map<int, Star *> &LocalStarLookupMap
+#endif
+		);
 int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[], 
 		       TopGridData *MetaData, int EL_level);
 int AdjustMustRefineParticlesRefineToLevel(TopGridData *MetaData, int EL_level);
@@ -409,6 +437,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 #ifdef INDIVIDUALSTAR
   Star *AllStars = NULL;
+#ifdef NBODY
+  //std::unordered_map<int, Star *> LocalStarLookupMap;
+  std::map<int, Star *> LocalStarLookupMap;
+#endif
 #endif
 
   while ((CheckpointRestart == TRUE)
@@ -477,7 +509,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     Star *AllStars = NULL;
 #endif
     StarParticleInitialize(Grids, MetaData, NumberOfGrids, LevelArray,
-			   level, AllStars, TotalStarParticleCountPrevious);
+						level, AllStars, TotalStarParticleCountPrevious
+						#if defined(NBODY) && defined(INDIVIDUALSTAR) 
+						, LocalStarLookupMap
+						#endif
+						);
 
     /* Calculate ClusterSMBHColdGasMass */
 
@@ -514,6 +550,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Prepare the density field (including particle density). */
 
     When = 0.5;
+
+
+#ifdef NBODY
+#ifndef INDIVIDUALSTAR
+				if (LevelArray[level+1] == NULL)
+					IdentifyNbodyParticlesEvolveLevel(LevelArray, level);
+#endif
+#endif
+
 
 #ifdef FAST_SIB
      PrepareDensityField(LevelArray,  level, MetaData, When, SiblingGridListStorage);
@@ -581,6 +626,49 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     //Ensure the consistency of the AccelerationField
     SetAccelerationBoundary(Grids, NumberOfGrids,SiblingList,level, MetaData,
             Exterior, LevelArray[level], LevelCycleCount[level]);
+
+#ifdef NBODY
+            /* Create a master list of all nbody particles */
+    
+            if (UseNBODY) {
+#ifndef INDIVIDUALSTAR
+              if (PrepareNbodyComputation(LevelArray, level) == FAIL) {
+                ENZO_FAIL("Error in NbodyParticleFindAll.");
+              }
+#else
+    
+              /* Reset Background Acceleration from Grids to Star Before Update */
+              for (auto &kv : LocalStarLookupMap) {
+                Star *star = kv.second;
+                if (star->ReturnLevel() == level) {
+                  //fprintf(stderr, "%d on %d,", level, star->ReturnID());
+                  star->DeleteBackgroundAcceleration();
+                }
+              }
+              /* Update Background Acceleration from Grids to Star */
+              for (auto &kv : LocalStarLookupMap) {
+                Star *star = kv.second;
+                if (star->ReturnLevel() == level) {
+                  //fprintf(stderr, "%d on %d,", level, star->ReturnID());
+                  star->UpdateBackgroundAcceleration();
+                }
+              }
+    
+            if (LevelArray[level+1] == NULL){
+              if (SendParticleToAbyss(LevelArray, level,AllStars, LocalStarLookupMap) == FAIL) {
+                ENZO_FAIL("Error in SendParticleToAbyss.");
+              }
+            }
+#endif //end INDIVIDUALSTAR
+
+            }
+#endif // end NBODY 
+    
+    #define GravTest
+    #ifdef GravTest
+    #endif
+    
+
 
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 #endif //SAB.
@@ -713,6 +801,22 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
         }//grid
     }//RK hydro
 
+#ifdef NBODY
+				/* Create a master list of all nbody particles */
+
+				if (UseNBODY) {
+#ifndef INDIVIDUALSTAR
+					if(FinalizeNbodyComputation(LevelArray, level) == FAIL) {
+#else
+					if (LevelArray[level+1] == NULL)
+						if(ReceiveParticleFromAbyss(AllStars, LocalStarLookupMap) == FAIL) {
+#endif
+							ENZO_FAIL("Error in NbodyParticleFindAll.");
+						}
+				}
+#endif
+
+
       /* Solve the cooling and species rate equations. */
  
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
@@ -809,8 +913,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     /* Finalize (accretion, feedback, etc.) star particles */
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
-			 level, AllStars, TotalStarParticleCountPrevious, OutputNow);
-
+						level, AllStars, TotalStarParticleCountPrevious, OutputNow
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+                         , LocalStarLookupMap
+#endif
+						);
     /* For each grid: a) interpolate boundaries from the parent grid.
                       b) copy any overlapping zones from siblings. */
  

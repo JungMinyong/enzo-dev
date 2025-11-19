@@ -45,8 +45,11 @@ void grid::SetNewParticleIndex(int &NumberCount1, PINT &NumberCount2)
       newstarcount++;
 #endif
 
-/* AE: Always make sure this applies to IndividualStar, IndividualStarRemnant, etc. */
+#ifdef NBODY
+      if (abstype == PARTICLE_TYPE_STAR || abstype == PARTICLE_TYPE_NBODY_NEW ||
+#else
       if (abstype == PARTICLE_TYPE_STAR ||
+#endif
 	  (abstype >= PARTICLE_TYPE_MUST_REFINE &&
 	   abstype != PARTICLE_TYPE_MBH)){
 	ParticleNumber[n] = NumberCount1++ + NumberCount2;

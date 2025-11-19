@@ -64,6 +64,12 @@ int grid::ComputeAccelerationFieldExternal()
  
   if (AccelerationField[0] == NULL)
     for (dim = 0; dim < GridRank; dim++) {
+#ifdef NBODY
+			AccelerationFieldNoStar[dim] = new float[size];
+			for (i = 0; i < size; i++){
+				AccelerationFieldNoStar[dim][i] = 0;
+			}
+#endif
       AccelerationField[dim] = new float[size];
       for (i = 0; i < size; i++)
         AccelerationField[dim][i] = 0;
@@ -72,6 +78,9 @@ int grid::ComputeAccelerationFieldExternal()
     if( SelfGravity == 0 ){
       for (dim = 0; dim < GridRank; dim++) {
         for (i = 0; i < size; i++){
+#ifdef NBODY
+				AccelerationFieldNoStar[dim][i] = 0;
+#endif
           AccelerationField[dim][i] = 0;
         }
       }
@@ -231,6 +240,17 @@ int grid::ComputeAccelerationFieldExternal()
 
 	    /* Apply force. */
 	
+#ifdef NBODY
+						if (dim == 0) {
+							AccelerationFieldNoStar[0][n] -= accel*xpos;
+						}
+						if (dim == 1) {
+							AccelerationFieldNoStar[1][n] -= accel*ypos;
+						}
+						if (dim == 2) {
+							AccelerationFieldNoStar[2][n] -= accel*zpos;
+						}
+#endif
 	    if (dim == 0)
 	      AccelerationField[0][n] -= accel*xpos;
 	    if (dim == 1)
@@ -338,7 +358,11 @@ int grid::ComputeAccelerationFieldExternal()
 	ParticleAcceleration[0][i] -= accel*xpos;
 	ParticleAcceleration[1][i] -= accel*ypos;
 	ParticleAcceleration[2][i] -= accel*zpos;
-
+#ifdef NBODY	
+				ParticleAccelerationNoStar[0][i] -= accel*xpos;
+				ParticleAccelerationNoStar[1][i] -= accel*ypos;
+				ParticleAccelerationNoStar[2][i] -= accel*zpos;
+#endif
       } // end: loop over number of particles
       
   } // end: if (PointSourceGravity)
@@ -449,6 +473,33 @@ int grid::ComputeAccelerationFieldExternal()
              accelcylR = (rcyl   ==0.0?0.0:fabs(accelcylR)/(rcyl/LengthUnits)/AccelUnits);
              accelcylz = (zheight==0.0?0.0:fabs(accelcylz)*zheight/fabs(zheight));
 
+#ifdef NBODY
+						if (dim == 0) {
+							AccelerationField[0][n] -= (   accelsph*xpos
+									+ accelcylR*xpos1
+									+ accelcylz*AngularMomentumx);
+							AccelerationFieldNoStar[0][n] -= (   accelsph*xpos
+									+ accelcylR*xpos1
+									+ accelcylz*AngularMomentumx);
+						}
+						if (dim == 1) {
+							AccelerationField[1][n] -= (  accelsph*ypos
+									+ accelcylR*ypos1
+									+ accelcylz*AngularMomentumy);
+							AccelerationFieldNoStar[1][n] -= (  accelsph*ypos
+									+ accelcylR*ypos1
+									+ accelcylz*AngularMomentumy);
+						}
+						if (dim == 2) {
+							AccelerationField[2][n] -= (   accelsph*zpos
+									+ accelcylR*zpos1
+									+ accelcylz*AngularMomentumz);
+
+							AccelerationFieldNoStar[2][n] -= (   accelsph*zpos
+									+ accelcylR*zpos1
+									+ accelcylz*AngularMomentumz);
+						}
+#endif
              if (dim == 0)
                AccelerationField[0][n] -= (   accelsph*xpos
                                             + accelcylR*xpos1
@@ -611,6 +662,20 @@ int grid::ComputeAccelerationFieldExternal()
 	  }
 	  g = GravConst*M/POW(r*LengthUnits,2);
 	  g /= AccelerationUnits;
+#ifdef NBODY
+							if (dim == 0) { 
+								AccelerationField[0][n] += -g*xpos/r;
+								AccelerationFieldNoStar[0][n] += -g*xpos/r;
+							}
+							if (dim == 1) {
+								AccelerationField[1][n] += -g*ypos/r;
+								AccelerationFieldNoStar[1][n] += -g*ypos/r;
+							}
+							if (dim == 2) { 
+								AccelerationField[2][n] += -g*zpos/r;
+								AccelerationFieldNoStar[2][n] += -g*zpos/r;
+							}
+#else
 	  if (dim == 0) { 
 	    AccelerationField[0][n] += -g*xpos/r;
 	  }
@@ -620,6 +685,7 @@ int grid::ComputeAccelerationFieldExternal()
 	  if (dim == 2) { 
 	    AccelerationField[2][n] += -g*zpos/r;
 	  }
+#endif
 	}
       }
     }
@@ -648,6 +714,12 @@ int grid::ComputeAccelerationFieldExternal()
       ParticleAcceleration[0][i] += -g*xpos/r;
       ParticleAcceleration[1][i] += -g*ypos/r;
       ParticleAcceleration[2][i] += -g*zpos/r;
+#ifdef NBODY
+				ParticleAccelerationNoStar[0][i] +=  -g*xpos/r;
+				ParticleAccelerationNoStar[1][i] +=  -g*ypos/r;
+				ParticleAccelerationNoStar[2][i] +=  -g*zpos/r;
+
+#endif
     }
     
   } // end if (ExternalGravity == 1)
@@ -714,6 +786,9 @@ int grid::ComputeAccelerationFieldExternal()
 	for (dim = 0; dim < GridRank; dim++)
 	  for (i = 0; i < size; i++)
 	    AccelerationField[dim][i] += accel_field[dim][i];
+#ifdef NBODY
+				AccelerationFieldNoStar[dim][i] += accel_field[dim][i];
+#endif
 
 	for (dim = 0; dim < GridRank; dim++) {
           delete [] accel_field[dim];
@@ -737,6 +812,12 @@ int grid::ComputeAccelerationFieldExternal()
 	  ParticleAcceleration[0][i] += accel_field[0][i];
 	  ParticleAcceleration[1][i] += accel_field[1][i];
 	  ParticleAcceleration[2][i] += accel_field[2][i];
+#ifdef NBODY
+					ParticleAccelerationNoStar[0][i] += accel_field[0][i];
+					ParticleAccelerationNoStar[1][i] += accel_field[1][i];
+					ParticleAccelerationNoStar[2][i] += accel_field[2][i];
+
+#endif
 	}
 
 	for (dim = 0; dim < GridRank; dim++) {
@@ -776,8 +857,14 @@ int grid::ComputeAccelerationFieldExternal()
 	
       /* Set field. */
  
-      for (i = 0; i < size; i++)
+			for (i = 0; i < size; i++) {
+#ifdef NBODY
 	AccelerationField[dim][i] = Constant;
+				AccelerationFieldNoStar[dim][i] = Constant;
+#else
+				AccelerationField[dim][i] = Constant;
+#endif
+			}
  
     } // loop over dims
  

@@ -40,7 +40,7 @@ int CommunicationBufferPurge(void);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
-				TopGridData* MetaData = NULL);
+		TopGridData* MetaData = NULL, bool NoStar = NOSTAR_NO);
 
 int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids, 
 			  TopGridData *MetaData,
@@ -131,8 +131,12 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 	 only delete the grid object on all processors after
 	 everything's done. */
 
-      if (Temp->GridData->ReturnProcessorNumber() == MyProcessorNumber)
+			if (Temp->GridData->ReturnProcessorNumber() == MyProcessorNumber) {
 	Temp->GridData->DeleteAllFields();
+#ifdef NBODY
+				Temp->GridData->DeleteAllFieldsNoStar();
+#endif
+			}
 
       delete [] SiblingList.GridList;
 

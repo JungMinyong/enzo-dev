@@ -80,3 +80,63 @@ int grid::SetIsolatedPotentialBoundary()
   return SUCCESS;
 }
 
+
+#ifdef NBODY
+int grid::SetIsolatedPotentialBoundaryNoStar()
+{
+
+	if (MyProcessorNumber != ProcessorNumber)
+		return SUCCESS;
+	if (PotentialFieldNoStar == NULL || GravitatingMassFieldCellSize == FLOAT_UNDEFINED) {
+		ENZO_FAIL("Potential NULL or gravity unitialized.\n");
+	}
+
+
+	/* Set start index and dimension of active part of potential field. */
+
+	int dim, i, j, k, GravStart[] = {0,0,0}, GravEnd[] = {0,0,0};
+	for (dim = 0; dim < GridRank; dim++) {
+		GravStart[dim] = nint((GridLeftEdge[dim] -
+					GravitatingMassFieldLeftEdge[dim])/GravitatingMassFieldCellSize);
+		GravEnd[dim] = nint((GridRightEdge[dim] -
+					GravitatingMassFieldLeftEdge[dim])/GravitatingMassFieldCellSize)-1;
+	}
+
+
+	/* First, copy potential values along boundaries into i-direction. */
+	for (k = GravStart[2]; k <= GravEnd[2]; k++)
+		for (j = GravStart[1]; j <= GravEnd[1]; j++) {
+			for (i = 0; i < GravStart[0]; i++) {
+				PotentialFieldNoStar[GINDEX(i,j,k)] = PotentialFieldNoStar[GINDEX(GravStart[0],j,k)];
+			}
+			for (i = GravEnd[0]+1; i < GravitatingMassFieldDimension[0]; i++) {
+				PotentialFieldNoStar[GINDEX(i,j,k)] = PotentialFieldNoStar[GINDEX(GravEnd[0],j,k)];
+			}
+		}
+	/* Next copy along the j-direction. */
+
+	for (k = GravStart[2]; k <= GravEnd[2]; k++)
+		for (i = 0; i < GravitatingMassFieldDimension[0]; i++) {
+			for (j = 0; j < GravStart[1]; j++) {
+				PotentialFieldNoStar[GINDEX(i,j,k)] = PotentialFieldNoStar[GINDEX(i,GravStart[1],k)];
+			}
+			for (j = GravEnd[1]+1; j < GravitatingMassFieldDimension[1]; j++) {
+				PotentialFieldNoStar[GINDEX(i,j,k)] = PotentialFieldNoStar[GINDEX(i,GravEnd[1],k)];
+			}
+		}
+
+	/* Finally copy along the k-direction. */
+
+	for (j = 0; j < GravitatingMassFieldDimension[1]; j++)
+		for (i = 0; i < GravitatingMassFieldDimension[0]; i++) {
+			for (k = 0; k < GravStart[2]; k++) {
+				PotentialFieldNoStar[GINDEX(i,j,k)] = PotentialFieldNoStar[GINDEX(i,j,GravStart[2])];
+			}
+			for (k = GravEnd[2]+1; k < GravitatingMassFieldDimension[2]; k++) {
+				PotentialFieldNoStar[GINDEX(i,j,k)] = PotentialFieldNoStar[GINDEX(i,j,GravEnd[2])];
+			}
+		}
+  return SUCCESS;
+}
+#endif
+

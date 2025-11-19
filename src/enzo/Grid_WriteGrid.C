@@ -793,8 +793,11 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
       if (SelfGravity && NumberOfParticles > 0) {
 	this->InitializeGravitatingMassFieldParticles(RefineBy);
 	this->ClearGravitatingMassFieldParticles();
+#ifdef NBODY
+	this->ClearGravitatingMassFieldParticlesNoStar();
+#endif
 	this->DepositParticlePositions(this, Time,
-				       GRAVITATING_MASS_FIELD_PARTICLES);
+				       GRAVITATING_MASS_FIELD_PARTICLES,FALSE);
       }
 
       /* If present, write out the GravitatingMassFieldParticles. */

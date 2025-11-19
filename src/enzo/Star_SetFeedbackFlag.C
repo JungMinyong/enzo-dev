@@ -53,7 +53,7 @@ int Star::SetFeedbackFlag(FLOAT Time, float dtFixed)
 //  const float TypeIILowerMass = 11, TypeIIUpperMass = 40.1;
 //  const float PISNLowerMass = 140, PISNUpperMass = 260;
   const float StarClusterSNeStart = 4.0;   // Myr after cluster is born
-  const float StarClusterSNeEnd = 20.0; // Myr (lifetime of a 8 Msun star)
+  const float StarClusterSNeEnd = 20.0; // Myr (lifetime of a 8 SolarMass star)
 
   int abs_type;
   float AgeInMyr;

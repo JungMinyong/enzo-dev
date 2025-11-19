@@ -60,6 +60,9 @@ int mbh_maker(int *nx, int *ny, int *nz, int *size, float *d, float *u,
   int i, j, k, ii, index;
   FILE *fptr;
   double dummy_double[3];
+#ifdef NBODY
+  double dummy_double2[3];
+#endif
   float dummy_float[3];
   char line[MAX_LINE_LENGTH];
 
@@ -83,14 +86,21 @@ int mbh_maker(int *nx, int *ny, int *nz, int *size, float *d, float *u,
       if (line[0] != '#') {
 
 	/* order: MBH mass (in Ms), MBH position[3], MBH creation time (w.r.t. the current time) */
-
+#ifdef NBODY
+	if (sscanf(line, " %"FSYM"  %"PSYM"  %"PSYM"  %"PSYM"  %"PSYM"  %"PSYM"  %"PSYM"  %"FSYM, 
+		   &dummy_float[0], &dummy_double[0], &dummy_double[1], &dummy_double[2], 
+		   &dummy_double2[0], &dummy_double2[1], &dummy_double2[2], &dummy_float[1]) != 8) {
+	  fprintf(stderr, "mbh_maker: File structure wrong in %s\n", MBHInsertLocationFilename);
+	  return FAIL;
+	}
+#else
 	if (sscanf(line, " %"FSYM"  %"PSYM"  %"PSYM"  %"PSYM"  %"FSYM, 
 		   &dummy_float[0], &dummy_double[0], &dummy_double[1],
 		   &dummy_double[2], &dummy_float[1]) != 5) {
 	  fprintf(stderr, "mbh_maker: File structure wrong in %s\n", MBHInsertLocationFilename);
 	  return FAIL;
 	}
-
+#endif
 	/* Find the indices in the grid */
 
 	i = (float) ((dummy_double[0] - *xstart) / (*dx));
@@ -128,11 +138,17 @@ int mbh_maker(int *nx, int *ny, int *nz, int *size, float *d, float *u,
 	      tcp[ii] = (float) ((*t) + dummy_float[1]);
 
 	    // MBH other attributes 
+#ifdef NBODY
+	    up[ii] = dummy_double2[0]; // unit_velocity
+	    vp[ii] = dummy_double2[1];
+	    wp[ii] = dummy_double2[2];
+	    tdp[ii] = MBHMinDynamicalTime;
+#else
 	    up[ii] = u[index];
 	    vp[ii] = v[index];
 	    wp[ii] = w[index];
 	    tdp[ii] = MBHMinDynamicalTime;
-	    
+#endif
 	    // the particle type has to be negative because it is just created 
 	    // only negative type Stars will be read at StarParticleFindAll->FindNewStarParticles
 	    type[ii] = (*ctype);

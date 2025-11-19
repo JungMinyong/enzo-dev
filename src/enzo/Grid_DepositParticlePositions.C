@@ -64,9 +64,9 @@ double ReturnWallTime(void);
    the MASS_FLAGGING_FIELD.  Only set in Grid_SetFlaggingField. */
  
 float DepositParticleMaximumParticleMass = 0;
- 
+
 int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
-				   int DepositField)
+		int DepositField, bool NoStar)
 {
  
   /* Return if this doesn't concern us. */
@@ -96,7 +96,15 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   if (DepositField == GRAVITATING_MASS_FIELD) {
     if (TargetGrid->GravitatingMassFieldCellSize <= 0)
       TargetGrid->InitializeGravitatingMassField(RefineBy);
+		/* by YS Jo, 0 for the original field; 1 for the gravity with stars */
+#ifdef NBODY
+		if (NoStar)
+			DepositFieldPointer = TargetGrid->GravitatingMassFieldNoStar;
+		else
+			DepositFieldPointer = TargetGrid->GravitatingMassField;
+#else
     DepositFieldPointer = TargetGrid->GravitatingMassField;
+#endif
     CellSize            = TargetGrid->GravitatingMassFieldCellSize;
     CloudSize           = CellWidth[0][0];
     for (dim = 0; dim < GridRank; dim++) {
@@ -110,7 +118,15 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   else if (DepositField == GRAVITATING_MASS_FIELD_PARTICLES) {
     if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
       TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
+		/* by YS Jo, 0 for the original field; 1 for the gravity with stars */
+#ifdef NBODY
+		if (NoStar)
+			DepositFieldPointer = TargetGrid->GravitatingMassFieldParticlesNoStar;
+		else
+			DepositFieldPointer = TargetGrid->GravitatingMassFieldParticles;
+#else
     DepositFieldPointer = TargetGrid->GravitatingMassFieldParticles;
+#endif
     CellSize            = TargetGrid->CellWidth[0][0];
     CloudSize            = CellWidth[0][0];
     for (dim = 0; dim < GridRank; dim++) {
@@ -252,15 +268,52 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
  
     /* If required, Change the mass of particles in this grid. */
  
+#ifdef NBODY
+		if (NoStar) {
+			ParticleMassTemp = new float[NumberOfParticles];
+			float MassFactorTemp = 1.;
+
+			if (MassFactor != 1.0 ||
+					((StarParticleCreation == (1 << SINK_PARTICLE)) &&
+					 SmoothField == TRUE)) 
+				MassFactorTemp = MassFactor;
+
+			for (i = 0; i < NumberOfParticles; i++) {
+				if ((ParticleType[i] == PARTICLE_TYPE_NBODY) ||
+						(ParticleType[i] == PARTICLE_TYPE_NBODY_NEW))
+					ParticleMassTemp[i] = 0;
+				else
+					ParticleMassTemp[i] = ParticleMass[i]*MassFactorTemp;
+			}
+			ParticleMassPointer = ParticleMassTemp;
+		} else { // NoStar
     if (MassFactor != 1.0 || 
 	((StarParticleCreation == (1 << SINK_PARTICLE)) && 
 	 SmoothField == TRUE)) {
       ParticleMassTemp = new float[NumberOfParticles];
+
       for (i = 0; i < NumberOfParticles; i++)
 	ParticleMassTemp[i] = ParticleMass[i]*MassFactor;
       ParticleMassPointer = ParticleMassTemp;
-    } else
+			}
+			else
+				ParticleMassPointer = ParticleMass;
+		} // endif NoStar
+#else
+		if (MassFactor != 1.0 ||
+				((StarParticleCreation == (1 << SINK_PARTICLE)) &&
+				 SmoothField == TRUE)) {
+			ParticleMassTemp = new float[NumberOfParticles];
+
+			for (i = 0; i < NumberOfParticles; i++)
+				ParticleMassTemp[i] = ParticleMass[i]*MassFactor;
+			ParticleMassPointer = ParticleMassTemp;
+		}
+		else
       ParticleMassPointer = ParticleMass;
+#endif
+
+
  
     /* If the target field is MASS_FLAGGING_FIELD, then set masses of
        particles which are too large to zero (to prevent run-away
@@ -449,17 +502,17 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     if (MyProcessorNumber == ProcessorNumber)
       CommunicationBufferedSend(DepositFieldPointer, Count, DataType, 
 			     Dest, MPI_SENDREGION_TAG, 
-			     MPI_COMM_WORLD, BUFFER_IN_PLACE);
+			     enzo_comm, BUFFER_IN_PLACE);
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
       MPI_Recv(DepositFieldPointer, Count, DataType, Source, 
-	       MPI_SENDREGION_TAG, MPI_COMM_WORLD, &status);
+	       MPI_SENDREGION_TAG, enzo_comm, &status);
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
       MPI_Irecv(DepositFieldPointer, Count, DataType, Source, 
-	        MPI_SENDREGION_TAG, MPI_COMM_WORLD, 
+	        MPI_SENDREGION_TAG, enzo_comm, 
 	        CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
       CommunicationReceiveBuffer[CommunicationReceiveIndex] = 
 	                                                  DepositFieldPointer;

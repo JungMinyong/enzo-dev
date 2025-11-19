@@ -211,6 +211,51 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 			     RegionStart, RegionStart+1, RegionStart+2);
 	index += RegionSize;
       }
+
+
+		// No Star Fields
+#ifdef NBODY
+		if (SendField == GRAVITATING_MASS_FIELD_PARTICLES_NO_STAR) {
+			FORTRAN_NAME(copy3d)(GravitatingMassFieldParticlesNoStar, buffer,
+					GravitatingMassFieldParticlesDimension,
+					GravitatingMassFieldParticlesDimension+1,
+					GravitatingMassFieldParticlesDimension+2,
+					RegionDim, RegionDim+1, RegionDim+2,
+					Zero, Zero+1, Zero+2,
+					RegionStart, RegionStart+1, RegionStart+2);
+		}
+
+		if (SendField == GRAVITATING_MASS_FIELD_NO_STAR) {
+			FORTRAN_NAME(copy3d)(GravitatingMassFieldNoStar, buffer,
+					GravitatingMassFieldDimension,
+					GravitatingMassFieldDimension+1,
+					GravitatingMassFieldDimension+2,
+					RegionDim, RegionDim+1, RegionDim+2,
+					Zero, Zero+1, Zero+2,
+					RegionStart, RegionStart+1, RegionStart+2);
+		}
+
+		if (SendField == POTENTIAL_FIELD_NO_STAR) {
+			FORTRAN_NAME(copy3d)(PotentialFieldNoStar, buffer,
+					GravitatingMassFieldDimension,
+					GravitatingMassFieldDimension+1,
+					GravitatingMassFieldDimension+2,
+					RegionDim, RegionDim+1, RegionDim+2,
+					Zero, Zero+1, Zero+2,
+					RegionStart, RegionStart+1, RegionStart+2);
+		}
+
+		if (SendField == ACCELERATION_FIELDS_NO_STAR) {
+			for (dim = 0; dim < GridRank; dim++) {
+				FORTRAN_NAME(copy3d)(AccelerationFieldNoStar[dim], &buffer[index],
+						GridDimension, GridDimension+1, GridDimension+2,
+						RegionDim, RegionDim+1, RegionDim+2,
+						Zero, Zero+1, Zero+2,
+						RegionStart, RegionStart+1, RegionStart+2);
+				index += RegionSize;
+			}
+		}
+#endif
   }
 
   /* Send buffer */
@@ -237,7 +282,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 		TransferSize, MyProcessorNumber, ToProcessor);
 #endif
       CommunicationBufferedSend(buffer, TransferSize, DataType, ToProcessor,
-				MPI_SENDREGION_TAG, MPI_COMM_WORLD, BUFFER_IN_PLACE);
+				MPI_SENDREGION_TAG, enzo_comm, BUFFER_IN_PLACE);
     }
 
     if (MyProcessorNumber == ToProcessor) {
@@ -256,7 +301,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //	       CommunicationReceiveIndex);
 
 	MPI_Irecv(buffer, TransferSize, DataType, ProcessorNumber,
-		  MPI_SENDREGION_TAG, MPI_COMM_WORLD,
+		  MPI_SENDREGION_TAG, enzo_comm,
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 	CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
 	CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
@@ -268,7 +313,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
 	MPI_Recv(buffer, TransferSize, DataType, ProcessorNumber,
-		 MPI_SENDREGION_TAG, MPI_COMM_WORLD, &Status);
+		 MPI_SENDREGION_TAG, enzo_comm, &Status);
 
     } // ENDIF ToProcessor
 
@@ -405,6 +450,55 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 			     Zero, Zero+1, Zero+2);
 	index += RegionSize;
       }
+
+
+
+		// No Star Fields
+#ifdef NBODY
+		if (SendField == GRAVITATING_MASS_FIELD_PARTICLES_NO_STAR) {
+			delete ToGrid->GravitatingMassFieldParticlesNoStar;
+			ToGrid->GravitatingMassFieldParticlesNoStar = new float[RegionSize];
+			FORTRAN_NAME(copy3d)(buffer, ToGrid->GravitatingMassFieldParticlesNoStar,
+					RegionDim, RegionDim+1, RegionDim+2,
+					RegionDim, RegionDim+1, RegionDim+2,
+					Zero, Zero+1, Zero+2,
+					Zero, Zero+1, Zero+2);
+		}
+
+		if (SendField == GRAVITATING_MASS_FIELD_NO_STAR) {
+			delete ToGrid->GravitatingMassFieldNoStar;
+			ToGrid->GravitatingMassFieldNoStar = new float[RegionSize];
+			FORTRAN_NAME(copy3d)(buffer, ToGrid->GravitatingMassFieldNoStar,
+					RegionDim, RegionDim+1, RegionDim+2,
+					RegionDim, RegionDim+1, RegionDim+2,
+					Zero, Zero+1, Zero+2,
+					Zero, Zero+1, Zero+2);
+		}
+
+
+		if (SendField == POTENTIAL_FIELD_NO_STAR) {
+			delete ToGrid->PotentialFieldNoStar;
+			ToGrid->PotentialFieldNoStar = new float[RegionSize];
+			FORTRAN_NAME(copy3d)(buffer, ToGrid->PotentialFieldNoStar,
+					RegionDim, RegionDim+1, RegionDim+2,
+					RegionDim, RegionDim+1, RegionDim+2,
+					Zero, Zero+1, Zero+2,
+					Zero, Zero+1, Zero+2);
+		}
+
+		if (SendField == ACCELERATION_FIELDS_NO_STAR) {
+			for (dim = 0; dim < GridRank; dim++) {
+				delete ToGrid->AccelerationFieldNoStar[dim];
+				ToGrid->AccelerationFieldNoStar[dim] = new float[RegionSize];
+				FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->AccelerationFieldNoStar[dim],
+						RegionDim, RegionDim+1, RegionDim+2,
+						RegionDim, RegionDim+1, RegionDim+2,
+						Zero, Zero+1, Zero+2,
+						Zero, Zero+1, Zero+2);
+				index += RegionSize;
+			}
+		}
+#endif
 
     /* Only delete the buffer if we're in receive mode (in send mode
        it will be deleted by CommunicationBufferedSend and if we're in

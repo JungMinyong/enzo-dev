@@ -44,12 +44,26 @@ int grid::AddRadiationPressureAcceleration()
 
   /* Check if acceleration field exists.  If not create it and zero it. */
 
-  if (AccelerationField[0] == NULL)
+#ifdef NBODY
+  if (AccelerationField[0] == NULL) {
+    for (dim = 0; dim < GridRank; dim++) {
+      //AccelerationField[dim] = new float*[2];
+      AccelerationField[dim] = new float[size];
+      AccelerationFieldNoStar[dim] = new float[size];
+      for (i = 0; i < size; i++) {
+				AccelerationField[dim][i] = 0;
+				AccelerationFieldNoStar[dim][i] = 0;
+			}
+    }
+#else
+  if (AccelerationField[0] == NULL) {
     for (dim = 0; dim < GridRank; dim++) {
       AccelerationField[dim] = new float[size];
       for (i = 0; i < size; i++)
 	AccelerationField[dim][i] = 0;
     }
+#endif
+	}
 
   /* Get acceleration fields from radiation pressure */
 
@@ -66,6 +80,9 @@ int grid::AddRadiationPressureAcceleration()
       index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++)
 	for (dim = 0; dim < GridRank; dim++) {
+#ifdef NBODY
+					AccelerationFieldNoStar[dim][index] += BaryonField[RPresNum1+dim][index];
+#endif
 	  AccelerationField[dim][index] += BaryonField[RPresNum1+dim][index];
 	  /*
 	  if (fabs(BaryonField[RPresNum1+dim][index]) > 

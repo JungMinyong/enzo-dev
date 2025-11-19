@@ -30,6 +30,9 @@
 /
 ************************************************************************/
 #include "preincludes.h"
+#include <cstddef>
+#include <unordered_map>
+#include <map>
  
 #ifdef USE_MPI
 #include <mpi.h>
@@ -127,7 +130,7 @@ int ReduceFragmentation(HierarchyEntry &TopGrid, TopGridData &MetaData,
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
-				TopGridData* MetaData = NULL);
+		TopGridData* MetaData = NULL, bool NoStar = NOSTAR_NO);
 double ReturnWallTime(void);
 int Enzo_Dims_create(int nnodes, int ndims, int *dims);
 int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], 
@@ -167,6 +170,10 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                              int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
                              int ThisLevel, Star *&AllStars,
                              int TotalStarParticleCountPrevious[],
+#ifdef NBODY
+                           //std::unordered_map<int, Star *> &LocalStarLookupMap,
+                           std::map<int, Star *> &LocalStarLookupMap,
+#endif
                              int SkipFeedbackFlag = 0);
 
   void DeleteStarList(Star *&Node);
@@ -646,9 +653,15 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     int NumberOfGrids = GenerateGridArray(LevelArray, 0, &Grids);
     int *TotalStarParticleCountPrevious = new int[NumberOfGrids];
 
-    StarParticleInitialize(Grids, &MetaData, NumberOfGrids, LevelArray,
-                           0, AllStars, TotalStarParticleCountPrevious, 1); //last arg, don't set flags
-
+		//std::unordered_map<int, Star*> empty;
+		std::map<int, Star*> empty;
+    StarParticleInitialize(Grids, &MetaData, NumberOfGrids,
+                            LevelArray, 0, AllStars,
+                            TotalStarParticleCountPrevious,
+#ifdef NBODY
+                            empty,
+#endif
+                            1); // last arg, don't set flags
     if (ProblemType != 25 && Restart == FALSE)
       RebuildHierarchy(&MetaData, LevelArray, 0, AllStars);
 
@@ -732,9 +745,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   MPI_Arg Count = 1;
   MPI_Arg stat;
 
-  stat = MPI_Comm_size(MPI_COMM_WORLD, &TaskCount);
-  stat = MPI_Comm_rank(MPI_COMM_WORLD, &ThisTask);
-  stat = MPI_Allgather(&MemInUse, Count, DataTypeInt, TaskMemory, Count, DataTypeInt, MPI_COMM_WORLD);
+  stat = MPI_Comm_size(enzo_comm, &TaskCount);
+  stat = MPI_Comm_rank(enzo_comm, &ThisTask);
+  stat = MPI_Allgather(&MemInUse, Count, DataTypeInt, TaskMemory, Count, DataTypeInt, enzo_comm);
 
   if (ThisTask == 0 ) {
     for ( i = 0; i < TaskCount; i++) {

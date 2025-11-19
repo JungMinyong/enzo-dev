@@ -49,7 +49,7 @@ int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
-				TopGridData* MetaData = NULL);
+				TopGridData* MetaData = NULL, bool NoStar = NOSTAR_NO);
 int CommunicationBufferPurge(void);
 Eint32 compare_proc1(const void *a, const void *b);
 Eint32 compare_grid1(const void *a, const void *b);
@@ -221,7 +221,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 #endif
 
     stat = MPI_Alltoall(NumberOfSends, 1, DataTypeInt,
-			RecvListCount, 1, DataTypeInt, MPI_COMM_WORLD);
+			RecvListCount, 1, DataTypeInt, enzo_comm);
     if (stat != MPI_SUCCESS) ENZO_FAIL("");
 
     TotalNumberOfRecv = 0;
@@ -255,7 +255,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
     stat = MPI_Alltoallv(SendList, MPI_SendListCount, MPI_SendListDisplacements,
 			   MPI_TwoInt,
 			 SharedList, MPI_RecvListCount, MPI_RecvListDisplacements,
-			   MPI_TwoInt, MPI_COMM_WORLD);
+			   MPI_TwoInt, enzo_comm);
     if (stat != MPI_SUCCESS) ENZO_FAIL("");
 
 #ifdef TIMING

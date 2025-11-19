@@ -1,0 +1,313 @@
+#include <iostream>
+#include <vector>
+#include <errno.h>
+#include "global.h"
+#include "Queue.h"
+#
+void broadcastFromRoot(double &data);
+void broadcastFromRoot(ULL &data);
+void broadcastFromRoot(int &data);
+void CalculateAcceleration01(Particle* ptcl1);
+void CalculateAcceleration23(Particle* ptcl1);
+void makePrimordialGroup(Particle* ptclCM);
+void NewFBInitialization(Particle* ptclCM);
+void deleteGroup(Particle* ptclCM);
+void NewFBInitialization3(Group* group);
+#ifdef CUDA
+void sendAllParticlesToGPU_Worker(double new_time);
+void sendAllParticlesToGPU_init_Worker();
+#endif
+
+void WorkerRoutines() {
+
+	std::cout << "Processor " << AbyssProcessorNumber << " is ready." << std::endl;
+	fprintf(nbpout, "Abyss Processor %d is ready.", AbyssProcessorNumber);
+
+	TaskName task = Error;
+	MPI_Status status;
+	MPI_Request request;
+	Queue queue;
+	int ptcl_id;
+	double next_time;
+
+	Particle *ptcl;
+
+	while (true) {
+		
+		MPI_Recv(&queue, 1, QueueType, ROOT, QUEUE_TAG, abyss_comm, &status);
+		task = queue.task;
+		ptcl_id = queue.pid;
+		next_time = queue.next_time;
+
+		switch (task) {
+			case IrrForce: // Irregular Acceleration
+				
+				ptcl = &particles[ptcl_id];
+				ptcl->computeAccelerationIrr();
+
+				ptcl->NewCurrentBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+
+				if (ptcl->RadiusOfNeighbor == 1e20)
+					ptcl->calculateTimeStepOnlyIrr();
+				else
+					ptcl->calculateTimeStepIrr();
+				ptcl->NextBlockIrr = ptcl->NewCurrentBlockIrr + ptcl->TimeBlockIrr; // of this particle
+				ptcl->isUpdateToDate = true;
+				break;
+
+
+			case RegForce: // Regular Acceleration
+				
+				ptcl = &particles[ptcl_id];
+				ptcl->computeAccelerationReg();
+				break;
+
+			case IrrUpdate: // Irregular Update Particle
+
+				ptcl = &particles[ptcl_id];
+
+				if (ptcl->NumberOfNeighbor != 0) // IAR modified
+					ptcl->updateParticle();
+				ptcl->CurrentBlockIrr = ptcl->NewCurrentBlockIrr;
+				ptcl->CurrentTimeIrr  = ptcl->CurrentBlockIrr*global_variable->time_step;
+				break;
+
+			case RegUpdate: // Regular Update Particle
+				
+				ptcl = &particles[ptcl_id];
+
+				ptcl->CurrentBlockReg += ptcl->TimeBlockReg;
+				ptcl->CurrentTimeReg = ptcl->CurrentBlockReg * global_variable->time_step;
+
+				ptcl->updateParticle();
+				std::memcpy(Neighbors + ptcl->NeighborsOffset, NewNeighbors + ptcl->NeighborsOffset, sizeof(int) * ptcl->NewNumberOfNeighbor);
+				ptcl->NumberOfNeighbor = ptcl->NewNumberOfNeighbor;
+
+				ptcl->calculateTimeStepReg();
+				ptcl->calculateTimeStepIrr();
+				// /*
+				if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentTimeReg) {
+					fprintf(stderr, "WARNING!!! In RegCudaUpdate...\n");
+					fprintf(stderr, "PID: %d\n", ptcl->PID);
+					fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", ptcl->CurrentBlockIrr, ptcl->CurrentBlockReg);
+					fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", ptcl->TimeBlockIrr, ptcl->TimeBlockReg);
+					fprintf(stderr, "CurrentBlockIrr * time_step: %.17g, CurrentBlockReg * time_step: %.17g\n", ptcl->CurrentBlockIrr*global_variable->time_step, ptcl->CurrentBlockReg*global_variable->time_step);
+					fprintf(stderr, "CurrentTimeIrr: %.17g, CurrentTimeReg: %.17g\n", ptcl->CurrentTimeIrr, ptcl->CurrentTimeReg);
+					fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
+					fflush(stderr);
+					assert(ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr > ptcl->CurrentBlockReg);
+					// assert(ptcl->CurrentTimeIrr == ptcl->CurrentTimeReg);
+					// assert(ptcl->CurrentBlockIrr == ptcl->CurrentBlockReg);
+				}
+				// */
+				ptcl->updateRadius();
+				ptcl->NextBlockIrr = ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr; // of ptcl particle
+				break;
+
+			case RegCuda: // Update Regular Particle CUDA
+				
+				ptcl = &particles[ptcl_id];
+				ptcl->updateRegularParticleCuda();
+				break;
+
+			case InitAcc1: // Initialize Acceleration(01)
+
+				ptcl = &particles[ptcl_id];
+				CalculateAcceleration01(ptcl);
+				break;
+
+			case InitAcc2: // Initialize Acceleration(23)
+
+				ptcl = &particles[ptcl_id];
+				CalculateAcceleration23(ptcl);
+				break;
+
+			case InitTime: // Initialize Time Step
+				
+				ptcl = &particles[ptcl_id];
+				if (ptcl->Mass > 0) // There might be initial PISN particles by EW 2025.5.1
+					ptcl->initializeTimeStep();
+				break;
+
+			case TimeSync: // Initialize Timestep variables
+				fprintf(stderr, "time sync (%d)\n", AbyssProcessorNumber);
+				//broadcastFromRoot(time_block);
+				//broadcastFromRoot(block_max);
+				//broadcastFromRoot(time_step);
+				//MPI_Win_sync(win);  // Synchronize memory
+				//MPI_Barrier(abyss_comm);
+				//MPI_Win_fence(0, win);
+				fprintf(stderr, "(%d) nbody+:time_block = %d, EnzoTimeStep=%e\n", AbyssProcessorNumber, global_variable->time_block, global_variable->EnzoTimeStep);
+				fflush(stderr);
+				break;
+
+
+#ifdef FEWBODY
+			case SearchPrimordialGroup: // Primordial binary search
+
+				ptcl = &particles[ptcl_id];
+
+				ptcl->NewNumberOfMember = 0;
+				if (ptcl->Mass > 0) // There might be initial PISN particles by EW 2025.5.1
+					ptcl->checkNewGroup2();
+
+				break;
+
+			case SearchGroup: // Few-body group search
+
+				ptcl = &particles[ptcl_id];
+				// std::cerr << "FB search of particle  " << ptcl_id << " is initiated on rank " << AbyssProcessorNumber << "." <<std::endl;
+
+				if (ptcl->getBinaryInterruptState()==BinaryInterruptState::threebody) {
+					ptcl->setBinaryInterruptState(BinaryInterruptState::none);
+				}
+				else if (ptcl->getBinaryInterruptState()==BinaryInterruptState::manybody) {
+					ptcl->NewNumberOfMember = 0;
+					ptcl->checkNewGroup2();
+					ptcl->setBinaryInterruptState(BinaryInterruptState::none);
+				}
+				else {
+					ptcl->NewNumberOfMember = 0;
+					if (ptcl->TimeStepIrr*global_variable->EnzoTimeStep*1e4 < TSEARCH)
+						ptcl->checkNewGroup();
+				}
+				/*
+				if (ptcl->getBinaryInterruptState()==BinaryInterruptState::manybody) {
+					ptcl->setBinaryInterruptState(BinaryInterruptState::none);
+					std::cout << "ptcl PID: " << ptcl->PID << ", ptcl NewNumberOfNeighbor: " << ptcl->NewNumberOfNeighbor << std::endl;
+				}
+				else {
+					ptcl->NewNumberOfNeighbor = 0;
+					if (ptcl->TimeStepIrr*EnzoTimeStep*1e4 < TSEARCH)
+						ptcl->checkNewGroup();
+				}
+				*/
+				// std::cerr << "FB search of particle  " << ptcl_index << " is successfully finished on rank " << AbyssProcessorNumber << "." <<std::endl;
+
+				break;
+
+			case MakePrimordialGroup: // Make a primordial group
+
+				ptcl = &particles[ptcl_id];
+				makePrimordialGroup(ptcl);
+				break;
+
+			case MakeGroup: // Make a group
+
+				ptcl = &particles[ptcl_id];
+
+				NewFBInitialization(ptcl);
+#ifdef DEBUG_ABYSS
+				// std::cout << "FewBody object of particle " << ptcl->PID
+				// 		  << " is successfully initialized on rank " << AbyssProcessorNumber << "." <<std::endl;
+#endif
+				break;
+
+			case DeleteGroup: // Delete a Group struct
+
+				ptcl = &particles[ptcl_id];
+				deleteGroup(ptcl);
+				break;
+
+			case ARIntegration: // SDAR for few body encounters
+
+				ptcl = &particles[ptcl_id];
+
+				if (!ptcl->isCMptcl || ptcl->GroupInfo == nullptr) {
+					fprintf(stderr, "Something is wrong. ptcl->isCMptcl=%d ptcl->GroupInfo=%p\n", ptcl->isCMptcl, ptcl->GroupInfo);
+					exit(EXIT_FAILURE);
+				}
+				
+				ptcl->GroupInfo->ARIntegration(next_time);
+				if (!ptcl->GroupInfo->isMerger && !ptcl->GroupInfo->isTerminate)
+					ptcl->GroupInfo->isTerminate = ptcl->GroupInfo->CheckBreak3();
+
+				if (ptcl->GroupInfo->isTerminate) {
+					if (ptcl->getBinaryInterruptState() == BinaryInterruptState::none)
+						ptcl->setBinaryInterruptState(BinaryInterruptState::terminated);
+
+					delete ptcl->GroupInfo;
+				}
+#ifdef DEBUG_ABYSS
+				// fprintf(nbpout, "In ARIntegration... 4. PID: %d, MyRank: %d\n", ptcl->PID, AbyssProcessorNumber);
+				// fflush(nbpout);
+#endif
+
+				break;
+			
+			case MergeManyBody: // Merger insided many-body (>2) group
+				
+				ptcl = &particles[ptcl_id];
+				std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << std::endl;
+
+				if (!ptcl->isCMptcl || ptcl->GroupInfo == nullptr) {
+					fprintf(stderr, "Something is wrong. ptcl->isCMptcl=%d ptcl->GroupInfo=%p\n", ptcl->isCMptcl, ptcl->GroupInfo);
+					exit(EXIT_FAILURE);
+				}
+
+				NewFBInitialization3(ptcl->GroupInfo);
+
+				ptcl->GroupInfo->isMerger = false;
+				ptcl->setBinaryInterruptState(BinaryInterruptState::none);
+
+				std::cout << "(SDAR) Processor " << AbyssProcessorNumber<< ": PID= "<<ptcl->PID << " NewFBInitialization3 done!" <<std::endl;
+				break;
+
+#ifdef CUDA
+			case PrepareGPUCalc:
+
+				sendAllParticlesToGPU_Worker(next_time);
+				continue;
+
+			case PrepareGPUCalc_init:
+
+				sendAllParticlesToGPU_init_Worker();
+				continue;
+#endif
+			
+			case ResetSDARTime:
+				
+				ptcl = &particles[ptcl_id];
+
+				ptcl->GroupInfo->CurrentTime = 0.;
+				ptcl->GroupInfo->sym_int.initialIntegration(0.);
+
+				break;
+#endif
+			case InitOnGPU: // Update Regular Particle CUDA II
+
+				ptcl = &particles[ptcl_id];
+				ptcl->initializeAfterCommunication();
+
+				break;
+
+			case Synchronize: // Synchronize
+				MPI_Win_sync(win);  // Synchronize memory
+				MPI_Barrier(abyss_comm);
+				break;
+
+			case Ends: // Simualtion ends
+				std::cout << "Processor " << AbyssProcessorNumber<< " returns." << std::endl;
+				return;
+				break;
+
+			case Error:
+				perror("Error task assignments");
+				exit(EXIT_FAILURE);
+				break;
+			default:
+				break;
+		}
+
+		// return that it's over
+		//task = -1;
+		if (task == IrrForce || task == RegForce || task == IrrUpdate || task == RegUpdate)
+			MPI_Isend(&ptcl_id, 1, MPI_INT, ROOT, TERMINATE_TAG, abyss_comm,&request);
+		else
+			MPI_Isend(&task, 1, MPI_INT, ROOT, TERMINATE_TAG, abyss_comm,&request);
+
+		MPI_Wait(&request, &status);
+		//std::cerr << "Processor " << AbyssProcessorNumber << " done." << std::endl;
+	}
+}
+

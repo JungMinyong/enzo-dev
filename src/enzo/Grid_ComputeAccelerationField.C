@@ -76,6 +76,11 @@ int grid::ComputeAccelerationField(int DifferenceType, int level)
  
     /* Allocate acceleration field. */
  
+#ifdef NBODY
+    if (AccelerationFieldNoStar[dim] != NULL) 
+      delete [] AccelerationFieldNoStar[dim];
+    AccelerationFieldNoStar[dim] = new float[size];
+#endif
     if (AccelerationField[dim] != NULL) {
       delete [] AccelerationField[dim];
     }
@@ -85,7 +90,15 @@ int grid::ComputeAccelerationField(int DifferenceType, int level)
   }
  
   /* Difference potential. */
- 
+#ifdef NBODY 
+  FORTRAN_NAME(comp_accel)(PotentialFieldNoStar, AccelerationFieldNoStar[0],
+      AccelerationFieldNoStar[1], AccelerationFieldNoStar[2], &GridRank, &DifferenceType,
+	    GravitatingMassFieldDimension, GravitatingMassFieldDimension+1,
+	      GravitatingMassFieldDimension+2,
+	    GridDimension, GridDimension+1, GridDimension+2,
+            Offset, Offset+1, Offset+2, CellSize, CellSize+1, CellSize+2);
+	//fprintf(stdout,"Okay?3"); // by YS
+#endif
   FORTRAN_NAME(comp_accel)(PotentialField, AccelerationField[0],
       AccelerationField[1], AccelerationField[2], &GridRank, &DifferenceType,
 	    GravitatingMassFieldDimension, GravitatingMassFieldDimension+1,

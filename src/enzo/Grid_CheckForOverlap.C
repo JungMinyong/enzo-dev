@@ -47,15 +47,26 @@ int grid::CheckForOverlap(grid *OtherGrid,
      apply to self, otherwise don't. */
   
 #ifndef TRANSFER
-  int DoSelf = (CopyFunction == &grid::AddOverlappingParticleMassField)?
+	int DoSelf = (CopyFunction == &grid::AddOverlappingParticleMassField 
+#ifdef NBODY
+    || CopyFunction == &grid::AddOverlappingParticleMassFieldNoStar
+#endif
+  )?
     TRUE : FALSE;
 #else 
   int DoSelf = (CopyFunction == &grid::AddOverlappingParticleMassField ||
+#ifdef NBODY
+			CopyFunction == &grid::AddOverlappingParticleMassFieldNoStar ||
+#endif
 		CopyFunction == &grid::SetSubgridMarkerFromSibling)?
     TRUE : FALSE;
 #endif
 
-  int FullPeriod = (CopyFunction == &grid::CopyPotentialField)?
+  int FullPeriod = (CopyFunction == &grid::CopyPotentialField 
+#ifdef NBODY
+    || CopyFunction == &grid::CopyPotentialFieldNoStar
+#endif
+  )?
     TRUE : FALSE;
  
   //  if (CopyFunction == &grid::CopyZonesFromGrid)

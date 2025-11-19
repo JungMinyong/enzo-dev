@@ -18,6 +18,7 @@
 #include <search.h>
 #include <string.h>
 #include <map>
+#include <unordered_map>
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -84,6 +85,11 @@ Star::Star(void)
     abundances[i] = 0.0;
 
   wind_mass_ejected = sn_mass_ejected = 0.0;
+#ifdef NBODY
+  GridParticleIndex = -1;
+  isABYSS = true;
+  isNewlyFormed = false;
+#endif
 }
 
 Star::Star(grid *_grid, int _id, int _level)
@@ -115,6 +121,11 @@ Star::Star(grid *_grid, int _id, int _level)
   Radius = Teff = SurfaceGravity = -1.0;
 
   GridID = _grid->ID;
+#ifdef NBODY
+  GridParticleIndex = _id;
+  isABYSS = true;
+  isNewlyFormed = false;
+#endif
   type = _grid->ParticleType[_id];
   Identifier = _grid->ParticleNumber[_id];
   Mass = FinalMass = BirthMass = (double)(_grid->ParticleMass[_id]);
@@ -172,6 +183,11 @@ Star::Star(StarBuffer *buffer, int n)
 {
   int i;
   CurrentGrid = NULL;
+#ifdef NBODY
+  GridParticleIndex = buffer[n].GridParticleIndex;
+  isABYSS = buffer[n].isABYSS;
+  isNewlyFormed = buffer[n].isNewlyFormed;
+#endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer[n].pos[i];
     vel[i] = buffer[n].vel[i];
@@ -236,6 +252,11 @@ Star::Star(StarBuffer buffer)
 {
   int i;
   CurrentGrid = NULL;
+#ifdef NBODY
+  GridParticleIndex = buffer.GridParticleIndex;
+  isNewlyFormed = buffer.isNewlyFormed;
+  isABYSS = buffer.isABYSS;
+#endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer.pos[i];
     vel[i] = buffer.vel[i];
@@ -321,6 +342,11 @@ void Star::operator=(Star a)
   int i, dim;
   //NextStar = a.NextStar;
   CurrentGrid = a.CurrentGrid;
+#ifdef NBODY
+  GridParticleIndex = a.GridParticleIndex;
+  isNewlyFormed = a.isNewlyFormed;
+  isABYSS = a.isABYSS;
+#endif
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     pos[dim] = a.pos[dim];
     vel[dim] = a.vel[dim];
@@ -411,6 +437,11 @@ Star *Star::copy(void)
   a->NextStar = NULL;
   a->PrevStar = NULL;
   a->CurrentGrid = CurrentGrid;
+#ifdef NBODY
+  a->GridParticleIndex = GridParticleIndex;
+  a->isNewlyFormed = isNewlyFormed;
+  a->isABYSS = isABYSS;
+#endif
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     a->pos[dim] = pos[dim];
     a->vel[dim] = vel[dim];
@@ -576,6 +607,25 @@ std::map<int, Star*> Star::MakeStarsMap() // makes lookup table to quickly find 
   return StarLookupMap;
 }
 
+#if defined (NBODY) && defined (INDIVIDUALSTAR)
+void Star::MakeStarsUnorderedMap(
+    std::unordered_map<int, Star *>
+        &StarLookupMap) // makes lookup table to quickly find stars in grid
+                        // during CopyToGrid
+{
+  /*
+  Star *temp = this;
+  while (temp) {
+    auto it = StarLookupMap.find(temp->Identifier);
+    if (it == StarLookupMap.end()) {
+      StarLookupMap.insert(
+          {temp->Identifier,
+           temp}); // adding Identifiers as keys, stars as values
+    }
+  }*/
+}
+#endif
+
 void Star::CopyToGridMap(std::map<int, Star*>* const &StarLookupMap)
 {
   Star *cstar;
@@ -722,6 +772,10 @@ void Star::CopyFromParticle(grid *_grid, int _id, int _level)
   BirthTime = _grid->ParticleAttribute[0][_id];
   LifeTime = _grid->ParticleAttribute[1][_id];
   Metallicity = _grid->ParticleAttribute[2][_id];
+
+  #ifdef NBODY
+    GridParticleIndex = _id;
+  #endif
   // below is removed because we want to keep Star->Mass as double
   // during the run - Ji-hoon Kim, Dec.2009
   //
@@ -1001,6 +1055,12 @@ void Star::StarListToBuffer(StarBuffer *&result, int n)
     result[count].PopIIIStar = tmp->PopIIIStar;
     result[count].AddedEmissivity = tmp->AddedEmissivity;
 
+#ifdef NBODY
+    result[count].GridParticleIndex = tmp->GridParticleIndex;
+    result[count].isNewlyFormed = tmp->isNewlyFormed;
+    result[count].isABYSS = tmp->isABYSS;
+#endif
+
     for (i = 0; i < 2; i++){
       result[count].se_table_position[i] = tmp->se_table_position[i];
       result[count].yield_table_position[i] = tmp->yield_table_position[i];
@@ -1065,6 +1125,12 @@ void Star::StarToBuffer(StarBuffer *result)
   result->PopIIIStar = tmp->PopIIIStar;
   result->AddedEmissivity = tmp->AddedEmissivity;
 
+#ifdef NBODY
+  result->GridParticleIndex = tmp->GridParticleIndex;
+  result->isNewlyFormed = tmp->isNewlyFormed;
+  result->isABYSS = tmp->isABYSS;
+#endif
+
   /* AJE */
   for(i =0; i < 2; i++){
     result->se_table_position[i] = tmp->se_table_position[i];
@@ -1084,3 +1150,123 @@ void Star::StarToBuffer(StarBuffer *result)
 
   return;
 }
+
+
+#if defined (NBODY) && defined (INDIVIDUALSTAR)
+void Star::GetBackgroundAcceleration() {
+
+  if (CurrentGrid == NULL) {
+    fprintf(stderr, "Is this possible?\n");
+  }
+  else {
+    //fprintf(stderr, "PID=%lld\n", Identifier);
+    auto it = CurrentGrid->IDtoIndexforBG.find(Identifier);
+    if (it == CurrentGrid->IDtoIndexforBG.end()) {
+      fprintf(stderr, "Identifier=%lld, GridParticleIndex = %d / index = %d is not in IDtoIndexForBG!!\n",
+              Identifier, GridParticleIndex, it->second);
+      exit(1);
+    }
+    bg_acc[0] = CurrentGrid->BackgroundAcceleration[it->second].x;
+    bg_acc[1] = CurrentGrid->BackgroundAcceleration[it->second].y;
+    bg_acc[2] = CurrentGrid->BackgroundAcceleration[it->second].z;
+      //fprintf(stderr, "bg_acc[%d]=%.3e\n", dim, bg_acc[dim]);
+  }
+}
+
+
+void Star::UpdateBackgroundAcceleration() {
+  if (CurrentGrid == NULL) {
+    fprintf(stderr, "Is this possible?\n");
+  }
+  else {
+    CurrentGrid->SaveBackgroundAcceleration(GridParticleIndex, Identifier);
+  }
+}
+
+
+
+void grid::SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier) {
+
+  if (IDtoIndexforBG.size() == 0) {
+    BackgroundAcceleration = new double3[NumberOfStars];
+    //IDtoIndexforBG.reserve(NumberOfStars);
+    fprintf(stderr, "Initialized BackgroundAcceleration array for %d stars\n", NumberOfStars);
+  }
+
+  if (ParticleNumber[GridParticleIndex] == Identifier) {
+    if (background_acc_counter >= NumberOfStars) {
+      fprintf(stderr, "BackgroundAcceleration overflow! More entries than NumberOfStars!\n");
+      exit(1);
+    }
+
+    if (IDtoIndexforBG.find(Identifier) == IDtoIndexforBG.end()) {
+      BackgroundAcceleration[background_acc_counter].x = ParticleAccelerationNoStar[0][GridParticleIndex];
+      BackgroundAcceleration[background_acc_counter].y = ParticleAccelerationNoStar[1][GridParticleIndex];
+      BackgroundAcceleration[background_acc_counter].z = ParticleAccelerationNoStar[2][GridParticleIndex];
+
+      IDtoIndexforBG.insert({Identifier, background_acc_counter});
+      background_acc_counter++;
+    }
+  }
+  else {
+    fprintf(stderr, "(mismatch) Grid PID=%lld | Star PID=%d\n", ParticleNumber[GridParticleIndex], Identifier);
+    fprintf(stderr, "Something went wrong in SaveBackgroundAcceleration!!!\n");
+    exit(1);
+  }
+}
+
+/*
+void grid::SaveBackgroundAcceleration(const int &GridParticleIndex, const int &Identifier) {
+
+  if (IDtoIndexforBG.size() == 0) {
+    BackgroundAcceleration = new double3[NumberOfStars];
+    IDtoIndexforBG.reserve(NumberOfStars);
+  }
+
+  if (ParticleNumber[GridParticleIndex] == Identifier) {
+    int index = IDtoIndexforBG.size();
+    BackgroundAcceleration[index].x =  ParticleAccelerationNoStar[0][GridParticleIndex],
+    BackgroundAcceleration[index].y =  ParticleAccelerationNoStar[1][GridParticleIndex],
+    BackgroundAcceleration[index].z =  ParticleAccelerationNoStar[2][GridParticleIndex],
+    IDtoIndexforBG.insert({Identifier, index});
+  }
+  else{
+    fprintf(stderr, "(mismatch) Grid PID=%lld | Star PID=%d\n", ParticleNumber[GridParticleIndex], Identifier);
+    fprintf(stderr, "Something went wrong in SaveBackgroundAcceleration!!!\n");
+    exit(1);
+  }
+}*/
+
+
+void Star::UpdateToGridParticle(const double *pos, const double *vel){
+  for (int dim=0; dim<MAX_DIMENSION; dim++) {
+    CurrentGrid->ParticlePosition[dim][GridParticleIndex] = pos[dim];
+    CurrentGrid->ParticleVelocity[dim][GridParticleIndex] = vel[dim];
+  }
+}
+
+void grid::UpdateToGridParticle(const double *pos, const double *vel) {
+}
+
+
+void Star::DeleteBackgroundAcceleration() {
+  if (CurrentGrid == NULL) {
+    fprintf(stderr, "Is this possible?\n");
+  }
+  else {
+    CurrentGrid->DeleteBackgroundAcceleration();
+  }
+}
+
+void grid::DeleteBackgroundAcceleration() {
+  if (IDtoIndexforBG.size() != 0)
+    IDtoIndexforBG.clear();
+  if (BackgroundAcceleration != NULL) {
+    delete [] BackgroundAcceleration;
+    BackgroundAcceleration = NULL;
+  }
+  background_acc_counter = 0;  // reset counter
+  // not sure if this is okay. Grid of not finest level might use it again?
+}
+#endif
+

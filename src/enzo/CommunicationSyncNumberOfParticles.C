@@ -31,6 +31,11 @@
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
 
+
+#ifdef MUST_FIX
+void CommunicationBufferedSend_Flush();
+#endif
+
 int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
 				       int NumberOfGrids)
 {
@@ -62,6 +67,9 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
     }
 
 #ifdef USE_MPI
+#ifdef MUST_FIX
+      CommunicationBufferedSend_Flush();
+#endif
   CommunicationAllReduceValues(buffer, NumberOfGrids * stride, MPI_SUM);
 #endif
 

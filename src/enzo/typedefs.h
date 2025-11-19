@@ -85,6 +85,12 @@ const field_type
   Acceleration0   = 31,
   Acceleration1   = 32,
   Acceleration2   = 33,
+#ifdef NBODY
+  GravPotentialNoStar   = 130,
+  Acceleration0NoStar   = 131,
+  Acceleration1NoStar   = 132,
+  Acceleration2NoStar   = 133,
+#endif
   RadPressure0    = 34,
   RadPressure1    = 35,
   RadPressure2    = 36,
@@ -120,6 +126,11 @@ const field_type
   AccelerationField1    = 58,
   AccelerationField2    = 59,
   AccelerationField3    = 60,
+#ifdef NBODY
+  AccelerationField1NoStar    = 158, 
+  AccelerationField2NoStar    = 159, 
+  AccelerationField3NoStar    = 160,
+#endif
 
   Galaxy1Colour          = 61,
   Galaxy2Colour          = 62,
@@ -500,7 +511,9 @@ const star_type
   Kravtsov = PARTICLE_TYPE_STAR,
   CenOstriker = PARTICLE_TYPE_STAR,
   AccretingParticle = PARTICLE_TYPE_MUST_REFINE;
-
+#ifdef NBODY
+const star_type  NbodyStar = PARTICLE_TYPE_NBODY_NEW; // by YS
+#endif
 /* Define a float/int union. */
 
 union float_int {

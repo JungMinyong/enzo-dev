@@ -75,6 +75,10 @@ int grid::FindNewStarParticles(int level, std::map<int, Star*>* const &StarParti
 	  NewStar->AssignFinalMass(PopIIIStarMass);
 	InsertStarAfter(Stars, NewStar);
 	NumberOfStars++;
+#if defined (NBODY) && defined (INDIVIDUALSTAR)
+				NewStar->SetAbyssFlag(true);
+				NewStar->SetNewStarFlag(true);
+#endif
       }
 
     }

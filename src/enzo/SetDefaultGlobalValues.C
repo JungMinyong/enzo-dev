@@ -991,6 +991,28 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   Mu			     = 0.6;
   DivBDampingLength          = 1.;
   UseCUDA		     = 0;
+  UseNBODY		     = 0;
+#ifdef NBODY
+  UseNBODY		     = 1;
+	NbodyFirst       = TRUE;
+	isNbodyParticleIdentification = FALSE;
+	isIdentificationOnTheFly      = FALSE;
+	for (int i=0; i<MAX_DIMENSION; i++)
+		NbodyClusterPosition[i] = -1.;
+	NbodyClusterPosition[3] = 0.;
+	NbodySmoothingLength  = -1;
+	NbodyTimeStepConstant = 0.01;
+	NbodyNeighborRadius   = 0.00044;
+	NbodyFixNumNeighbor   = 30;
+	NbodyMaxNumNeighbor   = 200;
+	NbodyBinaryRegularization = 0;
+	NbodyBinaryDistance = 0.0002;
+  NbodyStoreTimeStep = 0;
+	NbodyBinaryTimeStep = 2e-5;
+	NbodyNewStarToNbody = 0;
+	NbodyRestartStarToNbody = 0;
+#endif
+
   UseFloor		     = 0;
   UseViscosity		     = 0;
   ViscosityCoefficient       = 0.;

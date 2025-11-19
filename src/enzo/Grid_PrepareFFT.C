@@ -26,8 +26,8 @@ extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
  
- 
-int grid::PrepareFFT(region *InitialRegion, int Field, int DomainDim[])
+                                   
+int grid::PrepareFFT(region *InitialRegion, int Field, int DomainDim[], bool NoStar)
 {
  
   int dim, size;
@@ -89,12 +89,29 @@ int grid::PrepareFFT(region *InitialRegion, int Field, int DomainDim[])
   if (MyProcessorNumber == InitialRegion->Processor) {
  
     /* Set FieldPointer to the appropriate field. */
- 
+#ifdef NBODY
+		float *FieldPointer = NULL;
+		if (Field == GRAVITATING_MASS_FIELD) {
+			if (NoStar) {
+				FieldPointer = GravitatingMassFieldNoStar;
+			} else {
+				FieldPointer = GravitatingMassField;
+			}
+		}
+		if (Field == POTENTIAL_FIELD) {
+			if (NoStar) {
+				FieldPointer = PotentialFieldNoStar;
+			} else {
+				FieldPointer = PotentialField;
+			}
+		}
+#else
     float *FieldPointer = NULL;
     if (Field == GRAVITATING_MASS_FIELD)
       FieldPointer = GravitatingMassField;
     if (Field == POTENTIAL_FIELD)
       FieldPointer = PotentialField;
+#endif
     if (FieldPointer == NULL) {
       ENZO_VFAIL("Field type %"ISYM" not recognized.\n", Field)
     }
@@ -116,8 +133,17 @@ int grid::PrepareFFT(region *InitialRegion, int Field, int DomainDim[])
       //      GravitatingMassField = NULL;
     }
     if (Field == POTENTIAL_FIELD) {
+#ifdef NBODY
+			delete FieldPointer;
+			if (NoStar) {
+				PotentialFieldNoStar = NULL;
+			} else {
+				PotentialField = NULL;
+			}
+#else
       delete FieldPointer;
       PotentialField = NULL;
+#endif
     }
  
   } // end: if (MyProcessorNumber == ...)

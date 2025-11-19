@@ -59,8 +59,16 @@ grid::grid()
     CellWidth[i]                     = NULL;
     ParticlePosition[i]              = NULL;
     ParticleVelocity[i]              = NULL;
-    ParticleAcceleration[i]          = NULL;
     ActiveParticleAcceleration[i]    = NULL;
+    ParticleAcceleration[i]          = NULL;
+#ifdef NBODY
+		ParticleAccelerationNoStar[i]       = NULL;
+    AccelerationFieldNoStar[i]          = NULL;
+#ifndef INDIVIDUALSTAR
+    IndicesOfNbodyParticlesInGrid = NULL;
+    IndicesOfNewNbodyParticlesInGrid = NULL;
+#endif
+#endif
     AccelerationField[i]             = NULL;
     GravitatingMassFieldDimension[i] = 0;
     RandomForcingField[i]            = NULL;
@@ -88,6 +96,12 @@ grid::grid()
       FltUB[i] = NULL;
   }
 
+#ifdef NBODY
+	ParticleAccelerationNoStar[MAX_DIMENSION]       = NULL;
+#ifdef INDIVIDUALSTAR
+  BackgroundAcceleration = NULL;
+#endif
+#endif
   ParticleAcceleration[MAX_DIMENSION]      = NULL;
   ActiveParticleAcceleration[MAX_DIMENSION] = NULL;	
  
@@ -122,6 +136,11 @@ grid::grid()
   ParticleMass                  = NULL;
   ParticleNumber                = NULL;
   ParticleType                  = NULL;
+#ifdef NBODY
+  PotentialFieldNoStar             = NULL;
+  GravitatingMassFieldNoStar       = NULL;
+  GravitatingMassFieldParticlesNoStar = NULL;
+#endif
   PotentialField                = NULL;
   GravitatingMassField          = NULL;
   GravitatingMassFieldParticles = NULL;

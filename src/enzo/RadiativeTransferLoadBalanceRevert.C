@@ -36,7 +36,7 @@ double ReturnWallTime(void);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
-				TopGridData* MetaData = NULL);
+				TopGridData* MetaData = NULL, bool NoStar = NOSTAR_NO);
 
 #define MIN_LEVEL 1
 
@@ -134,6 +134,9 @@ int RadiativeTransferLoadBalanceRevert(HierarchyEntry **Grids[], int *NumberOfGr
       temp_proc = Grids[level][i]->GridData->ReturnProcessorNumber();
       if (MyProcessorNumber == temp_proc && ori_proc != temp_proc) {
 	Grids[level][i]->GridData->DeleteAllFields();
+#ifdef NBODY
+	Grids[level][i]->GridData->DeleteAllFieldsNoStar();
+#endif
 	Grids[level][i]->GridData->DeleteSubgridMarker();
       }
     } // ENDFOR grids

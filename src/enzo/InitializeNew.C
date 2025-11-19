@@ -879,7 +879,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // Make changes required for Zeus solver, and turn the TotalEnergy
   // variable (should be renamed just Energy) into GasEnergy
 
-  if (HydroMethod == Zeus_Hydro &&
+  if (UseHydro && HydroMethod == Zeus_Hydro &&
       ProblemType != 10 &&  // BWO (Rotating cylinder)
       ProblemType != 11 &&  // BWO (radiating shock)
       ProblemType != 13 &&  // BWO (Rotating Sphere)
@@ -889,7 +889,8 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
       ProblemType != 31 &&  // BWO (isolated galaxies)
       ProblemType != 60 &&
       ProblemType != 106 && //AK
-      ProblemType != 108)   //Yuan (Cluster)
+      ProblemType != 108 &&  //Yuan (Cluster)
+      ProblemType != -978) // AGORA
     ConvertTotalEnergyToGasEnergy(&TopGrid);
 
   // If using StarParticles, set the number to zero

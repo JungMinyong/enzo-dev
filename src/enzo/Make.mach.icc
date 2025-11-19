@@ -36,10 +36,10 @@ MACH_FILE  = Make.mach.icc
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_HDF5_INSTALL    = /home/wispedia/local/hdf5-1.8.23-intel
+LOCAL_HDF5_INSTALL    = /usr/local/hdf5/1.10.5_intel21/
 #/home/sykim/local/hdf5-1.12.1
 #/home/wispedia/local/hdf5-1.12.1
-LOCAL_GRACKLE_INSTALL = /home/wispedia/install/grackle_aemerick/icc_hdf5_1_8
+LOCAL_GRACKLE_INSTALL = /home/wispedia/local/grackle-aeos-intel
 LOCAL_HYPRE_INSTALL   = #/PATH/TO/HYPRE/INSTALL   # optional
 
 #-----------------------------------------------------------------------

@@ -41,7 +41,7 @@ double ReturnWallTime(void);
 
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 				int NumberOfSubgrids[],
-				int FluxFlag, TopGridData* MetaData)
+		int FluxFlag, TopGridData* MetaData, bool NoStar)
 {
 
 #ifdef USE_MPI
@@ -65,6 +65,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
   TotalReceives = CommunicationReceiveIndex;
   int gCSAPs_count, gCSAPs_done;
   int SendField;
+	int ierr, errclass; // by YS
 #ifdef TRANSFER
   PhotonPackageEntry *PP;
 #endif
@@ -152,7 +153,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 				CommunicationReceiveArgumentInt[1][index],
 				CommunicationReceiveArgumentInt[2][index],
 				CommunicationReceiveDependsOn[index]);
-			MPI_Comm comm = MPI_COMM_WORLD;
+			MPI_Comm comm = enzo_comm;
 			MPI_Arg errcode = ListOfStatuses[index].MPI_ERROR;
 			CommunicationErrorHandlerFn(&comm, &errcode);
 		} // ENDIF error
@@ -226,19 +227,19 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  break;
 
 	case 3:
-	  errcode = grid_one->DepositParticlePositions(grid_two,
-			CommunicationReceiveArgument[0][index],
-			CommunicationReceiveArgumentInt[0][index]);
-	  break;
-
-	case 4:
-	  errcode = grid_one->CopyParentToGravitatingFieldBoundary(grid_two);
-	  break;
+		errcode = grid_one->DepositParticlePositions(grid_two,
+				CommunicationReceiveArgument[0][index],
+				CommunicationReceiveArgumentInt[0][index], NoStar);
+		break;
 
 	case 5:
-	  errcode = grid_one->DepositBaryons(grid_two,
-			           CommunicationReceiveArgument[0][index]);
-	  break;
+		errcode = grid_one->DepositBaryons(grid_two,
+				CommunicationReceiveArgument[0][index],NoStar);
+		break;
+
+	case 4:
+		errcode = grid_one->CopyParentToGravitatingFieldBoundary(grid_two);
+		break;
 
 	case 6:
 	  errcode = grid_one->AddOverlappingParticleMassField(grid_two,
@@ -256,6 +257,32 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	case 9:
 	  errcode = grid_one->CopyPotentialField(grid_two, EdgeOffset);
 	  break;
+
+#ifdef NBODY
+					case 104:
+						errcode = grid_one->CopyParentToGravitatingFieldBoundaryNoStar(grid_two);
+						break;
+
+					case 106:
+						errcode = grid_one->AddOverlappingParticleMassFieldNoStar(grid_two,
+								EdgeOffset);
+						break;
+
+					case 107:
+						errcode = grid_one->PreparePotentialFieldNoStar(grid_two);
+						break;
+
+					case 108:
+						errcode = grid_one->CopyOverlappingMassFieldNoStar(grid_two, EdgeOffset);
+						break;
+
+					case 109:
+						errcode = grid_one->CopyPotentialFieldNoStar(grid_two, EdgeOffset);
+						break;
+					case 110:
+						errcode = grid_one->InterpolateAccelerationsNoStar(grid_two);
+						break;
+#endif
 
 	case 10:
 	  errcode = grid_one->InterpolateAccelerations(grid_two);

@@ -203,9 +203,13 @@ int grid::MoveSubgridParticlesFast(int NumberOfSubgrids, grid* ToGrids[],
 	    == FAIL) {
 	  ENZO_FAIL("Error in grid->CommunicationSendParticles.\n");
 	}
-	if (MyProcessorNumber == ProcessorNumber)
+				if (MyProcessorNumber == ProcessorNumber) {
 
 	  ToGrids[subgrid]->DeleteAllFields();
+#ifdef NBODY
+					ToGrids[subgrid]->DeleteAllFieldsNoStar();
+#endif
+				}
       }
  
   delete [] ParticlesToMove;

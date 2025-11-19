@@ -45,6 +45,12 @@ struct StarBuffer {
   double Radius;
   double SurfaceGravity;
   double Teff;
+  
+  #ifdef NBODY
+  int GridParticleIndex;
+  bool isABYSS;        // in case we would like to exclude this particle from the ABYSS pool
+  bool isNewlyFormed;   // in case we would like to exclude this particle from the ABYSS pool
+  #endif
 
   /* AJE: for individual stars - yield table numbers */
   int se_table_position[2];
