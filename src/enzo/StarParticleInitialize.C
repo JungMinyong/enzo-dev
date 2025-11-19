@@ -39,7 +39,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 int StarParticleMergeNew(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
 int StarParticleMergeMBH(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
 int FindTotalNumberOfParticles(LevelHierarchyEntry *LevelArray[]);
-int FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[]); // by YS
+//int FindTotalNumberOfNbodyParticles(LevelHierarchyEntry *LevelArray[]); // by YS
 void RecordTotalStarParticleCount(HierarchyEntry *Grids[], int NumberOfGrids,
 				  int TotalStarParticleCountPrevious[]);
 

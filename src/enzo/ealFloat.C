@@ -10,7 +10,8 @@
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "ealFloat.h"
-#include "communicators.h"
+//#include "communicators.h"
+extern MPI_Comm enzo_comm;
 
 void my_exit(int exit_status);
 

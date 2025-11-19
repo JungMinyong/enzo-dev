@@ -2449,6 +2449,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   } // if(StarMakerMinimumMassRamp > 0)
 
 	if (UseNBODY) {
+#ifdef NBODY
 		float DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1,
 					TemperatureUnits=1;
 		double MassUnits=1;
@@ -2461,7 +2462,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		// this is for background acceleration
 #ifndef INDIVIDUALSTAR
   #ifdef SEVN
-    if (NumberOfParticleAttributes < 11) {
+    if (NumberOfParticleAttributes < 11) { //MY: This should be changed to MAX_NUMBER_OF_PARTICLE_ATTRIBUTES
       NumberOfParticleAttributes = 11;
       fprintf(stdout, "NumberOfParticleAttributes = %d\n", NumberOfParticleAttributes);
     }
@@ -2473,7 +2474,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   #endif
   #endif
 
-#ifdef NBODY
+
 		if (isNbodyParticleIdentification) {
 			fprintf(stdout, "LengthUnits=%e\n", LengthUnits);
 			NbodyClusterPosition[3] = (NbodyClusterPosition[3] * kpc_cm / LengthUnits)*(NbodyClusterPosition[3] * kpc_cm / LengthUnits);

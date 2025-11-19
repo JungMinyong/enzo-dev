@@ -1,6 +1,7 @@
 #ifdef USE_MPI
 #include <mpi.h>
-#include "communicators.h"
+// #include "communicators.h"
+extern MPI_Comm enzo_comm;
 #endif
 #include <stdlib.h>
 #include <stdio.h>

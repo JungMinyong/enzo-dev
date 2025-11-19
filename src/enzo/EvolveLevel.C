@@ -663,13 +663,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
             }
 #endif // end NBODY 
-    
-    #define GravTest
-    #ifdef GravTest
-    #endif
-    
-
-
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 #endif //SAB.
 

@@ -16,7 +16,7 @@
 / MACRO DEFINITIONS AND PARAMETERS
 /
 ************************************************************************/
-#define MUST_FIX //by YS Jo
+// #define MUST_FIX //by YS Jo
 #ifdef USE_PYTHON
 #ifndef ENZO_PYTHON_IMPORTED
 #define PY_ARRAY_UNIQUE_SYMBOL enzo_ARRAY_API

@@ -76,9 +76,6 @@ int PrepareGravitatingMassField2a(HierarchyEntry *Grid, TopGridData *MetaData,
 #endif
 
 int PrepareGravitatingMassField2b(HierarchyEntry *Grid, int level);
-
-
-
 #ifdef NBODY
 int PrepareGravitatingMassFieldNoStar1(HierarchyEntry *Grid);
 #ifdef FAST_SIB
@@ -93,8 +90,6 @@ int PrepareGravitatingMassFieldNoStar2a(HierarchyEntry *Grid, TopGridData *MetaD
 #endif
 
 int PrepareGravitatingMassFieldNoStar2b(HierarchyEntry *Grid, int level);
-
-
 #endif
  
 #ifdef FAST_SIB
@@ -217,8 +212,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
   CommunicationBarrier();
 #endif
 
-
-
 	////////////// GravitatingMassFieldParticles for No Star
 #ifdef NBODY
 	TIME_MSG("Depositing particle mass field");
@@ -259,16 +252,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
 #endif
 	////////////// GravitatingMassFieldParticles for No Star Ends
-	///
-	///
-	///
-
-
-
-
-
-
-
 
   /******************************************************************/
   /* Grids: compute the GravitatingMassField (baryons & particles). */
@@ -394,9 +377,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
   } // ENDFOR grid batches
   LCAPERF_STOP("PrepareGravitatingMassField2b");
-
-
-
 
 #ifdef NBODY
 	/*******************************************************************************/
@@ -531,11 +511,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	/*******************************************************************************/
 #endif
 
-
 	//CommunicationBarrier(); //by YS
-
-
-
 
 
   /************************************************************************/
@@ -671,19 +647,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #ifdef FORCE_BUFFER_PURGE
   CommunicationBufferPurge();
 #endif
@@ -722,10 +685,9 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     LCAPERF_STOP("ComputePotentialFieldLevelZero");
   }
 
-
+#ifdef NBODY
 	CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
 
-#ifdef NBODY
 	if (level == 0) {
 		TIME_MSG("ComputePotentialFieldLevelZero");
 		LCAPERF_START("ComputePotentialFieldLevelZero");
@@ -745,7 +707,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 #endif
 
 
-
 	/*
 	
 	for (StartGrid = 0; StartGrid< NumberOfGrids; StartGrid+=GRIDS_PER_LOOP) {
@@ -762,22 +723,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 		}
 	}
 */
-
-
-
-
-
-
-
-/*================================================================================================================*/
-/*================================================================================================================*/
-/*================================================================================================================*/
-/*================================================================================================================*/
-/*================================================================================================================*/
-/*================================================================================================================*/
-
-
-
 
        
   /************************************************************************/
