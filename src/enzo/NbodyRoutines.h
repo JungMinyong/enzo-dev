@@ -115,7 +115,9 @@ struct ParticleDataType{
 struct ParticleSendDataType{
 	int ID;
 	double BackgroundAcceleration[MAX_DIMENSION];
-	//double Mass;
+#ifndef SEVN
+	double Mass;
+#endif
 
 #ifdef ENZO_ONLY
 	void copyFrom(Star *ptcl) {

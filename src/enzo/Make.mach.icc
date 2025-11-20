@@ -55,6 +55,7 @@ MACH_CXX_MPI   = mpiicpc #-DMPICH_IGNORE_CXX_SEEK # C++ compiler when using MPI
 MACH_FC_MPI    = mpiifort # Fortran 77 compiler when using MPI
 MACH_F90_MPI   = mpiifort # Fortran 90 compiler when using MPI
 MACH_LD_MPI    = mpiicpc # Linker when using MPI
+MACH_CUDACOMPILER = nvcc
 
 # Without MPI
 

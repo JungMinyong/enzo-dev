@@ -1008,7 +1008,7 @@ float SampleKroupaIMF() {
   if (xx < k1/k2) {
     mass = POW(0.5*c1*xx*k2 + POW(mlow, c1), 1.0/c1);
   } else {
-    mass = POW(c2*(xx*k2 - k1) + enzo_max(0.5, mlow)**c2, 1.0/c2);
+    mass = POW(c2*(xx*k2 - k1) + max(0.5, mlow)**c2, 1.0/c2);
   }
 
   IndividualStarIMFCalls++;

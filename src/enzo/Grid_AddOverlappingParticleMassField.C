@@ -191,11 +191,11 @@ int grid::AddOverlappingParticleMassFieldNoStar(grid *OtherGrid,
 
 	for (dim = 0; dim < GridRank; dim++) {
 
-		Left[dim] = enzo_max(
+		Left[dim] = max(
 				GravitatingMassFieldLeftEdge[dim] + EdgeOffset[dim],
 				OtherGrid->GravitatingMassFieldParticlesLeftEdge[dim]);
 
-		Right[dim] = enzo_min(
+		Right[dim] = min(
 				//	  GridRightEdge[dim] +
 				//	  GridLeftEdge[dim] - GravitatingMassFieldLeftEdge[dim] +
 				GravitatingMassFieldLeftEdge[dim] +

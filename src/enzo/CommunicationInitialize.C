@@ -315,7 +315,7 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 		{
 			MPI_Datatype MPI_ENZO_PTCL_SEND_RAW;
 			ParticleSendDataType dummy;
-
+#ifdef SEVN
 			int block_lengths[2] = {1, MAX_DIMENSION};
 			MPI_Aint displacements[2];
 			MPI_Datatype types[2] = {MPI_INT, MPI_DOUBLE};
@@ -327,13 +327,26 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 			//MPI_Get_address(&dummy.isNew, &displacements[2]);
 
 			for (int i = 0; i < 2; ++i)
-				displacements[i] -= base;
+					displacements[i] -= base;
 
-			MPI_Type_create_struct(2, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND_RAW);
-			MPI_Type_commit(&MPI_ENZO_PTCL_SEND_RAW);
+			MPI_Type_create_struct(2, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND_RAW);        
+#else
+			int block_lengths[3] = {1, MAX_DIMENSION, 1};
+			MPI_Aint displacements[3];
+			MPI_Datatype types[3] = {MPI_INT, MPI_DOUBLE, MPI_DOUBLE};
 
-			MPI_Aint lb=0, extent=sizeof(ParticleSendDataType);
-			MPI_Type_create_resized(MPI_ENZO_PTCL_SEND_RAW, lb, extent, &MPI_ENZO_PTCL_SEND);
+			MPI_Aint base;
+			MPI_Get_address(&dummy, &base);
+			MPI_Get_address(&dummy.ID, &displacements[0]);
+			MPI_Get_address(&dummy.BackgroundAcceleration, &displacements[1]);
+			MPI_Get_address(&dummy.Mass, &displacements[2]);
+			//MPI_Get_address(&dummy.isNew, &displacements[2]);
+
+			for (int i = 0; i < 3; ++i)
+					displacements[i] -= base;
+
+			MPI_Type_create_struct(3, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND_RAW);
+#endif
 			MPI_Type_commit(&MPI_ENZO_PTCL_SEND);
 			MPI_Type_free(&MPI_ENZO_PTCL_SEND_RAW);
 		}

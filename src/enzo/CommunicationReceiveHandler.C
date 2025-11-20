@@ -232,13 +232,13 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 				CommunicationReceiveArgumentInt[0][index], NoStar);
 		break;
 
+	case 4:
+		errcode = grid_one->CopyParentToGravitatingFieldBoundary(grid_two);
+		break;
+
 	case 5:
 		errcode = grid_one->DepositBaryons(grid_two,
 				CommunicationReceiveArgument[0][index],NoStar);
-		break;
-
-	case 4:
-		errcode = grid_one->CopyParentToGravitatingFieldBoundary(grid_two);
 		break;
 
 	case 6:

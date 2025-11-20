@@ -167,24 +167,6 @@ int PrepareGravitatingMassField2b(HierarchyEntry *Grid, int level)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #ifdef NBODY
 int PrepareGravitatingMassFieldNoStar1(HierarchyEntry *Grid)
 {
@@ -307,8 +289,3 @@ int PrepareGravitatingMassFieldNoStar2b(HierarchyEntry *Grid, int level)
   return SUCCESS;
 }
 #endif
-
-
-
-
-

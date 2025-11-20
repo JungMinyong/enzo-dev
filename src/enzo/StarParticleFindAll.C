@@ -295,16 +295,19 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 				fprintf(stderr, "Before LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
 						cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
 				fflush(stderr);
-				for (const auto& [id, starPtr] : LocalStarLookupMap) {
-					std::cerr << "ID: " << id;
-					if (starPtr) {
-						std::cerr << " | Name: " << starPtr->ReturnID();
-												//<< " | Mass: " << starPtr->mass;
-					} else {
-						std::cerr << " | [null Star pointer]";
-					}
-					std::cerr << '\n';
-				}
+				for (const auto& pair : LocalStarLookupMap) {
+          const auto& id = pair.first;
+          const auto& starPtr = pair.second;
+      
+          std::cerr << "ID: " << id;
+          if (starPtr) {
+              std::cerr << " | Name: " << starPtr->ReturnID();
+                                      //<< " | Mass: " << starPtr->mass;
+          } else {
+              std::cerr << " | [null Star pointer]";
+          }
+          std::cerr << '\n';
+        }
 				if (!cstar) {
 						fprintf(stderr, "cstar has a problem!\n");
 						fflush(stderr);
@@ -320,16 +323,19 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 						LocalStarLookupMap.insert(std::make_pair(cstar->ReturnID(), cstar));
 						//.emplace(cstar->ReturnID(), cstar);
 					}
-					for (const auto& [id, starPtr] : LocalStarLookupMap) {
-						std::cout << "ID: " << id;
-						if (starPtr) {
-							std::cout << " | Name: " << starPtr->ReturnID();
-													//<< " | Mass: " << starPtr->mass;
-						} else {
-							std::cout << " | [null Star pointer]";
-						}
-						std::cout << '\n';
-					}
+					for (const auto& pair : LocalStarLookupMap) {
+            const auto& id = pair.first;
+            const auto& starPtr = pair.second;
+        
+            std::cerr << "ID: " << id;
+            if (starPtr) {
+                std::cerr << " | Name: " << starPtr->ReturnID();
+                                        //<< " | Mass: " << starPtr->mass;
+            } else {
+                std::cerr << " | [null Star pointer]";
+            }
+            std::cerr << '\n';
+          }
 					fprintf(stderr, "After LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
 							cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
 					fflush(stderr);
