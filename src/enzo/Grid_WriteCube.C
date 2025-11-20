@@ -229,7 +229,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
     MPI_Arg Count;
 
 #ifdef USE_MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    MPI_Comm_size(enzo_comm, &mpi_size);
 #else
     mpi_size = 1;
 #endif
@@ -245,7 +245,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
     nop[MyProcessorNumber] = NumberOfParticles;
 
 #ifdef USE_MPI
-    MPI_Allreduce(nop, nopout, Count, DataTypeInt, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(nop, nopout, Count, DataTypeInt, MPI_SUM, enzo_comm);
     for( ipe=0; ipe < npe; ipe++)
     {
       nop[ipe] = nopout[ipe];
@@ -353,7 +353,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
     file_access_template = H5Pcreate (H5P_FILE_ACCESS);
       if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-    h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+    h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     mem_dsp_id = H5Screate_simple((Eint32) 3, InDim, NULL);
@@ -493,7 +493,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
       file_access_template = H5Pcreate (H5P_FILE_ACCESS);
         if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-      h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+      h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       mem_dsp_id = H5Screate_simple((Eint32) 3, InDim, NULL);
@@ -665,7 +665,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
       file_access_template = H5Pcreate (H5P_FILE_ACCESS);
         if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-      h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+      h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       mem_dsp_id = H5Screate_simple((Eint32) 3, InDim, NULL);
@@ -837,7 +837,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         file_access_template = H5Pcreate (H5P_FILE_ACCESS);
           if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-        h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+        h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         file_dsp_id = H5Screate_simple((Eint32) 1, &m_size, NULL);
@@ -938,7 +938,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         file_access_template = H5Pcreate (H5P_FILE_ACCESS);
           if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-        h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+        h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         file_dsp_id = H5Screate_simple((Eint32) 1, &m_size, NULL);
@@ -1030,7 +1030,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         file_access_template = H5Pcreate (H5P_FILE_ACCESS);
           if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-        h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+        h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         file_dsp_id = H5Screate_simple((Eint32) 1, &m_size, NULL);
@@ -1119,7 +1119,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         file_access_template = H5Pcreate (H5P_FILE_ACCESS);
           if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-        h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+        h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         file_dsp_id = H5Screate_simple((Eint32) 1, &m_size, NULL);
@@ -1206,7 +1206,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         file_access_template = H5Pcreate (H5P_FILE_ACCESS);
           if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-        h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+        h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         file_dsp_id = H5Screate_simple((Eint32) 1, &m_size, NULL);
@@ -1299,7 +1299,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         file_access_template = H5Pcreate (H5P_FILE_ACCESS);
           if( file_access_template == h5_error ){my_exit(EXIT_FAILURE);}
 
-        h5_status = H5Pset_fapl_mpio(file_access_template, MPI_COMM_WORLD, MPI_INFO_NULL);
+        h5_status = H5Pset_fapl_mpio(file_access_template, enzo_comm, MPI_INFO_NULL);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         file_dsp_id = H5Screate_simple((Eint32) 1, &m_size, NULL);

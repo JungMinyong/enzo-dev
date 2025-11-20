@@ -129,7 +129,7 @@ void ealFloat::ReduceSum(){
   float *RecvBuffer = new float[Size];
   Eint32 array_size = (Eint32) Size;
   int mpi_err = MPI_Allreduce( Array, RecvBuffer, array_size,
-			       FloatDataType, MPI_SUM, MPI_COMM_WORLD );
+			       FloatDataType, MPI_SUM, enzo_comm );
 
   if( mpi_err != MPI_SUCCESS ){
     fprintf(stderr, "ealFloat::ReduceSum, mpi_err = %"ISYM", exiting.\n", mpi_err);
@@ -150,7 +150,7 @@ void ealFloat::ReduceMin(){
   float *RecvBuffer = new float[Size];
   Eint32 array_size = (Eint32) Size;
   int mpi_err = MPI_Allreduce( Array, RecvBuffer, array_size,
-			       FloatDataType, MPI_MIN, MPI_COMM_WORLD );
+			       FloatDataType, MPI_MIN, enzo_comm );
 
   if( mpi_err != MPI_SUCCESS ){
     fprintf(stderr, "ealFloat::ReduceMax, mpi_err = %"ISYM", exiting.\n", mpi_err);
@@ -171,7 +171,7 @@ void ealFloat::ReduceMax(){
   float *RecvBuffer = new float[Size];
   Eint32 array_size = (Eint32) Size;
   int mpi_err = MPI_Allreduce( Array, RecvBuffer, array_size,
-			       FloatDataType, MPI_MAX, MPI_COMM_WORLD );
+			       FloatDataType, MPI_MAX, enzo_comm );
 
   if( mpi_err != MPI_SUCCESS ){
     fprintf(stderr, "ealFloat::ReduceMax, mpi_err = %"ISYM", exiting.\n", mpi_err);
@@ -222,7 +222,7 @@ void ealFloat::Bcast(int FromProcessor){
   Eint32 array_size = (Eint32) Size;
   int mpi_err =   MPI_Bcast( Array, array_size, 
 			     FloatDataType, FromProcessor,
-			     MPI_COMM_WORLD);
+			     enzo_comm);
 
   if( mpi_err != MPI_SUCCESS ){
     fprintf(stderr, "ealFloat::Bcast, mpi_err = %"ISYM", exiting.\n", mpi_err);

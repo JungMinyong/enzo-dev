@@ -48,11 +48,11 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 
   MPI_Arg mpi_rank;
   MPI_Arg mpi_size;
-  MPI_Comm comm = MPI_COMM_WORLD;
+  MPI_Comm comm = enzo_comm;
 
   MPI_Init(argc, argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  MPI_Comm_rank(enzo_comm, &mpi_rank);
+  MPI_Comm_size(enzo_comm, &mpi_size);
   MPI_Comm_create_errhandler(CommunicationErrorHandlerFn, &CommunicationErrorHandler);
   MPI_Comm_set_errhandler(comm, CommunicationErrorHandler);
 
@@ -108,7 +108,7 @@ void CommunicationAbort(int status)
 {
 
 #ifdef USE_MPI
-  MPI_Abort(MPI_COMM_WORLD,status);
+  MPI_Abort(enzo_comm,status);
 #else
   //  my_exit(status);
 #endif

@@ -390,8 +390,8 @@ void LcaPerf::begin (const char * suffix)
     // (not in lcaperf() because MPI will not have been initialized yet
 
 #ifdef USE_MPI
-    MPI_Comm_size (MPI_COMM_WORLD, &np_);
-    MPI_Comm_rank (MPI_COMM_WORLD, &ip_);
+    MPI_Comm_size (enzo_comm, &np_);
+    MPI_Comm_rank (enzo_comm, &ip_);
 #else
     np_ = 1;
     ip_ = 0;
@@ -1822,7 +1822,7 @@ void LcaPerf::create_directories_()
 
 #ifdef USE_MPI
   // Make sure all processors know which directory to use
-  MPI_Bcast (lcaperf_dir_, strlen("LCAPERF.###")+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast (lcaperf_dir_, strlen("LCAPERF.###")+1, MPI_CHAR, 0, enzo_comm);
 #endif
   
   // Save path base "/.../LCAPERF"
@@ -1870,7 +1870,7 @@ void LcaPerf::create_directories_()
 
 #ifdef USE_MPI
   if (!lDirCreated_) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(enzo_comm);
   }
 #endif
 

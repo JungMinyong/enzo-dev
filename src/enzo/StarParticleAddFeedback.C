@@ -258,7 +258,7 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 #ifdef UNUSED
     temp_int = CellsModified;
     MPI_Reduce(&temp_int, &CellsModified, 1, MPI_INT, MPI_SUM, ROOT_PROCESSOR,
-	       MPI_COMM_WORLD);
+	       enzo_comm);
 
     if (debug) {
       if (cstar->ReturnFeedbackFlag() != FORMATION)

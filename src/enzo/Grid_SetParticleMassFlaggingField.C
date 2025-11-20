@@ -179,7 +179,7 @@ int grid::SetParticleMassFlaggingField(
       MPI_Arg Mtag = Return_MPI_Tag(this->ID, ProcessorNumber);
       CommunicationBufferedSend(ParticleMassFlaggingField, size, DataType,
 				ProcessorNumber, Mtag,
-				MPI_COMM_WORLD, size*sizeof(float));
+				enzo_comm, size*sizeof(float));
       delete [] ParticleMassFlaggingField;
       ParticleMassFlaggingField = NULL;
     }
@@ -211,7 +211,7 @@ int grid::SetParticleMassFlaggingField(
       if (Source >= StartProc && Source < EndProc) {
 	buffer = new float[size];
   MPI_Arg Mtag = Return_MPI_Tag(this->ID, ProcessorNumber);
-	MPI_Irecv(buffer, Count, DataType, Source, Mtag, MPI_COMM_WORLD, 
+	MPI_Irecv(buffer, Count, DataType, Source, Mtag, enzo_comm, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
 	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
