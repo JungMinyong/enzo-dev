@@ -100,10 +100,8 @@ int grid::UpdateParticleVelocity(float TimeStep)
 	VelocityMidStep = ParticleVelocity[dim][i] +
 	                  ParticleAcceleration[dim][i]*0.5*TimeStep;
  
-#ifdef NBODY
 	ParticleVelocity[dim][i] +=
 	  (-VelocityMidStep*dadt/a + ParticleAcceleration[dim][i]) * TimeStep;
-#endif
  
 #endif /* VELOCITY_METHOD1 */
  
@@ -113,22 +111,17 @@ int grid::UpdateParticleVelocity(float TimeStep)
  
 	VelocityMidStep = ParticleVelocity[dim][i] ;
  
-#ifdef NBODY
 	ParticleVelocity[dim][i] +=
 	  (-VelocityMidStep*dadt/a + ParticleAcceleration[dim][i]) * TimeStep;
-#endif
-				//ParticleVelocity[dim][i] +=
-				//  (-VelocityMidStep*dadt/a + ParticleAcceleration[dim][i]) * TimeStep;
+
  
 #endif /* VELOCITY_METHOD2 */
  
 #ifdef VELOCITY_METHOD3
  
         /* iii) Semi-implicit way */
-#ifdef NBODY 
         ParticleVelocity[dim][i] = (coef1*ParticleVelocity[dim][i] +
                                     ParticleAcceleration[dim][i]*TimeStep)*coef2;
-#endif
 
  
 #endif /* VELOCITY_METHOD3 */
