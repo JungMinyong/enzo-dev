@@ -635,6 +635,7 @@ int ReceiveParticleFromEnzo() {
 
             deleteParticle(ptcl->PID, it->second);
             NumberOfSingleParticle--;
+            NumberOfParticle--;
             fprintf(stderr, "(%d,%d)", ptcl->PID, it->second);
         }
         fprintf(stderr, "\n");
@@ -1014,6 +1015,9 @@ int SendParticleToEnzo(Worker *workers) {
         // maybe we can it more fancy.
         ptcl = &particles[i];
         if (ptcl->isCMptcl)
+            continue;
+
+        if (!ptcl->isActive && ptcl->CMPtclIndex == -1 && ptcl->Mass >= 0.0)
             continue;
 
         offset = displs[ptcl->EnzoProcessorNumber] + sendcounts[ptcl->EnzoProcessorNumber];
