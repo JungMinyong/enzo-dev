@@ -70,8 +70,8 @@ MPI_Datatype MPI_ENZO_PTCL_SEND = MPI_DATATYPE_NULL;
 MPI_Datatype MPI_ENZO_PTCL_RECV = MPI_DATATYPE_NULL;
 #endif
 #endif
+int err; //just for debug 
 
- 
 /* function prototypes */
 void my_exit(int exit_status);
 
@@ -101,6 +101,7 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
   MPI_Comm_set_errhandler(comm, CommunicationErrorHandler);
 
 #ifdef NBODY
+
 	// by YS, N body function will be activated only if world_size > 2
 	if (world_size >= 2) {
 
@@ -347,6 +348,10 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 
 			MPI_Type_create_struct(3, block_lengths, displacements, types, &MPI_ENZO_PTCL_SEND_RAW);
 #endif
+			MPI_Type_commit(&MPI_ENZO_PTCL_SEND_RAW);
+
+			MPI_Aint lb=0, extent=sizeof(ParticleSendDataType);
+			MPI_Type_create_resized(MPI_ENZO_PTCL_SEND_RAW, lb, extent, &MPI_ENZO_PTCL_SEND);
 			MPI_Type_commit(&MPI_ENZO_PTCL_SEND);
 			MPI_Type_free(&MPI_ENZO_PTCL_SEND_RAW);
 		}
@@ -541,7 +546,8 @@ MPI_Datatype createJparticleType() {
 	for (int i = 0; i < 8; ++i) disp[i] -= base;
 
 	MPI_Type_create_struct(8, blocklen, disp, types, &JparticleType);
-	MPI_Type_commit(&JparticleType);
+	err = MPI_Type_commit(&JparticleType);
+	if (err != MPI_SUCCESS) fprintf(stderr,"Error: MPI_Type_commit JparticleType failed!\n");
 
 	return JparticleType;
 }
