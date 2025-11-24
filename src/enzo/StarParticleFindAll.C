@@ -284,7 +284,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
   /* Find minimum stellar lifetime */
   TIMER_START("StarParticleFindAll:MiniStellarLife");
   
-  for (cstar = AllStars; cstar; cstar = cstar->NextStar)
+  for (cstar = AllStars; cstar; cstar = cstar->NextStar) {
     if (cstar->ReturnMass() > 1e-9)
       minStarLifetime = min(minStarLifetime, cstar->ReturnLifetime());
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
@@ -352,7 +352,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 	//all I need is the particles on this level, not all the level. But, then I have to pass level from Evolve Level
 	// and for the finest level, I have to add all the particles across levels.
 #endif
-
+  }
 
 
 

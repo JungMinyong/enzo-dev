@@ -9,6 +9,8 @@ cd src/enzo/
 #export LD_LIBRARY_PATH=/home/wispedia/local/hdf5-1.12.1/lib:/home/wispedia/local/gsl-2.7.1/lib/gsl:/home/wispedia/local/fftw-2.1.5/lib:/home/wispedia/local/gsl-2.7.1/lib:$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/wispedia/local/hdf5-1.8.23-icc/lib
 #/home/wispedia/local/hdf5-1.12.1/lib
+module load intel21/compiler-21 intel21/hdf5-1.10.5 intel21/intelmpi-21 
+module list
 
 make machine-icc
 make io-64 precision-64 integers-32 particle-id-128 max-baryons-60 max-particle-attr-30 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no
