@@ -32,6 +32,12 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
 
   if (NumberOfParticleAttributes == 0) return;
 
+#ifdef NBODY
+  int NumberOfParticleAttributesNonNbody = NumberOfParticleAttributes - 4;
+#else
+  int NumberOfParticleAttributesNonNbody = NumberOfParticleAttributes;
+#endif
+
 #ifdef WINDS
   const char *temp_labels[] =
     {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x",
@@ -92,14 +98,14 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
 
     } // endif multimetals
 
+
     if (IndividualStarSaveTablePositions){
-      for(int ii = ParticleAttributeTableStartIndex; ii < NumberOfParticleAttributes; ii++){
+      for(int ii = ParticleAttributeTableStartIndex; ii < NumberOfParticleAttributesNonNbody; ii++){
         ParticleAttributeLabel[ii] = IndividualStarTableIDLabel(ii - ParticleAttributeTableStartIndex);
       }
     }
-    ParticleAttributeLabel[NumberOfParticleAttributes-2] = "wind_mass_ejected";
-    ParticleAttributeLabel[NumberOfParticleAttributes-1] = "sn_mass_ejected";
-
+    ParticleAttributeLabel[NumberOfParticleAttributesNonNbody-2] = "wind_mass_ejected";
+    ParticleAttributeLabel[NumberOfParticleAttributesNonNbody-1] = "sn_mass_ejected";
   } else { // not using individual star model
 
     if (StarMakerTypeIaSNe){
@@ -110,5 +116,17 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
 
 #endif
 
+#ifdef NBODY
+  ParticleAttributeLabel[NumberOfParticleAttributes - 4] = "is_abyss";
+  ParticleAttributeLabel[NumberOfParticleAttributes - 3] = "acc_x";
+  ParticleAttributeLabel[NumberOfParticleAttributes - 2] = "acc_y";
+  ParticleAttributeLabel[NumberOfParticleAttributes - 1] = "acc_z";
+#ifdef SEVN
+  ParticleAttributeLabel[NumberOfParticleAttributes - 6] = "sn_ejected_mass";
+  ParticleAttributeLabel[NumberOfParticleAttributes - 5] = "temperature_eff";
+#endif // SEVN
+#endif // NBODY
+
   return ;
 }
+
