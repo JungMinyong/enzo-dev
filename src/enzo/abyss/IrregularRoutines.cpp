@@ -79,10 +79,12 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::un
 #ifdef DEBUG_ABYSS
         fprintf(nbpout, "After getFirstNode... Irregular list size: %d\n", ThisLevelNode->ParticleList.size());
         fflush(nbpout);
+        /*
         for (int i = 0; i < ThisLevelNode->ParticleList.size(); i++) {
             ptcl = &particles[ThisLevelNode->ParticleList[i]];
             fprintf(nbpout, "PID: %d. RadiusOfNeighbor: %e\n", ptcl->PID, ptcl->RadiusOfNeighbor);
         }
+        */
 #endif
         ThisLevelNode->ParticleList.erase(
             std::remove_if(ThisLevelNode->ParticleList.begin(), ThisLevelNode->ParticleList.end(),
@@ -701,11 +703,13 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::un
 #ifdef DEBUG_ABYSS
         fprintf(nbpout, "skiplist->deleteFirstNode() ended\n");
         fflush(nbpout);
-        fprintf(nbpout, "After deleteFirstNode...");
+        fprintf(nbpout, "After deleteFirstNode...\n");
+        /*
         for (int i = 0; i < ThisLevelNode->ParticleList.size(); i++) {
             ptcl = &particles[ThisLevelNode->ParticleList[i]];
             fprintf(nbpout, "PID: %d. RadiusOfNeighbor: %e\n", ptcl->PID, ptcl->RadiusOfNeighbor);
         }
+        */
 #endif
 
         // std::cout << "deleteFirstNode success" << std::endl;

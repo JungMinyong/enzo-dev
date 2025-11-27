@@ -461,6 +461,17 @@ void Particle::calculateTimeStepOnlyIrr() {
 	TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
 
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+		fprintf(stderr, "Too small TimeStepIrr! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
+				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit,
+				TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
+			TimeLevelIrr++;
+			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
+			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
+		}
+	}
+
 	if (CurrentTimeIrr+TimeStepIrr > 1 && CurrentTimeIrr != 1.0) {
 		TimeStepIrr = 1 - CurrentTimeIrr;
 		TimeBlockIrr = global_variable->block_max-CurrentBlockIrr;
@@ -501,6 +512,17 @@ return;
 	TimeLevelIrr = std::max(global_variable->time_block,TimeLevelTmp);
 	TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
 	TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
+
+	if (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-10) {
+		fprintf(stderr, "Too small TimeStepIrr! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
+				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit,
+				TimeStepIrr*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);
+		while (TimeStepIrr*global_variable->EnzoTimeStep*1e4<1e-9) {
+			TimeLevelIrr++;
+			TimeStepIrr  = static_cast<double>(pow(2, TimeLevelIrr));
+			TimeBlockIrr = static_cast<ULL>(pow(2, TimeLevelIrr-global_variable->time_block));
+		}
+	}
 
 	if (CurrentTimeIrr+TimeStepIrr > 1 && CurrentTimeIrr != 1.0) {
 		TimeStepIrr = 1 - CurrentTimeIrr;
