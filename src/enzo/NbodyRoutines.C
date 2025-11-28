@@ -446,7 +446,7 @@ void grid::GetNbodyCenterOfMass(double &TotalMass) {
 	double dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
 
 	for (int i=0; i < NumberOfParticles; i++) {
-		if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
+		if (ParticleAttribute[NumberOfParticleAttributes-4][i] == ATTRIBUTE_NBODY) {
 			Mass = ParticleMass[i]*dv;
 			NbodyClusterPosition[0] += ParticlePosition[0][i]*Mass;
 			NbodyClusterPosition[1] += ParticlePosition[1][i]*Mass;

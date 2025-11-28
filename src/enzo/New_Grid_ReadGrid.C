@@ -501,22 +501,17 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       int abs_type;
       for (i = 0; i < NumberOfParticles; i++) {
 	abs_type = ABS(ParticleType[i]);
-#ifdef NBODY
-				if (abs_type < PARTICLE_TYPE_GAS || (abs_type > NUM_PARTICLE_TYPES-1
-							&& abs_type < PARTICLE_TYPE_NBODY) || abs_type > PARTICLE_TYPE_NBODY_REMOVE)
-#else
 					if (abs_type < PARTICLE_TYPE_GAS || abs_type > NUM_PARTICLE_TYPES-1)
-#endif
 					{
           ENZO_VFAIL("file: %s: particle %"ISYM" has unknown type %"ISYM"\n", name, i, ParticleType[i])
         }
 #ifdef NBODY
 				if (NbodyRestartStarToNbody && (ParticleType[i] == PARTICLE_TYPE_STAR 
 							|| ParticleType[i] == 12 || ParticleType[i] == 13 || ParticleType[i] == 14)) {
-					ParticleType[i] = PARTICLE_TYPE_NBODY;
+					ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY;
 				}
-				if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
-					ParticleType[i] = PARTICLE_TYPE_NBODY;
+				if (ParticleAttribute[NumberOfParticleAttributes-4][i] == ATTRIBUTE_NBODY_NEW) {
+					ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY;
 				}
 #endif
 			}
@@ -527,6 +522,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       for (i = 0; i < NumberOfParticles; i++)
 			{
 #ifdef NBODY
+/*
 				if (ReturnParticleType(i) == PARTICLE_TYPE_NBODY_NEW) { 
 					ParticleType[i] = PARTICLE_TYPE_NBODY;
 				}
@@ -537,6 +533,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
 				else {
         ParticleType[i] = ReturnParticleType(i);
 				}
+*/
 #else 
 				ParticleType[i] = ReturnParticleType(i);
 #endif

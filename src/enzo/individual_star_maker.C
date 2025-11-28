@@ -802,9 +802,8 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
                 } // end check for saving table positions
 
                 /* Keeping this as a particle attribute */
-                ParticleAttribute[NumberOfParticleAttributes-2][istar] = 0.0; // wind mass ejected
-                ParticleAttribute[NumberOfParticleAttributes-1][istar] = 0.0; // sn mass ejected
-
+                ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][istar] = 0.0; // wind mass ejected
+                ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][istar] = 0.0; // sn mass ejected
 
               } // end while loop for assigning particle properties
 

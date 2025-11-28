@@ -1817,9 +1817,8 @@ int grid::GalaxySimulationInitialStars(int *nmax, int *np, float *ParticleMass,
     } // end assign table positions
 
     /* Keeping this as a particle attribute */
-    ParticleAttribute[NumberOfParticleAttributes-2][count] = 0.0; // wind mass ejected
-    ParticleAttribute[NumberOfParticleAttributes-1][count] = 0.0; // sn mass ejected
-
+    ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][count] = 0.0; // wind mass ejected
+    ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][count] = 0.0; // sn mass ejected
     count++;
   }
 

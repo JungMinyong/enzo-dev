@@ -559,11 +559,24 @@ typedef long long int   HDF5_hid_t;
 #define PARTICLE_TYPE_NBODY_NEW     129  //by YS  2^7+1
 #define PARTICLE_TYPE_NBODY_REMOVE  130  //by YS  2^7+2
 
+#define ATTRIBUTE_NBODY         1
+#define ATTRIBUTE_NBODY_NEW      2
+#define ATTRIBUTE_NBODY_REMOVE      3
+#define ATTRIBUTE_NBODY_NO      -1
+#define ATTRIBUTE_NBODY_IGNORE      -2
+
 #define ENZO_PARTICLE_TYPE(A)  (A & MAX_ENZO_PARTICLE_TYPE)
 #define ABYSS_PARTICLE_TYPE(A) (A >> MAX_ENZO_PARTICLE_TYPE_BIT)
-
+#define NUM_ABYSS_ATTRIBUTES 4
+#ifdef SEVN
+#define NUM_SEVN_ATTRIBUTES 0
+#else
+#define NUM_SEVN_ATTRIBUTES 3
+#endif
 #else
 #define NUM_PARTICLE_TYPES 16
+#define NUM_ABYSS_ATTRIBUTES 0
+#define NUM_SEVN_ATTRIBUTES 0
 #endif
 
 #define CHILDRENPERPARENT           12

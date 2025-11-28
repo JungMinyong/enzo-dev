@@ -937,7 +937,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-          tg->ParticleType[i] += NbodyStar;
+          tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
 #endif
 			}
     } 
@@ -975,7 +975,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] += NbodyStar;
+        tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
 #endif
 			}
     }
@@ -1011,7 +1011,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] += NbodyStar;
+        tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
 #endif
 			}
     }
@@ -1047,7 +1047,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] += NbodyStar;
+        tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
 #endif
 			}
     }
@@ -1081,7 +1081,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 					tg->ParticleType[i] = NormalStarType;
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] += NbodyStar;
+        tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
 #endif
 			}
 
@@ -1112,7 +1112,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 					tg->ParticleType[i] = NormalStarType; // should be changed, by YS
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] = NbodyStar;
+        tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
 #endif
 			}
          
@@ -1283,8 +1283,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] = NbodyStar;
-				else
+					tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
         tg->ParticleType[i] = NormalStarType;
 #else
 				tg->ParticleType[i] = NormalStarType;
@@ -1342,11 +1341,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 			// by YS, have to have an option for this from config file.
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-          tg->ParticleType[i] = NbodyStar;
-				else
-          tg->ParticleType[i] = NormalStarType;
+          tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
+        tg->ParticleType[i] = NormalStarType;
 #ifdef SEVN
-          tg->ParticleAttribute[NumberOfParticleAttributes-8+0][i] = tg->ParticleMass[i];
+          tg->ParticleAttribute[NumberOfParticleAttributes-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES+0][i] = tg->ParticleMass[i];
 #endif
 
 #else
@@ -1404,14 +1402,14 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 			// by YS, have to have an option for this from config file.
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-          tg->ParticleType[i] = NbodyStar;
-				else
-          tg->ParticleType[i] = NormalStarType;
+          tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
+        tg->ParticleType[i] = NormalStarType;
 #ifdef SEVN
-         tg->ParticleAttribute[NumberOfParticleAttributes-8+0][i] = tg->ParticleMass[i];
-         tg->ParticleAttribute[NumberOfParticleAttributes-8+1][i] = FLOAT_UNDEFINED; // Wind Ejected Mass
-         tg->ParticleAttribute[NumberOfParticleAttributes-8+2][i] = FLOAT_UNDEFINED; // SN Ejected Mass
-         tg->ParticleAttribute[NumberOfParticleAttributes-8+3][i] = FLOAT_UNDEFINED; // Effective Teperature
+         tg->ParticleAttribute[NumberOfParticleAttributes-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][i] = tg->ParticleMass[i];
+         // (Query to EW) double check below
+         //tg->ParticleAttribute[NumberOfParticleAttributes-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES-3][i] = FLOAT_UNDEFINED; // Wind Ejected Mass
+         //tg->ParticleAttribute[NumberOfParticleAttributes-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES-2][i] = FLOAT_UNDEFINED; // SN Ejected Mass
+         //tg->ParticleAttribute[NumberOfParticleAttributes-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES-1][i] = FLOAT_UNDEFINED; // Effective Teperature
 #endif
 
 #else
@@ -1463,9 +1461,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++) {
 #ifdef NBODY
 				if (NbodyNewStarToNbody)
-					tg->ParticleType[i] = NbodyStar;
-				else
-          tg->ParticleType[i] = NormalStarType;
+          tg->ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_REMOVE;
+        tg->ParticleType[i] = NormalStarType;
 #else
 				tg->ParticleType[i] = NormalStarType;
 #endif
@@ -1974,6 +1971,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       ParticleAttribute[NumberOfParticleAttributes-8+0], ParticleAttribute[NumberOfParticleAttributes-8+1],
       ParticleAttribute[NumberOfParticleAttributes-8+2], ParticleAttribute[NumberOfParticleAttributes-8+3]);
 // */
+// (Query to EW): change NumberOfParticleAttributes-8 to -NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES
 #endif
 
    delete [] mu_field;

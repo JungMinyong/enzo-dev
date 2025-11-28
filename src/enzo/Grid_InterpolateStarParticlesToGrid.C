@@ -131,11 +131,9 @@ int grid::InterpolateStarParticlesToGrid(int NumberOfSPFields)
 
       /* Now store particle info */
 
-#ifdef NBODY
-      if (ParticleType[i] == PARTICLE_TYPE_STAR || ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
-#else
+      // (Query to YS) why PARTICLE_TYPE_NBODY is missing here? Now as I use ATTRIBUTE_NBODY, I remove below line
+      //if (ParticleType[i] == PARTICLE_TYPE_STAR || ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
       if (ParticleType[i] == PARTICLE_TYPE_STAR) {
-#endif
 
 	NumberOfStarParticlesInGrid++;
 

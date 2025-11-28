@@ -32,11 +32,7 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
 
   if (NumberOfParticleAttributes == 0) return;
 
-#ifdef NBODY
-  int NumberOfParticleAttributesNonNbody = NumberOfParticleAttributes - 4;
-#else
-  int NumberOfParticleAttributesNonNbody = NumberOfParticleAttributes;
-#endif
+  int NumberOfParticleAttributesNonNbody = NumberOfParticleAttributes - NUM_ABYSS_ATTRIBUTES - NUM_SEVN_ATTRIBUTES;
 
 #ifdef WINDS
   const char *temp_labels[] =
@@ -122,6 +118,7 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
   ParticleAttributeLabel[NumberOfParticleAttributes - 2] = "acc_y";
   ParticleAttributeLabel[NumberOfParticleAttributes - 1] = "acc_z";
 #ifdef SEVN
+  ParticleAttributeLabel[NumberOfParticleAttributes - 7] = "initial_mass";
   ParticleAttributeLabel[NumberOfParticleAttributes - 6] = "sn_ejected_mass";
   ParticleAttributeLabel[NumberOfParticleAttributes - 5] = "temperature_eff";
 #endif // SEVN

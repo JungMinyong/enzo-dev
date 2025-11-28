@@ -166,10 +166,8 @@ Star::Star(grid *_grid, int _id, int _level)
       yield_table_position[0] = yield_table_position[1] = -1.0;
 
     }
-
-    wind_mass_ejected = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-2][_id]);
-    sn_mass_ejected   = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-1][_id]);
-
+    wind_mass_ejected = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][_id]);
+    sn_mass_ejected   = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][_id]);
   }
 
   if (type == PARTICLE_TYPE_STAR)
@@ -748,8 +746,8 @@ void Star::UpdateIndividualStarParticleProperties(void)
     Mass    = (double)(CurrentGrid->ParticleMass[_id]);
     type     = CurrentGrid->ParticleType[_id];
     LifeTime = CurrentGrid->ParticleAttribute[1][_id];
-    wind_mass_ejected = (double)(CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-2][_id]);
-    sn_mass_ejected   = (double)(CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-1][_id]);
+    wind_mass_ejected = (double)(CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][_id]);
+    sn_mass_ejected   = (double)(CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][_id]);
     this->ConvertMassToSolar();
 //	}
   } // end if
@@ -836,9 +834,8 @@ void Star::CopyFromParticle(grid *_grid, int _id, int _level)
     //    abundances[i] = (double)(_grid->ParticleAttribute[4+i][_id]);
     //  }
     //}
-
-    wind_mass_ejected = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-2][_id]);
-    sn_mass_ejected   = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-1][_id]);
+    wind_mass_ejected = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][_id]);
+    sn_mass_ejected   = (double)(_grid->ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][_id]);
   }
 
   return;
