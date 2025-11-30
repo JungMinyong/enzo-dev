@@ -569,9 +569,9 @@ typedef long long int   HDF5_hid_t;
 #define ABYSS_PARTICLE_TYPE(A) (A >> MAX_ENZO_PARTICLE_TYPE_BIT)
 #define NUM_ABYSS_ATTRIBUTES 4
 #ifdef SEVN
-#define NUM_SEVN_ATTRIBUTES 0
-#else
 #define NUM_SEVN_ATTRIBUTES 3
+#else
+#define NUM_SEVN_ATTRIBUTES 0
 #endif
 #else
 #define NUM_PARTICLE_TYPES 16

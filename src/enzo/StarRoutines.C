@@ -89,6 +89,7 @@ Star::Star(void)
   GridParticleIndex = -1;
   isABYSS = true;
   isNewlyFormed = false;
+  isRemoved = false;
 #endif
 }
 
@@ -125,6 +126,7 @@ Star::Star(grid *_grid, int _id, int _level)
   GridParticleIndex = _id;
   isABYSS = true;
   isNewlyFormed = false;
+  isRemoved = false;
 #endif
   type = _grid->ParticleType[_id];
   Identifier = _grid->ParticleNumber[_id];
@@ -185,6 +187,7 @@ Star::Star(StarBuffer *buffer, int n)
   GridParticleIndex = buffer[n].GridParticleIndex;
   isABYSS = buffer[n].isABYSS;
   isNewlyFormed = buffer[n].isNewlyFormed;
+  isRemoved = buffer[n].isRemoved;
 #endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer[n].pos[i];
@@ -254,6 +257,7 @@ Star::Star(StarBuffer buffer)
   GridParticleIndex = buffer.GridParticleIndex;
   isNewlyFormed = buffer.isNewlyFormed;
   isABYSS = buffer.isABYSS;
+  isRemoved = buffer.isRemoved;
 #endif
   for (i = 0; i < MAX_DIMENSION; i++) {
     pos[i] = buffer.pos[i];
@@ -344,6 +348,7 @@ void Star::operator=(Star a)
   GridParticleIndex = a.GridParticleIndex;
   isNewlyFormed = a.isNewlyFormed;
   isABYSS = a.isABYSS;
+  isRemoved = a.isRemoved;
 #endif
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     pos[dim] = a.pos[dim];
@@ -439,6 +444,7 @@ Star *Star::copy(void)
   a->GridParticleIndex = GridParticleIndex;
   a->isNewlyFormed = isNewlyFormed;
   a->isABYSS = isABYSS;
+  a->isRemoved = isRemoved;
 #endif
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     a->pos[dim] = pos[dim];
@@ -1056,6 +1062,7 @@ void Star::StarListToBuffer(StarBuffer *&result, int n)
     result[count].GridParticleIndex = tmp->GridParticleIndex;
     result[count].isNewlyFormed = tmp->isNewlyFormed;
     result[count].isABYSS = tmp->isABYSS;
+    result[count].isRemoved = tmp->isRemoved;
 #endif
 
     for (i = 0; i < 2; i++){
@@ -1126,6 +1133,7 @@ void Star::StarToBuffer(StarBuffer *result)
   result->GridParticleIndex = tmp->GridParticleIndex;
   result->isNewlyFormed = tmp->isNewlyFormed;
   result->isABYSS = tmp->isABYSS;
+  result->isRemoved = tmp->isRemoved;
 #endif
 
   /* AJE */

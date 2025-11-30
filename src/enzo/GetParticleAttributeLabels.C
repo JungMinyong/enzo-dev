@@ -32,6 +32,12 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
 
   if (NumberOfParticleAttributes == 0) return;
 
+  assert(ParticleAttributeLabel.size() == NumberOfParticleAttributes);
+#ifdef debug_labels
+  for (int i = 0; i < NumberOfParticleAttributes; i++) {
+    ParticleAttributeLabel[i] = "__UNSET__";
+  }
+#endif
   int NumberOfParticleAttributesNonNbody = NumberOfParticleAttributes - NUM_ABYSS_ATTRIBUTES - NUM_SEVN_ATTRIBUTES;
 
 #ifdef WINDS
@@ -39,7 +45,7 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
     {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x",
       "particle_jet_y", "particle_jet_z", "typeia_fraction"};
   for(int i = 0; i < 7; i++){
-    ParticleAttributeLabel[i], temp_labels[i]);
+    ParticleAttributeLabel[i], temp_labels[i])t;
   }
 #else
 
@@ -124,6 +130,16 @@ void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabe
 #endif // SEVN
 #endif // NBODY
 
+#ifdef debug_labels
+  //Consistent only if you never turn on StarMakerTypeIaSNe or StarMakerTypeIISNeMetalField together with INDIVIDUAL_STAR.
+  for (int i = 0; i < NumberOfParticleAttributes; i++) {
+    fprintf(stderr, "ParticleAttributeLabel[%d] = %s\n", i, ParticleAttributeLabel[i].c_str());
+  }
+
+  for (int i = 0; i < NumberOfParticleAttributes; i++) {
+    assert(ParticleAttributeLabel[i] != "__UNSET__");
+  }
+#endif
   return ;
 }
 

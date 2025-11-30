@@ -50,6 +50,7 @@ struct StarBuffer {
   int GridParticleIndex;
   bool isABYSS;        // in case we would like to exclude this particle from the ABYSS pool
   bool isNewlyFormed;   // in case we would like to exclude this particle from the ABYSS pool
+  bool isRemoved;
   #endif
 
   /* AJE: for individual stars - yield table numbers */

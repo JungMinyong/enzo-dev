@@ -147,6 +147,7 @@ struct ParticleReceiveDataType{
 
 #ifdef ENZO_ONLY
 	void copyTo(Star *ptcl) {
+		ptcl->checkEscape(this->Position[0]);
 		ptcl->SetPosition(this->Position);
 		ptcl->SetVelocity(this->Velocity);
 		ptcl->UpdateToGridParticle(this->Position, this->Velocity);
