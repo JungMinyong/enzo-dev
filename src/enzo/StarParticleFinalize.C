@@ -106,10 +106,10 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Update position and velocity of star particles from the actual
      particles */
 
-#ifndef NBODY // (Query AEOS) I think we should change this if a star is not ABYSS star by EW 2025.7.28
+//#ifndef NBODY // (Query AEOS) I think we should change this if a star is not ABYSS star by EW 2025.7.28
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
     ThisStar->UpdatePositionVelocity();
-#endif
+//#endif
 
   // Apply individual star feedback if it exists
   if(STARMAKE_METHOD(INDIVIDUAL_STAR) && STARFEED_METHOD(INDIVIDUAL_STAR)){
