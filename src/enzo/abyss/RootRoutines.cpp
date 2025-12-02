@@ -181,6 +181,7 @@ void RootRoutines()
 		else  {		// NumberOfParticle < 2 case
 					// update position and velocity from background acceleration
 					// assume there is no CM particles
+				fprintf(stderr, "NumberOfParticle < MinParticles (%d). Only background potential is applied.\n", MinParticles);
 #ifdef DEBUG_ABYSS
 				fprintf(nbpout, "Before updateParticleBackground...\n");
 				fflush(nbpout);

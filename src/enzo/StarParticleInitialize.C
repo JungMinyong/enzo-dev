@@ -117,9 +117,9 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   if (MetaData->FirstTimestepAfterRestart)
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY-1; level++)
       for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
-	if (Temp->GridData->FindAllStarParticles(level) == FAIL) {
-	  	  ENZO_FAIL("Error in grid::FindAllStarParticles.");
-	}
+        if (Temp->GridData->FindAllStarParticles(level) == FAIL) {
+              ENZO_FAIL("Error in grid::FindAllStarParticles.");
+        }
   TIMER_STOP("StarParticleInitialize:InitializeStarsRestart");
 
   /* Create a master list of all star particles */

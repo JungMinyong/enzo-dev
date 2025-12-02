@@ -126,7 +126,9 @@ struct ParticleSendDataType{
 			this->BackgroundAcceleration[dim] = ptcl->ReturnBackgroundAcceleration()[dim];
 		}
 		this->ID = ptcl->ReturnID();
-		//this->Mass          = ptcl->Mass;
+#ifndef SEVN
+		this->Mass          = ptcl->ReturnMass();
+#endif
 	};
 #endif
 };

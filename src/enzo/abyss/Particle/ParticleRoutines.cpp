@@ -197,7 +197,7 @@ void Particle::set(const ParticleDataType &ptcl, const int& ProcessorNumber) {
 void Particle::update(const ParticleSendDataType &ptcl, const int& ProcessorNumber)
 {
 #ifndef SEVN
-	this->Mass                       = ptcl.Mass*EnzoMass;
+	this->Mass                       = ptcl.Mass / mass_unit;
 #endif
 	this->BackgroundAcceleration[0]  = ptcl.BackgroundAcceleration[0]*EnzoAcceleration;
 	this->BackgroundAcceleration[1]  = ptcl.BackgroundAcceleration[1]*EnzoAcceleration;

@@ -79,10 +79,13 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::un
 #ifdef DEBUG_ABYSS
         fprintf(nbpout, "After getFirstNode... Irregular list size: %d\n", ThisLevelNode->ParticleList.size());
         fflush(nbpout);
+        // ptcl = &particles[ThisLevelNode->ParticleList[0]];
         /*
         for (int i = 0; i < ThisLevelNode->ParticleList.size(); i++) {
             ptcl = &particles[ThisLevelNode->ParticleList[i]];
-            fprintf(nbpout, "PID: %d. RadiusOfNeighbor: %e\n", ptcl->PID, ptcl->RadiusOfNeighbor);
+            // fprintf(nbpout, "PID: %d. RadiusOfNeighbor: %e\n", ptcl->PID, ptcl->RadiusOfNeighbor);
+            if (ptcl->isActive)
+                fprintf(stderr, "PID: %d. Mass: %e Msun\n", ptcl->PID, ptcl->Mass * mass_unit);
         }
         */
 #endif

@@ -61,7 +61,7 @@ typedef unsigned long long ULL;
 //#define NNB_per_block 128
 
 // Parameters for Enzo-Abyss interface
-#define MinParticles 10
+#define MinParticles 3
 #define IrregularRoutineThreshold 100 // If nuber of particle is less than this value, only irregular routine is performed by EW 2025.9.17
 
 #define SEVNMetallicityLowerLimit 0.0001

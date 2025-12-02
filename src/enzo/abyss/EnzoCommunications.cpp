@@ -381,6 +381,7 @@ int InitialCommunication() {
             while (i >= displs[EnzoProcessorNumber+1])
                 EnzoProcessorNumber++;
             particles[i].setFirst(recvbuf[i], EnzoProcessorNumber);
+            fprintf(stderr, "In InitialCommunication... ptcl (PID: %d) mass is %e Msun\n", particles[i].PID, particles[i].Mass * mass_unit);
             PIDtoIndexMap.insert({recvbuf[i].ID, i});
             particles[i].ParticleIndex = i;
             particles[i].NeighborsOffset = i * MaxNumNeighbor;
@@ -762,7 +763,9 @@ int ReceiveParticleFromEnzo() {
             recvbuf[i].BackgroundAcceleration[dim] -= ClusterAcceleration[dim];
         }
 #endif
+        fprintf(stderr, "Before update... ptcl (PID: %d) mass is %e Msun\n", ptcl->PID, ptcl->Mass * mass_unit);
         ptcl->update(recvbuf_old[i], EnzoProcessorNumber);
+        fprintf(stderr, "After update... ptcl (PID: %d) mass is %e Msun\n", ptcl->PID, ptcl->Mass * mass_unit);
     } // endfor i
     delete[] recvbuf_old;
 
@@ -814,6 +817,7 @@ int ReceiveParticleFromEnzo() {
                 EnzoProcessorNumber++;
 
             particles[index].set(recvbuf_new[i], EnzoProcessorNumber);
+            fprintf(stderr, "In ReceiveParticleFromEnzo... new ptcl (PID: %d) mass is %e Msun\n", particles[index].PID, particles[index].Mass * mass_unit);
             particles[index].ParticleIndex = index;
             particles[index].NeighborsOffset = index * MaxNumNeighbor;
             PIDtoIndexMap.insert({recvbuf_new[i].ID, index});
