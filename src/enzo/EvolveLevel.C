@@ -816,7 +816,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->MultiSpeciesHandler();
 
       /* Update particle positions (if present). */
- 
+      // Escaped Nbody particles are not updated here because ParticleAttributes are not yet to be updated.
       UpdateParticlePositions(Grids[grid1]->GridData);
 
     /*Trying after solving for radiative transfer */

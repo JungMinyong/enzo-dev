@@ -78,6 +78,7 @@ int DetermineNumberOfParticleAttributes(void){
       }
       n += 2; // counters for mass loss
     }
+  n += NUM_ABYSS_ATTRIBUTES + NUM_SEVN_ATTRIBUTES;
 
   } else {
     n = 0;

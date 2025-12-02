@@ -159,14 +159,10 @@ int grid::UpdateParticlePositionNoStar(float TimeStep, int OffProcessorUpdate)
 			for (i = 0; i < NumberOfParticles; i++) {
 				/* Only particle not nbody will be updated */
 				//&& GridLevel != MaximumRefinementLevel )
-#ifdef INDIVIDUALSTAR
-				// Only dark matter and gas will move but not any star and black hole at all. by YS
-				if ( ParticleType[i] == PARTICLE_TYPE_DARK_MATTER || ParticleType[i] == PARTICLE_TYPE_GAS) {
-#else
-				if ( ParticleType[i] != PARTICLE_TYPE_NBODY 
-						&& ParticleType[i] != PARTICLE_TYPE_NBODY_NEW  
-						&& ParticleType[i] != PARTICLE_TYPE_NBODY_REMOVE)  {
-#endif
+				float &attr = ParticleAttribute[NumberOfParticleAttributes-4][i];
+				if (attr != ATTRIBUTE_NBODY 
+					&& attr != ATTRIBUTE_NBODY_REMOVE 
+					&& attr != ATTRIBUTE_NBODY_NEW) {
 					ParticlePosition[dim][i] += Coefficient*ParticleVelocity[dim][i];
 				}
 			} // ENDFOR particles

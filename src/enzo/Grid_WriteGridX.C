@@ -43,7 +43,7 @@ void my_exit(int status);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
 int WriteStringAttr(hid_t dset_id, char *Alabel, char *String, FILE *log_fptr);
- 
+void GetParticleAttributeLabels(std::vector<std::string> & ParticleAttributeLabel);
  
  
  
@@ -73,29 +73,30 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
   char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
 
+#ifdef OLD_ATTRIBUTES
 #ifdef NBODY
 #ifdef WINDS 
 #ifdef SEVN
   char *ParticleAttributeLabel[] = 
   {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
     "particle_jet_y", "particle_jet_z", "typeia_fraction", 
-    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff", "is_abyss",
     "acc_x", "acc_y", "acc_z"};
 #else
   char *ParticleAttributeLabel[] = 
   {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-    "particle_jet_y", "particle_jet_z", "typeia_fraction", 
+    "particle_jet_y", "particle_jet_z", "typeia_fraction", "is_abyss",
     "acc_x", "acc_y", "acc_z"};
 #endif
 #else
 #ifdef SEVN
   char *ParticleAttributeLabel[] = 
   {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff",
+    "initial_mass", "wind_ejected_mass", "sn_ejected_mass", "temperature_eff", "is_abyss",
     "acc_x", "acc_y", "acc_z"};
 #else
   char *ParticleAttributeLabel[] = 
-  {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+  {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", "is_abyss",
     "acc_x", "acc_y", "acc_z"};
 #endif
 #endif
@@ -113,6 +114,15 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
 
 #endif
 #endif // by YS, this should be fixed.
+#else // OLD_ATTRIBUTES
+  std::vector<std::string> ParticleAttributeLabel_temp(NumberOfParticleAttributes);
+  GetParticleAttributeLabels(ParticleAttributeLabel_temp);
+
+  char *ParticleAttributeLabel[NumberOfParticleAttributes];
+  for (int i = 0; i < NumberOfParticleAttributes; i++) {
+    ParticleAttributeLabel[i] = strdup(ParticleAttributeLabel_temp[i].c_str());
+  }
+#endif
   /*  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
       "metallicity_fraction", "alpha_fraction"};*/
 #ifdef IO_LOG

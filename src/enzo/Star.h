@@ -59,6 +59,7 @@ class Star
   double bg_acc[MAX_DIMENSION]; // background acceeleration for ABYSS
   bool isABYSS;        // in case we would like to exclude this particle from the ABYSS pool
   bool isNewlyFormed;   // in case we would like to exclude this particle from the ABYSS pool
+  bool isRemoved;   // in case we would like to exclude this particle from the ABYSS pool
 #endif
 
   /* AJE: for individual stars - yield table numbers */
@@ -97,12 +98,22 @@ public:
   double *ReturnBackgroundAcceleration(void) { return bg_acc; }
   bool ReturnAbyssFlag(){return isABYSS;};        // in case we would like to exclude this particle from the ABYSS pool
   bool ReturnNewStarFlag(){return isNewlyFormed;};   
+  bool ReturnRemovedFlag(){return isRemoved;};
   int ReturnGridParticleIndex(){return GridParticleIndex;};
+  void checkEscape(double &temp){
+    if (temp < -10) {
+      fprintf(stdout,"Escaped PID=%d in deletion\n", Identifier);
+      temp += 20;
+      isRemoved = true;
+      isABYSS = false;
+    }
+  }
   void SetPosition(double *temp){pos[0]=temp[0];pos[1]=temp[1];pos[2]=temp[2];};
   void SetVelocity(double *temp){vel[0]=temp[0];vel[1]=temp[1];vel[2]=temp[2];};
 
   void SetAbyssFlag(bool is){isABYSS=is;};        // in case we would like to exclude this particle from the ABYSS pool
   void SetNewStarFlag(bool is){isNewlyFormed=is;};   
+  void SetRemovedFlag(bool is){isRemoved=is;};   
   void MakeStarsUnorderedMap(std::unordered_map<int, Star*> &StarLookupMap); // makes lookup table to quickly find stars in grid during CopyToGrid
 	void GetBackgroundAcceleration();
   void UpdateBackgroundAcceleration();

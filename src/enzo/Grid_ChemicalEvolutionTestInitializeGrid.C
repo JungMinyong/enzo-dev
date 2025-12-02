@@ -481,8 +481,8 @@ int grid::chemical_evolution_test_star_deposit(int *nmax, int *np, float *Partic
         ParticleAttribute[tstart + 6][count] = t_j;
 
       }
-      ParticleAttribute[NumberOfParticleAttributes-2][count] = 0.0; // wind mass ejected
-      ParticleAttribute[NumberOfParticleAttributes-1][count] = 0.0; // sn mass ejected
+      ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][count] = 0.0; // wind mass ejected
+      ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][count] = 0.0; // sn mass ejected
 
 
       count++;
@@ -616,9 +616,8 @@ int grid::chemical_evolution_test_star_deposit(int *nmax, int *np, float *Partic
     } // end table position save check
 
     /* Keeping this as a particle attribute */
-    ParticleAttribute[NumberOfParticleAttributes-2][0] = 0.0; // wind mass ejected
-    ParticleAttribute[NumberOfParticleAttributes-1][0] = 0.0; // sn mass ejected
-
+    ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][0] = 0.0; // wind mass ejected
+    ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][0] = 0.0; // sn mass ejected
 
 
     *np = 1;

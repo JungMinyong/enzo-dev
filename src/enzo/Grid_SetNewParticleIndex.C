@@ -44,12 +44,9 @@ void grid::SetNewParticleIndex(int &NumberCount1, PINT &NumberCount2)
       newstars[newstarcount] = n;
       newstarcount++;
 #endif
-
-#ifdef NBODY
-      if (abstype == PARTICLE_TYPE_STAR || abstype == PARTICLE_TYPE_NBODY_NEW ||
-#else
+      // (Query to YS)
+      //if (abstype == PARTICLE_TYPE_STAR || abstype == PARTICLE_TYPE_NBODY_NEW ||
       if (abstype == PARTICLE_TYPE_STAR ||
-#endif
 	  (abstype >= PARTICLE_TYPE_MUST_REFINE &&
 	   abstype != PARTICLE_TYPE_MBH)){
 	ParticleNumber[n] = NumberCount1++ + NumberCount2;

@@ -636,7 +636,7 @@ int ReceiveParticleFromEnzo() {
 
             deleteParticle(ptcl->PID, it->second);
             NumberOfSingleParticle--;
-	    NumberOfParticle--;
+	        NumberOfParticle--;
             fprintf(stderr, "(%d,%d)", ptcl->PID, it->second);
         }
         fprintf(stderr, "\n");

@@ -83,14 +83,11 @@ int grid::UpdateParticleVelocity(float TimeStep)
  
       for (i = 0; i < NumberOfParticles; i++) {
 #ifdef NBODY
-#ifdef INDIVIDUALSTAR
-				if ( ParticleType[i] != PARTICLE_TYPE_DARK_MATTER && ParticleType[i] != PARTICLE_TYPE_GAS) continue;
+        float &attr = ParticleAttribute[NumberOfParticleAttributes-4][i];
+				if (attr != ATTRIBUTE_NBODY 
+          && attr != ATTRIBUTE_NBODY_REMOVE
+          && attr != ATTRIBUTE_NBODY_NEW) continue;
 				//#define PARTICLE_TYPE_MUST_REFINE    4 should I include this?
-#else
-				// by YS Jo
-				if ( ParticleType[i] == PARTICLE_TYPE_NBODY || ParticleType[i] == PARTICLE_TYPE_NBODY_NEW || ParticleType[i] == PARTICLE_TYPE_NBODY_REMOVE) continue;
-				//&& GridLevel != MaximumRefinementLevel )
-#endif
 #endif				
  
 #ifdef VELOCITY_METHOD1
@@ -134,12 +131,10 @@ int grid::UpdateParticleVelocity(float TimeStep)
  
 			for (i = 0; i < NumberOfParticles; i++) {
 #ifdef NBODY
-#ifdef INDIVIDUALSTAR
-				if ( ParticleType[i] != PARTICLE_TYPE_DARK_MATTER && ParticleType[i] != PARTICLE_TYPE_GAS) continue;
-				//#define PARTICLE_TYPE_MUST_REFINE    4 should I include this?
-#else
-				if ( ParticleType[i] != PARTICLE_TYPE_NBODY  && ParticleType[i] != PARTICLE_TYPE_NBODY_NEW  && ParticleType[i] != PARTICLE_TYPE_NBODY_REMOVE ) 
-#endif
+        float &attr = ParticleAttribute[NumberOfParticleAttributes-4][i];
+        if (attr != ATTRIBUTE_NBODY 
+            && attr != ATTRIBUTE_NBODY_REMOVE 
+            && attr != ATTRIBUTE_NBODY_NEW) continue;
 #endif
 	ParticleVelocity[dim][i] += ParticleAcceleration[dim][i] * TimeStep;
 			}

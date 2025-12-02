@@ -1939,15 +1939,15 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 			int count_new = 0;
 			if (NbodyFirst) {
 				for (int i=0; i<NumberOfParticles; i++) {
-					if (ParticleType[i] == PARTICLE_TYPE_NBODY)
+					if (ParticleAttribute[NumberOfParticleAttributes-4][i] == ATTRIBUTE_NBODY)
 						IndicesOfNbodyParticlesInGrid[count++] = i;
 				}
 			}
 			else {
 				for (int i=0; i<NumberOfParticles; i++) {
-					if (ParticleType[i] == PARTICLE_TYPE_NBODY)
+					if (ParticleAttribute[NumberOfParticleAttributes-4][i] == ATTRIBUTE_NBODY)
 						IndicesOfNbodyParticlesInGrid[count++] = i;
-					else if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW)
+					else if (ParticleAttribute[NumberOfParticleAttributes-4][i] == ATTRIBUTE_NBODY_NEW)
 						IndicesOfNewNbodyParticlesInGrid[count_new++] = i;
 				}
 			}
@@ -1960,13 +1960,14 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 			int i, count=0, count_new=0;
 				for (i=0; i<NumberOfParticles; i++) {
 					//fprintf(stderr,"ParticleType: %d", ParticleType[i]);
-					if (ParticleType[i] == PARTICLE_TYPE_NBODY) {
+					if (ParticleAttribute[NumberOfParticleAttributes-4][i] == ATTRIBUTE_NBODY) {
 						count++;
 					}
-					if (ParticleType[i] == PARTICLE_TYPE_NBODY_NEW) {
+					if (ParticleAttribute[NumberOfParticleAttributes-4][i] == ATTRIBUTE_NBODY_NEW) {
 						if (NbodyFirst) {
-							ParticleType[i] = PARTICLE_TYPE_NBODY_NEW+10;
+							ParticleAttribute[NumberOfParticleAttributes-4][i] = ATTRIBUTE_NBODY_NEW+10;
 							fprintf(stderr, "Something's wrong");
+              ENZO_FAIL("NbodyFirst is true but found new Nbody particle.");
 						}
 						else
 							count_new++;
@@ -2023,7 +2024,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				assert(IndicesOfNbodyParticlesInGrid != NULL);
 				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
 					int index = IndicesOfNbodyParticlesInGrid[i];
-					assert(ParticleType[index] == PARTICLE_TYPE_NBODY);
+					assert(ParticleAttribute[NumberOfParticleAttributes-4][index] == ATTRIBUTE_NBODY);
 
 					NbodyParticleIDTemp[*count]           = ParticleNumber[index];
 					NbodyParticleMassTemp[*count]         = ParticleMass[index]*dv;
@@ -2061,7 +2062,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				assert(IndicesOfNbodyParticlesInGrid != NULL);
 				for (int i=0; i < NumberOfNbodyParticlesInGrid; i++) {
 					int index = IndicesOfNbodyParticlesInGrid[i];
-					assert(ParticleType[index] == PARTICLE_TYPE_NBODY);
+          assert(ParticleAttribute[NumberOfParticleAttributes-4][index] == ATTRIBUTE_NBODY);
 
 					NbodyParticleIDTemp[*count]           = ParticleNumber[index];
 					NbodyParticleMassTemp[*count]         = ParticleMass[index]*dv;
@@ -2078,7 +2079,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				assert(IndicesOfNewNbodyParticlesInGrid != NULL);
 				for (int i=0; i < NumberOfNewNbodyParticlesInGrid; i++) {
 					int index = IndicesOfNewNbodyParticlesInGrid[i];
-					assert(ParticleType[index] == PARTICLE_TYPE_NBODY_NEW);
+          assert(ParticleAttribute[NumberOfParticleAttributes-4][index] == ATTRIBUTE_NBODY_NEW);
 
 					NewNbodyParticleIDTemp[*count_new]           = ParticleNumber[index];
 					NewNbodyParticleMassTemp[*count_new]         = ParticleMass[index]*dv;
@@ -2120,7 +2121,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 					if (NbodyParticlePositionTemp[0][*count] < -10) {
 						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
 						NbodyParticlePositionTemp[0][*count] += 20;
-						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+						ParticleAttribute[NumberOfParticleAttributes-4][index] = ATTRIBUTE_NBODY_REMOVE;
 					} // particle removal
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
 						ParticlePosition[dim][index] = NbodyParticlePositionTemp[dim][*count];
@@ -2140,7 +2141,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 					if (NewNbodyParticlePositionTemp[0][*count_new] < -10) {
 						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
 						NewNbodyParticlePositionTemp[0][*count_new] += 20;
-						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+						ParticleAttribute[NumberOfParticleAttributes-4][index] = ATTRIBUTE_NBODY_REMOVE;
 					} // particle removal
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
 						ParticlePosition[dim][index] = NewNbodyParticlePositionTemp[dim][*count_new];
@@ -2178,7 +2179,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 					if (NbodyParticlePositionTemp[0][*count] < -10) {
 						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
 						NbodyParticlePositionTemp[0][*count] += 20;
-						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+						ParticleAttribute[NumberOfParticleAttributes-4][index] = ATTRIBUTE_NBODY_REMOVE;
 					} // particle removal
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
 						ParticlePosition[dim][index] = NbodyParticlePositionTemp[dim][*count];
@@ -2206,12 +2207,12 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 					int index = IndicesOfNewNbodyParticlesInGrid[i];
 					assert(ParticleNumber[index] == NewNbodyParticleIDTemp[*count_new]);
 
-					ParticleType[index] = PARTICLE_TYPE_NBODY;
+          ParticleAttribute[NumberOfParticleAttributes-4][index] = ATTRIBUTE_NBODY;
 
 					if (NewNbodyParticlePositionTemp[0][*count_new] < -10) {
 						fprintf(stdout,"Escaped PID=%d in deletion\n", ParticleNumber[index]);
 						NewNbodyParticlePositionTemp[0][*count_new] += 20;
-						ParticleType[index] = PARTICLE_TYPE_NBODY_REMOVE;
+            ParticleAttribute[NumberOfParticleAttributes-4][index] = ATTRIBUTE_NBODY_REMOVE;
 					} // particle removal
 					for (int dim=0; dim<MAX_DIMENSION; dim++) {
 						ParticlePosition[dim][index] = NewNbodyParticlePositionTemp[dim][*count_new];
@@ -2237,6 +2238,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 		}
 #endif
 
+#ifdef OLD_NBODY
 		int IdentifyNbodyParticles() {
 
 			const double thres_r2 = NbodyClusterPosition[3];
@@ -2290,6 +2292,64 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 			} // endfor particles
 			return SUCCESS;
 		}
+#else // OLD_NBODY
+    int IdentifyNbodyParticles() {
+
+      const double thres_r2 = NbodyClusterPosition[3];
+      double r2;
+
+      if (MyProcessorNumber != ProcessorNumber) return SUCCESS;
+
+      //float dv = CellWidth[0][0]*CellWidth[0][0]*CellWidth[0][0];
+
+      NumberOfNbodyParticlesInGrid = 0;
+      NumberOfNewNbodyParticlesInGrid = 0;
+
+      for (int i=0; i < NumberOfParticles; i++) {
+
+        float &attr = ParticleAttribute[NumberOfParticleAttributes-4][i];
+        if (attr == ATTRIBUTE_NBODY_REMOVE) {
+          attr = ATTRIBUTE_NBODY_NO;
+          continue;
+        }
+
+        if (!NbodyFirst && attr == ATTRIBUTE_NBODY) {
+          NumberOfNbodyParticlesInGrid++;
+          continue;
+        }
+
+        if (attr == ATTRIBUTE_NBODY_NO || 
+          attr == ATTRIBUTE_NBODY_NEW || 
+          (NbodyFirst && attr == ATTRIBUTE_NBODY)) {
+
+          r2 = 0;
+          for (int dim = 0; dim < MAX_DIMENSION; dim++) {
+            r2 += (ParticlePosition[dim][i] - NbodyClusterPosition[dim])\
+                *(ParticlePosition[dim][i] - NbodyClusterPosition[dim]);
+          }
+
+          if ( r2 < thres_r2 ) {
+            if (NbodyFirst) {
+              attr = ATTRIBUTE_NBODY;
+              NumberOfNbodyParticlesInGrid++;
+            }
+            else {
+              attr = ATTRIBUTE_NBODY_NEW;
+              NumberOfNewNbodyParticlesInGrid++;
+            }
+          }
+          else {
+            if (attr == ATTRIBUTE_NBODY_NEW ||
+                (NbodyFirst && attr == ATTRIBUTE_NBODY)) {
+                  attr = ATTRIBUTE_NBODY_NO;
+            }
+          }
+        } // endif				
+      } // endfor particles
+      return SUCCESS;
+    }
+
+#endif // OLD_NBODY
 #endif
 
 		/* EW Individual star formation and feedback */

@@ -106,10 +106,23 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Update position and velocity of star particles from the actual
      particles */
 
-#ifndef NBODY // (Query AEOS) I think we should change this if a star is not ABYSS star by EW 2025.7.28
-  for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
+//#ifndef NBODY // (Query AEOS) I think we should change this if a star is not ABYSS star by EW 2025.7.28
+
+// UpdatePositionVelocity() will update the pos and vel of Star class from the Grid
+// For normal stars, pos of stars are updated in EvolveLevel.C, UpdateParticlePositions() in Grid
+// For Abyss stars, pos of stars are **not** updated there, so we should not update pos in star class from Grid
+// For escaped stars, ThisStar->isABYSS is false but their position is stored in Star class not Grid.
+  for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar){
+#if defined(NBODY) && defined(INDIVIDUALSTAR)
+    if (!ThisStar->ReturnAbyssFlag() && !ThisStar->ReturnRemovedFlag()){
+      ThisStar->UpdatePositionVelocity();
+      ThisStar->SetRemovedFlag(true); // to avoid updating again
+    }
+#else
     ThisStar->UpdatePositionVelocity();
 #endif
+  }
+//#endif
 
   // Apply individual star feedback if it exists
   if(STARMAKE_METHOD(INDIVIDUAL_STAR) && STARFEED_METHOD(INDIVIDUAL_STAR)){

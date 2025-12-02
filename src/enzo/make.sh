@@ -13,7 +13,7 @@ module load intel21/compiler-21 intel21/hdf5-1.10.5 intel21/intelmpi-21
 module list
 
 make machine-icc
-make io-64 precision-64 integers-32 particle-id-128 max-baryons-60 max-particle-attr-30 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no
+make io-64 precision-64 integers-32 particle-id-128 max-baryons-60 max-particle-attr-40 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no
 #make uuid-no 
 make individualstar-yes new-yield-tables-yes memorypool-yes 
 make nbody-yes fewbody-yes sevn-no

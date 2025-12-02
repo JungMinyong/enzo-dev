@@ -79,9 +79,8 @@ void Star::MirrorToParticle(void)
   CurrentGrid->ParticleAttribute[1][place] = this->LifeTime;
   CurrentGrid->ParticleAttribute[2][place] = this->Metallicity;
 
-  CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-2][place] = this->wind_mass_ejected;
-  CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-1][place] = this->sn_mass_ejected;
-
+  CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-2-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][place] = this->wind_mass_ejected;
+  CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-1-NUM_ABYSS_ATTRIBUTES-NUM_SEVN_ATTRIBUTES][place] = this->sn_mass_ejected;
 /*
   if( ABS(this->type) >= PARTICLE_TYPE_INDIVIDUAL_STAR &&
       ABS(this->type) <= PARTICLE_TYPE_INDIVIDUAL_STAR_REMNANT){
@@ -97,5 +96,11 @@ void Star::MirrorToParticle(void)
     CurrentGrid->ParticleAttribute[ts+6][place] = this->yield_table_position[1];
   }
 */
+#ifdef NBODY
+  //if (this->isRemoved) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_REMOVE;
+  //if (this->isNewlyFormed) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_NEW;
+  if (this->isABYSS) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY;
+  else CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_NO;
+#endif
   return;
 }
