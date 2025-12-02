@@ -132,9 +132,9 @@ int grid::UpdateParticleVelocity(float TimeStep)
 			for (i = 0; i < NumberOfParticles; i++) {
 #ifdef NBODY
         float &attr = ParticleAttribute[NumberOfParticleAttributes-4][i];
-        if (attr != ATTRIBUTE_NBODY 
-            && attr != ATTRIBUTE_NBODY_REMOVE 
-            && attr != ATTRIBUTE_NBODY_NEW) continue;
+        if (attr == ATTRIBUTE_NBODY 
+            || attr == ATTRIBUTE_NBODY_REMOVE 
+            || attr == ATTRIBUTE_NBODY_NEW) continue;
 #endif
 	ParticleVelocity[dim][i] += ParticleAcceleration[dim][i] * TimeStep;
 			}

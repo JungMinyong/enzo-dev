@@ -177,7 +177,7 @@ void Particle::calculateTimeStepIrr() {
 		}
 	}
 
-	fprintf(stderr, "In calculateTimeStepIrr, PID: %d, RadiusOfNeighbor: %e, TimeStepIrr = %e Myr\n", PID, RadiusOfNeighbor, TimeStepIrr*global_variable->EnzoTimeStep*1e4);
+	// fprintf(stderr, "In calculateTimeStepIrr, PID: %d, RadiusOfNeighbor: %e, TimeStepIrr = %e Myr\n", PID, RadiusOfNeighbor, TimeStepIrr*global_variable->EnzoTimeStep*1e4);
 
 	if (TimeStepIrr > 1) {
 		fprintf(stderr, "Why TimeStepIrr is too large? PID: %d, pos: (%e, %e, %e), vel: (%e, %e, %e)\n",
@@ -372,6 +372,12 @@ void Particle::calculateTimeStepReg() {
 	}
 	*/
 	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-8) {
+		fprintf(stderr, "PID: %d\n", PID);
+		fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", CurrentBlockIrr, CurrentBlockReg);
+		fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", TimeBlockIrr, TimeBlockReg);
+		fprintf(stderr, "CurrentBlockIrr * time_step: %.17g, CurrentBlockReg * time_step: %.17g\n", CurrentBlockIrr*global_variable->time_step, CurrentBlockReg*global_variable->time_step);
+		fprintf(stderr, "CurrentTimeIrr: %.17g, CurrentTimeReg: %.17g\n", CurrentTimeIrr, CurrentTimeReg);
+		fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
 		fprintf(stderr, "Too small TimeStepReg! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
 				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit, 
 				TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);

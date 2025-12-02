@@ -561,7 +561,7 @@ typedef long long int   HDF5_hid_t;
 
 #define ATTRIBUTE_NBODY         1
 #define ATTRIBUTE_NBODY_NEW      2
-#define ATTRIBUTE_NBODY_REMOVE      3
+#define ATTRIBUTE_NBODY_REMOVE      3 // currently this is not being used
 #define ATTRIBUTE_NBODY_NO      -1
 #define ATTRIBUTE_NBODY_IGNORE      -2
 

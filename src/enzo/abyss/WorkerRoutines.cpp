@@ -85,10 +85,14 @@ void WorkerRoutines() {
 
 				ptcl->calculateTimeStepReg();
 				ptcl->calculateTimeStepIrr();
-				// /*
+				// /*:q
 				if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentTimeReg) {
+					if (ptcl->NumberOfNeighbor == 0) {
+						ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
+					}
 					fprintf(stderr, "WARNING!!! In RegCudaUpdate...\n");
 					fprintf(stderr, "PID: %d\n", ptcl->PID);
+					fprintf(stderr, "NumberOfNeighbor: %d\n", ptcl->NumberOfNeighbor);
 					fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", ptcl->CurrentBlockIrr, ptcl->CurrentBlockReg);
 					fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", ptcl->TimeBlockIrr, ptcl->TimeBlockReg);
 					fprintf(stderr, "CurrentBlockIrr * time_step: %.17g, CurrentBlockReg * time_step: %.17g\n", ptcl->CurrentBlockIrr*global_variable->time_step, ptcl->CurrentBlockReg*global_variable->time_step);
