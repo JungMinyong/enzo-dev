@@ -290,7 +290,14 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
 		if (cstar->ReturnCurrentGrid() != NULL && 
 		(ThisLevel == cstar->ReturnLevel() || LevelArray[ThisLevel+1] == NULL)) {
-			if (cstar->ReturnMass()>0) {
+      // IdentifyNbodyParticle Start
+      float* pos = cstar->ReturnPosition();
+      double r2 = (pos[0] - NbodyClusterPosition[0])*(pos[0] - NbodyClusterPosition[0]) + 
+                  (pos[1] - NbodyClusterPosition[1])*(pos[1] - NbodyClusterPosition[1]) + 
+                  (pos[2] - NbodyClusterPosition[2])*(pos[2] - NbodyClusterPosition[2]);  
+      // IdentifyNbodyParticle End
+			if (cstar->ReturnMass()>0 && r2 < NbodyClusterPosition[3]) {
+        cstar->SetAbyssFlag(true);
 				assert(cstar != nullptr);
 				fprintf(stderr, "Before LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
 						cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());

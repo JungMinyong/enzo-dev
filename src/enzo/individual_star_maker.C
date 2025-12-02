@@ -563,7 +563,11 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
 
                 if (ParticleType[istar] == -PARTICLE_TYPE_INDIVIDUAL_STAR){
                   // (Query AEOS) Do we need this interpolation in SEVN? by EW 2025.7.28
-                  if(IndividualStarInterpolateLifetime(ParticleAttribute[1][istar], ParticleMass[istar],
+                  // (Query AEOS) We added these lines to prevent errors when star mass < 0.95 Msun
+                  if (ParticleMass[istar] < 1.0) {
+                    ParticleAttribute[1][istar] = huge_number * TimeUnits; // make sure its VERY large
+                  }
+                  else if(IndividualStarInterpolateLifetime(ParticleAttribute[1][istar], ParticleMass[istar],
                                                                                     ParticleAttribute[2][istar], 1) == FAIL){
                     printf(" %" ESYM "  %" ESYM "  %" ESYM "\n",ParticleAttribute[1][istar], ParticleMass[istar], ParticleAttribute[2][istar]);
                   ENZO_FAIL("Error in stellar lifetime interpolation");

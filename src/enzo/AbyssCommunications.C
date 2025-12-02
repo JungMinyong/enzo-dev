@@ -290,6 +290,7 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   int LocalNumberOfParticlesNew = 0;
   for (auto &kv : LocalStarLookupMap) {
     Star *star = kv.second;
+    if (!star->ReturnAbyssFlag()) continue;
     if (star->ReturnNewStarFlag())
       LocalNumberOfParticlesNew++;
     else
@@ -356,6 +357,7 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   //fprintf(stderr, "ENZO: Pos of x (%d) = ", MyProcessorNumber);
   for (auto &kv : LocalStarLookupMap) {
     Star *star = kv.second;
+    if (!star->ReturnAbyssFlag()) continue;
     if (star->ReturnNewStarFlag())
       sendbuf_new[count_new++].copyFrom(star);
     else

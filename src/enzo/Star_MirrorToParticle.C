@@ -97,9 +97,10 @@ void Star::MirrorToParticle(void)
   }
 */
 #ifdef NBODY
-  if (this->isRemoved) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_REMOVE;
-  else if (this->isNewlyFormed) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_NEW;
-  else if (this->isABYSS) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY;
+  //if (this->isRemoved) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_REMOVE;
+  //if (this->isNewlyFormed) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_NEW;
+  if (this->isABYSS) CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY;
+  else CurrentGrid->ParticleAttribute[NumberOfParticleAttributes-4][place] = ATTRIBUTE_NBODY_NO;
 #endif
   return;
 }
