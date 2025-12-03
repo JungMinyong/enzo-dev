@@ -645,6 +645,7 @@ int ReceiveParticleFromEnzo() {
         assert (NumberOfSingleParticle == NumberOfSingleParticleOld);
     }
 
+    /*
     if (debug1) {
         for (auto it = PIDtoIndexMap.begin(); it != PIDtoIndexMap.end(); ++it) {
             fprintf(stderr, "PIDtoIndexMap[%d] 1 = %d\n", it->first, it->second);
@@ -655,7 +656,9 @@ int ReceiveParticleFromEnzo() {
             fprintf(nbpout, "PIDtoIndexMap[%d] = %d\n", recvbuf_old[i].ID, index);
         }
     }
+    */
     
+    /*
     if (debug1) {
         //fprintf(stderr, "ABYSS: ID = ");
         fprintf(nbpout, "ABYSS: ID for OLD = ");
@@ -680,6 +683,7 @@ int ReceiveParticleFromEnzo() {
         fprintf(nbpout, ")\n");
         fflush(nbpout);
     }
+    */
 
     // COM conversion
     // later on we might need to take mass weight into account
