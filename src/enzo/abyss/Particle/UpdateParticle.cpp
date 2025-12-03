@@ -194,15 +194,10 @@ void Particle::calculateTimeStepIrr() {
 		throw std::runtime_error("");
 	}
 
-
-	/*
-	if (TimeStepIrr*EnzoTimeStep*1e4 < KSTime && (this->isCMptcl == false))
-		BinaryCandidateList.push_back(this);
-	if (PID == 430) {
-		std::cerr << "After TimeLevelIrr=" << TimeLevelIrr << std::endl;
-		std::cerr << std::endl;
+	if (CurrentTimeIrr+TimeStepIrr > 1 && CurrentTimeIrr != 1.0) {
+		TimeStepIrr = 1 - CurrentTimeIrr;
+		TimeBlockIrr = global_variable->block_max-CurrentBlockIrr;
 	}
-	*/
 }
 
 void Particle::calculateTimeStepIrr2() {
@@ -273,15 +268,10 @@ void Particle::calculateTimeStepIrr2() {
 		throw std::runtime_error("");
 	}
 
-
-	/*
-	if (TimeStepIrr*EnzoTimeStep*1e4 < KSTime && (this->isCMptcl == false))
-		BinaryCandidateList.push_back(this);
-	if (PID == 430) {
-		std::cerr << "After TimeLevelIrr=" << TimeLevelIrr << std::endl;
-		std::cerr << std::endl;
+	if (CurrentTimeIrr+TimeStepIrr > 1 && CurrentTimeIrr != 1.0) {
+		TimeStepIrr = 1 - CurrentTimeIrr;
+		TimeBlockIrr = global_variable->block_max-CurrentBlockIrr;
 	}
-	*/
 }
 
 
@@ -372,12 +362,12 @@ void Particle::calculateTimeStepReg() {
 	}
 	*/
 	if (TimeStepReg*global_variable->EnzoTimeStep*1e4<1e-8) {
-		fprintf(stderr, "PID: %d\n", PID);
-		fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", CurrentBlockIrr, CurrentBlockReg);
-		fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", TimeBlockIrr, TimeBlockReg);
-		fprintf(stderr, "CurrentBlockIrr * time_step: %.17g, CurrentBlockReg * time_step: %.17g\n", CurrentBlockIrr*global_variable->time_step, CurrentBlockReg*global_variable->time_step);
-		fprintf(stderr, "CurrentTimeIrr: %.17g, CurrentTimeReg: %.17g\n", CurrentTimeIrr, CurrentTimeReg);
-		fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
+		// fprintf(stderr, "PID: %d\n", PID);
+		// fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", CurrentBlockIrr, CurrentBlockReg);
+		// fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", TimeBlockIrr, TimeBlockReg);
+		// fprintf(stderr, "CurrentBlockIrr * time_step: %.17g, CurrentBlockReg * time_step: %.17g\n", CurrentBlockIrr*global_variable->time_step, CurrentBlockReg*global_variable->time_step);
+		// fprintf(stderr, "CurrentTimeIrr: %.17g, CurrentTimeReg: %.17g\n", CurrentTimeIrr, CurrentTimeReg);
+		// fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
 		fprintf(stderr, "Too small TimeStepReg! PID: %d (NN: %d, rad: %e pc), TimeStep = %e, TimeStepTmp0 = %e\n",
 				PID, NumberOfNeighbor, sqrt(RadiusOfNeighbor)*position_unit, 
 				TimeStepReg*global_variable->EnzoTimeStep*1e4, static_cast<double>(pow(2, TimeLevelTmp0))*global_variable->EnzoTimeStep*1e4);

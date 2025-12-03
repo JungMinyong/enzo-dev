@@ -87,9 +87,9 @@ void WorkerRoutines() {
 				ptcl->calculateTimeStepIrr();
 				// /*:q
 				if (ptcl->CurrentBlockIrr != ptcl->CurrentBlockReg || ptcl->CurrentTimeIrr != ptcl->CurrentTimeReg) {
-					if (ptcl->NumberOfNeighbor == 0) {
-						ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
-					}
+					// if (ptcl->NumberOfNeighbor == 0) {
+					// 	ptcl->CurrentBlockIrr = ptcl->CurrentBlockReg;
+					// }
 					fprintf(stderr, "WARNING!!! In RegCudaUpdate...\n");
 					fprintf(stderr, "PID: %d\n", ptcl->PID);
 					fprintf(stderr, "NumberOfNeighbor: %d\n", ptcl->NumberOfNeighbor);

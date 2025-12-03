@@ -299,9 +299,12 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 			if (cstar->ReturnMass()>0 && r2 < NbodyClusterPosition[3]) {
         cstar->SetAbyssFlag(true);
 				assert(cstar != nullptr);
+        /*
 				fprintf(stderr, "Before LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
 						cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
 				fflush(stderr);
+        */
+        /*
 				for (const auto& pair : LocalStarLookupMap) {
           const auto& id = pair.first;
           const auto& starPtr = pair.second;
@@ -315,6 +318,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
           }
           std::cerr << '\n';
         }
+        */
 				if (!cstar) {
 						fprintf(stderr, "cstar has a problem!\n");
 						fflush(stderr);
@@ -330,6 +334,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
 						LocalStarLookupMap.insert(std::make_pair(cstar->ReturnID(), cstar));
 						//.emplace(cstar->ReturnID(), cstar);
 					}
+          /*
 					for (const auto& pair : LocalStarLookupMap) {
             const auto& id = pair.first;
             const auto& starPtr = pair.second;
@@ -343,9 +348,12 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars
             }
             std::cerr << '\n';
           }
+          */
+          /*
 					fprintf(stderr, "After LSLM... ID: %d, level: %d, proc: %d, size: %d\n",
 							cstar->ReturnID(), ThisLevel, MyProcessorNumber, LocalStarLookupMap.size());
 					fflush(stderr);
+          */
 				} catch (const std::bad_alloc& e) {
 					fprintf(stderr, "Caught bad_alloc during insert! what(): %s\n", e.what());
 				} catch (...) {
