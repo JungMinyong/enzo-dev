@@ -763,9 +763,9 @@ int ReceiveParticleFromEnzo() {
             recvbuf[i].BackgroundAcceleration[dim] -= ClusterAcceleration[dim];
         }
 #endif
-        fprintf(stderr, "Before update... ptcl (PID: %d) mass is %e Msun\n", ptcl->PID, ptcl->Mass * mass_unit);
+        // fprintf(stderr, "Before update... ptcl (PID: %d) mass is %e Msun\n", ptcl->PID, ptcl->Mass * mass_unit);
         ptcl->update(recvbuf_old[i], EnzoProcessorNumber);
-        fprintf(stderr, "After update... ptcl (PID: %d) mass is %e Msun\n", ptcl->PID, ptcl->Mass * mass_unit);
+        // fprintf(stderr, "After update... ptcl (PID: %d) mass is %e Msun\n", ptcl->PID, ptcl->Mass * mass_unit);
     } // endfor i
     delete[] recvbuf_old;
 

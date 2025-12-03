@@ -859,8 +859,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     tg->ProcessorNumber = ProcessorNumber;
  
     /* Allocate space for new particles. */
- 
+    #ifdef INDIVIDUALSTAR
+    int MaximumNumberOfNewParticles = int(0.5*float(size)) + 10; // for star-by-star up to 0.08 Msun, I changed it from 0.25 to 0.5
+    #else
     int MaximumNumberOfNewParticles = int(0.25*float(size)) + 5;
+    #endif
 
     tg->AllocateNewParticles(MaximumNumberOfNewParticles);
  

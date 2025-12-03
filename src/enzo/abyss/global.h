@@ -88,6 +88,7 @@ extern double eta_tmp;
 extern double InitialNeighborRadius2;
 extern double EPS2;
 extern bool OnlyIrregularRoutine;
+extern int StoreTimeStep;
 
 
 // Few-Body

@@ -196,7 +196,8 @@ int writeParticle(double current_time, int outputNum) {
 	outputFile << NumPart << ", "; //
 	outputFile << outputTime << ", "; //
 	outputFile << outputTimeStep << ", "; //
-	outputFile << current_time << ""; //
+	outputFile << current_time << ", "; //
+	outputFile << AbyssCenter[0] << ", " << AbyssCenter[1] << ", " << AbyssCenter[2]; // AbyssCenter
 	outputFile << "\n";
     outputFile << std::left 
 			<< std::setw(width) << "PID"

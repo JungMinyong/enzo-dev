@@ -52,6 +52,7 @@ Worker *workers;
 void RootRoutines()
 {
 	outNum = 0;
+	int countSave = 0; // for StoreTimeStep
 	// int MinParticles = 5; // Minimum number of particles to start the nbody routine
 
 	std::cout << "Root processor is ready." << std::endl;
@@ -197,7 +198,13 @@ void RootRoutines()
 		// Time to communicate with enzo
 		if (global_time >= 1)
 		{	
-			// writeParticle(global_time, outNum++); // commented out by EW 2025.5.11
+			if (StoreTimeStep > 0){
+				countSave++;
+				if (countSave >= StoreTimeStep) {
+					countSave = 0;
+					writeParticle(global_time, outNum++);
+				}
+			}
 		
 			fprintf(stderr, "NbodyRoutine: %e (s)\n", nbody_durationtime*1e-9);
 			nbody_durationtime = 0;
