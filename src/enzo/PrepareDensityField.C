@@ -237,14 +237,14 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
 		/* Next, send data and process grids on the same processor. */
 
-		if (debug1) fprintf(stdout,"\nProc:%d 4-10\n", MyProcessorNumber); // by YS
+		// if (debug1) fprintf(stdout,"\nProc:%d 4-10\n", MyProcessorNumber); // by YS
 		CommunicationDirection = COMMUNICATION_SEND;
 		for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 			DepositParticleMassField(Grids[grid1], EvaluateTime, TRUE);
 
 		/* Finally, receive the data and process it. */
 
-		if (debug1) fprintf(stdout,"\nProc:%d 4-20\n", MyProcessorNumber); // by YS
+		// if (debug1) fprintf(stdout,"\nProc:%d 4-20\n", MyProcessorNumber); // by YS
 		CommunicationReceiveHandler(NULL,NULL,FALSE,NULL,TRUE);
 
 	} // ENDFOR grid batches

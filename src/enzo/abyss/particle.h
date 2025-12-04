@@ -536,6 +536,13 @@ struct Particle {
 		fprintf(file, "airr (3): %e, %e, %e\n", a_irr[0][3], a_irr[1][3], a_irr[2][3]);
 #endif
 		fprintf(file, "TimeStepIrr (Myr): %e, TimeStepReg (Myr): %e\n", TimeStepIrr*global_variable->EnzoTimeStep*1e4, TimeStepReg*global_variable->EnzoTimeStep*1e4);
+		/*
+		fprintf(file, "CurrentTimeIrr: %.17g, CurrentTimeReg: %.17g\n", CurrentTimeIrr, CurrentTimeReg);
+		fprintf(file, "TimeStepIrr: %.17g, TimeStepReg: %.17g\n", TimeStepIrr, TimeStepReg);
+		fprintf(file, "CurrentTimeIrr + TimeStepIrr: %.17g, CurrentTimeReg + TimeStepReg: %.17g\n", CurrentTimeIrr + TimeStepIrr, CurrentTimeReg + TimeStepReg);
+		fprintf(file, "NewCurrentBlockIrr * time_step: %.17g\n", NewCurrentBlockIrr * global_variable->time_step);
+		fprintf(file, "NextBlockIrr * time_step: %.17g\n", NextBlockIrr * global_variable->time_step);
+		*/
 	}
 
 #ifndef INDIVIDUALSTAR

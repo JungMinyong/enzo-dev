@@ -112,6 +112,20 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::un
         // print out particlelist
         // fprintf(stdout, "(IRR_FORCE) next_time: %e Myr\n", next_time*global_variable->EnzoTimeStep*1e4);
         fprintf(nbpout, "(IRR_FORCE) next_time: %e Myr\n", next_time*global_variable->EnzoTimeStep*1e4);
+        /*
+        fprintf(nbpout, "0th PID: %d. CurrentTimeIrr: %.17g, TimeStepIrr: %.17g\n", 
+                    particles[ThisLevelNode->ParticleList[0]].PID, 
+                    particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr, 
+                    particles[ThisLevelNode->ParticleList[0]].TimeStepIrr);
+        fprintf(nbpout, "CurrentTimeIrr + TimeStepIrr = %.17g\n", 
+                    particles[ThisLevelNode->ParticleList[0]].CurrentTimeIrr + particles[ThisLevelNode->ParticleList[0]].TimeStepIrr);
+        fprintf(nbpout, "NewCurrentBlockIrr: %llu\n", particles[ThisLevelNode->ParticleList[0]].NewCurrentBlockIrr);
+        fprintf(nbpout, "NextBlockIrr: %llu\n", particles[ThisLevelNode->ParticleList[0]].NextBlockIrr);
+        fprintf(nbpout, "NextBlockIrr * time_step: %.17g\n", 
+                    particles[ThisLevelNode->ParticleList[0]].NextBlockIrr*global_variable->time_step);
+        fprintf(nbpout, "NextBlockIrr: %.17g Myr\n", 
+                    particles[ThisLevelNode->ParticleList[0]].NextBlockIrr*global_variable->time_step*global_variable->EnzoTimeStep*1e4);
+        */
         fprintf(nbpout, "Irregular list size: %d\n", ThisLevelNode->ParticleList.size());
         fflush(nbpout);
         /*
@@ -252,17 +266,17 @@ bool IrregularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::un
             ptcl->CurrentTimeIrr = ptcl->CurrentBlockIrr * global_variable->time_step;
         }
 #ifdef DEBUG_ABYSS
-        // for (int i : ThisLevelNode->ParticleList)
-        // {
-        //     ptcl = &particles[i];
-        //     if (ptcl->CurrentTimeIrr != next_time)
-        //     {
-        //         // fprintf(stdout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
-        //         fprintf(nbpout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
-        //         fflush(nbpout);
-        //         assert(ptcl->CurrentTimeIrr == next_time);
-        //     }
-        // }
+        for (int i : ThisLevelNode->ParticleList)
+        {
+            ptcl = &particles[i];
+            if (ptcl->CurrentTimeIrr != next_time)
+            {
+                // fprintf(stdout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
+                fprintf(nbpout, "Error! PID: %d, CurrentTimeIrr: %e Myr, next_time: %e Myr\n", ptcl->PID, ptcl->CurrentTimeIrr * global_variable->EnzoTimeStep * 1e4, next_time * global_variable->EnzoTimeStep * 1e4);
+                fflush(nbpout);
+                assert(ptcl->CurrentTimeIrr == next_time);
+            }
+        }
         // std::cout << "Irregular update done" << std::endl;
         fprintf(nbpout, "Irregular update done\n");
         fflush(nbpout);

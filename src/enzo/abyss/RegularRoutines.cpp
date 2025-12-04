@@ -68,7 +68,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unor
 #endif
 
 #ifdef DEBUG
-    std::cout << "Regular force starts" << std::endl;
+    fprintf(nbpout, "Regular force starts\n");
 #endif
     // Regular force
     queue_scheduler.initialize(RegForce);
@@ -80,7 +80,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unor
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
 #ifdef DEBUG
-    std::cout << "Regular force ended" << std::endl;
+    fprintf(nbpout, "Regular force ended\n");
 #endif
 
 #ifdef NSIGHT
@@ -104,7 +104,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unor
 #endif
 
 #ifdef DEBUG
-    std::cout << "update regular starts" << std::endl;
+    fprintf(nbpout, "update regular starts\n");
 #endif
     // Update Regular
     queue_scheduler.initialize(RegUpdate);
@@ -116,7 +116,7 @@ void RegularRoutines(QueueScheduler &queue_scheduler, Worker *workers, std::unor
         queue_scheduler.waitQueue(0); // blocking wait
     } while (queue_scheduler.isComplete());
 #ifdef DEBUG
-    std::cout << "update regular ended" << std::endl;
+    fprintf(nbpout, "update regular ended\n");
 #endif
 
 #ifdef NSIGHT

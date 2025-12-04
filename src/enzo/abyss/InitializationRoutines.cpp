@@ -608,6 +608,12 @@ void InitializationOnCPU(QueueScheduler &queue_scheduler, Worker *workers) {
 
             if (ptcl->TimeStepIrr != 0) { // originally existing nbody particles
 
+                ptcl->CurrentTimeIrr = 0.;
+                ptcl->CurrentBlockIrr = 0;
+                ptcl->CurrentTimeReg = 0.;
+                ptcl->CurrentBlockReg = 0;
+                ptcl->NewCurrentBlockIrr = 0;
+
                 if (ptcl->RadiusOfNeighbor == 1e20)
                     ptcl->calculateTimeStepOnlyIrr();
                 else {
