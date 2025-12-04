@@ -197,7 +197,10 @@ int writeParticle(double current_time, int outputNum) {
 	outputFile << outputTime << ", "; //
 	outputFile << outputTimeStep << ", "; //
 	outputFile << current_time << ", "; //
-	outputFile << AbyssCenter[0] << ", " << AbyssCenter[1] << ", " << AbyssCenter[2]; // AbyssCenter
+	outputFile << std::setprecision(15)
+           << AbyssCenter[0] << ", "
+           << AbyssCenter[1] << ", "
+           << AbyssCenter[2]; // AbyssCenter with double accuracy
 	outputFile << "\n";
     outputFile << std::left 
 			<< std::setw(width) << "PID"

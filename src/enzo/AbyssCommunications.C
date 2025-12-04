@@ -357,7 +357,10 @@ int CommunicationToAbyss(LevelHierarchyEntry *LevelArray[], int level, Star *&Al
   //fprintf(stderr, "ENZO: Pos of x (%d) = ", MyProcessorNumber);
   for (auto &kv : LocalStarLookupMap) {
     Star *star = kv.second;
-    if (!star->ReturnAbyssFlag()) continue;
+    if (!star->ReturnAbyssFlag()) {
+      fprintf(stderr, "ENZO: Skip ID %d not in ABYSS pool.\n", star->ReturnID());
+      continue;
+    }
     if (star->ReturnNewStarFlag())
       sendbuf_new[count_new++].copyFrom(star);
     else

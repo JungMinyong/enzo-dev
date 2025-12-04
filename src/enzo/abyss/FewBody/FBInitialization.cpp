@@ -33,7 +33,7 @@ void Group::initialManager() {
 	// 1000000 in PeTar & ar.cxx
 	manager.step.initialSymplecticCofficients(-6); // Symplectic integrator order, should be even number
 	// -6 in PeTar & ar.cxx
-	manager.interrupt_detection_option = 2; // modify orbit or check interruption using modifyAndInterruptIter function
+	manager.interrupt_detection_option = 0; // modify orbit or check interruption using modifyAndInterruptIter function
 											// 0: turn off
 											// 1: modify the binary orbits based on detetion criterion
 											// 2. modify and also interrupt integrations
