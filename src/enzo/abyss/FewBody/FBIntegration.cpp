@@ -94,6 +94,18 @@ void Group::ARIntegration(double next_time) {
     }
 #endif    
     
+    if (next_time <= CurrentTime) {
+        fprintf(stderr, "ERROR in ARIntegration: next_time (%e) <= CurrentTime (%e)\n", next_time, CurrentTime);
+        fprintf(stderr, "PID: %d, NN: %d, rad: %e pc\n", groupCM->PID, groupCM->NumberOfNeighbor, sqrt(groupCM->RadiusOfNeighbor)*position_unit);
+        fprintf(stderr, "CurrentBlockIrr: %llu, CurrentBlockReg: %llu\n", groupCM->CurrentBlockIrr, groupCM->CurrentBlockReg);
+        fprintf(stderr, "next_time: %.17g, CurrentTime: %.17g\n", next_time, CurrentTime);
+        fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", groupCM->TimeBlockIrr, groupCM->TimeBlockReg);
+        fprintf(stderr, "CurrentBlockIrr * time_step: %.17g, CurrentBlockReg * time_step: %.17g\n", groupCM->CurrentBlockIrr*global_variable->time_step, groupCM->CurrentBlockReg*global_variable->time_step);
+        fprintf(stderr, "NextBlockIrr: %llu, NextBlockIrr * time_step: %.17g\n", groupCM->NextBlockIrr, groupCM->NextBlockIrr*global_variable->time_step);
+        fprintf(stderr, "NewCurrentBlockIrr: %llu, NewCurrentBlockIrr * time_step: %.17g\n", groupCM->NewCurrentBlockIrr, groupCM->NewCurrentBlockIrr*global_variable->time_step);
+        fprintf(stderr, "CurrentTimeIrr: %.17g, CurrentTimeReg: %.17g\n", groupCM->CurrentTimeIrr, groupCM->CurrentTimeReg);
+        fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
+    }
     assert(next_time > CurrentTime);
     // auto bin_interrupt = sym_int.integrateToTime(next_time*global_variable->EnzoTimeStep); // original AR integrator
 

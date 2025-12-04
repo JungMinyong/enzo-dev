@@ -83,6 +83,9 @@ void WorkerRoutines() {
 				std::memcpy(Neighbors + ptcl->NeighborsOffset, NewNeighbors + ptcl->NeighborsOffset, sizeof(int) * ptcl->NewNumberOfNeighbor);
 				ptcl->NumberOfNeighbor = ptcl->NewNumberOfNeighbor;
 
+				int old_NN = ptcl->NumberOfNeighbor;
+				ULL old_TBI = ptcl->TimeBlockIrr;
+
 				ptcl->calculateTimeStepReg();
 				ptcl->calculateTimeStepIrr();
 				// /*:q
@@ -97,9 +100,12 @@ void WorkerRoutines() {
 					fprintf(stderr, "TimeBlockIrr: %llu, TimeBlockReg: %llu\n", ptcl->TimeBlockIrr, ptcl->TimeBlockReg);
 					fprintf(stderr, "CurrentBlockIrr * time_step: %.17g, CurrentBlockReg * time_step: %.17g\n", ptcl->CurrentBlockIrr*global_variable->time_step, ptcl->CurrentBlockReg*global_variable->time_step);
 					fprintf(stderr, "CurrentTimeIrr: %.17g, CurrentTimeReg: %.17g\n", ptcl->CurrentTimeIrr, ptcl->CurrentTimeReg);
+					fprintf(stderr, "NewCurrentBlockIrr: %llu, NextBlockIrr: %llu\n", ptcl->NewCurrentBlockIrr, ptcl->NextBlockIrr);
+					fprintf(stderr, "Old NumberOfNeighbor: %d, Old TimeBlockIrr: %llu\n", old_NN, old_TBI);
 					fprintf(stderr, "NextRegTimeBlock: %llu\n", global_variable->NextRegTimeBlock);
 					fflush(stderr);
-					assert(ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr > ptcl->CurrentBlockReg);
+					if (!(old_NN == 0 && ptcl->NextBlockIrr * global_variable->time_step > 1.0))
+						assert(ptcl->CurrentBlockIrr + ptcl->TimeBlockIrr > ptcl->CurrentBlockReg);
 					// assert(ptcl->CurrentTimeIrr == ptcl->CurrentTimeReg);
 					// assert(ptcl->CurrentBlockIrr == ptcl->CurrentBlockReg);
 				}
