@@ -13,12 +13,12 @@ struct GlobalVariable {
 	double OldEnzoTimeStep;
 	double EnzoCurrentTime; // Current Enzo Time in Myr
 	// int NumberOfParticle;
-#ifdef COMOVE
-	double a_i;
-	double a_f;
-	double dadt_i;
-	double dadt_f;
-#endif
+// #ifdef COMOVE
+	double a_i = 1.0;
+	double a_f = 1.0;
+	double dadt_i = 0.0;
+	double dadt_f = 0.0;
+// #endif
 };
 
 #endif

@@ -1101,7 +1101,7 @@ int SendParticleToEnzo(Worker *workers) {
 
 #ifdef HUBBLE_FLOW
             // update ptcl->Position
-            ptcl->Position[dim] -= NbodyCOM[dim] * EnzoLengh;
+            ptcl->Position[dim] -= NbodyCOM[dim] * EnzoLength;
 #endif
 
 #ifdef COM_EVOLUTION
@@ -1318,7 +1318,8 @@ int SendParticleToEnzo(Worker *workers) {
         for (int dim = 0; dim < Dim; dim++) {
             ClusterPosition[dim] += NbodyCOM[dim];
         }
-        MPI_Send(ClusterPosition, 3, MPI_DOUBLE, 0, 700, inter_comm);
+        // MPI_Send(ClusterPosition, 3, MPI_DOUBLE, 0, 700, inter_comm);
+        MPI_Ibcast(ClusterPosition, 3, MPI_DOUBLE, NumberOfProcessors, inter_comm, &request);
 #else // NO HUBBLE_FLOW
         for (int dim = 0; dim < Dim; dim++) {
             NbodyCOM[dim] += ClusterPosition[dim];

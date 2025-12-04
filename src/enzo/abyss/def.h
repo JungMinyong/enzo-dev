@@ -69,5 +69,5 @@ typedef unsigned long long ULL;
 #define SEVNLowerMassLimit 2.2
 #define MassiveBlackHoleCutoff 100.0 // Msun
 
-#define COMOVE
-#define NO_HUBBLE_FLOW
+// #define COMOVE
+#define HUBBLE_FLOW
