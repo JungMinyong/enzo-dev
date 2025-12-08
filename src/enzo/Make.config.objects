@@ -1301,16 +1301,18 @@ POBJS_NBODY= \
         abyss/FewBody/FBTermination.o\
         abyss/FewBody/GroupAccelerationRoutine.o\
         abyss/StellarEvolution.o\
+
+POBJS_NBODY_CUDA= \
+        abyss/cuda/CalculateRegularAcceleration.o\
+        abyss/cuda/cuda_my_acceleration.o\
+        abyss/cuda/cuda_kernels.o\
+        ##abyss/cuda/cuda_routines.o\
+        ##abyss/cuda/CalculateAccelerationForAll.o\
+        #StarSplitter.o\
         #star_maker7_individual.o \
         #star_maker7_individual2.o \
         #star_maker3mom_individual.o\
         #star_maker3mom_individual2.o\
-        #abyss/cuda/CalculateRegularAcceleration.o\
-        #abyss/cuda/cuda_my_acceleration.o\
-        #abyss/cuda/cuda_kernels.o\        
-        #StarSplitter.o\
-        #abyss/cuda/cuda_routines.o\
-        #abyss/cuda/CalculateAccelerationForAll.o\
 
 
 

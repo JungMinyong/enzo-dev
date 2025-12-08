@@ -806,10 +806,15 @@
 
     ifeq ($(CONFIG_ECUDA),yes)
         ERROR_ECUDA = 0
-	    ASSEMBLE_ECUDA_DEFINES = -DECUDA
-	    ASSEMBLE_CUDA_LIBS = $(MACH_LIBS_CUDA)
-	    ASSEMBLE_CUDA_INCLUDES = $(MACH_LIBS_INCLUDES)
-	    OBJS_ECUDA_LIB = $(OBJS_ECUDA_ALL)
+        ASSEMBLE_CUDA_LIBS = $(MACH_LIBS_CUDA)
+        ASSEMBLE_CUDA_INCLUDES = $(MACH_LIBS_INCLUDES)
+        ifeq ($(CONFIG_NBODY),no)
+            ASSEMBLE_ECUDA_DEFINES = -DECUDA
+            OBJS_ECUDA_LIB = $(OBJS_ECUDA_ALL)
+        else
+            ASSEMBLE_ECUDA_DEFINES = 
+            OBJS_ECUDA_LIB = 
+        endif
     endif
 
     # Settings to tell the make system not to compile CUDA routines
@@ -840,11 +845,16 @@
     ifeq ($(CONFIG_NBODY),yes)
 
         ERROR_NBODY = 0
-	    ASSEMBLE_NBODY_DEFINES = -DNBODY -DDEBUG_ABYSS #-D GPU #-D SIMD #-D OMP
+	    ASSEMBLE_NBODY_DEFINES = -DNBODY -DDEBUG_ABYSS #-DCUDA #-D GPU #-D SIMD #-D OMP
         ASSEMBLE_NBODY_LIBS = $(MACH_LIBS_NBODY)
  	    ASSEMBLE_NBODY_INCLUDES = $(MACH_LIBS_INCLUDES)
         OBJS_NBODY_LIB = $(OBJS_NBODY_ALL)
         OBJS_NBODY = $(POBJS_NBODY)
+
+        ifeq ($(CONFIG_ECUDA),yes)
+            ASSEMBLE_NBODY_DEFINES += -DCUDA
+            OBJS_NBODY += $(POBJS_NBODY_CUDA)
+        endif
 
         ERROR_FEWBODY = 1
         ifeq ($(CONFIG_FEWBODY),yes)

@@ -19,5 +19,5 @@ make individualstar-yes new-yield-tables-yes memorypool-yes
 make nbody-yes fewbody-yes sevn-no
 #make show-config
 #make show-flags
-make -j8
+make -j16
 
