@@ -453,8 +453,7 @@ int ReceiveParticleFromAbyss(
 		auto it  = LocalStarLookupMap.find(recvbuf[i].ID);
     if (it != LocalStarLookupMap.end()) {
       recvbuf[i].copyTo(it->second);
-      fprintf(stderr, "ENZO: %d successfully copied on %d.\n",
-      recvbuf[i].ID, MyProcessorNumber);
+      // fprintf(stderr, "ENZO: %d successfully copied on %d.\n", recvbuf[i].ID, MyProcessorNumber);
     }
     else {
       fprintf(stderr, "ENZO: LocalStarLookupMap doesn't have %d on %d!\n",

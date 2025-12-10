@@ -1299,6 +1299,11 @@ int IndividualStarInterpolateLifetime(float &tau, const float &M,
 
   float Z = metallicity;
 
+  if (M < 1) { // table does not support M < 0.95
+    tau = huge_number;  // it should be huge_number times TimeUnits, but it doesn't matter;
+    return SUCCESS;
+  }
+
   if (mode == 3){ /// PopIII
     float temp_mass=0.0, temp_luminosity = 0.0;
     temp_mass = M;
@@ -1953,6 +1958,12 @@ int IndividualStarEvaluateInterpolation(float &y, float *ya[],
 int IndividualStarInterpolateLifetime(float   &tau,
                                       const int &i, const int &j,
                                       const float &M, const float &metallicity, const int &mode){
+
+  if (M < 1) { // table does not support M < 0.95
+    tau = huge_number;  // it should be huge_number times TimeUnits, but it doesn't matter;
+    return SUCCESS;
+  }
+                                      
   /* new function - oct 2016 - for new interplation methods */
   // convert metallicity to solar
   float Z = metallicity;
