@@ -100,8 +100,10 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   /* Update the star particle counters. */
 
+  TIMER_START("StarParticleFinalize:CommunicationUpdateStarParticleCount");
   CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
 				       TotalStarParticleCountPrevious);
+  TIMER_STOP("StarParticleFinalize:CommunicationUpdateStarParticleCount");
 
   /* Update position and velocity of star particles from the actual
      particles */
@@ -112,6 +114,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 // For normal stars, pos of stars are updated in EvolveLevel.C, UpdateParticlePositions() in Grid
 // For Abyss stars, pos of stars are **not** updated there, so we should not update pos in star class from Grid
 // For escaped stars, ThisStar->isABYSS is false but their position is stored in Star class not Grid.
+  TIMER_START("StarParticleFinalize:UpdatePositionVelocity");
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar){
 #if defined(NBODY) && defined(INDIVIDUALSTAR)
     if (!ThisStar->ReturnAbyssFlag() && !ThisStar->ReturnRemovedFlag()){
@@ -122,10 +125,12 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     ThisStar->UpdatePositionVelocity();
 #endif
   }
+  TIMER_STOP("StarParticleFinalize:UpdatePositionVelocity");
 //#endif
 
   // Apply individual star feedback if it exists
   if(STARMAKE_METHOD(INDIVIDUAL_STAR) && STARFEED_METHOD(INDIVIDUAL_STAR)){
+    TIMER_START("StarParticleFinalize:UpdateWhiteDwarfProperties");
     for(ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar){
       if(ThisStar->ReturnType() == -PARTICLE_TYPE_INDIVIDUAL_STAR_WD){
 
@@ -133,13 +138,18 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
       }
     }
+    TIMER_STOP("StarParticleFinalize:UpdateWhiteDwarfProperties");
 
+    TIMER_START("StarParticleFinalize:UpdateAveragedAbundances");
     UpdateAveragedAbundances(MetaData, LevelArray, level, AllStars);
+    TIMER_STOP("StarParticleFinalize:UpdateAveragedAbundances");
+    TIMER_START("StarParticleFinalize:IndividualStarParticleAddFeedback");
 #ifdef SEVN
     IndividualStarParticleAddFeedbackSEVN(Grids, MetaData, LevelArray, level, AllStars, AddedFeedback);
 #else
     IndividualStarParticleAddFeedback(Grids, MetaData, LevelArray, level, AllStars, AddedFeedback);
 #endif
+    TIMER_STOP("StarParticleFinalize:IndividualStarParticleAddFeedback");
   } else{
 
     /* Apply any stellar feedback onto the grids and add any gas to the
@@ -174,7 +184,9 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   /* Check for any stellar deaths */
 
+  TIMER_START("StarParticleFinalize:StarParticleDeath");
   StarParticleDeath(LevelArray, level, AllStars);
+  TIMER_STOP("StarParticleFinalize:StarParticleDeath");
 
   /*
      If the new particles are above a specified mass threshold,
@@ -189,10 +201,13 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   int mbh_particle_io_count = 0;
   std::map<int, Star*> StarLookupMap;
   OutputNow = FALSE;
+  TIMER_START("StarParticleFinalize:MakeStarsMap");
   if (AllStars) {
     StarLookupMap = AllStars->MakeStarsMap();
   }
+  TIMER_STOP("StarParticleFinalize:MakeStarsMap");
 
+  TIMER_START("StarParticleFinalize:ActivateNewStar");
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count++) {
     //TimeNow = LevelArray[ThisStar->ReturnLevel()]->GridData->ReturnTime();
 //    if (debug) {
@@ -233,6 +248,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     }
 
   } // ENDFOR stars
+  TIMER_STOP("StarParticleFinalize:ActivateNewStar");
 
   if (PopIIIOutputOnFeedback)
     OutputNow = CommunicationMaxValue(OutputNow);
