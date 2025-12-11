@@ -165,10 +165,10 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
 
   this->AllocateGrids(); 
 
-  printf("rho_sphere=%"GSYM", cs_sphere=%"GSYM", rho_medium=%"GSYM", p_medium=%"GSYM"\n",
+  printf("rho_sphere=%" GSYM", cs_sphere=%" GSYM", rho_medium=%" GSYM", p_medium=%" GSYM"\n",
 	 rho_sphere[0], cs_sphere[0], rho_medium, p_medium);
-  printf("r_sphere: %"GSYM"\n", r_sphere[0]);
-  printf("turb_sphere: %"GSYM"\n", turb_sphere[0]);
+  printf("r_sphere: %" GSYM"\n", r_sphere[0]);
+  printf("turb_sphere: %" GSYM"\n", turb_sphere[0]);
 
   // if use BE sphere, read in the BE sphere density profile
 
@@ -186,7 +186,7 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
         printf("BE sphere data not enough\n");
         return FAIL;
       }
-      sscanf(line, "%"FSYM" %"FSYM, &radius[i], &rho_be[i]);
+      sscanf(line, "%" FSYM" %" FSYM, &radius[i], &rho_be[i]);
     }
     printf("Reading ./be.dat finished.\n");
     fclose(fptr);
@@ -209,10 +209,10 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
         printf("SIT data not enough\n");
         return FAIL;
       }
-      sscanf(line, "%"GSYM" %"GSYM" %"GSYM" %"GSYM, &theta_sit[i], &R_sit[i], &phi_sit[i], &dphi_sit[i]);
+      sscanf(line, "%" GSYM" %" GSYM" %" GSYM" %" GSYM, &theta_sit[i], &R_sit[i], &phi_sit[i], &dphi_sit[i]);
     }
     fgets(line, MAX_LINE_LENGTH, fptr);
-    sscanf(line, "%"GSYM, &v_sit);
+    sscanf(line, "%" GSYM, &v_sit);
     fclose(fptr);
   }
 
@@ -260,7 +260,7 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
 	  FLOAT r = sqrt(pow(fabs(x-sphere_position[sphere][0]), 2) +
 		   pow(fabs(y-sphere_position[sphere][1]), 2) +
 		   pow(fabs(z-sphere_position[sphere][2]), 2) );
-	  r = max(r, 0.1*CellWidth[0][0]);
+	  r = MAX_VAL(r, 0.1*CellWidth[0][0]);
 
 	  if (r < r_sphere[sphere]) {
 
@@ -529,7 +529,7 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
     float VelocityNormalization = 1;
 // for level > 0 grids the CloudMachNumber passed in is actuall the Velocity normalization factor
     if (level > 0) VelocityNormalization = turb_sphere[0];
-    printf("Cloud Mach Number = %"GSYM" \n",turb_sphere[0]);
+    printf("Cloud Mach Number = %" GSYM" \n",turb_sphere[0]);
     for (i = 0; i < 3; i++) {
       for (n = 0; n < activesize; n++) {
 	TurbulenceVelocity[i][n] *= VelocityNormalization;

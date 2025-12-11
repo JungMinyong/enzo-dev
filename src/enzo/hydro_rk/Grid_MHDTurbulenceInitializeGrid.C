@@ -102,7 +102,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
   }
 
   if (debug) 
-    printf("Begin generating turbulent velocity spectrum... %"ISYM" %"ISYM" %"ISYM"\n", 
+    printf("Begin generating turbulent velocity spectrum... %" ISYM" %" ISYM" %" ISYM"\n", 
 	   GridDimension[0]-2*NumberOfGhostZones,
 	   GridDimension[1]-2*NumberOfGhostZones,
 	   GridDimension[2]-2*NumberOfGhostZones);
@@ -145,7 +145,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
         y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
         z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
         r = sqrt(pow(fabs(x-xc),2)+pow(fabs(y-yc),2)+pow(fabs(z-zc),2));
-        r = max(r, 0.1*CellWidth[0][0]);
+        r = MAX_VAL(r, 0.1*CellWidth[0][0]);
 
         if (r < rs) {
           BaryonField[iden ][n] = rho_medium;
@@ -204,7 +204,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
         y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
         z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
         r = sqrt(pow(fabs(x-xc),2)+pow(fabs(y-yc),2)+pow(fabs(z-zc),2));
-        r = max(r, 0.1*CellWidth[0][0]);
+        r = MAX_VAL(r, 0.1*CellWidth[0][0]);
 
         if (r < rs) {
           BaryonField[ivx][igrid] = TurbulenceVelocity[0][n];
@@ -225,7 +225,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
     }
 
   /* Initialize driving force field = efficiency * density * velocity / t_ff*/
-  printf("UseDrivingField =%"ISYM"\n",UseDrivingField);
+  printf("UseDrivingField =%" ISYM"\n",UseDrivingField);
   if (UseDrivingField) {
     float k1, k2, dk;
     k1 = 3.0;
@@ -273,7 +273,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
 	     RandomForcingField[0][igrid] = DrivingField[0][n]*DrivingEfficiency;
 	     RandomForcingField[1][igrid] = DrivingField[1][n]*DrivingEfficiency;
 	     RandomForcingField[2][igrid] = DrivingField[2][n]*DrivingEfficiency;
-	     //	     fprintf(stderr, "%"GSYM"\t",RandomForcingField[0][igrid]);
+	     //	     fprintf(stderr, "%" GSYM"\t",RandomForcingField[0][igrid]);
 	  }
 	}
       }

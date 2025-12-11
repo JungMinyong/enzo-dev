@@ -181,7 +181,7 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
   }
 
   if (NumberOfParticleAttributes > MAX_NUMBER_OF_PARTICLE_ATTRIBUTES){
-    ENZO_VFAIL("Number of necessary particle attributes (%"ISYM") greater than"
+    ENZO_VFAIL("Number of necessary particle attributes (%" ISYM") greater than"
               " MAX_NUMBER_OF_PARTICLE_ATTRIBUTES. Change and re-compile.\n",NumberOfParticleAttributes);
   }
 
@@ -199,7 +199,7 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
   mpi_rank = 0;
 #endif
 
-  sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
+  sprintf(pid, "%" TASK_TAG_FORMAT ISYM, MyProcessorNumber);
 
   strcpy(groupfilename, name);
   strcat(groupfilename, CPUSuffix);
@@ -237,7 +237,7 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
   strcpy(memorymapname, name);
   strcat(memorymapname, MemoryMapSuffix);
-  sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
+  sprintf(pid, "%" TASK_TAG_FORMAT ISYM, MyProcessorNumber);
 
   /* Read the memory map */
 
@@ -311,8 +311,8 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
     /* scan data hierarchy for maximum task number */
 
     while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL)
-      if (sscanf(line, "Task = %"ISYM, &dummy_int) > 0)
-	PreviousMaxTask = max(PreviousMaxTask, dummy_int);
+      if (sscanf(line, "Task = %" ISYM, &dummy_int) > 0)
+	PreviousMaxTask = MAX_VAL(PreviousMaxTask, dummy_int);
 
     rewind(fptr);
 
@@ -337,7 +337,7 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
 #ifdef SINGLE_HDF5_OPEN_ON_INPUT
 
-    fprintf(stderr, "OPEN %s on processor %"ISYM"\n", groupfilename, MyProcessorNumber);
+    fprintf(stderr, "OPEN %s on processor %" ISYM"\n", groupfilename, MyProcessorNumber);
 
 #ifdef USE_HDF5_INPUT_BUFFERING
     memory_increment = 1024*1024;

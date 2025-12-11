@@ -202,7 +202,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
   if (MyProcessorNumber == ProcessorNumber)
   {
 
-    sprintf(id, "%"GRID_TAG_FORMAT""ISYM, grid_id);
+    sprintf(id, "%" GRID_TAG_FORMAT ISYM, grid_id);
 
     strcpy(LogName, base_name);
     strcat(LogName, ".cubelog");
@@ -211,10 +211,10 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
     if (io_log) {
       log_fptr = fopen(LogName, "a");
       fprintf(log_fptr, "Grid_WriteCube\n");
-      fprintf(log_fptr, "  ID %"ISYM"  %s\n", grid_id, id);
+      fprintf(log_fptr, "  ID %" ISYM"  %s\n", grid_id, id);
       fprintf(log_fptr, "  BASE %s\n", base_name);
-      fprintf(log_fptr, "  Left  %12.4"FSYM"  %12.4"FSYM"  %12.4"FSYM"\n", GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
-      fprintf(log_fptr, "  Right %12.4"FSYM"  %12.4"FSYM"  %12.4"FSYM"\n", GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
+      fprintf(log_fptr, "  Left  %12.4" FSYM"  %12.4" FSYM"  %12.4" FSYM"\n", GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
+      fprintf(log_fptr, "  Right %12.4" FSYM"  %12.4" FSYM"  %12.4" FSYM"\n", GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
     }
 
   }
@@ -260,15 +260,15 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
       TCount = TCount + nop[ipe];
     }
 
-//    fprintf(stderr, "nop %"ISYM": %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM"\n", MyProcessorNumber,
+//    fprintf(stderr, "nop %" ISYM": %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM"\n", MyProcessorNumber,
 //      nop[0], nop[1], nop[2], nop[3], nop[4], nop[5], nop[6], nop[7]);
-//    fprintf(stderr, "pof %"ISYM": %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM"\n", MyProcessorNumber,
+//    fprintf(stderr, "pof %" ISYM": %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM" %" ISYM"\n", MyProcessorNumber,
 //      pof[0], pof[1], pof[2], pof[3], pof[4], pof[5], pof[6], pof[7]);
-//    fprintf(stderr, "total particle count: %"ISYM"\n", TCount);
+//    fprintf(stderr, "total particle count: %" ISYM"\n", TCount);
 
-    //  fprintf(stderr, "Call Barrier 1 on task %"ISYM", grid %"ISYM"\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 1 on task %" ISYM", grid %" ISYM"\n", MyProcessorNumber, grid_id);
     CommunicationBarrier();
-    //  fprintf(stderr, "Call Barrier 1 on task %"ISYM", grid %"ISYM" complete\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 1 on task %" ISYM", grid %" ISYM" complete\n", MyProcessorNumber, grid_id);
   }
 
 
@@ -366,7 +366,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
       if( file_id == h5_error ){my_exit(EXIT_FAILURE);}
 
     h5_status = H5Pclose(file_access_template);
-      fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+      fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     dset_id = H5Dcreate(file_id, FieldName, file_type_id, file_dsp_id, H5P_DEFAULT);
@@ -450,7 +450,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     h5_status = H5Fclose(file_id);
-      fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+      fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     delete temp;
@@ -464,9 +464,9 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
 
   if (MyProcessorNumber == ProcessorNumber)
   {
-    //  fprintf(stderr, "Call Barrier 2 on task %"ISYM", grid %"ISYM"\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 2 on task %" ISYM", grid %" ISYM"\n", MyProcessorNumber, grid_id);
     CommunicationBarrier();
-    //  fprintf(stderr, "Call Barrier 2 on task %"ISYM", grid %"ISYM" complete\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 2 on task %" ISYM", grid %" ISYM" complete\n", MyProcessorNumber, grid_id);
   }
 
 
@@ -506,7 +506,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         if( file_id == h5_error ){my_exit(EXIT_FAILURE);}
 
       h5_status = H5Pclose(file_access_template);
-        fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+        fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       dset_id = H5Dcreate(file_id, FieldName, file_type_id, file_dsp_id, H5P_DEFAULT);
@@ -599,7 +599,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       h5_status = H5Fclose(file_id);
-        fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+        fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       delete temperature;
@@ -648,7 +648,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
 			          GravitatingMassFieldParticlesLeftEdge[dim])/
 			         GravitatingMassFieldParticlesCellSize) - 1;
 
-        //  fprintf(stderr, "%"ISYM" %"ISYM" %10.4"FSYM" %10.4"FSYM" %10.4"FSYM" %10.4"FSYM"\n",
+        //  fprintf(stderr, "%" ISYM" %" ISYM" %10.4" FSYM" %10.4" FSYM" %10.4" FSYM" %10.4" FSYM"\n",
         //          GravStartIndex[dim], GravEndIndex[dim],
         //          GridLeftEdge[dim], GridRightEdge[dim],
         //          GravitatingMassFieldParticlesLeftEdge[dim],
@@ -681,7 +681,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         if( file_id == h5_error ){my_exit(EXIT_FAILURE);}
 
       h5_status = H5Pclose(file_access_template);
-        fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+        fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       dset_id = H5Dcreate(file_id, FieldName, file_type_id, file_dsp_id, H5P_DEFAULT);
@@ -769,7 +769,7 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       h5_status = H5Fclose(file_id);
-        fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+        fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     } // end of (if GravitatingMassFieldParticles != NULL)
@@ -784,9 +784,9 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
 
   if (MyProcessorNumber == ProcessorNumber)
   {
-    //  fprintf(stderr, "Call Barrier 3 on task %"ISYM", grid %"ISYM"\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 3 on task %" ISYM", grid %" ISYM"\n", MyProcessorNumber, grid_id);
     CommunicationBarrier();
-    //  fprintf(stderr, "Call Barrier 3 on task %"ISYM", grid %"ISYM" complete\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 3 on task %" ISYM", grid %" ISYM" complete\n", MyProcessorNumber, grid_id);
   }
 
 
@@ -890,18 +890,18 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(file_access_template);
-          fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(xfer_prop_list);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fflush(file_id, H5F_SCOPE_GLOBAL);
-          fprintf(log_fptr, "H5Fflush: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fflush: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fclose(file_id);
-          fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         } // if output cube active for this dim
@@ -991,18 +991,18 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(file_access_template);
-          fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(xfer_prop_list);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fflush(file_id, H5F_SCOPE_GLOBAL);
-          fprintf(log_fptr, "H5Fflush: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fflush: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fclose(file_id);
-          fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       } // if output cube active for this dim
@@ -1083,18 +1083,18 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(file_access_template);
-          fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(xfer_prop_list);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fflush(file_id, H5F_SCOPE_GLOBAL);
-          fprintf(log_fptr, "H5Fflush: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fflush: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fclose(file_id);
-          fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     delete temp;
@@ -1172,18 +1172,18 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(file_access_template);
-          fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(xfer_prop_list);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fflush(file_id, H5F_SCOPE_GLOBAL);
-          fprintf(log_fptr, "H5Fflush: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fflush: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fclose(file_id);
-          fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     delete tempint;
@@ -1259,18 +1259,18 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(file_access_template);
-          fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(xfer_prop_list);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fflush(file_id, H5F_SCOPE_GLOBAL);
-          fprintf(log_fptr, "H5Fflush: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fflush: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fclose(file_id);
-          fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
     delete [] tempint;
@@ -1352,18 +1352,18 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(file_access_template);
-          fprintf(log_fptr, "H5Pclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Pclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Pclose(xfer_prop_list);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fflush(file_id, H5F_SCOPE_GLOBAL);
-          fprintf(log_fptr, "H5Fflush: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fflush: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
         h5_status = H5Fclose(file_id);
-          fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
+          fprintf(log_fptr, "H5Fclose: %" ISYM"\n", h5_status);
           if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
 
       } // if output cube active for this attribute
@@ -1388,12 +1388,12 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
   {
     if (io_log) fclose(log_fptr);
 
-    //  fprintf(stderr, "Call Barrier 4 on task %"ISYM", grid %"ISYM"\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 4 on task %" ISYM", grid %" ISYM"\n", MyProcessorNumber, grid_id);
     CommunicationBarrier();
-    //  fprintf(stderr, "Call Barrier 4 on task %"ISYM", grid %"ISYM" complete\n", MyProcessorNumber, grid_id);
+    //  fprintf(stderr, "Call Barrier 4 on task %" ISYM", grid %" ISYM" complete\n", MyProcessorNumber, grid_id);
   }
 
-  //  fprintf(stderr, "Exit Grid_WriteCube on cpu %"ISYM"\n", MyProcessorNumber);
+  //  fprintf(stderr, "Exit Grid_WriteCube on cpu %" ISYM"\n", MyProcessorNumber);
 
 #endif
 

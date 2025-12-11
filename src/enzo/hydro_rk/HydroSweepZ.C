@@ -96,11 +96,11 @@ int HydroSweepZ(float **Prim, float **Flux3D, int GridDimension[],
 	  EOS(p, Prim[iden][igrid], Prim1[1][k], h, cs, dpdrho, dpde, EOSType, 0);
 	  Prim1[1][k] = p;
 	  // then compare pressures, not energies, if using floor
-	  Prim1[1][k] = max(Prim1[1][k], min_coeff*Prim1[0][k]*Prim1[0][k]*(Gamma-1.0));
+	  Prim1[1][k] = MAX_VAL(Prim1[1][k], min_coeff*Prim1[0][k]*Prim1[0][k]*(Gamma-1.0));
 	}
 	else
 	  // compare energies if using floor
-	  Prim1[1][k] = max(Prim1[1][k], min_coeff*Prim1[0][k]);
+	  Prim1[1][k] = MAX_VAL(Prim1[1][k], min_coeff*Prim1[0][k]);
 
 	Prim1[2][k] = vx;
 	Prim1[3][k] = vy;

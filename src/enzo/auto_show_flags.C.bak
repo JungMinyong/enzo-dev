@@ -1,0 +1,24 @@
+#include <stdio.h>
+void auto_show_flags(FILE *fp) {
+   fprintf (fp,"\n");
+   fprintf (fp,"CPP = /gpfs/home/vjl4366/intel/oneapi/compiler/2025.3/bin/icx\n");
+   fprintf (fp,"CC  = /gpfs/home/vjl4366/intel/oneapi/mpi/2021.17/bin/mpiicc\n");
+   fprintf (fp,"CXX = /gpfs/home/vjl4366/intel/oneapi/mpi/2021.17/bin/mpiicpx\n");
+   fprintf (fp,"FC  = /gpfs/home/vjl4366/intel/oneapi/mpi/2021.17/bin/mpiifx\n");
+   fprintf (fp,"F90 = /gpfs/home/vjl4366/intel/oneapi/mpi/2021.17/bin/mpiifx\n");
+   fprintf (fp,"LD  = /gpfs/home/vjl4366/intel/oneapi/mpi/2021.17/bin/mpiicpx\n");
+   fprintf (fp,"\n");
+   fprintf (fp,"DEFINES = -DLINUX -DH5_USE_16_API  -D__max_subgrids=100000 -D__max_baryons=60 -D__max_particle_attr=40 -D__max_cpu_per_node=64 -D__memory_pool_size=100000 -DINITS64 -DSMALL_INTS -DCONFIG_PINT_8 -DIO_64    -DUSE_MPI   -DCONFIG_PFLOAT_8 -DCONFIG_BFLOAT_8  -DUSE_HDF5_GROUPS   -DTRANSFER   -DNEW_GRID_IO -DFAST_SIB   -DNBODY -DDEBUG_ABYSS  -DAR_TTL -DAR_SLOWDOWN_TREE -DAR_SLOWDOWN_TIMESCALE -DFEWBODY     -DENZO_PERFORMANCE  -DUSE_GRACKLE  -DSAB -DINDIVIDUALSTAR -DNEWYIELDTABLES -DMEMORYPOOL\n");
+   fprintf (fp,"\n");
+   fprintf (fp,"INCLUDES = -I/home/vjl4366/pkg/hdf5-1.10.8/build/include  -I/appl/intel/oneapi/mpi/latest/include      -I/home/vjl4366/pkg/grackle-aeos/build/include  -I./abyss/SDAR/src     -I.\n");
+   fprintf (fp,"\n");
+   fprintf (fp,"CPPFLAGS = -P -traditional \n");
+   fprintf (fp,"CFLAGS   =  -O3 -g\n");
+   fprintf (fp,"CXXFLAGS = -std=c++11 -O3 -g\n");
+   fprintf (fp,"FFLAGS   = -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi -O3 -g\n");
+   fprintf (fp,"F90FLAGS = -fno-second-underscore -O3 -g\n");
+   fprintf (fp,"LDFLAGS  = -lstdc++ -lc -O3 -g\n");
+   fprintf (fp,"\n");
+   fprintf (fp,"LIBS     = -L/home/vjl4366/pkg/hdf5-1.10.8/build/lib -lhdf5 -lz  -L/appl/intel/oneapi/mpi/latest/lib          -L/home/vjl4366/pkg/grackle-aeos/build/lib -lgrackle -ifort -lifcore -lifport\n");
+   fprintf (fp,"\n");
+}

@@ -111,7 +111,7 @@ int rllf(float **FluxLine, float **priml, float **primr, int ActiveSize)
     ap = Max(0, lp_l, lp_r);
     am = Max(0, -lm_l, -lm_r);
     
-    a0 = max(ap, am) + priml[2][n];
+    a0 = MAX_VAL(ap, am) + priml[2][n];
 
     for (int field = 0; field < NEQ_HYDRO; field++) {
       FluxLine[field][n] = 0.5*(Fr[field] - a0 * Ur[field]);

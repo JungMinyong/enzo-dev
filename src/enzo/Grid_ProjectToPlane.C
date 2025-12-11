@@ -98,25 +98,25 @@ int grid::ProjectToPlane(FLOAT ProjectedFieldLeftEdge[],
   /* Find the start and stop indicies in the ProjectionDimension of this
      grid for the projected region. */
  
-  start = max(int((ProjectedFieldLeftEdge[ProjectionDimension] -
+  start = MAX_VAL(int((ProjectedFieldLeftEdge[ProjectionDimension] -
 	 	   GridLeftEdge[ProjectionDimension]) /
 	          CellWidth[ProjectionDimension][0]), 0);
-  stop  = min(int((ProjectedFieldRightEdge[ProjectionDimension] -
+  stop  = MIN_VAL(int((ProjectedFieldRightEdge[ProjectionDimension] -
 	           GridLeftEdge[ProjectionDimension]) /
 	          CellWidth[ProjectionDimension][0]),
 	      GridEndIndex[ProjectionDimension] -
 	      GridStartIndex[ProjectionDimension]);
  
-  LeftCellFraction = min(1.0 - ((ProjectedFieldLeftEdge[ProjectionDimension] -
+  LeftCellFraction = MIN_VAL(1.0 - ((ProjectedFieldLeftEdge[ProjectionDimension] -
 				 GridLeftEdge[ProjectionDimension]) /
 				CellWidth[ProjectionDimension][0] - start), 1);
-  RightCellFraction = min((ProjectedFieldRightEdge[ProjectionDimension] -
+  RightCellFraction = MIN_VAL((ProjectedFieldRightEdge[ProjectionDimension] -
 			   GridLeftEdge[ProjectionDimension]) /
 			  CellWidth[ProjectionDimension][0] - stop, 1);
  
   start += GridStartIndex[ProjectionDimension];
   stop += GridStartIndex[ProjectionDimension];
-  if (debug) printf("ProjectToGrid: start = %"ISYM"/%"ISYM" (%5.3"FSYM")  stop = %"ISYM"/%"ISYM" (%5.3"FSYM")  GridLeft/Right = %5.3"PSYM"/%5.3"PSYM"\n",
+  if (debug) printf("ProjectToGrid: start = %" ISYM"/%" ISYM" (%5.3" FSYM")  stop = %" ISYM"/%" ISYM" (%5.3" FSYM")  GridLeft/Right = %5.3" PSYM"/%5.3" PSYM"\n",
 		start, GridStartIndex[ProjectionDimension], LeftCellFraction,
 		stop, GridEndIndex[ProjectionDimension], RightCellFraction,
 		    GridLeftEdge[ProjectionDimension],
@@ -255,19 +255,19 @@ int grid::ProjectToPlane(FLOAT ProjectedFieldLeftEdge[],
       Offset[dim] = -nint((GridFarLeftEdge[dim] -
                            GravitatingMassFieldParticlesLeftEdge[dim])/
                           CellWidth[dim][0]);
-//      printf("Offset[%"ISYM"] = %"ISYM"  GFLE = %"GSYM"  GMFPLE = %"GSYM"\n", dim, Offset[dim],
+//      printf("Offset[%" ISYM"] = %" ISYM"  GFLE = %" GSYM"  GMFPLE = %" GSYM"\n", dim, Offset[dim],
 //	     GridFarLeftEdge[dim],GravitatingMassFieldParticlesLeftEdge[dim]);
     }
  
     /* Copy grid-like region of GravitatingMassFieldParticles to temp field. */
  
-    for (k = max(0,Offset[2]); k < GridDimension[2]-max(0,Offset[2]); k++)
-      for (j = max(0,Offset[1]); j < GridDimension[1]-max(0,Offset[1]); j++) {
-        bfindex = (k*GridDimension[1] + j)*GridDimension[0] + max(0,Offset[0]);
+    for (k = MAX_VAL(0,Offset[2]); k < GridDimension[2]-MAX_VAL(0,Offset[2]); k++)
+      for (j = MAX_VAL(0,Offset[1]); j < GridDimension[1]-MAX_VAL(0,Offset[1]); j++) {
+        bfindex = (k*GridDimension[1] + j)*GridDimension[0] + MAX_VAL(0,Offset[0]);
         dmindex = ((k - Offset[2])*GravitatingMassFieldParticlesDimension[1] +
                    (j - Offset[1]))*GravitatingMassFieldParticlesDimension[0] +
-		   (max(0, Offset[0]) - Offset[0]);
-	for (i = max(0,Offset[0]); i < GridDimension[0]-max(0,Offset[0]);
+		   (MAX_VAL(0, Offset[0]) - Offset[0]);
+	for (i = MAX_VAL(0,Offset[0]); i < GridDimension[0]-MAX_VAL(0,Offset[0]);
 	     i++, bfindex++, dmindex++)
 	  temp[bfindex] = GravitatingMassFieldParticles[dmindex];
       }
@@ -327,13 +327,13 @@ int grid::ProjectToPlane(FLOAT ProjectedFieldLeftEdge[],
   int PFStart[MAX_DIMENSION], PFStop[MAX_DIMENSION];
   for (dim = 0; dim < GridRank; dim++) {
  
-    PFStart[dim] = max(nint((GridLeftEdge[dim] - ProjectedFieldLeftEdge[dim])/
+    PFStart[dim] = MAX_VAL(nint((GridLeftEdge[dim] - ProjectedFieldLeftEdge[dim])/
 			     ProjectedFieldCellSize), 0);
-    PFStop[dim]  = min(nint((GridRightEdge[dim] - ProjectedFieldLeftEdge[dim])/
+    PFStop[dim]  = MIN_VAL(nint((GridRightEdge[dim] - ProjectedFieldLeftEdge[dim])/
 		 	     ProjectedFieldCellSize),
 		       ProjectedFieldDims[dim]) - 1;
   }
-  /*  printf("PFStart = %"ISYM" %"ISYM"  PFStop = %"ISYM" %"ISYM", a/bdim = %"ISYM"/%"ISYM" level = %"GSYM"\n",
+  /*  printf("PFStart = %" ISYM" %" ISYM"  PFStop = %" ISYM" %" ISYM", a/bdim = %" ISYM"/%" ISYM" level = %" GSYM"\n",
 	 PFStart[adim], PFStart[bdim], PFStop[adim], PFStop[bdim],
 	 adim, bdim, float(level)); */
  

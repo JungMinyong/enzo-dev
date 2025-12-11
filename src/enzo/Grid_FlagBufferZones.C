@@ -189,7 +189,7 @@ int grid::FlagBufferZones()
 	      RefineRegionRightEdge[2])
 	    FlaggingField[Index] = 0;
 	
-	FlaggingField[Index] = min(FlaggingField[Index], 1);
+	FlaggingField[Index] = MIN_VAL(FlaggingField[Index], 1);
       }
     }
  
@@ -209,7 +209,7 @@ int grid::FlagBufferZones()
     size *= GridEndIndex[dim] - GridStartIndex[dim] + 1;
  
   if (debug1)
-    printf("FlagBufferZones: NumberOfFlaggedCells = %"ISYM" (%.1"FSYM"%%)\n",
+    printf("FlagBufferZones: NumberOfFlaggedCells = %" ISYM" (%.1" FSYM"%%)\n",
 	   NumberOfFlaggedCells, float(NumberOfFlaggedCells)*100.0/
 	   float(size));
  

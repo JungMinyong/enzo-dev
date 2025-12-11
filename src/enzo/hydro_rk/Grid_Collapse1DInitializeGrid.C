@@ -68,13 +68,13 @@ int grid::Collapse1DInitializeGrid(FLOAT r_sphere,
         printf("BE sphere data not enough\n");
         return FAIL;
       }
-      sscanf(line, "%"GSYM" %"GSYM, &radius[i], &rho_be[i]);
+      sscanf(line, "%" GSYM" %" GSYM, &radius[i], &rho_be[i]);
     }
     fclose(fptr);
   }
 
 
-  printf("rho_sphere=%"GSYM", cs_sphere=%"GSYM", rho_medium=%"GSYM", p_medium=%"GSYM"\n",
+  printf("rho_sphere=%" GSYM", cs_sphere=%" GSYM", rho_medium=%" GSYM", p_medium=%" GSYM"\n",
 	 rho_sphere, cs_sphere, rho_medium, p_medium);
   
   float rho, vel[3], eint, etot, h, cs, dpdrho, dpde, v2;
@@ -124,7 +124,7 @@ int grid::Collapse1DInitializeGrid(FLOAT r_sphere,
     } // if (r < r_sphere)
     /*else {
       if (sphere_type == 3) {
-	rho = max(rho_sphere/14.0*exp(-10.0*(r-r_sphere)/r_sphere), rho_medium);
+	rho = MAX_VAL(rho_sphere/14.0*exp(-10.0*(r-r_sphere)/r_sphere), rho_medium);
 	EOS(p_medium, rho, eint, h, cs, dpdrho, dpde, 0, 1);
       }
       }*/

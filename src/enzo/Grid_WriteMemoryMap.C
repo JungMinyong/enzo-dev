@@ -36,7 +36,7 @@ int grid::WriteMemoryMap(FILE *fptr, char *base_name, int grid_id)
 
   if (MyProcessorNumber == ROOT_PROCESSOR) {
 
-    fprintf(fptr, "Grid %8"ISYM"  PN %8"ISYM"  Memory %16"ISYM"\n", grid_id, ProcessorNumber, TaskMemory[ProcessorNumber]);
+    fprintf(fptr, "Grid %8" ISYM"  PN %8" ISYM"  Memory %16" ISYM"\n", grid_id, ProcessorNumber, TaskMemory[ProcessorNumber]);
 
   }
 

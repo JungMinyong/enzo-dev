@@ -149,7 +149,7 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
     AddParticleAttributes = TRUE;
   }
   if (NumberOfParticleAttributes > MAX_NUMBER_OF_PARTICLE_ATTRIBUTES){
-    ENZO_VFAIL("Number of necessary particle attributes (%"ISYM") greater than"
+    ENZO_VFAIL("Number of necessary particle attributes (%" ISYM") greater than"
               " MAX_NUMBER_OF_PARTICLE_ATTRIBUTES. Change and re-compile.\n",NumberOfParticleAttributes);
   }
 
@@ -203,7 +203,7 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
   strcat(memorymapname, MemoryMapSuffix);
 
 #ifdef USE_MPI
-  sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
+  sprintf(pid, "%" TASK_TAG_FORMAT ISYM, MyProcessorNumber);
 #endif
 
   /* Read the memory map */

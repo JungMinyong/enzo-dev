@@ -84,7 +84,7 @@ int grid::SourceTerms(float **dU, float min_coeff)
 	      dtdz*(BaryonField[Vel3Num][kp1] - BaryonField[Vel3Num][km1]);
 	    rho = BaryonField[DensNum][igrid];
 	    eint = BaryonField[GENum][igrid];
-	    eint = max(eint, min_coeff*rho);
+	    eint = MAX_VAL(eint, min_coeff*rho);
 	    EOS(p, rho, eint, h, cs, dpdrho, dpde, EOSType, 2);
 	    dU[iEint][n] -= p*divVdt;
 	  }

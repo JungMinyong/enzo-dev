@@ -177,43 +177,43 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
     if (sscanf(line, "TurbulenceSimulationMagnetic3Name = %s", dummy) ==1)
       TurbulenceSimulationMagneticNames[2] = dummy;
 
-    ret += sscanf(line, "TurbulenceSimulationInitialTemperature = %"FSYM,
+    ret += sscanf(line, "TurbulenceSimulationInitialTemperature = %" FSYM,
                   &TurbulenceSimulationInitialTemperature);
-    ret += sscanf(line, "TurbulenceSimulationInitialDensity = %"FSYM,
+    ret += sscanf(line, "TurbulenceSimulationInitialDensity = %" FSYM,
                   &TurbulenceSimulationInitialDensity);
-    ret += sscanf(line, "TurbulenceSimulationSoundSpeed = %"FSYM,
+    ret += sscanf(line, "TurbulenceSimulationSoundSpeed = %" FSYM,
                   &TurbulenceSimulationSoundSpeed);
-    ret += sscanf(line, "TurbulenceSimulationInitialPressure = %"FSYM,
+    ret += sscanf(line, "TurbulenceSimulationInitialPressure = %" FSYM,
                   &TurbulenceSimulationInitialPressure);
-    ret += sscanf(line, "TurbulenceSimulationInitialDensityPerturbationAmplitude = %"FSYM,
+    ret += sscanf(line, "TurbulenceSimulationInitialDensityPerturbationAmplitude = %" FSYM,
                   &TurbulenceSimulationInitialDensityPerturbationAmplitude);
-    ret += sscanf(line, "TurbulenceSimulationNumberOfInitialGrids = %"ISYM,
+    ret += sscanf(line, "TurbulenceSimulationNumberOfInitialGrids = %" ISYM,
                   &TurbulenceSimulationNumberOfInitialGrids);
-    ret += sscanf(line, "TurbulenceSimulationSubgridsAreStatic = %"ISYM,
+    ret += sscanf(line, "TurbulenceSimulationSubgridsAreStatic = %" ISYM,
                   &TurbulenceSimulationSubgridsAreStatic);
  
-    if (sscanf(line, "TurbulenceSimulationGridLeftEdge[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridLeftEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
+    if (sscanf(line, "TurbulenceSimulationGridLeftEdge[%" ISYM"]", &gridnum) > 0)
+      ret += sscanf(line, "TurbulenceSimulationGridLeftEdge[%" ISYM"] = %" PSYM" %" PSYM" %" PSYM,
                     &gridnum, &TurbulenceSimulationGridLeftEdge[gridnum][0],
                     &TurbulenceSimulationGridLeftEdge[gridnum][1],
                     &TurbulenceSimulationGridLeftEdge[gridnum][2]);
-    if (sscanf(line, "TurbulenceSimulationGridRightEdge[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridRightEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
+    if (sscanf(line, "TurbulenceSimulationGridRightEdge[%" ISYM"]", &gridnum) > 0)
+      ret += sscanf(line, "TurbulenceSimulationGridRightEdge[%" ISYM"] = %" PSYM" %" PSYM" %" PSYM,
                     &gridnum,
 		    &TurbulenceSimulationGridRightEdge[gridnum][0],
                     &TurbulenceSimulationGridRightEdge[gridnum][1],
                     &TurbulenceSimulationGridRightEdge[gridnum][2]);
-    if (sscanf(line, "TurbulenceSimulationGridDimension[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridDimension[%"ISYM"] = %"ISYM" %"ISYM" %"ISYM,
+    if (sscanf(line, "TurbulenceSimulationGridDimension[%" ISYM"]", &gridnum) > 0)
+      ret += sscanf(line, "TurbulenceSimulationGridDimension[%" ISYM"] = %" ISYM" %" ISYM" %" ISYM,
                     &gridnum,
 		    &TurbulenceSimulationGridDimension[gridnum][0],
                     &TurbulenceSimulationGridDimension[gridnum][1],
                     &TurbulenceSimulationGridDimension[gridnum][2]);
-    if (sscanf(line, "TurbulenceSimulationGridLevel[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridLevel[%"ISYM"] = %"ISYM,
+    if (sscanf(line, "TurbulenceSimulationGridLevel[%" ISYM"]", &gridnum) > 0)
+      ret += sscanf(line, "TurbulenceSimulationGridLevel[%" ISYM"] = %" ISYM,
                     &gridnum, &TurbulenceSimulationGridLevel[gridnum]);
                                                                                 
-    if( sscanf(line, "TurbulenceSimulationInitialMagneticField = %"PSYM" %"PSYM" %"PSYM,
+    if( sscanf(line, "TurbulenceSimulationInitialMagneticField = %" PSYM" %" PSYM" %" PSYM,
 		  TurbulenceSimulationInitialMagneticField,
 		  TurbulenceSimulationInitialMagneticField+1,
 	       TurbulenceSimulationInitialMagneticField+2) > 0){
@@ -299,7 +299,7 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
  
   if (RandomForcing)
     if (MyProcessorNumber == ROOT_PROCESSOR)
-      printf("RandomForcingEdot: %"GSYM"\n", RandomForcingEdot);
+      printf("RandomForcingEdot: %" GSYM"\n", RandomForcingEdot);
  
   /* -------------------------------------------------------------------- */
   /* Generate the root grid and set-up the hierarchy. */
@@ -375,12 +375,12 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
      ATTENTION: printf %s on sun fails if passed a NULL pointer. */
  
   if (MyProcessorNumber == ROOT_PROCESSOR) {
-    fprintf(Outfptr, "TurbulenceSimulationInitialDensity   = %"FSYM"\n\n",
+    fprintf(Outfptr, "TurbulenceSimulationInitialDensity   = %" FSYM"\n\n",
 	    TurbulenceSimulationInitialTemperature);
     fprintf(Outfptr, "TurbulenceSimulationInitialDensityPerturbationAmplitude = %f\n\n", 
 	    TurbulenceSimulationInitialDensityPerturbationAmplitude);
  
-    fprintf(Outfptr, "TurbulenceSimulationInitialTemperature   = %"FSYM"\n\n",
+    fprintf(Outfptr, "TurbulenceSimulationInitialTemperature   = %" FSYM"\n\n",
 	    TurbulenceSimulationInitialTemperature);
     fprintf(Outfptr, "TurbulenceSimulationInitialPressure   = %f\n\n", 
 	    TurbulenceSimulationInitialPressure);
@@ -465,30 +465,30 @@ int TurbulenceSimulationReInitialize(HierarchyEntry *TopGrid,
   }
  
   if (MyProcessorNumber == ROOT_PROCESSOR)
-    printf("TurbulenceSimulation: ReInitializing grid %"ISYM"\n", gridnum);
+    printf("TurbulenceSimulation: ReInitializing grid %" ISYM"\n", gridnum);
  
   /* If there is more than one grid, add the grid number to the name. */
  
   if (TurbulenceSimulationNumberOfInitialGrids > 1) {
  
     if (TurbulenceSimulationDensityName)
-      sprintf(DensityName = new char[MAX_LINE_LENGTH], "%s.%1"ISYM,
+      sprintf(DensityName = new char[MAX_LINE_LENGTH], "%s.%1" ISYM,
 	      TurbulenceSimulationDensityName, gridnum);
     if (TurbulenceSimulationTotalEnergyName)
-      sprintf(TotalEnergyName = new char[MAX_LINE_LENGTH], "%s.%1"ISYM,
+      sprintf(TotalEnergyName = new char[MAX_LINE_LENGTH], "%s.%1" ISYM,
 	      TurbulenceSimulationTotalEnergyName, gridnum);
     if (TurbulenceSimulationGasPressureName)
-      sprintf(GasPressureName = new char[MAX_LINE_LENGTH], "%s.%1"ISYM,
+      sprintf(GasPressureName = new char[MAX_LINE_LENGTH], "%s.%1" ISYM,
 	      TurbulenceSimulationGasPressureName, gridnum);
     if (TurbulenceSimulationGasEnergyName)
-      sprintf(GasEnergyName = new char[MAX_LINE_LENGTH], "%s.%1"ISYM,
+      sprintf(GasEnergyName = new char[MAX_LINE_LENGTH], "%s.%1" ISYM,
 	      TurbulenceSimulationGasEnergyName, gridnum);
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
       if (TurbulenceSimulationVelocityNames[dim])
-	sprintf(VelocityNames[dim] = new char[MAX_LINE_LENGTH], "%s.%1"ISYM,
+	sprintf(VelocityNames[dim] = new char[MAX_LINE_LENGTH], "%s.%1" ISYM,
 		TurbulenceSimulationVelocityNames[dim], gridnum);
       if (TurbulenceSimulationRandomForcingNames[dim])
-	sprintf(RandomForcingNames[dim] = new char[MAX_LINE_LENGTH], "%s.%1"ISYM,
+	sprintf(RandomForcingNames[dim] = new char[MAX_LINE_LENGTH], "%s.%1" ISYM,
 		TurbulenceSimulationRandomForcingNames[dim], gridnum);
     }
  

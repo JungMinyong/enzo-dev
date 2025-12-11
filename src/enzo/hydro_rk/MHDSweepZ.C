@@ -99,7 +99,7 @@ int MHDSweepZ(float **Prim, float **Flux3D, int GridDimension[],
 	  Prim1[1][k] = p;
 	} 
 
-	Prim1[1][k] = max(Prim1[1][k], min_coeff*rho);
+	Prim1[1][k] = MAX_VAL(Prim1[1][k], min_coeff*rho);
 	Prim1[0][k] = rho;
 	Prim1[2][k] = vx;
 	Prim1[3][k] = vy;

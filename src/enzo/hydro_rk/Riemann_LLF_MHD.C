@@ -150,10 +150,10 @@ int llf_mhd(float **FluxLine, float **priml, float **primr, float **prim, int Ac
 
     ap = Max(Zero, lp_l, lp_r);
     am = Max(Zero, -lm_l, -lm_r);
-    //ap = max(Zero, lp_r);
-    //am = max(Zero, -lm_l);
+    //ap = MAX_VAL(Zero, lp_r);
+    //am = MAX_VAL(Zero, -lm_l);
 
-    float a0 = max(ap, am);
+    float a0 = MAX_VAL(ap, am);
 
     for (int field = 0; field < NEQ_MHD-1; field++) {
       FluxLine[field][n] = 0.5*(Fl[field]+Fr[field]-a0*(Ur[field]-Ul[field]));
@@ -165,14 +165,14 @@ int llf_mhd(float **FluxLine, float **priml, float **primr, float **prim, int Ac
     FluxLine[iPhi][n] *= (C_h*C_h);
 
     /*if (isnan(FluxLine[iD][n])) {
-      printf("F[iD] huge at n=%"ISYM": fl[iS1]=%lf, fr[iS1]=%lf, Ul[iS1]=%lf, Ur[iS1]=%lf, ap=%lf, am = %lf\n",
+      printf("F[iD] huge at n=%" ISYM": fl[iS1]=%lf, fr[iS1]=%lf, Ul[iS1]=%lf, Ur[iS1]=%lf, ap=%lf, am = %lf\n",
 	     n, Fl[iD], Fr[iD], Ul[iD], Ur[iD], ap, am);
-      printf("lp_l=%lf, lm_l=%lf, lp_r=%lf, lm_r=%lf, pl=%"GSYM", pr=%"GSYM", cfr=%"GSYM", temp2=%"GSYM", 4.0csca=%"GSYM"\n",
+      printf("lp_l=%lf, lm_l=%lf, lp_r=%lf, lm_r=%lf, pl=%" GSYM", pr=%" GSYM", cfr=%" GSYM", temp2=%" GSYM", 4.0csca=%" GSYM"\n",
 	     lp_l, lm_l, lp_r, lm_r, pl, pr, cf, temp1*temp1, 4.0*cs2*ca2);
-      printf("cs2=%"GSYM", ca2=%"GSYM", B2/rho=%"GSYM"\n", cs2, ca2, B2/rho);
-      printf("priml: rho = %"GSYM", eint = %"GSYM", vx = %"GSYM", vy = %"GSYM", vz = %"GSYM"\n",
+      printf("cs2=%" GSYM", ca2=%" GSYM", B2/rho=%" GSYM"\n", cs2, ca2, B2/rho);
+      printf("priml: rho = %" GSYM", eint = %" GSYM", vx = %" GSYM", vy = %" GSYM", vz = %" GSYM"\n",
 	     priml[0][n], priml[1][n], priml[2][n], priml[3][n], priml[4][n]);
-      printf("primr: rho = %"GSYM", eint = %"GSYM", vx = %"GSYM", vy = %"GSYM", vz = %"GSYM"\n",
+      printf("primr: rho = %" GSYM", eint = %" GSYM", vx = %" GSYM", vy = %" GSYM", vz = %" GSYM"\n",
 	     primr[0][n], primr[1][n], primr[2][n], primr[3][n], primr[4][n]);
       return FAIL;
       }*/

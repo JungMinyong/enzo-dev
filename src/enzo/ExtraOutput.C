@@ -77,13 +77,13 @@ int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *
 
     if( WriteOut ){
         fflush(stdout);
-        fprintf(stderr,"Extra Output ED%02"ISYM"_%04d %s\n",output_flag,output_number[output_flag],message);
+        fprintf(stderr,"Extra Output ED%02" ISYM"_%04d %s\n",output_flag,output_number[output_flag],message);
         LevelHierarchyEntry *Temp2 = LevelArray[0];
         while (Temp2->NextGridThisLevel != NULL)
           Temp2 = Temp2->NextGridThisLevel; /* ugh: find last in linked list */
         //#ifdef USE_HDF5_GROUPS
-        sprintf(MetaData->ExtraDumpName,"Extra%02"ISYM"_",output_flag);
-        sprintf(MetaData->ExtraDumpDir,"ED%02"ISYM"_",output_flag);
+        sprintf(MetaData->ExtraDumpName,"Extra%02" ISYM"_",output_flag);
+        sprintf(MetaData->ExtraDumpDir,"ED%02" ISYM"_",output_flag);
         if (Group_WriteAllData(MetaData->ExtraDumpName, output_number[output_flag]++,
                    Temp2->GridHierarchyEntry, *MetaData, Exterior,
 #ifdef TRANSFER

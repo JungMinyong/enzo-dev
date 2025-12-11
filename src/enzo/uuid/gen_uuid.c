@@ -36,20 +36,20 @@
  * Force inclusion of SVID stuff since we need it if we're compiling in
  * gcc-wall wall mode
  */
-#define _SVID_SOURCE
+// Feature test macros must be defined before any system headers
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
+#endif
 
 #ifdef _WIN32
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
 #define UUID MYUUID
 #endif
+
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
+#include <stdlib.h>   // srand, rand
+#include <unistd.h>   // getpid, getuid, read, close, ftruncate
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -94,9 +94,10 @@
 #include "uuidd.h"
 
 #ifdef HAVE_SRANDOM
-#define srand(x) 	srandom(x)
-#define rand() 		random()
+#define srand(x)  srandom(x)
+#define rand()    random()
 #endif
+
 
 #ifdef TLS
 #define THREAD_LOCAL static TLS

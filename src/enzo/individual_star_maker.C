@@ -117,7 +117,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
   if (! this->isLocal()) return SUCCESS;
 
   if ( this->dtFixed == 0.0){
-    printf("DT EQUAL TO ZERO\N");
+    printf("DT EQUAL TO ZERO\n");
     return FAIL;
   }
 
@@ -337,12 +337,12 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
               // stop at grid edge if cell near boundary
               istart = iend = jstart = jend = kstart = kend = 0;
               if (integer_sep > 0){
-                istart   = min( i - ibuff             , integer_sep);
-                iend     = min( (nx - ibuff - 1 ) - i, integer_sep);
-                jstart   = min( j - ibuff             , integer_sep);
-                jend     = min( (ny - ibuff - 1 ) - j, integer_sep);
-                kstart   = min( k - ibuff             , integer_sep);
-                kend     = min( (nz - ibuff - 1 ) - k, integer_sep);
+                istart   = MIN_VAL( i - ibuff             , integer_sep);
+                iend     = MIN_VAL( (nx - ibuff - 1 ) - i, integer_sep);
+                jstart   = MIN_VAL( j - ibuff             , integer_sep);
+                jend     = MIN_VAL( (ny - ibuff - 1 ) - j, integer_sep);
+                kstart   = MIN_VAL( k - ibuff             , integer_sep);
+                kend     = MIN_VAL( (nz - ibuff - 1 ) - k, integer_sep);
               }
 
               // loop through cells and add up total amount of mass available for SF
@@ -395,7 +395,7 @@ int grid::individual_star_maker(float *dm, float *temp, int *nmax, float *mu, in
               if( bmass*IndividualStarMassFraction > IndividualStarSFGasMassThreshold ){
                 // if true, we can try and form stars. compute probability that this mass will
                 // form stars this timestep
-                star_fraction  = min(StarMakerMassEfficiency*(this->dtFixed)/tdyn, 1.0);
+                star_fraction  = MIN_VAL(StarMakerMassEfficiency*(this->dtFixed)/tdyn, 1.0);
                 mass_to_stars  = star_fraction * bmass;
 
                 pstar          = mass_to_stars / IndividualStarSFGasMassThreshold;
@@ -1008,7 +1008,7 @@ float SampleKroupaIMF() {
   if (xx < k1/k2) {
     mass = POW(0.5*c1*xx*k2 + POW(mlow, c1), 1.0/c1);
   } else {
-    mass = POW(c2*(xx*k2 - k1) + max(0.5, mlow)**c2, 1.0/c2);
+    mass = POW(c2*(xx*k2 - k1) + MAX_VAL(0.5, mlow)**c2, 1.0/c2);
   }
 
   IndividualStarIMFCalls++;

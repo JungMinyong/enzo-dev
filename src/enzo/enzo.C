@@ -440,7 +440,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 #ifdef FLOW_TRACE
   char pid[MAX_TASK_TAG_SIZE];
   char flow_trace_log[MAX_NAME_LENGTH];
-  sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
+  sprintf(pid, "%" TASK_TAG_FORMAT ISYM, MyProcessorNumber);
   strcpy(flow_trace_log, "FlowTrace.");
   strcat(flow_trace_log, pid);
   flow_trace_fptr = fopen( flow_trace_log, "w" );
@@ -473,10 +473,10 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     counter[i] = 0;
   }
  
-  sprintf(perfname, "perfdata_%"ISYM".%"ISYM, NumberOfProcessors, MyProcessorNumber);
+  sprintf(perfname, "perfdata_%" ISYM".%" ISYM, NumberOfProcessors, MyProcessorNumber);
   perfname[strlen(perfname)] = '\0';
  
-  sprintf(tracename, "trace_%"ISYM".%"ISYM, NumberOfProcessors, MyProcessorNumber);
+  sprintf(tracename, "trace_%" ISYM".%" ISYM, NumberOfProcessors, MyProcessorNumber);
   tracename[strlen(tracename)] = '\0';
 
 #ifdef MPI_TRACE
@@ -490,7 +490,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 #endif /* MPI_INSTRUMENTATION */
 
 #ifdef MEM_TRACE
-  sprintf(memtracename, "mem_%"ISYM".%"ISYM, NumberOfProcessors, MyProcessorNumber);
+  sprintf(memtracename, "mem_%" ISYM".%" ISYM, NumberOfProcessors, MyProcessorNumber);
   memtracename[strlen(memtracename)] = '\0';
   memtracePtr = fopen(memtracename, "w");
   traceMEM = TRUE;
@@ -878,7 +878,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     }
   }
   } catch(EnzoFatalException&) {
-    fprintf(stderr, "Failure reported on processor %"ISYM"\n",
+    fprintf(stderr, "Failure reported on processor %" ISYM"\n",
                 MyProcessorNumber);
     CommunicationAbort(EXIT_FAILURE);
   }
@@ -904,38 +904,38 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   fprintf(filePtr, "Waiting communication time:          %12.6e\n", WaitComm);
  
   fprintf(filePtr, "\n\n");
-  fprintf(filePtr, "Transferring region       (%8"ISYM" times) %12.6e\n", counter[5],  timer[5]);
-  fprintf(filePtr, "Sending particles         (%8"ISYM" times) %12.6e\n", counter[7],  timer[7]);
-  fprintf(filePtr, "Transferring particles    (%8"ISYM" times) %12.6e\n", counter[9],  timer[9]);
-  fprintf(filePtr, "Transferring Fluxes       (%8"ISYM" times) %12.6e\n", counter[12], timer[12]);
-  fprintf(filePtr, "ShareGrids                (%8"ISYM" times) %12.6e\n", counter[13], timer[13]);
-  fprintf(filePtr, "Transpose                 (%8"ISYM" times) %12.6e\n", counter[14], timer[14]);
-  fprintf(filePtr, "BroadcastValue            (%8"ISYM" times) %12.6e\n", counter[15], timer[15]);
-  fprintf(filePtr, "MinValue                  (%8"ISYM" times) %12.6e\n", counter[16], timer[16]);
-  fprintf(filePtr, "UpdateStarParticleCount   (%8"ISYM" times) %12.6e\n", counter[11], timer[11]);
+  fprintf(filePtr, "Transferring region       (%8" ISYM" times) %12.6e\n", counter[5],  timer[5]);
+  fprintf(filePtr, "Sending particles         (%8" ISYM" times) %12.6e\n", counter[7],  timer[7]);
+  fprintf(filePtr, "Transferring particles    (%8" ISYM" times) %12.6e\n", counter[9],  timer[9]);
+  fprintf(filePtr, "Transferring Fluxes       (%8" ISYM" times) %12.6e\n", counter[12], timer[12]);
+  fprintf(filePtr, "ShareGrids                (%8" ISYM" times) %12.6e\n", counter[13], timer[13]);
+  fprintf(filePtr, "Transpose                 (%8" ISYM" times) %12.6e\n", counter[14], timer[14]);
+  fprintf(filePtr, "BroadcastValue            (%8" ISYM" times) %12.6e\n", counter[15], timer[15]);
+  fprintf(filePtr, "MinValue                  (%8" ISYM" times) %12.6e\n", counter[16], timer[16]);
+  fprintf(filePtr, "UpdateStarParticleCount   (%8" ISYM" times) %12.6e\n", counter[11], timer[11]);
  
   fprintf(filePtr, "\n\n");
-  fprintf(filePtr, "RebuildHierarchy          (%8"ISYM" times) %12.6e\n", counter[1],  timer[1]);
-  fprintf(filePtr, "RebuildHierarchy interval (%8"ISYM" times) %12.6e\n", counter[0],  timer[0]);
-  fprintf(filePtr, "Load balancing            (%8"ISYM" times) %12.6e\n", counter[2],  timer[2]);
-  fprintf(filePtr, "Region transfer size      (%8"ISYM" times) %12.6e\n", counter[5],  timer[6]);
-  fprintf(filePtr, "Particles sent            (%8"ISYM" times) %12.6e\n", counter[7],  timer[8]);
-  fprintf(filePtr, "Particle transfer size    (%8"ISYM" times) %12.6e\n", counter[9],  timer[10]);
+  fprintf(filePtr, "RebuildHierarchy          (%8" ISYM" times) %12.6e\n", counter[1],  timer[1]);
+  fprintf(filePtr, "RebuildHierarchy interval (%8" ISYM" times) %12.6e\n", counter[0],  timer[0]);
+  fprintf(filePtr, "Load balancing            (%8" ISYM" times) %12.6e\n", counter[2],  timer[2]);
+  fprintf(filePtr, "Region transfer size      (%8" ISYM" times) %12.6e\n", counter[5],  timer[6]);
+  fprintf(filePtr, "Particles sent            (%8" ISYM" times) %12.6e\n", counter[7],  timer[8]);
+  fprintf(filePtr, "Particle transfer size    (%8" ISYM" times) %12.6e\n", counter[9],  timer[10]);
  
   fprintf(filePtr, "\n\n");
-  fprintf(filePtr, "Number of load balancing calls %"ISYM"/%"ISYM" (LOAD_BALANCE_RATIO=%"FSYM")\n",counter[3], counter[2], timer[3]);
-  fprintf(filePtr, "Number of flagging cells  (%8"ISYM" times) %12.6e\n", counter[4], timer[4]);
+  fprintf(filePtr, "Number of load balancing calls %" ISYM"/%" ISYM" (LOAD_BALANCE_RATIO=%" FSYM")\n",counter[3], counter[2], timer[3]);
+  fprintf(filePtr, "Number of flagging cells  (%8" ISYM" times) %12.6e\n", counter[4], timer[4]);
  
   fprintf(filePtr, "\n\n");
 
   if ( flagging_count != 0 )
-    fprintf(filePtr, "Average percentage of flagging cells %12.6e(= %12.6e/%"ISYM")\n",
+    fprintf(filePtr, "Average percentage of flagging cells %12.6e(= %12.6e/%" ISYM")\n",
             flagging_pct/flagging_count, flagging_pct, flagging_count);
   else
     fprintf(filePtr, "Average percentage of flagging cells 0\n");
  
   if ( moving_count != 0 )
-    fprintf(filePtr, "Average percentage of moving cells   %12.6e(= %12.6e/%"ISYM")\n",
+    fprintf(filePtr, "Average percentage of moving cells   %12.6e(= %12.6e/%" ISYM")\n",
             moving_pct/moving_count, moving_pct,moving_count);
   else
     fprintf(filePtr, "Average percentage of moving cells 0\n");
@@ -979,7 +979,7 @@ void my_exit(int status)
 
   } else if (status == EXIT_FAILURE) {
 
-    fprintf (stderr,"%s:%d %"ISYM" ABORT ON EXIT_FAILURE!\n",
+    fprintf (stderr,"%s:%d %" ISYM" ABORT ON EXIT_FAILURE!\n",
 	     __FILE__,__LINE__,MyProcessorNumber);
 
     ENZO_FAIL("my_exit has been called.");
@@ -987,7 +987,7 @@ void my_exit(int status)
 
   } else {
 
-    fprintf (stderr,"%s:%d %"ISYM" ABORT ON UNKNOWN EXIT VALUE %"ISYM"!\n",
+    fprintf (stderr,"%s:%d %" ISYM" ABORT ON UNKNOWN EXIT VALUE %" ISYM"!\n",
 	     __FILE__,__LINE__,MyProcessorNumber,status);
 
     ENZO_FAIL("my_exit has been called without a known exit value.");

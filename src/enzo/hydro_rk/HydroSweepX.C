@@ -58,7 +58,7 @@ int HydroSweepX(float **Prim, float **Flux3D, int GridDimension[],
   }
 
   int extra = (ReconstructionMethod == PPM);
-  //    fprintf(stderr, "extra %"ISYM"\n", extra);
+  //    fprintf(stderr, "extra %" ISYM"\n", extra);
   for (int field = 0; field < NEQ_HYDRO-idual; field++) {
     priml[field] = new float[Xactivesize+1+extra];
     primr[field] = new float[Xactivesize+1+extra];
@@ -99,11 +99,11 @@ int HydroSweepX(float **Prim, float **Flux3D, int GridDimension[],
 	  EOS(p, Prim[iden][igrid], Prim1[1][i], h, cs, dpdrho, dpde, EOSType, 0);
 	  Prim1[1][i] = p;
 	  // then compare pressures, not energies, if using floor
-	  Prim1[1][i] = max(Prim1[1][i], min_coeff*Prim1[0][i]*Prim1[0][i]*(Gamma-1.0));
+	  Prim1[1][i] = MAX_VAL(Prim1[1][i], min_coeff*Prim1[0][i]*Prim1[0][i]*(Gamma-1.0));
 	}
 	else 
 	  // compare energies if using floor
-	  Prim1[1][i] = max(Prim1[1][i], min_coeff*Prim1[0][i]);
+	  Prim1[1][i] = MAX_VAL(Prim1[1][i], min_coeff*Prim1[0][i]);
 	
 	Prim1[2][i] = vx;
 	Prim1[3][i] = vy;

@@ -96,21 +96,21 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
   if((WriteEverything==TRUE) || (WriteGhostZones == TRUE))
     CopyOnlyActive = FALSE;
 
-  char *ParticlePositionLabel[] =
+  const char *ParticlePositionLabel[] =
      {"particle_position_x", "particle_position_y", "particle_position_z"};
-  char *ParticleVelocityLabel[] =
+  const char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
 
   std::vector<std::string> ParticleAttributeLabel(NumberOfParticleAttributes);
   GetParticleAttributeLabels(ParticleAttributeLabel);
 
-  char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
+  const char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
 			     "Particle_x-velocity", "Particle_y-velocity",
 			     "Particle_z-velocity"};
   /* initialize */
 
   char id[MAX_GROUP_TAG_SIZE];
-  sprintf(id, "%"GROUP_TAG_FORMAT""ISYM, grid_id);
+  sprintf(id, "%" GROUP_TAG_FORMAT ISYM, grid_id);
 
   /* make sure quantities defined at least for 3d */
 
@@ -143,10 +143,10 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
   /* 1) Save general grid class data */
 
   char pid[MAX_TASK_TAG_SIZE];
-  sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
+  sprintf(pid, "%" TASK_TAG_FORMAT ISYM, MyProcessorNumber);
 
   char gpid[MAX_TASK_TAG_SIZE];
-  sprintf(gpid, "%"TASK_TAG_FORMAT""ISYM, ProcessorNumber);
+  sprintf(gpid, "%" TASK_TAG_FORMAT ISYM, ProcessorNumber);
 
   char *groupfilename = new char[MAX_LINE_LENGTH];
   strcpy(groupfilename, base_name);
@@ -164,9 +164,9 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
   if (MyProcessorNumber == ROOT_PROCESSOR && HierarchyFileOutputFormat > 0) {
 
-    fprintf(fptr, "Task              = %"ISYM"\n", ProcessorNumber);
+    fprintf(fptr, "Task              = %" ISYM"\n", ProcessorNumber);
 
-    fprintf(fptr, "GridRank          = %"ISYM"\n", GridRank);
+    fprintf(fptr, "GridRank          = %" ISYM"\n", GridRank);
 
     fprintf(fptr, "GridDimension     = ");
     WriteListOfInts(fptr, GridRank, GridDimension);
@@ -183,14 +183,14 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
     fprintf(fptr, "GridRightEdge     = ");
     WriteListOfFloats(fptr, GridRank, GridRightEdge);
 
-    fprintf(fptr, "Time              = %"GOUTSYM"\n", Time);
+    fprintf(fptr, "Time              = %" GOUTSYM"\n", Time);
 
     if(WriteEverything == TRUE)
-    fprintf(fptr, "OldTime           = %"GOUTSYM"\n", OldTime);
+    fprintf(fptr, "OldTime           = %" GOUTSYM"\n", OldTime);
 
-    fprintf(fptr, "SubgridsAreStatic = %"ISYM"\n", SubgridsAreStatic);
+    fprintf(fptr, "SubgridsAreStatic = %" ISYM"\n", SubgridsAreStatic);
 
-    fprintf(fptr, "NumberOfBaryonFields = %"ISYM"\n", NumberOfBaryonFields);
+    fprintf(fptr, "NumberOfBaryonFields = %" ISYM"\n", NumberOfBaryonFields);
 
     if (NumberOfBaryonFields > 0) {
       fprintf(fptr, "FieldType = ");
@@ -199,15 +199,15 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
       fprintf(fptr, "BaryonFileName = %s\n", procfilename);
 
-      fprintf(fptr, "CourantSafetyNumber    = %"FSYM"\n", CourantSafetyNumber);
-      fprintf(fptr, "PPMFlatteningParameter = %"ISYM"\n", PPMFlatteningParameter);
-      fprintf(fptr, "PPMDiffusionParameter  = %"ISYM"\n", PPMDiffusionParameter);
-      fprintf(fptr, "PPMSteepeningParameter = %"ISYM"\n", PPMSteepeningParameter);
+      fprintf(fptr, "CourantSafetyNumber    = %" FSYM"\n", CourantSafetyNumber);
+      fprintf(fptr, "PPMFlatteningParameter = %" ISYM"\n", PPMFlatteningParameter);
+      fprintf(fptr, "PPMDiffusionParameter  = %" ISYM"\n", PPMDiffusionParameter);
+      fprintf(fptr, "PPMSteepeningParameter = %" ISYM"\n", PPMSteepeningParameter);
 
     }
 
-    fprintf(fptr, "NumberOfParticles   = %"ISYM"\n", NumberOfParticles);
-    fprintf(fptr, "NumberOfActiveParticles = %"ISYM"\n", NumberOfActiveParticles);
+    fprintf(fptr, "NumberOfParticles   = %" ISYM"\n", NumberOfParticles);
+    fprintf(fptr, "NumberOfActiveParticles = %" ISYM"\n", NumberOfActiveParticles);
         // Now write out which kind of active particles we have in this grid.
     fprintf(fptr, "PresentParticleTypes = ");
     if (NumberOfParticles)
@@ -221,10 +221,10 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
     // And their counts
     fprintf(fptr, "ParticleTypeCounts = ");
     if (NumberOfParticles)
-      fprintf(fptr, "%"ISYM" ", NumberOfParticles);
+      fprintf(fptr, "%" ISYM" ", NumberOfParticles);
     for (int i = 0; i<EnabledActiveParticlesCount; i++){
       if (ActiveParticleTypeCount[i] > 0) {
-        fprintf(fptr, "%"ISYM" ", ActiveParticleTypeCount[i]);
+        fprintf(fptr, "%" ISYM" ", ActiveParticleTypeCount[i]);
       }
     }
     fprintf(fptr, "\n");
@@ -233,7 +233,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       fprintf(fptr, "ParticleFileName = %s\n", procfilename); // must be same as above
 
     if (SelfGravity)
-      fprintf(fptr, "GravityBoundaryType = %"ISYM"\n", GravityBoundaryType);
+      fprintf(fptr, "GravityBoundaryType = %" ISYM"\n", GravityBoundaryType);
 
   }
 
@@ -336,7 +336,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
              the AccelerationField */
 
           for(dim = 0; dim < GridRank; dim++) {
-            snprintf(node_name, 254, "AccelerationField%"ISYM"", dim);
+            snprintf(node_name, 254, "AccelerationField%" ISYM"", dim);
             this->write_dataset(GridRank, FullOutDims, node_name,
                 acc_node, file_type_id, (VOIDP) AccelerationField[dim],
                 FALSE);
@@ -416,7 +416,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
         for ( i=0;i<size;i++ ){
           if ( DivB[i] > max_div_b ) max_div_b = DivB[i];
         }
-        fprintf(stdout, "max(DivB) = %10.5e\n", max_div_b);
+        fprintf(stdout, "MAX_VAL(DivB) = %10.5e\n", max_div_b);
         if(CopyOnlyActive == TRUE) {
           this->write_dataset(GridRank, OutDims, "DivB",
                               group_id, file_type_id, (VOIDP) DivB,
@@ -1007,7 +1007,7 @@ int grid::WriteFluxGroup(hid_t top_group, fluxes *fluxgroup)
   for (dim = 0; dim < GridRank; dim++) {
     /* compute size (in floats) of flux storage */
 
-    snprintf(name, 254, "Axis%"ISYM, dim);
+    snprintf(name, 254, "Axis%" ISYM, dim);
     axis_group = H5Gcreate(top_group, name, 0);
     if(axis_group == h5_error)ENZO_VFAIL("Can't create %s", name)
 

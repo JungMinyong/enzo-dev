@@ -98,7 +98,7 @@ int grid::SphericalInfallGetProfile(int level, int ReportLevel)
 	if (GridRank > 2)
 	  DivVel += BaryonField[Vel3Num][index+offset2] -
 	            BaryonField[Vel3Num][index-offset2];
-	MaxDivVel = max(MaxDivVel, fabs(DivVel));
+	MaxDivVel = MAX_VAL(MaxDivVel, fabs(DivVel));
       }
     }
   MaxDivVel /= 2.0*a*CellWidth[0][0];
@@ -109,22 +109,22 @@ int grid::SphericalInfallGetProfile(int level, int ReportLevel)
   for (dim = 0; dim < GridRank; dim++) {
     MinVel[dim] = MaxVel[dim] = 0;
     for (i = 0; i < GridDimension[0]*GridDimension[1]*GridDimension[2]; i++) {
-      MinVel[dim] = min(MinVel[dim], BaryonField[Vel1Num+dim][i]);
-      MaxVel[dim] = max(MaxVel[dim], BaryonField[Vel1Num+dim][i]);
+      MinVel[dim] = MIN_VAL(MinVel[dim], BaryonField[Vel1Num+dim][i]);
+      MaxVel[dim] = MAX_VAL(MaxVel[dim], BaryonField[Vel1Num+dim][i]);
     }
   }
   float MaxDens = 0, MinEntropy = huge_number, MaxDensVel = 0;
   for (i = 0; i < GridDimension[0]*GridDimension[1]*GridDimension[2]; i++) {
-    MaxDens = max(MaxDens, BaryonField[DensNum][i]);
+    MaxDens = MAX_VAL(MaxDens, BaryonField[DensNum][i]);
     if (MaxDens == BaryonField[DensNum][i])
       MaxDensVel = BaryonField[Vel1Num][i];
-    MinEntropy = min(MinEntropy, BaryonField[GENum][i]/
+    MinEntropy = MIN_VAL(MinEntropy, BaryonField[GENum][i]/
                                  POW(BaryonField[DensNum][i], Gamma-1));
   }
  
   /* Open output file. */
  
-  sprintf(ProfileName, "%s.L%1.1"ISYM".%4.4"ISYM, "SphericalInfallProfile", level,
+  sprintf(ProfileName, "%s.L%1.1" ISYM".%4.4" ISYM, "SphericalInfallProfile", level,
 	  SphericalInfallGetProfileNumber);
  
   if (level >= SphericalInfallGetProfileLowestLevel) {
@@ -146,7 +146,7 @@ int grid::SphericalInfallGetProfile(int level, int ReportLevel)
     ENZO_VFAIL("Error opening %s.\n", SphericalInfallReportName)
   }
  
-  fprintf(fptr, "# l %"ISYM" t = %"FSYM" L = %"GSYM" %"GSYM" %"GSYM" %"GSYM" d(max) = %"GSYM" S(min) = %"GSYM" v_dmax = %"GSYM" div_v_max = %"GSYM"  dt/dt_divv = %"GSYM"\n",
+  fprintf(fptr, "# l %" ISYM" t = %" FSYM" L = %" GSYM" %" GSYM" %" GSYM" %" GSYM" d(max) = %" GSYM" S(min) = %" GSYM" v_dmax = %" GSYM" div_v_max = %" GSYM"  dt/dt_divv = %" GSYM"\n",
 	  level, Time,
 	  AngularMomentum[0], AngularMomentum[1], AngularMomentum[2], LMod,
 	  MaxDens, MinEntropy, MaxDensVel, MaxDivVel, MaxDivVel*dtFixed);
@@ -169,7 +169,7 @@ int grid::SphericalInfallGetProfile(int level, int ReportLevel)
 
     int Offset = GridDimension[0]*(Index[1] + Index[2]*GridDimension[1]);
     for (i = Index[0]; i < GridDimension[0]; i++) {
-      fprintf(fptr, "%"FSYM" ", CellLeftEdge[0][i] + 0.5*CellWidth[0][i] -
+      fprintf(fptr, "%" FSYM" ", CellLeftEdge[0][i] + 0.5*CellWidth[0][i] -
 	                   SphericalInfallCenter[0]);
       for (n = 0; n < NumberOfBaryonFields; n++)
 	fprintf(fptr, "%e ", BaryonField[n][i + Offset]);

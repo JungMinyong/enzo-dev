@@ -80,7 +80,7 @@ int grid::AnalyzeTrackPeaks(int level, int ReportLevel)
  
   /* Open output file. */
  
-  sprintf(PeakOutputName, "%s.L%1.1"ISYM, "PeakData", level);
+  sprintf(PeakOutputName, "%s.L%1.1" ISYM, "PeakData", level);
  
   if ((fptr = fopen(PeakOutputName, "a")) == FAIL) {
     ENZO_VFAIL("Error opening %s.\n", PeakOutputName)
@@ -183,7 +183,7 @@ int grid::AnalyzeTrackPeaks(int level, int ReportLevel)
 	    PeakPosition[level][n][dim] = pos[dim];
 	  PeakDensity[level][n] = BaryonField[DensNum][index];
  
-	  fprintf(fptr, "peak=%"ISYM" ", n);
+	  fprintf(fptr, "peak=%" ISYM" ", n);
  
 	  for (l = 0; l < level; l++)
 	    for (int n1 = 0; n1 < MAX_PEAKS; n1++)
@@ -195,12 +195,12 @@ int grid::AnalyzeTrackPeaks(int level, int ReportLevel)
 		radius = sqrt(radius);
  
 		if (radius < CellWidth[0][0]*POW(float(RefineBy), level-l))
-		  fprintf(fptr, "%"ISYM"l%"ISYM" ", l, n1);
+		  fprintf(fptr, "%" ISYM"l%" ISYM" ", l, n1);
 	      }
  
-	  fprintf(fptr, "! %"GOUTSYM" ", Time);
+	  fprintf(fptr, "! %" GOUTSYM" ", Time);
  
-	  fprintf(fptr, "%"GSYM" %"GSYM" %"GSYM" ", PeakDensity[level][n],
+	  fprintf(fptr, "%" GSYM" %" GSYM" %" GSYM" ", PeakDensity[level][n],
 		  temperature[index], temperature[index]/
 		  POW(BaryonField[DensNum][index], Gamma-1));
 
@@ -214,16 +214,16 @@ int grid::AnalyzeTrackPeaks(int level, int ReportLevel)
 	    gindex = (gdims[2]*GravitatingMassFieldParticlesDimension[1] +
 		      gdims[1])*GravitatingMassFieldParticlesDimension[0] +
 		      gdims[0];
-	    fprintf(fptr, "%"GSYM" ", GravitatingMassFieldParticles[gindex]);
+	    fprintf(fptr, "%" GSYM" ", GravitatingMassFieldParticles[gindex]);
 	  }
 	  else
-	    fprintf(fptr, "%"GSYM" ", tiny_number);
+	    fprintf(fptr, "%" GSYM" ", tiny_number);
  
-	  fprintf(fptr, "%"GOUTSYM" %"GOUTSYM" %"GOUTSYM" ", PeakPosition[level][n][0],
+	  fprintf(fptr, "%" GOUTSYM" %" GOUTSYM" %" GOUTSYM" ", PeakPosition[level][n][0],
 		  PeakPosition[level][n][1], PeakPosition[level][n][2]);
  
 	  for (l = 1; l < NumberOfBaryonFields; l++)
-	    fprintf(fptr, "%"GSYM" ", BaryonField[l][index]);
+	    fprintf(fptr, "%" GSYM" ", BaryonField[l][index]);
  
 	  fprintf(fptr, "\n");
  

@@ -79,7 +79,7 @@ int grid::CollapseMHD2DInitializeGrid(FLOAT r_sphere,
 
   this->AllocateGrids();
 
-  printf("rho_sphere=%"GSYM", cs_sphere=%"GSYM", rho_medium=%"GSYM", p_medium=%"GSYM"\n",
+  printf("rho_sphere=%" GSYM", cs_sphere=%" GSYM", rho_medium=%" GSYM", p_medium=%" GSYM"\n",
 	 rho_sphere[0], cs_sphere[0], rho_medium*DensityUnits, p_medium);
 
   float rho, vel[3], eint, etot, h, cs, dpdrho, dpde, v2, B2, Bx, By, Bz;
@@ -111,7 +111,7 @@ int grid::CollapseMHD2DInitializeGrid(FLOAT r_sphere,
 	  FLOAT r = sqrt(pow(fabs(x-sphere_position[sphere][0]), 2) +
 		   pow(fabs(y-sphere_position[sphere][1]), 2) +
 		   pow(fabs(z-sphere_position[sphere][2]), 2) );
-	  r = max(r, 0.1*CellWidth[0][0]);
+	  r = MAX_VAL(r, 0.1*CellWidth[0][0]);
 
 	  if (r < r_sphere[sphere]) {
 

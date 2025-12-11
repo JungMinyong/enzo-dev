@@ -1,0 +1,7 @@
+#include <stdio.h>
+void auto_show_version(FILE *fp) {
+   fprintf (fp,"\n");
+   fprintf (fp,"Git Branch   AA-cpu-debug\n");
+   fprintf (fp,"Git Revision 9d542ebc7ac63600f42db02bbf593477d085c3fa\n");
+   fprintf (fp,"\n");
+}

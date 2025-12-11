@@ -126,8 +126,8 @@ int hlld_mhd(float **FluxLine, float **priml, float **primr, float **prim, int A
     Bx = 0.5*(Bx_l + Bx_r);
     // first, outermost wave speeds
     // simplest choice from Miyoshi & Kusano (2005)
-    S_l = min(vx_l, vx_r) - max(cf_l, cf_r);
-    S_r = max(vx_l, vx_r) + max(cf_l, cf_r);
+    S_l = MIN_VAL(vx_l, vx_r) - MAX_VAL(cf_l, cf_r);
+    S_r = MAX_VAL(vx_l, vx_r) + MAX_VAL(cf_l, cf_r);
 
     if (S_l > 0) {
       for (int field = 0; field < NEQ_MHD - 1; field++) {

@@ -82,7 +82,7 @@ int grid::MHDSourceTerms(float **dU, float min_coeff)
 	    dtdz*(BaryonField[Vel3Num][kp1] - BaryonField[Vel3Num][km1]);
 	  rho = BaryonField[DensNum][igrid];
 	  eint = BaryonField[GENum][igrid];
-	  eint = max(eint, min_coeff*rho);
+	  eint = MAX_VAL(eint, min_coeff*rho);
 	  EOS(p, rho, eint, h, cs, dpdrho, dpde, EOSType, 2);
 	  dU[iEint][n] -= p*divVdt;
 
@@ -155,7 +155,7 @@ int grid::MHDSourceTerms(float **dU, float min_coeff)
 	  dU[iEtot][n] += dtFixed*rho*(gx*vx + gy*vy + gz*vz);
 
 	if (i==3 && j==3 && k==4 && GridLeftEdge[0]==0.0 && GridLeftEdge[1]==1.0)
-	  printf("StermStart4 old %"GSYM" \n", dU[iS2][n])  ;
+	  printf("StermStart4 old %" GSYM" \n", dU[iS2][n])  ;
 	}
       }
     }
@@ -184,7 +184,7 @@ int grid::MHDSourceTerms(float **dU, float min_coeff)
 				       GasDragCoefficient*vz*vz);
 
 	if (i==3 && j==3 && k==4 && GridLeftEdge[0]==0.0 && GridLeftEdge[1]==1.0)
-	  printf("StermStart4 old %"GSYM" \n", dU[iS2][n])  ;
+	  printf("StermStart4 old %" GSYM" \n", dU[iS2][n])  ;
 	}
       }
     }

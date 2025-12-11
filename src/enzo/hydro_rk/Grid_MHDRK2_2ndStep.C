@@ -140,7 +140,7 @@ int grid::MHDRK2_2ndStep(fluxes *SubgridFluxes[],
   if(OutputOnDensity == 1){
     int DensNum = FindField(Density, FieldType, NumberOfBaryonFields);
     for(int i = 0; i < size; i++)
-      CurrentMaximumDensity = max(BaryonField[DensNum][i], CurrentMaximumDensity);
+      CurrentMaximumDensity = MAX_VAL(BaryonField[DensNum][i], CurrentMaximumDensity);
   }
 
   return SUCCESS;

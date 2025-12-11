@@ -64,11 +64,11 @@ int WriteAllDataCubes(char *basename, int filenumber,
   MetaData.Time = (WriteTime < 0) ? MetaData.Time : WriteTime;
 
   //  cycle number
-  sprintf(cycle_id, "%8.8"ISYM, MetaData.CycleNumber);
+  sprintf(cycle_id, "%8.8" ISYM, MetaData.CycleNumber);
  
   strcpy(name, "TS");
   strcat(name, cycle_id);
-  //  fprintf(stderr, "Dump cycle: %"ISYM"  %s\n", MetaData.CycleNumber, name);
+  //  fprintf(stderr, "Dump cycle: %" ISYM"  %s\n", MetaData.CycleNumber, name);
  
   //  Start I/O timing
  

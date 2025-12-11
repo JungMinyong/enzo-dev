@@ -36,25 +36,24 @@ MACH_FILE  = Make.mach.icc
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_HDF5_INSTALL    = /usr/local/hdf5/1.10.5_intel21/
-#/home/sykim/local/hdf5-1.12.1
-#/home/wispedia/local/hdf5-1.12.1
-LOCAL_GRACKLE_INSTALL = /home/wispedia/local/grackle-aeos-intel
+LOCAL_HDF5_INSTALL    = /home/vjl4366/pkg/hdf5-1.10.8/build
+LOCAL_GRACKLE_INSTALL = /home/vjl4366/pkg/grackle-aeos_intel/build_intel
 LOCAL_HYPRE_INSTALL   = #/PATH/TO/HYPRE/INSTALL   # optional
+LOCAL_MPI_INSTAL= 
 
 #-----------------------------------------------------------------------
 # Compiler settings
 #-----------------------------------------------------------------------
 
-MACH_CPP       = icc # C preprocessor command
+MACH_CPP       = icx # C preprocessor command
 
 # With MPI
 
-MACH_CC_MPI    = mpiicc # C compiler when using MPI
-MACH_CXX_MPI   = mpiicpc #-DMPICH_IGNORE_CXX_SEEK # C++ compiler when using MPI
-MACH_FC_MPI    = mpiifort # Fortran 77 compiler when using MPI
-MACH_F90_MPI   = mpiifort # Fortran 90 compiler when using MPI
-MACH_LD_MPI    = mpiicpc # Linker when using MPI
+MACH_CC_MPI    = mpiicx # C compiler when using MPI
+MACH_CXX_MPI   = mpiicpx #-DMPICH_IGNORE_CXX_SEEK # C++ compiler when using MPI
+MACH_FC_MPI    = mpiifx # Fortran 77 compiler when using MPI
+MACH_F90_MPI   = mpiifx # Fortran 90 compiler when using MPI
+MACH_LD_MPI    = mpiicpx # Linker when using MPI
 MACH_CUDACOMPILER = nvcc
 
 # Without MPI
@@ -75,13 +74,12 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 #-----------------------------------------------------------------------
 
 
-MACH_CPPFLAGS = -P -traditional 
+MACH_CPPFLAGS = -P -traditional-cpp
 MACH_CFLAGS   = 
-MACH_CXXFLAGS = -std=c++11
-MACH_FFLAGS   = -lmpi_usempif08 -lmpi_usempi_ignore_tkr -lmpi_mpifh -lmpi
-#MACH_FFLAGS   = -fno-second-underscore -ffixed-line-length-132
+MACH_CXXFLAGS = -std=c++11 -xHost
+MACH_FFLAGS   = -fno-second-underscore #-ffixed-line-length-132
 MACH_F90FLAGS = -fno-second-underscore
-MACH_LDFLAGS  = -lstdc++ -lc
+MACH_LDFLAGS  = -lifcore -lifport
 
 #-----------------------------------------------------------------------
 # Optimization flags
@@ -89,14 +87,14 @@ MACH_LDFLAGS  = -lstdc++ -lc
 
 MACH_OPT_WARN        = -Wall -g
 MACH_OPT_DEBUG       = -g
-MACH_OPT_HIGH        = -O2
-MACH_OPT_AGGRESSIVE  = -O3 -g
+MACH_OPT_HIGH        = -O2 -xHost
+MACH_OPT_AGGRESSIVE  = -O3 -g -xHost
 
 #-----------------------------------------------------------------------
 # Includes
 #-----------------------------------------------------------------------
 
-LOCAL_INCLUDES_MPI    = -I/appl/intel/oneapi/mpi/latest/include
+LOCAL_INCLUDES_MPI    = -I$(LOCAL_MPI_INSTALL)/include
 # MPI includes
 LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
 LOCAL_INCLUDES_HYPRE  = -I$(LOCAL_HYPRE_INSTALL)/include
@@ -113,17 +111,16 @@ MACH_INCLUDES_GRACKLE  = $(LOCAL_INCLUDES_GRACKLE)
 # Libraries
 #-----------------------------------------------------------------------
 
-LOCAL_LIBS_MPI    = -L/appl/intel/oneapi/mpi/latest/lib
+LOCAL_LIBS_MPI    = -L$(LOCAL_MPI_INSATLL)/lib
 # MPI libraries
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz
 LOCAL_LIBS_HYPRE  = -L$(LOCAL_HYPRE_INSTALL)/lib -lHYPRE
 LOCAL_LIBS_PAPI   = # PAPI libraries
 LOCAL_LIBS_MACH   = #-lgfortran # Machine-dependent libraries
-LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib -lgrackle -ifort -lifcore -lifport
+LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib -lgrackle 
 
-MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH) 
+MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
 MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
 MACH_LIBS_GRACKLE = $(LOCAL_LIBS_GRACKLE)
-MACH_LIBS_CUDA   = -L/usr/local/cuda/lib64 -lcudart -lcublas -lcuda

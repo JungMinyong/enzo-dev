@@ -125,19 +125,19 @@ int grid::ProjectToPlane2(FLOAT ProjectedFieldLeftEdge[],
   /* Find the start and stop indicies in the ProjectionDimension of this
      grid for the projected region. */
 
-  start = max(int((ProjectedFieldLeftEdge[ProjectionDimension] - 
+  start = MAX_VAL(int((ProjectedFieldLeftEdge[ProjectionDimension] - 
 	 	   GridLeftEdge[ProjectionDimension]) /
 	          CellWidth[ProjectionDimension][0]), 0);
-  stop  = min(int((ProjectedFieldRightEdge[ProjectionDimension] - 
+  stop  = MIN_VAL(int((ProjectedFieldRightEdge[ProjectionDimension] - 
 	           GridLeftEdge[ProjectionDimension]) /
 	          CellWidth[ProjectionDimension][0]),
 	      GridEndIndex[ProjectionDimension] - 
 	      GridStartIndex[ProjectionDimension]);
 
-  LeftCellFraction = min(1.0 - ((ProjectedFieldLeftEdge[ProjectionDimension] - 
+  LeftCellFraction = MIN_VAL(1.0 - ((ProjectedFieldLeftEdge[ProjectionDimension] - 
 				 GridLeftEdge[ProjectionDimension]) /
 				CellWidth[ProjectionDimension][0] - start), 1);
-  RightCellFraction = min((ProjectedFieldRightEdge[ProjectionDimension] - 
+  RightCellFraction = MIN_VAL((ProjectedFieldRightEdge[ProjectionDimension] - 
 			   GridLeftEdge[ProjectionDimension]) /
 			  CellWidth[ProjectionDimension][0] - stop, 1);
 
@@ -145,7 +145,7 @@ int grid::ProjectToPlane2(FLOAT ProjectedFieldLeftEdge[],
   stop += GridStartIndex[ProjectionDimension];
   if (debug) 
     printf("ProjectToGrid: start = %d/%d (%5.3f)  stop = %d/%d (%5.3f)  "
-	   "GridLeft/Right = %5.3"FSYM"/%5.3"FSYM"\n",
+	   "GridLeft/Right = %5.3" FSYM"/%5.3" FSYM"\n",
 	   start, GridStartIndex[ProjectionDimension], LeftCellFraction,
 	   stop, GridEndIndex[ProjectionDimension], RightCellFraction,
 	   GridLeftEdge[ProjectionDimension],
@@ -545,7 +545,7 @@ int grid::ProjectToPlane2(FLOAT ProjectedFieldLeftEdge[],
       }
 
       nelec = dom * BaryonField[DeNum][i];
-      log_nelec = max(min(log10f(nelec), 9), 2);
+      log_nelec = MAX_VAL(MIN_VAL(log10f(nelec), 9), 2);
       log_nelec2 = log_nelec * log_nelec;
       log_temp = log10f(temperature[i]);
       log_temp2 = log_temp * log_temp;
@@ -593,7 +593,7 @@ int grid::ProjectToPlane2(FLOAT ProjectedFieldLeftEdge[],
     offset = MetalLumField*size;
     for (i = 0; i < size; i++) {
       temp_field[i] = all_luminosities[i+offset];
-      max_lum = max(max_lum, temp_field[i]);
+      max_lum = MAX_VAL(max_lum, temp_field[i]);
     }
 
     /* Scale the total metal line luminosity to individual lines from

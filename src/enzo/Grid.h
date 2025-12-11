@@ -1696,9 +1696,8 @@ gradient force to gravitational force for one-zone collapse test. */
 
 #ifdef INDIVIDUALSTAR
    void DeleteStellarAbundances(){
-     if(StellarAbundances == NULL) return;
 
-     int i;
+    int i;
      int num_extra = 0;
 
      if (IndividualStarTrackAGBMetalDensity) num_extra++;
@@ -1735,7 +1734,7 @@ gradient force to gravitational force for one-zone collapse test. */
        // this is meant to be enough info that interesting analysis can be done off of this data
        // file alone, without reference to data dump (e.g. MDFs)
 
-       fprintf(fptr, "StellarAbundances P(%" ISYM "): %" ISYM " %" ISYM " %" ISYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM "\n",
+       fprintf(fptr, "StellarAbundances P(%" ISYM "): %" ISYM " %" PISYM " %" ISYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM " %" ESYM "\n",
               MyProcessorNumber,
               this->ID, ParticleNumber[index], ParticleType[index],
               ParticlePosition[0][index], ParticlePosition[1][index], ParticlePosition[2][index],

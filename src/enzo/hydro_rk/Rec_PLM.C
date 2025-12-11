@@ -78,10 +78,10 @@ int plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq)
     }
   }
   for (int i = 0; i < ActiveSize+1; i++) {
-    priml[0][i] = max(priml[0][i], SmallRho);
-    //priml[1][i] = max(priml[1][i], SmallEint);
-    primr[0][i] = max(primr[0][i], SmallRho);
-    //primr[1][i] = max(primr[1][i], SmallEint);
+    priml[0][i] = MAX_VAL(priml[0][i], SmallRho);
+    //priml[1][i] = MAX_VAL(priml[1][i], SmallEint);
+    primr[0][i] = MAX_VAL(primr[0][i], SmallRho);
+    //primr[1][i] = MAX_VAL(primr[1][i], SmallEint);
   }
 
   return SUCCESS;

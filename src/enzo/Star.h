@@ -102,7 +102,7 @@ public:
   int ReturnGridParticleIndex(){return GridParticleIndex;};
   void checkEscape(double &temp){
     if (temp < -10) {
-      fprintf(stdout,"Escaped PID=%d in deletion\n", Identifier);
+      fprintf(stdout,"Escaped PID=%" PISYM" in deletion\n", Identifier);
       temp += 20;
       isRemoved = true;
       isABYSS = false;
@@ -145,10 +145,10 @@ public:
   int* ReturnYieldTablePosition(void){  this->AssertInterpolationPositions(3);
                                         return yield_table_position; };
 
-  int* ReturnSETablePosition(void){ this->AssertInterpolationPositions(1);//printf("setable %"ISYM" %"ISYM"\n",se_table_position[0], se_table_position[1]);
+  int* ReturnSETablePosition(void){ this->AssertInterpolationPositions(1);//printf("setable %" ISYM" %" ISYM"\n",se_table_position[0], se_table_position[1]);
                                     return se_table_position; };
 
-  int* ReturnRadTablePosition(void){this->AssertInterpolationPositions(2);//printf("radtable %"ISYM" %"ISYM" %"ISYM"\n", rad_table_position[0], rad_table_position[1], rad_table_position[2]);
+  int* ReturnRadTablePosition(void){this->AssertInterpolationPositions(2);//printf("radtable %" ISYM" %" ISYM" %" ISYM"\n", rad_table_position[0], rad_table_position[1], rad_table_position[2]);
                                     return rad_table_position; };
 
   double* ReturnAbundances(void){ return abundances;};

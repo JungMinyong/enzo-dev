@@ -111,7 +111,7 @@ int InitialLoadBalanceRootGrids(FILE *fptr, hid_t Hfile_id, int TopGridRank,
       NumberOfRootGrids = 0;
       while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
 	
-	if (sscanf(line, "Grid = %"ISYM, &dummy) > 0)
+	if (sscanf(line, "Grid = %" ISYM, &dummy) > 0)
 	  NumberOfRootGrids++;
 	
 	// Reached the last root grid
@@ -170,7 +170,7 @@ int InitialLoadBalanceRootGrids(FILE *fptr, hid_t Hfile_id, int TopGridRank,
       if (HierarchyFileInputFormat % 2 == 0) {
 	GridID = i+1;
 	
-	sprintf(group_name,"/Level0/Grid%"GROUP_TAG_FORMAT""ISYM, GridID);
+	sprintf(group_name,"/Level0/Grid%" GROUP_TAG_FORMAT ISYM, GridID);
 	group_id = H5Gopen(Hfile_id, group_name);
 	
 	attr_id = H5Aopen_name(group_id, "Task");
@@ -201,7 +201,7 @@ int InitialLoadBalanceRootGrids(FILE *fptr, hid_t Hfile_id, int TopGridRank,
 	  h5_status = H5Aclose(attr_id);
 	  
 	  for (j=0;j<NumberOfDaughterGrids;j++) {
-	    sprintf(group_name,"DaughterGrids/DaughterGrid%"ISYM, j);
+	    sprintf(group_name,"DaughterGrids/DaughterGrid%" ISYM, j);
 	    daughter_group_id = H5Gopen(group_id, group_name);
 
 	    dset_id = H5Dopen(daughter_group_id, "GridDimensions");
@@ -228,26 +228,26 @@ int InitialLoadBalanceRootGrids(FILE *fptr, hid_t Hfile_id, int TopGridRank,
 	  fgets(line, MAX_LINE_LENGTH, fptr);
 	  if (feof(fptr)) break;
 	  
-	  sscanf(line, "Grid = %"ISYM, &GridID);
-	  sscanf(line, "Task = %"ISYM, &ThisTask);
-	  sscanf(line, "GridRank = %"ISYM, &Rank);
+	  sscanf(line, "Grid = %" ISYM, &GridID);
+	  sscanf(line, "Task = %" ISYM, &ThisTask);
+	  sscanf(line, "GridRank = %" ISYM, &Rank);
 	  switch (Rank) {
 	  case 1:
-	    sscanf(line, "GridDimension = %"ISYM, GridDims);
-	    sscanf(line, "GridLeftEdge = %"PSYM, LeftEdge);
-	    sscanf(line, "GridRightEdge = %"PSYM, RightEdge);
+	    sscanf(line, "GridDimension = %" ISYM, GridDims);
+	    sscanf(line, "GridLeftEdge = %" PSYM, LeftEdge);
+	    sscanf(line, "GridRightEdge = %" PSYM, RightEdge);
 	    break;
 	  case 2:
-	    sscanf(line, "GridDimension = %"ISYM" %"ISYM, GridDims, GridDims+1);
-	    sscanf(line, "GridLeftEdge = %"PSYM" %"PSYM, LeftEdge, LeftEdge+1);
-	    sscanf(line, "GridRightEdge = %"PSYM" %"PSYM, RightEdge, RightEdge+1);
+	    sscanf(line, "GridDimension = %" ISYM" %" ISYM, GridDims, GridDims+1);
+	    sscanf(line, "GridLeftEdge = %" PSYM" %" PSYM, LeftEdge, LeftEdge+1);
+	    sscanf(line, "GridRightEdge = %" PSYM" %" PSYM, RightEdge, RightEdge+1);
 	    break;
 	  case 3:
-	    sscanf(line, "GridDimension = %"ISYM" %"ISYM" %"ISYM,
+	    sscanf(line, "GridDimension = %" ISYM" %" ISYM" %" ISYM,
 		   GridDims, GridDims+1, GridDims+2);
-	    sscanf(line, "GridLeftEdge = %"PSYM" %"PSYM" %"PSYM,
+	    sscanf(line, "GridLeftEdge = %" PSYM" %" PSYM" %" PSYM,
 		   LeftEdge, LeftEdge+1, LeftEdge+2);
-	    sscanf(line, "GridRightEdge = %"PSYM" %"PSYM" %"PSYM,
+	    sscanf(line, "GridRightEdge = %" PSYM" %" PSYM" %" PSYM,
 		   RightEdge, RightEdge+1, RightEdge+2);
 	    break;
 	  default:
@@ -312,26 +312,26 @@ int InitialLoadBalanceRootGrids(FILE *fptr, hid_t Hfile_id, int TopGridRank,
 	  fgets(line, MAX_LINE_LENGTH, fptr);
 	  if (feof(fptr)) break;
 	  
-	  sscanf(line, "Grid = %"ISYM, &GridID);
-	  sscanf(line, "Task = %"ISYM, &ThisTask);
-	  sscanf(line, "GridRank = %"ISYM, &Rank);
+	  sscanf(line, "Grid = %" ISYM, &GridID);
+	  sscanf(line, "Task = %" ISYM, &ThisTask);
+	  sscanf(line, "GridRank = %" ISYM, &Rank);
 	  switch (Rank) {
 	  case 1:
-	    sscanf(line, "GridDimension = %"ISYM, GridDims);
-	    sscanf(line, "GridLeftEdge = %"PSYM, LeftEdge);
-	    sscanf(line, "GridRightEdge = %"PSYM, RightEdge);
+	    sscanf(line, "GridDimension = %" ISYM, GridDims);
+	    sscanf(line, "GridLeftEdge = %" PSYM, LeftEdge);
+	    sscanf(line, "GridRightEdge = %" PSYM, RightEdge);
 	    break;
 	  case 2:
-	    sscanf(line, "GridDimension = %"ISYM" %"ISYM, GridDims, GridDims+1);
-	    sscanf(line, "GridLeftEdge = %"PSYM" %"PSYM, LeftEdge, LeftEdge+1);
-	    sscanf(line, "GridRightEdge = %"PSYM" %"PSYM, RightEdge, RightEdge+1);
+	    sscanf(line, "GridDimension = %" ISYM" %" ISYM, GridDims, GridDims+1);
+	    sscanf(line, "GridLeftEdge = %" PSYM" %" PSYM, LeftEdge, LeftEdge+1);
+	    sscanf(line, "GridRightEdge = %" PSYM" %" PSYM, RightEdge, RightEdge+1);
 	    break;
 	  case 3:
-	    sscanf(line, "GridDimension = %"ISYM" %"ISYM" %"ISYM,
+	    sscanf(line, "GridDimension = %" ISYM" %" ISYM" %" ISYM,
 		   GridDims, GridDims+1, GridDims+2);
-	    sscanf(line, "GridLeftEdge = %"PSYM" %"PSYM" %"PSYM,
+	    sscanf(line, "GridLeftEdge = %" PSYM" %" PSYM" %" PSYM,
 		   LeftEdge, LeftEdge+1, LeftEdge+2);
-	    sscanf(line, "GridRightEdge = %"PSYM" %"PSYM" %"PSYM,
+	    sscanf(line, "GridRightEdge = %" PSYM" %" PSYM" %" PSYM,
 		   RightEdge, RightEdge+1, RightEdge+2);
 	    break;
 	  default:

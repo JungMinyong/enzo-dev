@@ -71,7 +71,7 @@ int grid::SetFloor()
 
         emin = 4.0*0.48999*rho*pow(CellWidth[0][0],2)/(Gamma*(Gamma-1.0));
 
-        eint = max(eint, emin);
+        eint = MAX_VAL(eint, emin);
 
         BaryonField[ietot][igrid] = eint + 0.5*v2;
 
@@ -104,7 +104,7 @@ int grid::SetFloor()
 	    float rho1 = B2/pow(ca_min,2);
 	    BaryonField[DensNum][igrid] = rho1;
 	    BaryonField[TENum][igrid] += 0.5*B2/rho1;
-	    printf("floor set based on MaximumAlvenSpeed: (%"GSYM" %"GSYM" %"GSYM"), rho: %"GSYM"->%"GSYM"\n", CellLeftEdge[0][i],
+	    printf("floor set based on MaximumAlvenSpeed: (%" GSYM" %" GSYM" %" GSYM"), rho: %" GSYM"->%" GSYM"\n", CellLeftEdge[0][i],
 		   CellLeftEdge[1][j], CellLeftEdge[2][k], rho*DensityUnits, rho1*DensityUnits);
 	  }
 	}

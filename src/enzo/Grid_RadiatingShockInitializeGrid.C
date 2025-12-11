@@ -248,35 +248,35 @@ int grid::RadiatingShockInitializeGrid(FLOAT dr,
 
 	if ((i+j+k) == 0) {
 	  if (MultiSpecies) {
-	    fprintf(stderr,"External medium: Density: %.2"ESYM, BaryonField[DensNum][cellindex]);
-	    fprintf(stderr,", HI: %.2"ESYM", HII: %.2"ESYM", HeI: %.2"ESYM,BaryonField[HINum][cellindex],
+	    fprintf(stderr,"External medium: Density: %.2" ESYM, BaryonField[DensNum][cellindex]);
+	    fprintf(stderr,", HI: %.2" ESYM", HII: %.2" ESYM", HeI: %.2" ESYM,BaryonField[HINum][cellindex],
 		    BaryonField[HIINum][cellindex],
 		    BaryonField[HeINum][cellindex]);
-	    fprintf(stderr,", HeII: %.2"ESYM", HeIII: %.2"ESYM", De: %.2"ESYM,BaryonField[HeIINum][cellindex],
+	    fprintf(stderr,", HeII: %.2" ESYM", HeIII: %.2" ESYM", De: %.2" ESYM,BaryonField[HeIINum][cellindex],
 		    BaryonField[HeIIINum][cellindex],BaryonField[DeNum][cellindex]);
 	    if (MultiSpecies > 1) {
-	      fprintf(stderr,", H2I: %.2"ESYM", H2II: %.2"ESYM", HM: %.2"ESYM,BaryonField[H2INum][cellindex],
+	      fprintf(stderr,", H2I: %.2" ESYM", H2II: %.2" ESYM", HM: %.2" ESYM,BaryonField[H2INum][cellindex],
 		      BaryonField[H2IINum][cellindex],BaryonField[HMNum][cellindex]);
 	    }
 	    if (MultiSpecies > 2) {
-	      fprintf(stderr,", DI: %.2"ESYM", DII: %.2"ESYM", HDI: %.2"ESYM,BaryonField[DINum][cellindex],
+	      fprintf(stderr,", DI: %.2" ESYM", DII: %.2" ESYM", HDI: %.2" ESYM,BaryonField[DINum][cellindex],
 		      BaryonField[DIINum][cellindex],BaryonField[HDINum][cellindex]);
 	    }
 	    if (TestProblemData.UseMetallicityField) {
-	      fprintf(stderr,", Metal: %.2"ESYM,BaryonField[MetalNum][cellindex]);
+	      fprintf(stderr,", Metal: %.2" ESYM,BaryonField[MetalNum][cellindex]);
 	    }
 	    fprintf(stderr,"\n");
 	  }
 	  else if (GloverChemistryModel) {
 	    int GCM = TestProblemData.GloverChemistryModel;  // purely for convenience
-	    fprintf(stderr,"      External medium: Density: %.2"ESYM, BaryonField[DensNum][cellindex]);
-	    fprintf(stderr,", HI: %.2"ESYM", HII: %.2"ESYM", H2I: %.2"ESYM,BaryonField[HINum][cellindex],
+	    fprintf(stderr,"      External medium: Density: %.2" ESYM, BaryonField[DensNum][cellindex]);
+	    fprintf(stderr,", HI: %.2" ESYM", HII: %.2" ESYM", H2I: %.2" ESYM,BaryonField[HINum][cellindex],
 		    BaryonField[HIINum][cellindex],
 		    BaryonField[H2INum][cellindex]);
 	    if( (GCM==1) || (GCM==2) || (GCM==3) || (GCM==7) ){
-	      fprintf(stderr,", HeI: %.2"ESYM", HeII: %.2"ESYM", HeIII: %.2"ESYM,BaryonField[HeINum][cellindex],
+	      fprintf(stderr,", HeI: %.2" ESYM", HeII: %.2" ESYM", HeIII: %.2" ESYM,BaryonField[HeINum][cellindex],
 		      BaryonField[HeIINum][cellindex],BaryonField[HeIIINum][cellindex]);
-	      fprintf(stderr,", DI: %.2"ESYM", DII: %.2"ESYM", HDI: %.2"ESYM,BaryonField[DINum][cellindex],
+	      fprintf(stderr,", DI: %.2" ESYM", DII: %.2" ESYM", HDI: %.2" ESYM,BaryonField[DINum][cellindex],
 		      BaryonField[DIINum][cellindex],BaryonField[HDINum][cellindex]);
 	    }
 	    fprintf(stderr,"\n");
@@ -301,7 +301,7 @@ int grid::RadiatingShockInitializeGrid(FLOAT dr,
   
 	r = sqrt(r);  // ok, now it's just r
 	
-	//r = max(r, 0.1*CellWidth[0][0]);
+	//r = MAX_VAL(r, 0.1*CellWidth[0][0]);
 	
 
 	if (r <= dr + 1.5*CellWidth[0][i]) {
@@ -587,33 +587,33 @@ int grid::RadiatingShockInitializeGrid(FLOAT dr,
 	} // if(TestProblemData.GloverChemistryModel)
 
 	  if (MultiSpecies) {
-	    fprintf(stderr,"Cell fraction: %.4"FSYM", Density: %.2"ESYM, cellfraction,BaryonField[DensNum][cellindex]);
-	    fprintf(stderr,", HI: %.2"ESYM", HII: %.2"ESYM", HeI: %.2"ESYM,BaryonField[HINum][cellindex],BaryonField[HIINum][cellindex],
+	    fprintf(stderr,"Cell fraction: %.4" FSYM", Density: %.2" ESYM, cellfraction,BaryonField[DensNum][cellindex]);
+	    fprintf(stderr,", HI: %.2" ESYM", HII: %.2" ESYM", HeI: %.2" ESYM,BaryonField[HINum][cellindex],BaryonField[HIINum][cellindex],
 		    BaryonField[HeINum][cellindex]);
-	    fprintf(stderr,", HeII: %.2"ESYM", HeIII: %.2"ESYM", De: %.2"ESYM,BaryonField[HeIINum][cellindex],
+	    fprintf(stderr,", HeII: %.2" ESYM", HeIII: %.2" ESYM", De: %.2" ESYM,BaryonField[HeIINum][cellindex],
 		    BaryonField[HeIIINum][cellindex],BaryonField[DeNum][cellindex]);
 	    if (MultiSpecies > 1) {
-	      fprintf(stderr,", H2I: %.2"ESYM", H2II: %.2"ESYM", HM: %.2"ESYM,BaryonField[H2INum][cellindex],
+	      fprintf(stderr,", H2I: %.2" ESYM", H2II: %.2" ESYM", HM: %.2" ESYM,BaryonField[H2INum][cellindex],
 		      BaryonField[H2IINum][cellindex],BaryonField[HMNum][cellindex]);
 	    }
 	    if (MultiSpecies > 2) {
-	      fprintf(stderr,", DI: %.2"ESYM", DII: %.2"ESYM", HDI: %.2"ESYM,BaryonField[DINum][cellindex],
+	      fprintf(stderr,", DI: %.2" ESYM", DII: %.2" ESYM", HDI: %.2" ESYM,BaryonField[DINum][cellindex],
 		      BaryonField[DIINum][cellindex],BaryonField[HDINum][cellindex]);
 	    }
 	    if (TestProblemData.UseMetallicityField) {
-	      fprintf(stderr,", Metal: %.2"ESYM,BaryonField[MetalNum][cellindex]);
+	      fprintf(stderr,", Metal: %.2" ESYM,BaryonField[MetalNum][cellindex]);
 	    }
 	    fprintf(stderr,"\n");
 	  }
 	  else if (GloverChemistryModel) {
 	    int GCM = TestProblemData.GloverChemistryModel;  // purely for convenience
-	    fprintf(stderr,"Cell fraction: %.4"FSYM", Density: %.2"ESYM, cellfraction,BaryonField[DensNum][cellindex]);
-	    fprintf(stderr,", HI: %.2"ESYM", HII: %.2"ESYM", H2I: %.2"ESYM,BaryonField[HINum][cellindex],BaryonField[HIINum][cellindex],
+	    fprintf(stderr,"Cell fraction: %.4" FSYM", Density: %.2" ESYM, cellfraction,BaryonField[DensNum][cellindex]);
+	    fprintf(stderr,", HI: %.2" ESYM", HII: %.2" ESYM", H2I: %.2" ESYM,BaryonField[HINum][cellindex],BaryonField[HIINum][cellindex],
 		    BaryonField[H2INum][cellindex]);
 	    if( (GCM==1) || (GCM==2) || (GCM==3) || (GCM==7) ){
-	      fprintf(stderr,", HeI: %.2"ESYM", HeII: %.2"ESYM", HeIII: %.2"ESYM,BaryonField[HeINum][cellindex],
+	      fprintf(stderr,", HeI: %.2" ESYM", HeII: %.2" ESYM", HeIII: %.2" ESYM,BaryonField[HeINum][cellindex],
 		      BaryonField[HeIINum][cellindex],BaryonField[HeIIINum][cellindex]);
-	      fprintf(stderr,", DI: %.2"ESYM", DII: %.2"ESYM", HDI: %.2"ESYM,BaryonField[DINum][cellindex],
+	      fprintf(stderr,", DI: %.2" ESYM", DII: %.2" ESYM", HDI: %.2" ESYM,BaryonField[DINum][cellindex],
 		      BaryonField[DIINum][cellindex],BaryonField[HDINum][cellindex]);
 	    }
 	    fprintf(stderr,"\n");
