@@ -110,17 +110,29 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 		TotalNumberOfProcessors = world_size;
 		WorldProcessorNumber = world_rank;
 
-		int NumberOfEnzoNodes = 0;
+		int NumberOfCpuNodes = 0;
+		int NumberOfGpuNodes = 0;
 		int NumberOfEnzoProcessors = 0;
 		char *env;
 
 		env = std::getenv("ENZO_PROCESSOR_NUM");
+		if (env == NULL) {
+			fprintf(stderr, "Missing ENZO_PROCESSOR_NUM\n");
+			exit(EXIT_FAILURE);
+		}
 		NumberOfEnzoProcessors = std::atoi(env);
-		env = std::getenv("ENZO_NODE_NUM");
-		NumberOfEnzoNodes = std::atoi(env);
-
-		NumberOfProcessors = NumberOfEnzoProcessors;
-		NumberOfAbyssProcessors = TotalNumberOfProcessors - NumberOfEnzoProcessors;
+		env = std::getenv("ENZO_CPU_NODE_NUM");
+		if (env == NULL) {
+			fprintf(stderr, "Missing ENZO_CPU_NODE_NUM\n");
+			exit(EXIT_FAILURE);
+		}
+		NumberOfCpuNodes = std::atoi(env);
+		env = std::getenv("ENZO_GPU_NODE_NUM");
+		if (env == NULL) {
+			fprintf(stderr, "Missing ENZO_GPU_NODE_NUM\n");
+			exit(EXIT_FAILURE);
+		}
+		NumberOfGpuNodes = std::atoi(env);
 
 
 		/***********************************
@@ -130,34 +142,29 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 		MPI_Group world_group;
 		MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 
-		// 1) Get and normalize hostname (helps when some ranks see FQDNs, others short names)
-		char raw_name[MPI_MAX_PROCESSOR_NAME]; int len = 0;
-		MPI_Get_processor_name(raw_name, &len);
+		// Create a node-local communicator for shared-memory windows
+		local_comm = MPI_COMM_NULL;
+		MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, world_rank,
+							MPI_INFO_NULL, &local_comm);
 
-		// Make a normalized, short, lowercase name up to the first '.'
-		char name[MPI_MAX_PROCESSOR_NAME];
-		int n = 0;
-		for (int i = 0; i < len && n < MPI_MAX_PROCESSOR_NAME-1; ++i) {
-				char c = raw_name[i];
-				if (c == '.') break;                    // drop domain suffixes
-				if (c >= 'A' && c <= 'Z') c += 32;      // tolower ASCII
-				name[n++] = c;
-		}
-		name[n] = '\0';
-
-		// 2) Make a stable, non-negative color from hostname (FNV-1a masked to 31 bits)
-		uint32_t h = 2166136261u;
-		for (int i = 0; i < n; ++i) { h ^= (uint8_t)name[i]; h *= 16777619u; }
-		int color = (int)(h & 0x7fffffff);          // ensure color >= 0
-
-		// 3) Split by color; 'key' controls the ordering inside each node communicator
-		MPI_Comm local_comm = MPI_COMM_NULL;
-		MPI_Comm_split(MPI_COMM_WORLD, color, /*key=*/world_rank, &local_comm);
-
-		// 4) Now you have contiguous local ranks 0..local_size-1 per node
-		int local_rank = -1, local_size = 0;
+		local_rank = -1;
+		local_size = 0;
 		MPI_Comm_rank(local_comm, &local_rank);
 		MPI_Comm_size(local_comm, &local_size);
+
+		char raw_name[MPI_MAX_PROCESSOR_NAME];
+		int raw_len = 0;
+		MPI_Get_processor_name(raw_name, &raw_len);
+
+		char short_name[MPI_MAX_PROCESSOR_NAME];
+		int sn = 0;
+		for (int i = 0; i < raw_len && sn < MPI_MAX_PROCESSOR_NAME - 1; ++i) {
+			char c = raw_name[i];
+			if (c == '.') break;
+			if (c >= 'A' && c <= 'Z') c += 32;
+			short_name[sn++] = c;
+		}
+		short_name[sn] = '\0';
 
 
 		int local_root = world_rank;
@@ -174,24 +181,116 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 
 		int node_id = std::distance(unique_roots.begin(),
 									std::find(unique_roots.begin(), unique_roots.end(), local_root));
-		int ordered_rank =  node_id * local_size + local_rank;
-		std::cout << "world rank " << world_rank << " is on node id of " << node_id
-				  << " (local rank: " << local_rank << ", total on node: " << local_size << ")  "
-				  << "ordered rank: " << ordered_rank << " " << std::endl;
 
-
-		// This is for inter_comm
-		/*
-		int ranks_inter[2];
-		if (ordered_rank == 0) {
-			ranks_inter[0] = world_rank;
+		int total_nodes = NumberOfCpuNodes + NumberOfGpuNodes;
+		int detected_nodes = static_cast<int>(unique_roots.size());
+		if (detected_nodes != total_nodes) {
+			if (world_rank == 0) {
+				fprintf(stderr,
+						"ENZO_CPU_NODE_NUM (%d) + ENZO_GPU_NODE_NUM (%d) must match detected nodes (%d)\n",
+						NumberOfCpuNodes, NumberOfGpuNodes, detected_nodes);
+			}
+			exit(EXIT_FAILURE);
 		}
-		if (ordered_rank == NumberOfEnzoProcessors) {
-			ranks_inter[1] = world_rank;
-		}*/
 
-		// Create a Enzo communicator 
-		if (ordered_rank < NumberOfEnzoProcessors)
+		bool is_cpu_node = (node_id < NumberOfCpuNodes);
+		bool is_gpu_node = (node_id >= NumberOfCpuNodes && node_id < total_nodes);
+
+		if (local_rank == 0) {
+			std::cout << "node " << node_id << " (" << short_name << ") classified as "
+					  << (is_gpu_node ? "gpu" : "cpu") << std::endl;
+		}
+
+		std::cout << "world rank " << world_rank << " is on node id of " << node_id
+				  << " (" << (is_gpu_node ? "gpu" : "cpu") << " node, local rank: " << local_rank
+				  << ", total on node: " << local_size << ") " << std::endl;
+
+		int cpu_rank_flag = is_cpu_node ? 1 : 0;
+		int cpu_rank_count = 0;
+		MPI_Allreduce(&cpu_rank_flag, &cpu_rank_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+		std::vector<int> local_sizes(world_size, 0);
+		MPI_Allgather(&local_size, 1, MPI_INT, local_sizes.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+		std::vector<int> node_sizes(total_nodes, 0);
+		for (int r = 0; r < world_size; ++r) {
+			int root = node_roots[r];
+			std::vector<int>::iterator it = std::lower_bound(unique_roots.begin(), unique_roots.end(), root);
+			if (it == unique_roots.end() || *it != root) {
+				continue;
+			}
+			int nid = std::distance(unique_roots.begin(), it);
+			node_sizes[nid] = local_sizes[r];
+		}
+
+		int gpu_rank_count = 0;
+		for (int nid = NumberOfCpuNodes; nid < total_nodes; ++nid) {
+			gpu_rank_count += node_sizes[nid];
+		}
+
+		if (NumberOfEnzoProcessors < cpu_rank_count) {
+			if (world_rank == 0) {
+				fprintf(stderr,
+						"ENZO_PROCESSOR_NUM (%d) is less than CPU-node ranks (%d); using %d\n",
+						NumberOfEnzoProcessors, cpu_rank_count, cpu_rank_count);
+			}
+			NumberOfEnzoProcessors = cpu_rank_count;
+		}
+		if (NumberOfEnzoProcessors > TotalNumberOfProcessors) {
+			if (world_rank == 0) {
+				fprintf(stderr,
+						"ENZO_PROCESSOR_NUM (%d) exceeds total ranks (%d); using %d\n",
+						NumberOfEnzoProcessors, TotalNumberOfProcessors, TotalNumberOfProcessors);
+			}
+			NumberOfEnzoProcessors = TotalNumberOfProcessors;
+		}
+
+		int max_enzo = cpu_rank_count + gpu_rank_count;
+		if (NumberOfEnzoProcessors > max_enzo) {
+			if (world_rank == 0) {
+				fprintf(stderr,
+						"ENZO_PROCESSOR_NUM (%d) exceeds CPU+GPU ranks (%d); using %d\n",
+						NumberOfEnzoProcessors, max_enzo, max_enzo);
+			}
+			NumberOfEnzoProcessors = max_enzo;
+		}
+
+		int remaining_enzo = NumberOfEnzoProcessors - cpu_rank_count;
+		if (remaining_enzo < 0) {
+			remaining_enzo = 0;
+		}
+		if (remaining_enzo > gpu_rank_count) {
+			remaining_enzo = gpu_rank_count;
+		}
+
+		int gpu_order = -1;
+		if (is_gpu_node) {
+			int gpu_rank_offset = 0;
+			for (int nid = NumberOfCpuNodes; nid < node_id; ++nid) {
+				gpu_rank_offset += node_sizes[nid];
+			}
+			gpu_order = gpu_rank_offset + local_rank;
+		}
+
+		bool is_enzo_rank = is_cpu_node;
+		bool is_abyss_rank = false;
+		if (is_gpu_node) {
+			if (gpu_order >= 0 && gpu_order < remaining_enzo) {
+				is_enzo_rank = true;
+			} else {
+				is_abyss_rank = true;
+			}
+		}
+
+		int local_has_abyss = 0;
+		int abyss_flag = is_abyss_rank ? 1 : 0;
+		MPI_Allreduce(&abyss_flag, &local_has_abyss, 1, MPI_INT, MPI_MAX, local_comm);
+
+		NumberOfProcessors = NumberOfEnzoProcessors;
+		NumberOfAbyssProcessors = TotalNumberOfProcessors - NumberOfEnzoProcessors;
+
+		// Create a Enzo communicator
+		if (is_enzo_rank)
 		{
 			MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &enzo_comm);
 		}
@@ -201,7 +300,7 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 		}
 
 		// Create a Abyss communicator
-		if (ordered_rank >= NumberOfEnzoProcessors)
+		if (is_abyss_rank)
 		{
 			MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &abyss_comm);
 		}
@@ -210,12 +309,39 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 			MPI_Comm_split(MPI_COMM_WORLD, MPI_UNDEFINED, world_rank, &abyss_comm);
 		}
 
+		// Rank for each communicator
+		if (MPI_COMM_NULL != enzo_comm)
+		{
+			MPI_Comm_rank(enzo_comm, &MyProcessorNumber);
+			std::cout << "World rank " << world_rank << " (local rank " << local_rank << " of node " << node_id << ") is in enzo_comm"
+					  << std::endl;
+		}
+		if (MPI_COMM_NULL != abyss_comm)
+		{
+			MPI_Comm_rank(abyss_comm, &AbyssProcessorNumber);
+			std::cout << "World rank " << world_rank << " (local rank " << local_rank << " of node " << node_id << ") is in abyss_comm"
+					  << std::endl;
+		}
+
 		// Create a Inter communicator
+		int in_inter = 0;
 #ifdef INDIVIDUAL
-		if (ordered_rank <= NumberOfEnzoProcessors)
+		if (MPI_COMM_NULL != enzo_comm) {
+			in_inter = 1;
+		}
+		if (MPI_COMM_NULL != abyss_comm && AbyssProcessorNumber == 0) {
+			in_inter = 1;
+		}
 #else
-		if (ordered_rank == 0 || ordered_rank == NumberOfEnzoProcessors)
+		if (MPI_COMM_NULL != enzo_comm && MyProcessorNumber == 0) {
+			in_inter = 1;
+		}
+		if (MPI_COMM_NULL != abyss_comm && AbyssProcessorNumber == 0) {
+			in_inter = 1;
+		}
 #endif
+
+		if (in_inter)
 		{
 			MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &inter_comm);
 		}
@@ -224,28 +350,8 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 			MPI_Comm_split(MPI_COMM_WORLD, MPI_UNDEFINED, world_rank, &inter_comm);
 		}
 
-
-
-
-		// Rank for each communicator 
-		if (ordered_rank < NumberOfEnzoProcessors)
-		{
-			MPI_Comm_rank(enzo_comm, &MyProcessorNumber);
-			std::cout << "World rank " << world_rank << " (local rank " << local_rank << " of node " << node_id << ") is in enzo_comm"
-					  << std::endl;
-		}
-		if (ordered_rank >= NumberOfEnzoProcessors)
-		{
-			MPI_Comm_rank(abyss_comm, &AbyssProcessorNumber);
-			std::cout << "World rank " << world_rank << " (local rank " << local_rank << " of node " << node_id << ") is in abyss_comm"
-					  << std::endl;
-		}
-		int inter_rank;
-#ifdef INDIVIDUAL
-		if (ordered_rank <= NumberOfEnzoProcessors)
-#else
-		if (ordered_rank == 0 || ordered_rank == NumberOfEnzoProcessors)
-#endif
+		int inter_rank = -1;
+		if (MPI_COMM_NULL != inter_comm)
 		{
 			MPI_Comm_rank(inter_comm, &inter_rank);
 			std::cout << "World rank " << world_rank << " (local rank " << local_rank << " of node " << node_id << ") is in inter_comm"
@@ -406,33 +512,33 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 		 *     Shared Memeory Setting      *
 		 ***********************************/
 
-		// Allocate shared memory
-		//if (abyss_comm != MPI_COMM_NULL)
-		//{
-		if (AbyssProcessorNumber == 0)
+		// Allocate shared memory on nodes that have Abyss ranks
+		if (local_has_abyss)
 		{
-			MPI_Win_allocate_shared(sizeof(Particle) * MaxNumParticle, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles, &win);
-			MPI_Win_allocate_shared(sizeof(GlobalVariable), sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable, &win2);
-			MPI_Win_allocate_shared(sizeof(int) * MaxNumParticle * MaxNumNeighbor, sizeof(int), MPI_INFO_NULL, local_comm, &Neighbors, &win3);
-			MPI_Win_allocate_shared(sizeof(int) * MaxNumParticle * MaxNumNeighbor, sizeof(int), MPI_INFO_NULL, local_comm, &NewNeighbors, &win4);
-		}
-		else
-		{
-			MPI_Win_allocate_shared(0, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles, &win);
-			MPI_Win_allocate_shared(0, sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable, &win2);
-			MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &Neighbors, &win3);
-			MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &NewNeighbors, &win4);
-		}
-		// Query shared memory of rank 0
+			if (local_rank == 0)
+			{
+				MPI_Win_allocate_shared(sizeof(Particle) * MaxNumParticle, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles, &win);
+				MPI_Win_allocate_shared(sizeof(GlobalVariable), sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable, &win2);
+				MPI_Win_allocate_shared(sizeof(int) * MaxNumParticle * MaxNumNeighbor, sizeof(int), MPI_INFO_NULL, local_comm, &Neighbors, &win3);
+				MPI_Win_allocate_shared(sizeof(int) * MaxNumParticle * MaxNumNeighbor, sizeof(int), MPI_INFO_NULL, local_comm, &NewNeighbors, &win4);
+			}
+			else
+			{
+				MPI_Win_allocate_shared(0, sizeof(Particle), MPI_INFO_NULL, local_comm, &particles, &win);
+				MPI_Win_allocate_shared(0, sizeof(GlobalVariable), MPI_INFO_NULL, local_comm, &global_variable, &win2);
+				MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &Neighbors, &win3);
+				MPI_Win_allocate_shared(0, sizeof(int), MPI_INFO_NULL, local_comm, &NewNeighbors, &win4);
+			}
+			// Query shared memory of rank 0
 
-		MPI_Aint size_bytes;
-		int disp_unit;
+			MPI_Aint size_bytes;
+			int disp_unit;
 
-		MPI_Win_shared_query(win, 0, &size_bytes, &disp_unit, &particles);
-		MPI_Win_shared_query(win2, 0, &size_bytes, &disp_unit, &global_variable);
-		MPI_Win_shared_query(win3, 0, &size_bytes, &disp_unit, &Neighbors);
-		MPI_Win_shared_query(win4, 0, &size_bytes, &disp_unit, &NewNeighbors);
-		//}
+			MPI_Win_shared_query(win, 0, &size_bytes, &disp_unit, &particles);
+			MPI_Win_shared_query(win2, 0, &size_bytes, &disp_unit, &global_variable);
+			MPI_Win_shared_query(win3, 0, &size_bytes, &disp_unit, &Neighbors);
+			MPI_Win_shared_query(win4, 0, &size_bytes, &disp_unit, &NewNeighbors);
+		}
 	}
 	else
 	{

@@ -11,8 +11,8 @@ echo $LD_LIBRARY_PATH
 
 ldconfig -p | grep hdf5
 
-make machine-icc
-make io-64 precision-64 integers-32 particle-id-128 max-baryons-60 max-particle-attr-40 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-no
+make machine-hap2
+make io-64 precision-64 integers-32 particle-id-128 max-baryons-60 max-particle-attr-40 lcaperf-no max-tasks-per-node-64 grackle-yes photon-yes opt-aggressive cuda-yes
 #make uuid-no 
 make individualstar-yes new-yield-tables-yes memorypool-yes 
 make nbody-yes fewbody-yes sevn-no
