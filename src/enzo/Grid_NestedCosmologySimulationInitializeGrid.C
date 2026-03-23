@@ -1687,7 +1687,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
 
 	  // If there are exactly 1/8 as many particles as cells,
 	  // then set the particle mass to 8 times the usual
-
+/*
 	  int NumberOfActiveCells = (GridEndIndex[0]-GridStartIndex[0]+1)*
 	    (GridEndIndex[1]-GridStartIndex[1]+1)*
 	    (GridEndIndex[2]-GridStartIndex[2]+1);
@@ -1695,7 +1695,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	    UniformParticleMass *= 8;
 	  if (NumberOfParticles == NumberOfActiveCells*8)
 	    UniformParticleMass /= 8;
-
+*/
 	  //      UniformParticleMass *= float(POW(TotalRefinement, GridRank));
 
 	  // Issue a warning if PPIO or PRGIO are on (possibility of errors
