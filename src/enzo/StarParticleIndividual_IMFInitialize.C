@@ -138,11 +138,17 @@ int InitializeIMF(float *& data, const float & lower_mass, const float & upper_m
       m = POW(10.0, m0 + i*dm);
 
       if (m < 0.08){ // NEED TO CHECK UNITS !!!!
-        total_fn += POW(m, IndividualStarKroupaAlpha1);
+        total_fn += m * POW(m, IndividualStarKroupaAlpha1);
       } else if (m < 0.5){
-        total_fn += POW(m, IndividualStarKroupaAlpha2);
+        total_fn += POW(0.08, IndividualStarKroupaAlpha1 -
+                              IndividualStarKroupaAlpha2) *
+                    m * POW(m, IndividualStarKroupaAlpha2);
       } else{
-        total_fn += POW(m, IndividualStarKroupaAlpha3);
+        total_fn += POW(0.08, IndividualStarKroupaAlpha1 -
+                              IndividualStarKroupaAlpha2) *
+                    POW(0.5, IndividualStarKroupaAlpha2 -
+                             IndividualStarKroupaAlpha3) *
+                    m * POW(m, IndividualStarKroupaAlpha3);
       }
 
       data[i] = total_fn;
